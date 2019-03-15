@@ -34,7 +34,7 @@ h1 {
   border-radius: 13px;
 }
 .link-button { margin: 0 5px; }
-#try-online.link-button {
+.try-online.link-button {
   background: #c0efe4;
   color: #238961;
 }

@@ -12,6 +12,7 @@ install() {
 	launch.sh
 
 	# Install ytt
+	echo "Installing ytt..."
 	wget -O- https://github.com/get-ytt/ytt/releases/download/v0.1.0/ytt-linux-amd64 > /tmp/ytt
 	echo "08d52157a8a7cea47215f05b5e16f318005430d15729f45697686715cb92b705  /tmp/ytt" | shasum -c -
 	mv /tmp/ytt /usr/local/bin/ytt
@@ -19,8 +20,9 @@ install() {
 	echo "Installed ytt"
 
 	# Install kapp
+	echo "Installing kapp..."
 	wget -O- https://github.com/k14s/kapp/releases/download/v0.1.0/kapp-linux-amd64 > /tmp/kapp
-	echo "xxx  /tmp/kapp" | shasum -c -	
+	echo "95c84b7d2c40830fa72dc7ff0e6f6fc31e9c7c5ab7c2bfcae22866d2967d0c8f  /tmp/kapp" | shasum -c -
 	mv /tmp/kapp /usr/local/bin/kapp
 	chmod +x /usr/local/bin/kapp
 	echo "Installed kapp"
