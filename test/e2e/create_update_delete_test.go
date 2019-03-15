@@ -1,0 +1,93 @@
+package e2e
+
+import (
+	"reflect"
+	"strings"
+	"testing"
+
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+)
+
+func TestCreateUpdateDelete(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+
+	yaml1 := `
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-master
+spec:
+  ports:
+  - port: 6380
+    targetPort: 6380
+  selector:
+    app: redis
+    tier: backend
+    role: master
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+data:
+  key: value
+`
+
+	yaml2 := `
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+data:
+  key: value2
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config2
+data:
+  key: value
+`
+
+	name := "test-create-update-delete"
+	cleanUp := func() {
+		kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{AllowError: true})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("deploy initial", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		NewPresentClusterResource("service", "redis-master", env.Namespace, kubectl)
+		NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
+	})
+
+	logger.Section("deploy update with 1 delete, 1 update, 1 add", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
+
+		NewMissingClusterResource(t, "service", "redis-master", env.Namespace, kubectl)
+
+		config := NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
+		val := config.RawPath(ctlres.NewPathFromStrings([]string{"data", "key"}))
+		if !reflect.DeepEqual(val, "value2") {
+			t.Fatalf("Expected value to be updated")
+		}
+
+		NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
+	})
+
+	logger.Section("delete application", func() {
+		kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{})
+
+		NewMissingClusterResource(t, "service", "redis-master", env.Namespace, kubectl)
+		NewMissingClusterResource(t, "configmap", "redis-config", env.Namespace, kubectl)
+		NewMissingClusterResource(t, "configmap", "redis-config2", env.Namespace, kubectl)
+	})
+}

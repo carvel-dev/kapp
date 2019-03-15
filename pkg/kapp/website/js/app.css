@@ -1,0 +1,152 @@
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: sans-serif;
+  font-size: 20px;
+  line-height: 1.4;
+}
+
+/* Header stuff */
+#header {
+  width: 100%;
+  padding: 5px;
+  margin-bottom: 10px;
+}
+h1 {
+  position: absolute;;
+}
+.hero {
+  font-size: 25px;
+  text-align: center;
+  padding: 20px;
+  margin: 0;
+  border-bottom: 1px solid #efefef;
+}
+.logo {
+  color: #111;
+  font-size: 30px;
+  font-family: courier;
+}
+.link-button,
+.button {
+  padding: 10px 15px 7px;
+  background: #f1f9ff;
+  border-radius: 13px;
+}
+.link-button { margin: 0 5px; }
+#try-online.link-button {
+  background: #c0efe4;
+  color: #238961;
+}
+.content {
+  margin: 10px auto;
+  width: 1200px;
+}
+input {
+  font-family: sans-serif;
+  font-size: 14px;
+  border-radius: 3px;
+  border: 1px solid #AAA;
+  padding: 4px;
+}
+input[disabled] {
+  background: #f7f7f7;
+  border-color: #f7f7f7;
+  color: #666;
+}
+li code,
+p code {
+  background: #f1f1f1;
+  border-radius: 4px;
+  border: 1px solid #eee;
+  padding: 2px 4px;
+  font-size: 80%;
+}
+a:visited, a, a:hover {
+  color: #00c;
+}
+a {
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+.button {
+  border: none;
+  border-radius: 3px;
+  color: blue;
+  padding: 5px 10px;
+  margin: 0;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 13px;
+  cursor: pointer;
+}
+.button:hover { text-decoration: underline; }
+.terminal {
+  background: #000;
+  color: #eee;
+  font-size: 80%;
+  padding: 7px 9px;
+  border-radius: 4px;
+}
+.terminal .green { color: #A1C935; }
+.terminal .red { color: red; }
+code, .terminal, .logo {
+  font-family: Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace;
+}
+
+/* Intro */
+#intro {
+  clear: both;
+  border-bottom: 1px solid #efefef;
+}
+
+#features { border-bottom: 1px solid #efefef; }
+#features .highlight {
+  background: #fff8be;
+  font-style: normal;
+}
+
+#playground { border-bottom: 1px solid #efefef; }
+
+/* Workflow */
+#workflow table {
+  max-width: 100%;
+}
+#workflow table,
+#workflow tr,
+#workflow td {
+  border-collapse:collapse;
+  padding: 0;
+  margin: 0;
+  border-width: 0;
+  vertical-align: text-top;
+}
+#workflow .doc {
+  width: 20%;
+  font-size: 80%;
+  padding-right: 10px;
+}
+#workflow .output {
+  max-width: 800px;
+  background: #000;
+  padding: 7px 9px;
+}
+#workflow tr:last-child .output {
+  padding-bottom: 40px;
+}
+#workflow .output .terminal {
+  margin: 0;
+  overflow: auto;
+  padding: 7px 9px;
+}
+#workflow .output .terminal::-webkit-scrollbar {
+  background: #000;
+}
+#workflow .output .terminal::-webkit-scrollbar-thumb {
+  background: #222;
+  border-radius: 10px;
+  border: 2px solid #555;
+}

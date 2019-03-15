@@ -1,0 +1,166 @@
+package appgroup
+
+import (
+	"fmt"
+	"io/ioutil"
+	"path/filepath"
+
+	"github.com/cppforlife/go-cli-ui/ui"
+	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
+	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
+	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
+	"github.com/spf13/cobra"
+)
+
+type DeployOptions struct {
+	ui          ui.UI
+	depsFactory cmdcore.DepsFactory
+
+	AppGroupFlags AppGroupFlags
+	DeployFlags   DeployFlags
+	AppFlags      DeployAppFlags
+}
+
+type DeployAppFlags struct {
+	DiffFlags           cmdtools.DiffFlags
+	ResourceFilterFlags cmdtools.ResourceFilterFlags
+	ApplyFlags          cmdapp.ApplyFlags
+	DeployFlags         cmdapp.DeployFlags
+	LabelFlags          cmdapp.LabelFlags
+}
+
+func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *DeployOptions {
+	return &DeployOptions{ui: ui, depsFactory: depsFactory}
+}
+
+func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "deploy",
+		Aliases: []string{"d", "dep"},
+		Short:   "Deploy app group",
+		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+	}
+	o.AppGroupFlags.Set(cmd, flagsFactory)
+	o.DeployFlags.Set(cmd)
+	o.AppFlags.DiffFlags.SetWithPrefix("diff", cmd)
+	o.AppFlags.ResourceFilterFlags.Set(cmd)
+	o.AppFlags.ApplyFlags.SetWithDefaults(cmdapp.ApplyFlagsDeployDefaults, cmd)
+	o.AppFlags.DeployFlags.Set(cmd)
+	return cmd
+}
+
+func (o *DeployOptions) Run() error {
+	coreClient, err := o.depsFactory.CoreClient()
+	if err != nil {
+		return err
+	}
+
+	dynamicClient, err := o.depsFactory.DynamicClient()
+	if err != nil {
+		return err
+	}
+
+	// TODO what if app is renamed? currently it
+	// will have conflicting resources with new-named app
+	updatedApps, err := o.appsToUpdate()
+	if err != nil {
+		return err
+	}
+
+	// TODO is there some order between apps?
+	for _, appGroupApp := range updatedApps {
+		err := o.deployApp(appGroupApp)
+		if err != nil {
+			return err
+		}
+	}
+
+	apps := ctlapp.NewApps(o.AppGroupFlags.NamespaceFlags.Name, coreClient, dynamicClient)
+
+	existingAppsInGroup, err := apps.List(map[string]string{appGroupAnnKey: o.AppGroupFlags.Name})
+	if err != nil {
+		return err
+	}
+
+	// Delete apps that no longer are present in directories
+	for _, app := range existingAppsInGroup {
+		if _, found := updatedApps[app.Name()]; !found {
+			err := o.deleteApp(app.Name())
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+type appGroupApp struct {
+	Name string
+	Path string
+}
+
+func (o *DeployOptions) appsToUpdate() (map[string]appGroupApp, error) {
+	result := map[string]appGroupApp{}
+	dir := o.DeployFlags.Directory
+
+	fileInfos, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return nil, fmt.Errorf("Reading directory '%s': %s", dir, err)
+	}
+
+	for _, fi := range fileInfos {
+		if !fi.IsDir() {
+			continue
+		}
+		app := appGroupApp{
+			Name: fmt.Sprintf("%s-%s", o.AppGroupFlags.Name, fi.Name()),
+			Path: filepath.Join(dir, fi.Name()),
+		}
+		result[app.Name] = app
+	}
+
+	return result, nil
+}
+
+func (o *DeployOptions) deployApp(app appGroupApp) error {
+	o.ui.PrintLinef("--- deploying app '%s' (namespace: %s) from %s",
+		app.Name, o.AppGroupFlags.NamespaceFlags.Name, app.Path)
+
+	deployOpts := cmdapp.NewDeployOptions(o.ui, o.depsFactory)
+	deployOpts.AppFlags = cmdapp.AppFlags{
+		Name:           app.Name,
+		NamespaceFlags: o.AppGroupFlags.NamespaceFlags,
+	}
+	deployOpts.FileFlags = cmdtools.FileFlags{
+		Files:     []string{app.Path},
+		Recursive: true,
+	}
+	deployOpts.DiffFlags = o.AppFlags.DiffFlags
+	deployOpts.ResourceFilterFlags = o.AppFlags.ResourceFilterFlags
+	deployOpts.ApplyFlags = o.AppFlags.ApplyFlags
+	deployOpts.DeployFlags = o.AppFlags.DeployFlags
+
+	deployOpts.LabelFlags = o.AppFlags.LabelFlags
+	deployOpts.LabelFlags.Labels = append(
+		deployOpts.LabelFlags.Labels,
+		fmt.Sprintf("%s=%s", appGroupAnnKey, o.AppGroupFlags.Name))
+
+	return deployOpts.Run()
+}
+
+func (o *DeployOptions) deleteApp(name string) error {
+	o.ui.PrintLinef("--- deleting app '%s' (namespace: %s)",
+		name, o.AppGroupFlags.NamespaceFlags.Name)
+
+	deleteOpts := cmdapp.NewDeleteOptions(o.ui, o.depsFactory)
+	deleteOpts.AppFlags = cmdapp.AppFlags{
+		Name:           name,
+		NamespaceFlags: o.AppGroupFlags.NamespaceFlags,
+	}
+	deleteOpts.DiffFlags = o.AppFlags.DiffFlags
+	deleteOpts.ApplyFlags = cmdapp.ApplyFlagsDeleteDefaults // TODO better conf
+
+	return deleteOpts.Run()
+}
