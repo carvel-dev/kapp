@@ -2,6 +2,10 @@
 
 `kapp` CLI encourages Kubernetes users to manage resources in bulk by working with "Kubernetes applications" (sets of resources with the same label). It focuses on resource diffing, labeling, deployment and deletion. Unlike tools like Helm, `kapp` considers YAML templating and management of packages outside of its scope, though it works great with tools that generate Kubernetes configuration.
 
+![](docs/kapp-deploy-screenshot.png)
+
+See [https://get-kapp.io](https://get-kapp.io) for detailed example workflow.
+
 Features:
 
 - Works with standard Kubernetes YAMLs
@@ -18,8 +22,6 @@ Features:
 - Works with any group of labeled resources (`kapp -a label:tier=web inspect -t`)
 - Works without server side components
 - GitOps friendly (`kapp app-group deploy -g all-apps --directory .`)
-
-See [https://get-kapp.io](https://get-kapp.io) for detailed example workflow.
 
 ## Docs
 
