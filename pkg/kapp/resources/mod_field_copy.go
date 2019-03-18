@@ -21,7 +21,11 @@ func (t FieldCopyMod) ApplyFromMultiple(res Resource, srcs map[FieldCopyModSourc
 	if res == nil || !t.ResourceMatcher.Matches(res) {
 		return nil
 	}
-	return t.apply(res.unstructured().Object, t.Path, Path{}, srcs)
+	err := t.apply(res.unstructured().Object, t.Path, Path{}, srcs)
+	if err != nil {
+		return fmt.Errorf("FieldCopyMod for path '%s': %s", t.Path.AsString(), err)
+	}
+	return nil
 }
 
 func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[FieldCopyModSource]Resource) error {

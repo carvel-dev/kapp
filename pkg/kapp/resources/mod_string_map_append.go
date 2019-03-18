@@ -19,7 +19,11 @@ func (t StringMapAppendMod) Apply(res Resource) error {
 	if !t.ResourceMatcher.Matches(res) {
 		return nil
 	}
-	return t.apply(res.unstructured().Object, t.Path)
+	err := t.apply(res.unstructured().Object, t.Path)
+	if err != nil {
+		return fmt.Errorf("StringMapAppendMod for path '%s': %s", t.Path.AsString(), err)
+	}
+	return nil
 }
 
 func (t StringMapAppendMod) apply(obj interface{}, path Path) error {
@@ -33,7 +37,8 @@ func (t StringMapAppendMod) apply(obj interface{}, path Path) error {
 
 			var found bool
 			obj, found = typedObj[*part.MapKey]
-			if !found {
+			// TODO check strictness?
+			if !found || obj == nil {
 				// create empty maps if there are no downstream array indexes;
 				// if there are, we cannot make them anyway, so just exit
 				if t.SkipIfNotFound || path.ContainsNonMapKeys() {

@@ -21,6 +21,7 @@ type Resource interface {
 
 	Namespace() string
 	SetNamespace(name string)
+	RemoveNamespace()
 
 	Name() string
 	SetName(name string)
@@ -136,6 +137,10 @@ func (r *ResourceImpl) APIGroup() string {
 
 func (r *ResourceImpl) Namespace() string        { return r.un.GetNamespace() }
 func (r *ResourceImpl) SetNamespace(name string) { r.un.SetNamespace(name) }
+
+func (r *ResourceImpl) RemoveNamespace() {
+	unstructured.RemoveNestedField(r.un.Object, "metadata", "namespace")
+}
 
 func (r *ResourceImpl) Name() string {
 	name := r.un.GetName()

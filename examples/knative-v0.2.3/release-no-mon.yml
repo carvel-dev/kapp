@@ -702,6 +702,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  annotations: null
   labels:
     app: knative-ingressgateway
     chart: gateways-1.0.1

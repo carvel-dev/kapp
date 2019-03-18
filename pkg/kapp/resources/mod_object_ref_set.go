@@ -16,7 +16,11 @@ func (t ObjectRefSetMod) Apply(res Resource) error {
 	if !t.ResourceMatcher.Matches(res) {
 		return nil
 	}
-	return t.apply(res.unstructured().Object, t.Path)
+	err := t.apply(res.unstructured().Object, t.Path)
+	if err != nil {
+		return fmt.Errorf("ObjectRefSetMod for path '%s': %s", t.Path.AsString(), err)
+	}
+	return nil
 }
 
 func (t ObjectRefSetMod) apply(obj interface{}, path Path) error {

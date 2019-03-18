@@ -15,7 +15,11 @@ func (t FieldRemoveMod) Apply(res Resource) error {
 	if !t.ResourceMatcher.Matches(res) {
 		return nil
 	}
-	return t.apply(res.unstructured().Object, t.Path)
+	err := t.apply(res.unstructured().Object, t.Path)
+	if err != nil {
+		return fmt.Errorf("FieldRemoveMod for path '%s': %s", t.Path.AsString(), err)
+	}
+	return nil
 }
 
 func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
@@ -26,6 +30,10 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 		case part.MapKey != nil:
 			typedObj, ok := obj.(map[string]interface{})
 			if !ok {
+				// TODO check strictness?
+				if typedObj == nil {
+					return nil // map is a nil, nothing to remove
+				}
 				return fmt.Errorf("Unexpected non-map found")
 			}
 

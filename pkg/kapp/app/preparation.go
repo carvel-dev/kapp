@@ -72,9 +72,7 @@ func (a Preparation) placeIntoNamespace(resources []ctlres.Resource, opts Prepar
 
 			resources[i] = res
 		} else {
-			if len(res.Namespace()) > 0 {
-				return nil, fmt.Errorf("Expected resource '%s' to not specify namespace as its kind is not namespaced", res.Description())
-			}
+			res.RemoveNamespace()
 		}
 	}
 
