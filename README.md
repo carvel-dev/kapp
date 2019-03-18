@@ -39,4 +39,4 @@ Features:
 ./hack/test-all.sh
 ```
 
-`build.sh` depends on [ytt](https://github.com/get-ytt/ytt).
+`build.sh` depends on [ytt](https://github.com/k14s/ytt).
