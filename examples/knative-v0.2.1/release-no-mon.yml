@@ -702,7 +702,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  # TODO annotations: null
+  annotations: null
   labels:
     app: knative-ingressgateway
     chart: gateways-1.0.1
@@ -1352,7 +1352,7 @@ metadata:
 ---
 apiVersion: v1
 data:
-  istio.sidecar.includeOutboundIPRanges: '10.20.4.167/14,10.128.0.6/14'
+  istio.sidecar.includeOutboundIPRanges: '*'
 kind: ConfigMap
 metadata:
   name: config-network

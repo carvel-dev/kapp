@@ -1352,7 +1352,7 @@ metadata:
 ---
 apiVersion: v1
 data:
-  istio.sidecar.includeOutboundIPRanges: '10.20.4.167/14,10.128.0.6/14'
+  istio.sidecar.includeOutboundIPRanges: '*'
 kind: ConfigMap
 metadata:
   name: config-network
@@ -1535,7 +1535,7 @@ metadata:
     app: elasticsearch-logging
     kubernetes.io/cluster-service: "true"
   name: elasticsearch-logging
-  # namespace: knative-monitoring TODO fix me
+  namespace: knative-monitoring
 roleRef:
   apiGroup: ""
   kind: ClusterRole
@@ -7359,7 +7359,7 @@ apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
   name: kube-state-metrics
-  # namespace: knative-monitoring TODO fix me
+  namespace: knative-monitoring
 rules:
 - apiGroups:
   - ""
@@ -7427,7 +7427,7 @@ apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
   name: kube-state-metrics
-  # namespace: knative-monitoring TODO fix me
+  namespace: knative-monitoring
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -13810,7 +13810,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: node-exporter
-  # namespace: knative-monitoring TODO fix me
+  namespace: knative-monitoring
 rules:
 - apiGroups:
   - authentication.k8s.io
@@ -13829,7 +13829,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: node-exporter
-  # namespace: knative-monitoring TODO fix me
+  namespace: knative-monitoring
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -16960,7 +16960,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: prometheus-system
-  # namespace: knative-monitoring TODO fix me
+  namespace: knative-monitoring
 rules:
 - apiGroups:
   - ""
