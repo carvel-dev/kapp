@@ -8,6 +8,8 @@ go fmt ./cmd/... ./pkg/... ./test/...
 	# template all playground assets
 	# into a single Go file
 	cd pkg/kapp/website; 
+
+	ytt version || { echo >&2 "ytt is required for building. Install from https://github.com/k14s/ytt"; exit 1; }
 	ytt template -R \
 		-f . \
 		-f ../../../hack/build-values.yml \
