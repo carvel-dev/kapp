@@ -24,7 +24,18 @@
       <div id="intro">
         <div id="basic-usage">
           <h2>Basic Usage</h2>
-          <pre class="terminal">$ kapp deploy -a cass1 -R -f examples/cassandra/</pre>
+          <pre class="terminal">
+<span class="gray"># Configurations picked up from a directory</span>
+$ kapp deploy -a cass1 -R -f examples/cassandra/
+
+<span class="gray"># Can be used with helm charts, removing need for Tiller</span>
+$ helm template my-chart --values my-vals.yml | kapp -y deploy -a my-chart -f -
+
+<span class="gray"># ... and with kustomize</span>
+$ kustomize build ./some-app | kapp -y deploy -a some-app -f -
+
+<span class="gray"># ... or templaed with ytt</span>
+$ ytt template -R -f ./some-app | kapp -y deploy -a some-app -f -</pre>
         </div>
 
         <div id="features">
@@ -33,7 +44,7 @@
             <li>Works with standard Kubernetes YAMLs</li>
             <li>
               <em class="highlight">Focuses exclusively on deployment workflow</em>, not packaging or templating
-              <ul><li>but plays well with tools (such as <a href="https://get-ytt.io">ytt</a>) that produce Kubernetes configuration</li></ul>
+              <ul><li>but plays well with tools (such as <a href="https://get-ytt.io">ytt</a>, <a href="https://github.com/kubernetes-sigs/kustomize">kustomize</a> and <a href="https://helm.sh/docs/helm/#helm-template">helm template</a> command, etc.) that produce Kubernetes configuration</li></ul>
             </li>
             <li>
               <em class="highlight">Converges application resources</em> (creates, updates and/or deletes resources) in each deploy

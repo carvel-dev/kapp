@@ -93,6 +93,7 @@ a:hover {
 }
 .terminal .green { color: #A1C935; }
 .terminal .red { color: red; }
+.terminal .gray { color: #a9a9a9; }
 code, .terminal, .logo {
   font-family: Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace;
 }
