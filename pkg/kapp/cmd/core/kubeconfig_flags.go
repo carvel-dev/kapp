@@ -2,7 +2,6 @@ package core
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/cppforlife/cobrautil"
 	"github.com/spf13/cobra"
@@ -16,7 +15,7 @@ type KubeconfigFlags struct {
 
 func (f *KubeconfigFlags) Set(cmd *cobra.Command, flagsFactory FlagsFactory) {
 	f.Path = NewKubeconfigPathFlag()
-	cmd.PersistentFlags().Var(f.Path, "kubeconfig", "Path to the kubeconfig file ($KAPP_KUBECONFIG or $KUBECONFIG)")
+	cmd.PersistentFlags().Var(f.Path, "kubeconfig", "Path to the kubeconfig file ($KAPP_KUBECONFIG)")
 
 	f.Context = NewKubeconfigContextFlag()
 	cmd.PersistentFlags().Var(f.Context, "kubeconfig-context", "Kubeconfig context override ($KAPP_KUBECONFIG_CONTEXT)")
@@ -66,19 +65,7 @@ func (s *KubeconfigPathFlag) resolveValue() string {
 		return path
 	}
 
-	path = os.Getenv("KUBECONFIG")
-	if len(path) > 0 {
-		return path
-	}
-
-	return filepath.Join(s.homeDir(), ".kube", "config")
-}
-
-func (*KubeconfigPathFlag) homeDir() string {
-	if h := os.Getenv("HOME"); h != "" {
-		return h
-	}
-	return os.Getenv("USERPROFILE") // windows
+	return ""
 }
 
 type KubeconfigContextFlag struct {

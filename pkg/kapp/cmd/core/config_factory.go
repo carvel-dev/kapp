@@ -68,8 +68,16 @@ func (f *ConfigFactoryImpl) clientConfig() (clientcmd.ClientConfig, error) {
 		return nil, fmt.Errorf("Resolving config context: %s", err)
 	}
 
-	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		&clientcmd.ClientConfigLoadingRules{ExplicitPath: path},
-		&clientcmd.ConfigOverrides{CurrentContext: context},
-	), nil
+	// Based on https://github.com/kubernetes/kubernetes/blob/30c7df5cd822067016640aa267714204ac089172/staging/src/k8s.io/cli-runtime/pkg/genericclioptions/config_flags.go#L124
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	overrides := &clientcmd.ConfigOverrides{}
+
+	if len(path) > 0 {
+		loadingRules.ExplicitPath = path
+	}
+	if len(context) > 0 {
+		overrides.CurrentContext = context
+	}
+
+	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, overrides), nil
 }
