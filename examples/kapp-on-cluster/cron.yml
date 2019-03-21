@@ -1,0 +1,37 @@
+#@ load("@ytt:data", "data")
+
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: kapp-on-cluster
+  namespace: #@ data.values.namespace
+spec:
+  schedule: "*/1 * * * *"
+  suspend: #@ data.values.suspend
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccount: kapp-on-cluster-sa
+          restartPolicy: Never
+          containers:
+          - name: deploy
+            image: ubuntu:xenial
+            args:
+            - /bin/bash
+            - -c
+            - |
+              set -e -x
+
+              apt-get update
+              apt-get -y install wget git
+
+              echo "Installing kapp..."
+              wget -O- ??? > /tmp/kapp
+              mv /tmp/kapp /usr/local/bin/kapp
+              chmod +x /usr/local/bin/kapp
+              echo "Installed kapp"
+
+              git clone https://github.com/k14s/kapp
+              cd kapp
+              kapp --tty --yes app-group -g gitops deploy --directory examples/gitops

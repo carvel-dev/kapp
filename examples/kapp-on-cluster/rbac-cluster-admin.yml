@@ -1,0 +1,31 @@
+#@ load("@ytt:data", "data")
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kapp-on-cluster-admin
+rules:
+- apiGroups: ['*']
+  resources: ['*']
+  verbs: ['*']
+- nonResourceURLs: ['*']
+  verbs: ['*']
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: kapp-on-cluster-admin-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kapp-on-cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: kapp-on-cluster-sa
+  namespace: #@ data.values.namespace
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kapp-on-cluster-sa
+  namespace: #@ data.values.namespace
