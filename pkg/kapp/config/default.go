@@ -128,6 +128,17 @@ ownershipLabelRules:
   - apiVersionKindMatcher: {apiVersion: apps/v1beta1, kind: StatefulSet}
   - apiVersionKindMatcher: {apiVersion: extensions/v1beta1, kind: StatefulSet}
 
+- path: [spec, template, metadata, labels]
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: batch/v1, kind: Job}
+  - apiVersionKindMatcher: {apiVersion: batch/v1beta1, kind: Job}
+  - apiVersionKindMatcher: {apiVersion: batch/v2alpha1, kind: Job}
+
+- path: [spec, jobTemplate, spec, template, metadata, labels]
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: batch/v1beta1, kind: CronJob}
+  - apiVersionKindMatcher: {apiVersion: batch/v2alpha1, kind: CronJob}
+
 labelScopingRules:
 - path: [spec, selector]
   resourceMatchers:
