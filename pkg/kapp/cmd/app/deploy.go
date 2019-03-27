@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -115,6 +116,10 @@ func (o *DeployOptions) Run() error {
 		existingResources, err = ctlres.NewUniqueResources(existingResources).Match(newResources)
 		if err != nil {
 			return err
+		}
+	} else {
+		if len(newResources) == 0 && !o.DeployFlags.AllowEmpty {
+			return fmt.Errorf("Trying to apply empty set of resources. Refusing to continue unless --allow-empty is specified.")
 		}
 	}
 

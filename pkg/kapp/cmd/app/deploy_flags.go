@@ -8,7 +8,8 @@ import (
 
 type DeployFlags struct {
 	ctlapp.PrepareResourcesOpts
-	Patch bool
+	Patch      bool
+	AllowEmpty bool
 }
 
 func (s *DeployFlags) Set(cmd *cobra.Command) {
@@ -21,4 +22,5 @@ func (s *DeployFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().StringSliceVar(&s.MapNamespaces, "map-ns", nil, "Map resources from one namespace into another (could be specified multiple times)")
 
 	cmd.Flags().BoolVarP(&s.Patch, "patch", "p", false, "Add or update provided resource")
+	cmd.Flags().BoolVar(&s.AllowEmpty, "allow-empty", false, "Allow to apply empty set of resources (which results in deletion of all cluster resources)")
 }
