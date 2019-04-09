@@ -13,8 +13,8 @@ install() {
 
 	# Install ytt
 	echo "Installing ytt..."
-	wget -O- https://github.com/k14s/ytt/releases/download/v0.4.0/ytt-linux-amd64 > /tmp/ytt
-	echo "5205c22c5bd5a34c2d6f63e9870d70a7272d33d01dcbace2c5fbefcca85e00aa  /tmp/ytt" | shasum -c -
+	wget -O- https://github.com/k14s/ytt/releases/download/v0.5.0/ytt-linux-amd64 > /tmp/ytt
+	echo "340a3bd30c925f865b53762e3c54b88843b2d0b898fbb58e2deb003ea182df26  /tmp/ytt" | shasum -c -
 	mv /tmp/ytt /usr/local/bin/ytt
 	chmod +x /usr/local/bin/ytt
 	echo "Installed ytt"
