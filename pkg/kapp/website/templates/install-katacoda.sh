@@ -22,7 +22,7 @@ install() {
 	# Install kapp
 	echo "Installing kapp..."
 	wget -O- https://github.com/k14s/kapp/releases/download/v0.4.0/kapp-linux-amd64 > /tmp/kapp
-	echo "7a61cf9523281d94711c752ebd8d890068602f3fe6baf344895fbc59b9d5664e  /tmp/kapp" | shasum -c -
+	echo "c6b603ac7dce5ba7f0679df7b69f39a35c8278f479534c2ea5cda8a83acfc0a1  /tmp/kapp" | shasum -c -
 	mv /tmp/kapp /usr/local/bin/kapp
 	chmod +x /usr/local/bin/kapp
 	echo "Installed kapp"
