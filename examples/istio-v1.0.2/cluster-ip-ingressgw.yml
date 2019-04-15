@@ -1,0 +1,14 @@
+#! Useful in environments that do not support LoadBalancer type
+
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.subset({"metadata":{"name":"istio-ingressgateway"},"kind":"Service"})
+---
+spec:
+  type: ClusterIP
+  ports:
+  #@overlay/match by=overlay.all,expects="1+"
+  -
+    #@overlay/remove
+    #@overlay/match missing_ok=True
+    nodePort:
