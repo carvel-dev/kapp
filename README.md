@@ -32,6 +32,10 @@ Features:
 - [Gitops](docs/gitops.md)
 - [Config](docs/config.md)
 
+## Install
+
+Grab prebuilt binaries from the [Releases page](https://github.com/k14s/kapp/releases).
+
 ## Development
 
 ```bash
