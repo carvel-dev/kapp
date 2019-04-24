@@ -2,6 +2,8 @@
 
 set -e -x -u
 
-GOCACHE=off go test ./pkg/... -test.v $@
+go clean -testcache
+
+go test ./pkg/... -test.v $@
 
 echo UNIT SUCCESS
