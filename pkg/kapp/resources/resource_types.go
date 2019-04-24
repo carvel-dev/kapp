@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -33,7 +34,7 @@ func NewResourceTypesImpl(coreClient kubernetes.Interface) *ResourceTypesImpl {
 }
 
 func (g *ResourceTypesImpl) All() ([]ResourceType, error) {
-	serverResources, err := g.coreClient.Discovery().ServerResources()
+	serverResources, err := g.serverResources()
 	if err != nil {
 		return nil, err
 	}
@@ -67,6 +68,19 @@ func (g *ResourceTypesImpl) All() ([]ResourceType, error) {
 	}
 
 	return pairs, nil
+}
+
+func (g *ResourceTypesImpl) serverResources() ([]*metav1.APIResourceList, error) {
+	var lastError error
+	for i := 0; i < 5; i++ {
+		serverResources, err := g.coreClient.Discovery().ServerResources()
+		if err == nil {
+			return serverResources, nil
+		}
+		lastError = err
+		time.Sleep(1 * time.Second)
+	}
+	return nil, lastError
 }
 
 func (g *ResourceTypesImpl) memoizedAll() ([]ResourceType, error) {
