@@ -40,6 +40,7 @@ Grab prebuilt binaries from the [Releases page](https://github.com/k14s/kapp/rel
 
 ```bash
 ./hack/build.sh
+export KAPP_E2E_NAMESPACE=kapp-test
 ./hack/test-all.sh
 ```
 
