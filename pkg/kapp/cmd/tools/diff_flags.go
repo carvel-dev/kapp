@@ -22,7 +22,7 @@ func (s *DiffFlags) SetWithPrefix(prefix string, cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&s.Summary, prefix+"summary", true, "Show diff summary")
 	cmd.Flags().BoolVar(&s.SummaryFull, prefix+"summary-full", false, "Show full diff summary (includes ignored and unchanged items)")
 
-	cmd.Flags().BoolVar(&s.Changes, prefix+"changes", false, "Show changes")
+	cmd.Flags().BoolVarP(&s.Changes, prefix+"changes", "c", false, "Show changes")
 	cmd.Flags().BoolVar(&s.ChangesFull, prefix+"changes-full", false, "Show full changes (includes ignored and unchanged items)")
 
 	cmd.Flags().IntVar(&s.Context, prefix+"context", 2, "Show number of lines around changed lines")
