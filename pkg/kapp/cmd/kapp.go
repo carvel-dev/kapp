@@ -91,7 +91,6 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	appCmd := cmdtools.NewCmd()
 	appCmd.AddCommand(cmdtools.NewInspectCmd(cmdtools.NewInspectOptions(o.ui, o.depsFactory), flagsFactory))
 	appCmd.AddCommand(cmdtools.NewDiffCmd(cmdtools.NewDiffOptions(o.ui, o.depsFactory), flagsFactory))
-	appCmd.AddCommand(cmdtools.NewListImagesCmd(cmdtools.NewListImagesOptions(o.ui, o.depsFactory), flagsFactory))
 	appCmd.AddCommand(cmdtools.NewListLabelsCmd(cmdtools.NewListLabelsOptions(o.ui, o.depsFactory), flagsFactory))
 	cmd.AddCommand(appCmd)
 
