@@ -5,7 +5,7 @@ This example shows how to run `kapp` continiously in cluster, and converge a set
 To install perform:
 
 ```bash
-$ ytt t -R -f examples/kapp-on-cluster/ | kapp --yes deploy -a kapp-on-cluster -f - --diff-changes
+$ ytt t -f examples/kapp-on-cluster/ | kapp --yes deploy -a kapp-on-cluster -f - --diff-changes
 ```
 
 See `cron.yml` for details on what this script does every 1m.

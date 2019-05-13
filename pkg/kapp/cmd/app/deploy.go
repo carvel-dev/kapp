@@ -170,7 +170,7 @@ func (o *DeployOptions) newResources() ([]ctlres.Resource, error) {
 	var allResources []ctlres.Resource
 
 	for _, file := range o.FileFlags.Files {
-		fileRs, err := ctlres.NewFileResources(file, o.FileFlags.Recursive)
+		fileRs, err := ctlres.NewFileResources(file)
 		if err != nil {
 			return nil, err
 		}

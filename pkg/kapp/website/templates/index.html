@@ -30,7 +30,7 @@
           <h2>Basic Usage</h2>
           <pre class="terminal">
 <span class="gray"># Configurations picked up from a directory</span>
-$ kapp deploy -a cass1 -R -f examples/cassandra/
+$ kapp deploy -a cass1 -f examples/cassandra/
 
 <span class="gray"># Can be used with helm charts, removing need for Tiller</span>
 $ helm template my-chart --values my-vals.yml | kapp -y deploy -a my-chart -f -
@@ -39,7 +39,7 @@ $ helm template my-chart --values my-vals.yml | kapp -y deploy -a my-chart -f -
 $ kustomize build ./some-app | kapp -y deploy -a some-app -f -
 
 <span class="gray"># ... or templated with ytt</span>
-$ ytt template -R -f ./some-app | kapp -y deploy -a some-app -f -</pre>
+$ ytt template -f ./some-app | kapp -y deploy -a some-app -f -</pre>
         </div>
 
         <div id="features">

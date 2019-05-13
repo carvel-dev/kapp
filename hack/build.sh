@@ -10,7 +10,7 @@ go fmt ./cmd/... ./pkg/... ./test/...
 	cd pkg/kapp/website; 
 
 	ytt version || { echo >&2 "ytt is required for building. Install from https://github.com/k14s/ytt"; exit 1; }
-	ytt template -R \
+	ytt template \
 		-f . \
 		-f ../../../hack/build-values.yml \
 		--file-mark 'generated.go.txt:exclusive-for-output=true' \

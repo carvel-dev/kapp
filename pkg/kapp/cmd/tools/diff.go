@@ -34,12 +34,12 @@ func NewDiffCmd(o *DiffOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 }
 
 func (o *DiffOptions) Run() error {
-	newResources, err := o.fileResources(o.FileFlags.Files, o.FileFlags.Recursive)
+	newResources, err := o.fileResources(o.FileFlags.Files)
 	if err != nil {
 		return err
 	}
 
-	existingResources, err := o.fileResources(o.FileFlags2.Files, o.FileFlags2.Recursive)
+	existingResources, err := o.fileResources(o.FileFlags2.Files)
 	if err != nil {
 		return err
 	}
@@ -56,11 +56,11 @@ func (o *DiffOptions) Run() error {
 	return nil
 }
 
-func (o *DiffOptions) fileResources(files []string, recursive bool) ([]ctlres.Resource, error) {
+func (o *DiffOptions) fileResources(files []string) ([]ctlres.Resource, error) {
 	var newResources []ctlres.Resource
 
 	for _, file := range files {
-		fileRs, err := ctlres.NewFileResources(file, recursive)
+		fileRs, err := ctlres.NewFileResources(file)
 		if err != nil {
 			return nil, err
 		}

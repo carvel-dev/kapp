@@ -22,7 +22,7 @@ $ kapp ls
 To create or update an application use `deploy` command:
 
 ```bash
-$ kapp deploy -a my-name -R -f my-app-config/
+$ kapp deploy -a my-name -f my-app-config/
 ```
 
 Deploy command consists of two stages: [resource "diff" stage](diff.md), and [resource "apply" stage](apply.md).

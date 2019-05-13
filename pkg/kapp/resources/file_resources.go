@@ -16,7 +16,7 @@ type FileResource struct {
 	fileSrc FileSource
 }
 
-func NewFileResources(file string, recursive bool) ([]FileResource, error) {
+func NewFileResources(file string) ([]FileResource, error) {
 	var fileRs []FileResource
 
 	switch {
@@ -33,10 +33,6 @@ func NewFileResources(file string, recursive bool) ([]FileResource, error) {
 		}
 
 		if fileInfo.IsDir() {
-			if !recursive {
-				return nil, fmt.Errorf("Expected file '%s' to not be a directory", file)
-			}
-
 			var paths []string
 
 			err := filepath.Walk(file, func(path string, fi os.FileInfo, err error) error {
