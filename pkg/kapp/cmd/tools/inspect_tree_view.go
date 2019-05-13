@@ -25,9 +25,6 @@ func (v InspectTreeView) Print(ui ui.UI) {
 	versionHeader := uitable.NewHeader("Version")
 	versionHeader.Hidden = true
 
-	managedByHeader := uitable.NewHeader("Managed by")
-	managedByHeader.Hidden = true
-
 	table := uitable.Table{
 		Title:   fmt.Sprintf("Resources in %s", v.Source),
 		Content: "resources",
@@ -38,7 +35,7 @@ func (v InspectTreeView) Print(ui ui.UI) {
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Kind"),
 			versionHeader,
-			managedByHeader,
+			uitable.NewHeader("Managed by"),
 			uitable.NewHeader("Conditions"),
 			uitable.NewHeader("Age"),
 		},
