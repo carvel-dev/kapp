@@ -68,3 +68,13 @@ func (c Conf) TemplateRules() []TemplateRule {
 	}
 	return result
 }
+
+func (c Conf) AdditionalLabels() map[string]string {
+	result := map[string]string{}
+	for _, config := range c.configs {
+		for k, v := range config.AdditionalLabels {
+			result[k] = v
+		}
+	}
+	return result
+}

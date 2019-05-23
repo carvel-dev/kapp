@@ -13,12 +13,15 @@ const (
 )
 
 type Config struct {
-	APIVersion          string `json:"apiVersion"`
-	Kind                string
+	APIVersion string `json:"apiVersion"`
+	Kind       string
+
 	RebaseRules         []RebaseRule
 	OwnershipLabelRules []OwnershipLabelRule
 	LabelScopingRules   []LabelScopingRule
 	TemplateRules       []TemplateRule
+
+	AdditionalLabels map[string]string
 }
 
 type RebaseRule struct {

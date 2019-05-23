@@ -92,7 +92,7 @@ func (o *DeployOptions) Run() error {
 	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient)
 	labeledResources := ctlres.NewLabeledResources(labelSelector, identifiedResources)
 
-	err = labeledResources.Prepare(newResources, conf.OwnershipLabelMods(), conf.LabelScopingMods())
+	err = labeledResources.Prepare(newResources, conf.OwnershipLabelMods(), conf.LabelScopingMods(), conf.AdditionalLabels())
 	if err != nil {
 		return err
 	}

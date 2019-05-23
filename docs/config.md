@@ -40,6 +40,10 @@ templateRules:
     - path: [spec, template, spec, containers, {allIndexes: true}, envFrom, {allIndexes: true}, configMapRef]
       resourceMatchers:
       - apiVersionKindMatcher: {apiVersion: apps/v1, kind: Deployment}
+
+additionalLabels:
+  department: marketing
+  cost-center: mar201
 ```
 
 `rebaseRules` specify origin of field values. Kubernetes cluster generates (or defaults) some field values, hence these values will need to be merged in future to avoid flagging them during diffing. Common example is `v1/Service`'s `spec.clusterIP` field is automatically populated if it's not set. See [HPA and Deployment rebase](hpa-deployment-rebase.md) example.
@@ -49,6 +53,8 @@ templateRules:
 `labelScopingRules` specify locations for inserting kapp generated labels that scope resources to resources within current application.
 
 `templateRules` how template resources affect other resources. In above example, template config maps are said to affect deployments.
+
+`additionalLabels` specify additional labels to apply to all resources for custom uses by the user (added based on `ownershipLabelRules`).
 
 ### Resource matchers
 

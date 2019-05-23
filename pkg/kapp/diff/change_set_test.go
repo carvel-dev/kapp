@@ -1,8 +1,8 @@
 package diff_test
 
 import (
-	"testing"
 	"strings"
+	"testing"
 
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"

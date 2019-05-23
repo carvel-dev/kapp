@@ -20,7 +20,9 @@ func NewLabeledResources(labelSelector labels.Selector, identifiedResources Iden
 	return &LabeledResources{labelSelector, identifiedResources}
 }
 
-func (a *LabeledResources) Prepare(resources []Resource, olmFunc OwnershipLabelModsFunc, lsmFunc LabelScopingModsFunc) error {
+func (a *LabeledResources) Prepare(resources []Resource, olmFunc OwnershipLabelModsFunc,
+	lsmFunc LabelScopingModsFunc, additionalLabels map[string]string) error {
+
 	labelKey, labelVal, err := NewSimpleLabel(a.labelSelector).KV()
 	if err != nil {
 		return err
@@ -31,6 +33,10 @@ func (a *LabeledResources) Prepare(resources []Resource, olmFunc OwnershipLabelM
 		ownershipLabels := map[string]string{
 			labelKey:         labelVal,
 			assocLabel.Key(): assocLabel.Value(),
+		}
+
+		for k, v := range additionalLabels {
+			ownershipLabels[k] = v
 		}
 
 		for _, t := range olmFunc(ownershipLabels) {
