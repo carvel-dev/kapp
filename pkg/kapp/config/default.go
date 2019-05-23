@@ -9,37 +9,45 @@ apiVersion: kapp.k14s.io/v1alpha1
 kind: Config
 
 rebaseRules:
-# Copy over all metadata (with reosurceVersion, etc.)
+# Copy over all metadata (with resourceVersion, etc.)
 - path: [metadata]
-  merge: copy
+  type: copy
   sources: [existing]
   resourceMatchers:
   - allResourceMatcher: {}
 
 # Be specific about labels to be applied
 - path: [metadata, labels]
-  merge: copy
+  type: remove
+  resourceMatchers:
+  - allResourceMatcher: {}
+- path: [metadata, labels]
+  type: copy
   sources: [new]
   resourceMatchers:
   - allResourceMatcher: {}
 
 # Be specific about annotations to be applied
 - path: [metadata, annotations]
-  merge: copy
+  type: remove
+  resourceMatchers:
+  - allResourceMatcher: {}
+- path: [metadata, annotations]
+  type: copy
   sources: [new]
   resourceMatchers:
   - allResourceMatcher: {}
 
 # Copy over all status, since cluster owns that
 - path: [status]
-  merge: copy
+  type: copy
   sources: [new, existing]
   resourceMatchers:
   - allResourceMatcher: {}
 
 # Prefer user provided, but allow cluster set
 - path: [spec, clusterIP]
-  merge: copy
+  type: copy
   sources: [new, existing]
   resourceMatchers:
   - apiVersionKindMatcher:
@@ -48,7 +56,7 @@ rebaseRules:
 
 # Prefer user provided, but allow cluster set
 - path: [spec, finalizers]
-  merge: copy
+  type: copy
   sources: [new, existing]
   resourceMatchers:
   - apiVersionKindMatcher:
@@ -57,7 +65,7 @@ rebaseRules:
 
 # Prefer user provided, but allow cluster set
 - path: [secrets]
-  merge: copy
+  type: copy
   sources: [new, existing]
   resourceMatchers:
   - apiVersionKindMatcher:
@@ -65,7 +73,7 @@ rebaseRules:
       kind: ServiceAccount
 
 - path: [spec, storageClassName]
-  merge: copy
+  type: copy
   sources: [new, existing]
   resourceMatchers:
   - apiVersionKindMatcher:
@@ -73,7 +81,7 @@ rebaseRules:
       kind: PersistentVolumeClaim
 
 - path: [spec, volumeName]
-  merge: copy
+  type: copy
   sources: [new, existing]
   resourceMatchers:
   - apiVersionKindMatcher:
@@ -81,7 +89,7 @@ rebaseRules:
       kind: PersistentVolumeClaim
 
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
-  merge: copy
+  type: copy
   sources: [new, existing]
   resourceMatchers:
   - apiVersionKindMatcher:

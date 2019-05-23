@@ -27,8 +27,8 @@ func NewConfFromResources(resources []ctlres.Resource) ([]ctlres.Resource, Conf,
 	return rsWithoutConfigs, Conf{configs}, nil
 }
 
-func (c Conf) RebaseMods() []ctlres.FieldCopyMod {
-	var mods []ctlres.FieldCopyMod
+func (c Conf) RebaseMods() []ctlres.ResourceModWithMultiple {
+	var mods []ctlres.ResourceModWithMultiple
 	for _, config := range c.configs {
 		for _, rule := range config.RebaseRules {
 			mods = append(mods, rule.AsMods()...)

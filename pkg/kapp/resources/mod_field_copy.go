@@ -17,6 +17,8 @@ type FieldCopyMod struct {
 	Sources         []FieldCopyModSource // first preferred
 }
 
+var _ ResourceModWithMultiple = FieldCopyMod{}
+
 func (t FieldCopyMod) ApplyFromMultiple(res Resource, srcs map[FieldCopyModSource]Resource) error {
 	if res == nil || !t.ResourceMatcher.Matches(res) {
 		return nil

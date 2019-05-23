@@ -24,8 +24,8 @@ type Config struct {
 type RebaseRule struct {
 	ResourceMatchers []ResourceMatcher
 	Path             ctlres.Path
-	// TODO Strategy string
-	Sources []ctlres.FieldCopyModSource
+	Type             string
+	Sources          []ctlres.FieldCopyModSource
 }
 
 type OwnershipLabelRule struct {
@@ -90,15 +90,27 @@ func NewConfigFromResource(res ctlres.Resource) (Config, error) {
 	return config, nil
 }
 
-func (r RebaseRule) AsMods() []ctlres.FieldCopyMod {
-	var mods []ctlres.FieldCopyMod
+func (r RebaseRule) AsMods() []ctlres.ResourceModWithMultiple {
+	var mods []ctlres.ResourceModWithMultiple
 
 	for _, matcher := range r.ResourceMatchers {
-		mods = append(mods, ctlres.FieldCopyMod{
-			ResourceMatcher: matcher.AsResourceMatcher(),
-			Path:            r.Path,
-			Sources:         r.Sources,
-		})
+		switch r.Type {
+		case "copy":
+			mods = append(mods, ctlres.FieldCopyMod{
+				ResourceMatcher: matcher.AsResourceMatcher(),
+				Path:            r.Path,
+				Sources:         r.Sources,
+			})
+
+		case "remove":
+			mods = append(mods, ctlres.FieldRemoveMod{
+				ResourceMatcher: matcher.AsResourceMatcher(),
+				Path:            r.Path,
+			})
+
+		default:
+			panic(fmt.Sprintf("Unknown rebase rule type: %s (supported: copy, remove)", r.Type)) // TODO
+		}
 	}
 
 	return mods

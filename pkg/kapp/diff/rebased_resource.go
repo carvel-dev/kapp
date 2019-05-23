@@ -6,10 +6,10 @@ import (
 
 type RebasedResource struct {
 	existingRes, newRes ctlres.Resource
-	mods                []ctlres.FieldCopyMod
+	mods                []ctlres.ResourceModWithMultiple
 }
 
-func NewRebasedResource(existingRes, newRes ctlres.Resource, mods []ctlres.FieldCopyMod) RebasedResource {
+func NewRebasedResource(existingRes, newRes ctlres.Resource, mods []ctlres.ResourceModWithMultiple) RebasedResource {
 	if existingRes == nil && newRes == nil {
 		panic("Expected either existingRes or newRes be non-nil")
 	}
@@ -35,12 +35,13 @@ func (r RebasedResource) Resource() (ctlres.Resource, error) {
 		return result, nil // all done rebasing
 	}
 
-	resSources := map[ctlres.FieldCopyModSource]ctlres.Resource{
-		ctlres.FieldCopyModSourceNew:      r.newRes.DeepCopy(), // cant be newRes as it will be modified in place
-		ctlres.FieldCopyModSourceExisting: r.existingRes,
-	}
-
 	for _, t := range r.mods {
+		// copy newRes and existingRes as they may be be modified in place
+		resSources := map[ctlres.FieldCopyModSource]ctlres.Resource{
+			ctlres.FieldCopyModSourceNew:      r.newRes.DeepCopy(),
+			ctlres.FieldCopyModSourceExisting: r.existingRes.DeepCopy(),
+		}
+
 		err := t.ApplyFromMultiple(result, resSources)
 		if err != nil {
 			return nil, err

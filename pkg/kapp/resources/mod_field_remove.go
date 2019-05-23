@@ -10,6 +10,11 @@ type FieldRemoveMod struct {
 }
 
 var _ ResourceMod = FieldRemoveMod{}
+var _ ResourceModWithMultiple = FieldCopyMod{}
+
+func (t FieldRemoveMod) ApplyFromMultiple(res Resource, _ map[FieldCopyModSource]Resource) error {
+	return t.Apply(res)
+}
 
 func (t FieldRemoveMod) Apply(res Resource) error {
 	if !t.ResourceMatcher.Matches(res) {

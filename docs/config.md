@@ -12,7 +12,7 @@ kind: Config
 
 rebaseRules:
 - path: [spec, clusterIP]
-  merge: copy
+  type: copy
   sources: [new, existing]
   resourceMatchers:
   - apiVersionKindMatcher:

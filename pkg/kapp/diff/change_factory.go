@@ -5,10 +5,10 @@ import (
 )
 
 type ChangeFactory struct {
-	mods []ctlres.FieldCopyMod
+	mods []ctlres.ResourceModWithMultiple
 }
 
-func NewChangeFactory(mods []ctlres.FieldCopyMod) ChangeFactory {
+func NewChangeFactory(mods []ctlres.ResourceModWithMultiple) ChangeFactory {
 	return ChangeFactory{mods}
 }
 

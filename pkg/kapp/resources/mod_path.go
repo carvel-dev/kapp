@@ -10,6 +10,10 @@ type ResourceMod interface {
 	Apply(Resource) error
 }
 
+type ResourceModWithMultiple interface {
+	ApplyFromMultiple(Resource, map[FieldCopyModSource]Resource) error
+}
+
 type Path []*PathPart
 
 type PathPart struct {

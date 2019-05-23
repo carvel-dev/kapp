@@ -43,6 +43,8 @@ type Resource interface {
 	AsYAMLBytes() ([]byte, error)
 	AsTypedObj(obj interface{}) error
 
+	Debug(string)
+
 	markTransient()
 	Transient() bool
 
@@ -219,6 +221,14 @@ func (r *ResourceImpl) AsYAMLBytes() ([]byte, error) {
 
 func (r *ResourceImpl) AsTypedObj(obj interface{}) error {
 	return scheme.Scheme.Convert(r.unstructuredPtr(), obj, nil)
+}
+
+func (r *ResourceImpl) Debug(title string) {
+	bs, err := r.AsYAMLBytes()
+	if err != nil {
+		panic("Unexpected failure to serialize resource")
+	}
+	fmt.Printf("%s (%s):\n%s\n", title, r.Description(), bs)
 }
 
 func (r *ResourceImpl) unstructured() unstructured.Unstructured     { return r.un }
