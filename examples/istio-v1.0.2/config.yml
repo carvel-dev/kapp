@@ -5,7 +5,7 @@ kind: Config
 rebaseRules:
 #! It seems that caBundle is automatically populated
 - path: [webhooks, {allIndexes: true}, clientConfig, caBundle]
-  merge: copy
+  type: copy
   sources: [new, existing]
   resourceMatchers:
   - apiVersionKindMatcher:
