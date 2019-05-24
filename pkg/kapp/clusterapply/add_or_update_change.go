@@ -22,7 +22,8 @@ const (
 )
 
 var (
-	uiWaitPrefix = color.New(color.Faint).Sprintf("%s", " L ") // consistent with inspect tree view
+	uiWaitPrefix       = color.New(color.Faint).Sprintf(" L ") // consistent with inspect tree view
+	uiWaitParentPrefix = color.New(color.Faint).Sprintf(" ^ ")
 )
 
 type AddOrUpdateChangeOpts struct {
@@ -138,30 +139,45 @@ func (c AddOrUpdateChange) IsDoneApplying() (ctlresm.DoneApplyState, error) {
 		return ctlresm.DoneApplyState{}, err
 	}
 
+	// Sort so that resources show up more or less consistently
 	sort.Slice(associatedRs, func(i, j int) bool {
 		return associatedRs[i].Description() > associatedRs[j].Description()
 	})
 
-	states := []ctlresm.DoneApplyState{}
-	allRs := append([]ctlres.Resource{parentRes}, associatedRs...)
-
-	// Associated resources should also be checked
-	// for example Deployment's Pods
-	for _, res := range allRs {
-		isParent := parentResKey == ctlres.NewUniqueResourceKey(res).String()
-
-		if !isParent {
-			c.ui.NotifyBegin(uiWaitPrefix+"waiting on %s", res.Description())
+	// Remove possibly found parent resource
+	for i, res := range associatedRs {
+		if parentResKey == ctlres.NewUniqueResourceKey(res).String() {
+			associatedRs = append(associatedRs[:i], associatedRs[i+1:]...)
+			break
 		}
+	}
 
-		// TODO show all of them?
+	// Prepend parent so it always shows up first
+	allRs := append([]ctlres.Resource{parentRes}, associatedRs...)
+	states := []ctlresm.DoneApplyState{}
+
+	// Associated resources should also be checked for example Deployment's Pods
+	for i, res := range allRs {
+		isParent := i == 0
+
 		state, err := c.isResourceDoneApplying(res, isParent)
 		if err != nil {
 			return state, err
 		}
 
-		if !isParent {
-			msg := " ... "
+		// If it's successul and it's only parent
+		hideStatus := len(allRs) == 1 && (state.Done && state.Successful)
+
+		if !hideStatus {
+			// Start of notification
+			msg := fmt.Sprintf(uiWaitPrefix+"waiting on %s", res.Description())
+			if isParent {
+				msg = uiWaitParentPrefix
+			}
+			c.ui.NotifyBegin(msg)
+
+			// End of notification
+			msg = " ... "
 			if state.Done {
 				msg += "done"
 			} else {
@@ -172,8 +188,6 @@ func (c AddOrUpdateChange) IsDoneApplying() (ctlresm.DoneApplyState, error) {
 			}
 			c.ui.NotifyEnd(msg)
 		}
-
-		// TODO show parent status as well
 
 		states = append(states, state)
 	}
