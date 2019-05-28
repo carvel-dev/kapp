@@ -214,7 +214,7 @@ func (c AddOrUpdateChange) isResourceDoneApplying(res ctlres.Resource, isParent 
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewDeleting(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCRDvX(res) },
 		// It's rare that Pod is directly created
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewPodvX(res) },
+		func(res ctlres.Resource) SpecificResource { return ctlresm.NewPodv1(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewServicev1(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewDeploymentv1(res) },
 	}

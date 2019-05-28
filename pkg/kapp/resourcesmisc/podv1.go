@@ -1,26 +1,29 @@
 package resourcesmisc
 
 import (
+	"fmt"
+
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
-type PodvX struct {
+type Podv1 struct {
 	resource ctlres.Resource
 }
 
-func NewPodvX(resource ctlres.Resource) *PodvX {
-	matcher := ctlres.APIGroupKindMatcher{
-		APIGroup: "",
-		Kind:     "Pod",
+func NewPodv1(resource ctlres.Resource) *Podv1 {
+	matcher := ctlres.APIVersionKindMatcher{
+		APIVersion: "v1",
+		Kind:       "Pod",
 	}
 	if matcher.Matches(resource) {
-		return &PodvX{resource}
+		return &Podv1{resource}
 	}
 	return nil
 }
 
-func (s PodvX) IsDoneApplying() DoneApplyState {
+func (s Podv1) IsDoneApplying() DoneApplyState {
 	// TODO deal with failure scenarios (retry, timeout?)
 	if phase, ok := s.resource.Status()["phase"].(string); ok {
 		switch phase {
@@ -28,7 +31,7 @@ func (s PodvX) IsDoneApplying() DoneApplyState {
 		// Container images has not been created. This includes time before being scheduled as
 		// well as time spent downloading images over the network, which could take a while.
 		case "Pending":
-			return DoneApplyState{Done: false, Message: "Pending"}
+			return DoneApplyState{Done: false, Message: s.detailedMsg("Pending", s.pendingDetailsReason())}
 
 		// Running: The Pod has been bound to a node, and all of the Containers have been created.
 		// At least one Container is still running, or is in the process of starting or restarting.
@@ -55,3 +58,49 @@ func (s PodvX) IsDoneApplying() DoneApplyState {
 
 	return DoneApplyState{Done: false, Message: "Undetermined phase"}
 }
+
+func (s Podv1) detailedMsg(state, msg string) string {
+	if len(msg) > 0 {
+		return state + ": " + msg
+	}
+	return state
+}
+
+func (s Podv1) pendingDetailsReason() string {
+	pod := corev1.Pod{}
+
+	err := s.resource.AsTypedObj(&pod)
+	if err != nil {
+		return ""
+	}
+
+	statuses := append([]corev1.ContainerStatus{}, pod.Status.InitContainerStatuses...)
+	statuses = append(statuses, pod.Status.ContainerStatuses...)
+
+	for _, st := range statuses {
+		if st.State.Waiting != nil {
+			return fmt.Sprintf("%s (message: %s)",
+				st.State.Waiting.Reason, st.State.Waiting.Message)
+		}
+	}
+
+	return ""
+}
+
+/*
+
+status:
+  containerStatuses:
+  - image: kbld:docker-io-...
+    imageID: ""
+    lastState: {}
+    name: simple-app
+    ready: false
+    restartCount: 0
+    state:
+      waiting:
+        message: 'rpc error: code = Unknown desc = Error response from daemon: repository
+          kbld not found: does not exist or no pull access'
+        reason: ErrImagePull
+
+*/
