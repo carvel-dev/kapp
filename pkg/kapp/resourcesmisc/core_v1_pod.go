@@ -78,8 +78,11 @@ func (s Corev1Pod) pendingDetailsReason(pod corev1.Pod) string {
 
 	for _, st := range statuses {
 		if st.State.Waiting != nil {
-			return fmt.Sprintf("%s (message: %s)",
-				st.State.Waiting.Reason, st.State.Waiting.Message)
+			msg := st.State.Waiting.Reason
+			if len(st.State.Waiting.Message) > 0 {
+				msg += fmt.Sprintf(" (message: %s)", st.State.Waiting.Message)
+			}
+			return msg
 		}
 	}
 
