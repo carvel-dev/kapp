@@ -217,6 +217,7 @@ func (c AddOrUpdateChange) isResourceDoneApplying(res ctlres.Resource, isParent 
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCorev1Pod(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCorev1Service(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewAppsv1Deployment(res) },
+		func(res ctlres.Resource) SpecificResource { return ctlresm.NewAppsv1DaemonSet(res) },
 	}
 
 	for _, f := range specificResFactories {
