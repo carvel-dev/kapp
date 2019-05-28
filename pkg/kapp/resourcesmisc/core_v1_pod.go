@@ -8,22 +8,22 @@ import (
 )
 
 // https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
-type Podv1 struct {
+type Corev1Pod struct {
 	resource ctlres.Resource
 }
 
-func NewPodv1(resource ctlres.Resource) *Podv1 {
+func NewCorev1Pod(resource ctlres.Resource) *Corev1Pod {
 	matcher := ctlres.APIVersionKindMatcher{
 		APIVersion: "v1",
 		Kind:       "Pod",
 	}
 	if matcher.Matches(resource) {
-		return &Podv1{resource}
+		return &Corev1Pod{resource}
 	}
 	return nil
 }
 
-func (s Podv1) IsDoneApplying() DoneApplyState {
+func (s Corev1Pod) IsDoneApplying() DoneApplyState {
 	// TODO deal with failure scenarios (retry, timeout?)
 	if phase, ok := s.resource.Status()["phase"].(string); ok {
 		switch phase {
@@ -59,14 +59,14 @@ func (s Podv1) IsDoneApplying() DoneApplyState {
 	return DoneApplyState{Done: false, Message: "Undetermined phase"}
 }
 
-func (s Podv1) detailedMsg(state, msg string) string {
+func (s Corev1Pod) detailedMsg(state, msg string) string {
 	if len(msg) > 0 {
 		return state + ": " + msg
 	}
 	return state
 }
 
-func (s Podv1) pendingDetailsReason() string {
+func (s Corev1Pod) pendingDetailsReason() string {
 	pod := corev1.Pod{}
 
 	err := s.resource.AsTypedObj(&pod)

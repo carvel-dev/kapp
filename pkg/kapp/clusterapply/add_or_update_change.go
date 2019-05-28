@@ -214,9 +214,9 @@ func (c AddOrUpdateChange) isResourceDoneApplying(res ctlres.Resource, isParent 
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewDeleting(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCRDvX(res) },
 		// It's rare that Pod is directly created
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewPodv1(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewServicev1(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewDeploymentv1(res) },
+		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCorev1Pod(res) },
+		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCorev1Service(res) },
+		func(res ctlres.Resource) SpecificResource { return ctlresm.NewAppsv1Deployment(res) },
 	}
 
 	for _, f := range specificResFactories {
