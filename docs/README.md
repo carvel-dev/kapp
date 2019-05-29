@@ -7,3 +7,5 @@
 - [Gitops](gitops.md)
 - [Config](config.md)
 - [FAQ](faq.md)
+- Talks
+  - [sig-apps presentation (starts at 7:26)](https://www.youtube.com/watch?v=lYrt1cF6IoE&feature=youtu.be&t=446)

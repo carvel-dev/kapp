@@ -28,14 +28,7 @@ Features:
 
 ## Docs
 
-- [Apps](docs/apps.md)
-  - [Deploy command](docs/apps.md#deploy)
-    - [Diff](docs/diff.md)
-    - [Apply](docs/apply.md)
-- [Gitops](docs/gitops.md)
-- [Config](docs/config.md)
-- Talks
-  - [sig-apps presentation (starts at 7:26)](https://www.youtube.com/watch?v=lYrt1cF6IoE&feature=youtu.be&t=446)
+- [Docs](docs/README.md) with topics about diff, apply, gitops, config, talks
 
 ## Install
 
