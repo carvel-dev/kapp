@@ -6,3 +6,4 @@
     - [Apply](apply.md)
 - [Gitops](gitops.md)
 - [Config](config.md)
+- [FAQ](faq.md)
