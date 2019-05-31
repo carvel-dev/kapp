@@ -50,7 +50,7 @@ additionalLabels:
 
 `ownershipLabelRules` specify locations for inserting kapp generated labels. These labels allow kapp to track which resources belong to which application. For resources that describe creation of other resources (e.g. `Deployment` or `StatefulSet`), configuration may need to specify where to insert labels for child resources that will be created.
 
-`labelScopingRules` specify locations for inserting kapp generated labels that scope resources to resources within current application.
+`labelScopingRules` specify locations for inserting kapp generated labels that scope resources to resources within current application. `kapp.k14s.io/disable-label-scoping: ""` (value must be empty) annotation can be used to exclude an individual resource from label scoping.
 
 `templateRules` how template resources affect other resources. In above example, template config maps are said to affect deployments.
 
