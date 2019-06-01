@@ -39,7 +39,7 @@ $ helm template my-chart --values my-vals.yml | kapp -y deploy -a my-chart -f -
 $ kustomize build ./some-app | kapp -y deploy -a some-app -f -
 
 <span class="gray"># ... or templated with ytt</span>
-$ ytt template -f ./some-app | kapp -y deploy -a some-app -f -</pre>
+$ ytt -f ./some-app | kapp -y deploy -a some-app -f -</pre>
         </div>
 
         <div id="features">
