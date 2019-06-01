@@ -4,6 +4,8 @@ set -e -x -u
 
 go fmt ./cmd/... ./pkg/... ./test/...
 
+build_values_path="../../../${BUILD_VALUES:-./hack/build-values-default.yml}"
+
 (
 	# template all playground assets
 	# into a single Go file
@@ -12,7 +14,7 @@ go fmt ./cmd/... ./pkg/... ./test/...
 	ytt version || { echo >&2 "ytt is required for building. Install from https://github.com/k14s/ytt"; exit 1; }
 	ytt template \
 		-f . \
-		-f ../../../hack/build-values.yml \
+		-f $build_values_path \
 		--file-mark 'generated.go.txt:exclusive-for-output=true' \
 		--output ../../../tmp/
 )

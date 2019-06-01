@@ -40,6 +40,8 @@ Grab prebuilt binaries from the [Releases page](https://github.com/k14s/kapp/rel
 ./hack/build.sh
 export KAPP_E2E_NAMESPACE=kapp-test
 ./hack/test-all.sh
+
+BUILD_VALUES=./hack/build-values-get-kapp-io.yml ./hack/build.sh # includes goog analytics
 ```
 
 `build.sh` depends on [ytt](https://github.com/k14s/ytt).
