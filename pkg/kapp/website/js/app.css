@@ -2,7 +2,7 @@ html, body { margin: 0; padding: 0; }
 
 body {
   font-family: sans-serif;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1.4;
 }
 
@@ -16,7 +16,7 @@ h1 {
   position: absolute;;
 }
 .hero {
-  font-size: 25px;
+  font-size: 20px;
   text-align: center;
   padding: 20px;
   margin: 0;
@@ -40,7 +40,7 @@ h1 {
 }
 .content {
   margin: 10px auto;
-  width: 1200px;
+  width: 1000px;
 }
 input {
   font-family: sans-serif;
@@ -104,7 +104,7 @@ code, .terminal, .logo {
 }
 #k14s-tools p {
   margin: 0 auto;
-  width: 1200px;
+  width: 1000px;
   color: #777;
   font-size: 80%;
   padding: 5px 0;
@@ -147,6 +147,7 @@ code, .terminal, .logo {
   max-width: 800px;
   background: #000;
   padding: 7px 9px;
+  font-size: 16px;
 }
 #workflow tr:last-child .output {
   padding-bottom: 40px;
