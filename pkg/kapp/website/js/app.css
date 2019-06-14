@@ -112,10 +112,7 @@ code, .terminal, .logo {
 #k14s-tools p a { color: #111; }
 
 /* Intro */
-#intro {
-  clear: both;
-  border-bottom: 1px solid #ddd;
-}
+#intro { clear: both; }
 
 #features { border-bottom: 1px solid #ddd; }
 #features .highlight {
@@ -126,9 +123,6 @@ code, .terminal, .logo {
 #playground { border-bottom: 1px solid #ddd; }
 
 /* Workflow */
-#workflow table {
-  max-width: 100%;
-}
 #workflow table,
 #workflow tr,
 #workflow td {
@@ -137,6 +131,10 @@ code, .terminal, .logo {
   margin: 0;
   border-width: 0;
   vertical-align: text-top;
+}
+#workflow table {
+  max-width: 100%;
+  margin-bottom: 1em;
 }
 #workflow .doc {
   width: 20%;
@@ -165,3 +163,5 @@ code, .terminal, .logo {
   border-radius: 10px;
   border: 2px solid #555;
 }
+
+#footer { text-align: center; }
