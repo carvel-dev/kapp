@@ -29,6 +29,8 @@ Features:
 ## Docs
 
 - [Docs](docs/README.md) with topics about diff, apply, gitops, config, talks
+- Talks
+  - [TGI Kubernetes 079: YTT and Kapp](https://www.youtube.com/watch?v=CSglwNTQiYg) with Joe Beda
 
 ## Install
 
