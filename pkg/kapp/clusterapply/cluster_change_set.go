@@ -123,7 +123,7 @@ func (c ClusterChangeSet) waitForClusterChanges(changes []ClusterChange) error {
 				if len(state.Message) > 0 {
 					msg += " (" + state.Message + ")"
 				}
-				return fmt.Errorf("waiting on %s finished unsuccessfully%s", desc, msg)
+				return fmt.Errorf("waiting on %s: finished unsuccessfully%s", desc, msg)
 			}
 		}
 
