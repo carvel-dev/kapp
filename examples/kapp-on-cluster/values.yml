@@ -1,0 +1,25 @@
+#@data/values
+---
+name: gitops
+
+#! pauses _future_ processing
+suspend_updates: false
+
+rbac:
+  #! if rbac.cluster==false, all app resources are placed into one namespace
+  #! if rbac.cluster==true, namespace is only used for storing kapp metadata
+  namespace: default
+  #! by default, limit to a single namespace
+  cluster: true
+  #! do not include default rbac configuration
+  #! so that custom configuration could be added
+  #! (still includes ServiceAccount)
+  custom: false
+
+git_repo:
+  #! passed to git clone
+  url: https://github.com/k14s/kapp
+  #! pem encoded private key (non-encrypted) for private repos
+  private_key: ""
+  #! use . for current directory
+  directory: examples/gitops

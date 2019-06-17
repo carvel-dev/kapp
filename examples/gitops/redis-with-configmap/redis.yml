@@ -19,7 +19,7 @@ metadata:
 spec:
   containers:
   - name: redis
-    image: kubernetes/redis:v1
+    image: k8s.gcr.io/redis:e2e
     env:
     - name: MASTER
       value: "true"

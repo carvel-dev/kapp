@@ -4,11 +4,11 @@ apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
   name: kapp-on-cluster
-  namespace: #@ data.values.namespace
+  namespace: #@ data.values.rbac.namespace
 spec:
   schedule: "*/1 * * * *"
   concurrencyPolicy: Forbid
-  suspend: #@ data.values.suspend
+  suspend: #@ data.values.suspend_updates
   jobTemplate:
     spec:
       template:
@@ -28,12 +28,42 @@ spec:
               apt-get -y install wget git
 
               echo "Installing kapp..."
-              wget -O- https://github.com/k14s/kapp/releases/download/v0.4.0/kapp-linux-amd64 > /tmp/kapp
-              echo "7a61cf9523281d94711c752ebd8d890068602f3fe6baf344895fbc59b9d5664e  /tmp/kapp" | shasum -c -
+              wget -O- https://github.com/k14s/kapp/releases/download/v0.7.0/kapp-linux-amd64 > /tmp/kapp
+              echo "55d247fab5bab8b94b7f00b644a1eebb023d9ed448246c84a8c27a05b35475e8  /tmp/kapp" | shasum -c -
               mv /tmp/kapp /usr/local/bin/kapp
               chmod +x /usr/local/bin/kapp
               echo "Installed kapp"
 
-              git clone https://github.com/k14s/kapp
-              cd kapp
-              kapp --tty --yes app-group -g gitops deploy --directory examples/gitops
+              echo "Cloning repo..."
+              if [ -s /var/git-creds/private.key ]; then
+                eval $(ssh-agent)
+                ssh-add /var/git-creds/private.key
+              fi
+              git clone (@= data.values.git_repo.url @) /tmp/git-repo
+              cd /tmp/git-repo
+
+              echo "Applying changes..."
+              kapp --tty --yes app-group deploy \
+                -g (@= data.values.name @) \
+                --directory (@= data.values.git_repo.directory @) \
+                (@= "" if data.values.rbac.cluster else "--into-ns " + data.values.rbac.namespace @)
+              echo "Applied changes"
+            volumeMounts:
+            - name: git-creds
+              mountPath: /var/git-creds
+          volumes:
+          - name: git-creds
+            secret:
+              secretName: kapp-on-cluster-git-creds
+              items:
+              - key: private_key
+                path: private.key
+                defaultMode: 256
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kapp-on-cluster-git-creds
+  namespace: #@ data.values.rbac.namespace
+data:
+  private_key: #@ data.values.git_repo.private_key
