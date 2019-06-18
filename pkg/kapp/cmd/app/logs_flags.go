@@ -16,7 +16,7 @@ type LogsFlags struct {
 
 func (s *LogsFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&s.Follow, "follow", "f", false, "As new pods are added, new pod logs will be printed")
-	cmd.Flags().Int64Var(&s.Lines, "lines", 10, "Number of lines")
+	cmd.Flags().Int64Var(&s.Lines, "lines", 10, "Limit to number of lines (use -1 to remove limit)")
 	cmd.Flags().BoolVar(&s.ContainerTag, "container-tag", true, "Include container tag")
 	cmd.Flags().StringVarP(&s.PodName, "pod-name", "m", "", "Set partial pod name to filter logs")
 }
@@ -29,7 +29,7 @@ func (s *LogsFlags) PodLogOpts() (ctllogs.PodLogOpts, error) {
 
 	opts := ctllogs.PodLogOpts{Follow: s.Follow, ContainerTag: s.ContainerTag}
 
-	if !s.Follow {
+	if s.Lines >= 0 {
 		opts.Lines = &s.Lines
 	}
 
