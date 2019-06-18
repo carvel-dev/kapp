@@ -14,14 +14,20 @@ const (
 	uiSepPrefix = "--- "
 )
 
+type ClusterChangeSetOpts struct {
+	WaitTimeout       time.Duration
+	WaitCheckInterval time.Duration
+}
+
 type ClusterChangeSet struct {
 	changes              []ctldiff.Change
+	opts                 ClusterChangeSetOpts
 	clusterChangeFactory ClusterChangeFactory
 	ui                   UI
 }
 
-func NewClusterChangeSet(changes []ctldiff.Change, clusterChangeFactory ClusterChangeFactory, ui UI) ClusterChangeSet {
-	return ClusterChangeSet{changes, clusterChangeFactory, ui}
+func NewClusterChangeSet(changes []ctldiff.Change, opts ClusterChangeSetOpts, clusterChangeFactory ClusterChangeFactory, ui UI) ClusterChangeSet {
+	return ClusterChangeSet{changes, opts, clusterChangeFactory, ui}
 }
 
 func (c ClusterChangeSet) Apply() error {
@@ -99,6 +105,7 @@ func (c ClusterChangeSet) Apply() error {
 }
 
 func (c ClusterChangeSet) waitForClusterChanges(changes []ClusterChange) error {
+	startTime := time.Now()
 	inProgressChanges := changes
 
 	for {
@@ -133,7 +140,11 @@ func (c ClusterChangeSet) waitForClusterChanges(changes []ClusterChange) error {
 
 		inProgressChanges = newInProgressChanges
 
-		time.Sleep(1 * time.Second)
+		if time.Now().Sub(startTime) > c.opts.WaitTimeout {
+			return fmt.Errorf("timed out waiting after %s", c.opts.WaitTimeout)
+		}
+
+		time.Sleep(c.opts.WaitCheckInterval)
 		c.ui.Notify("")
 		c.ui.Notify(uiSepPrefix+" waiting on %d changes", len(inProgressChanges))
 	}

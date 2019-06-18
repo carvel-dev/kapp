@@ -162,7 +162,7 @@ func (o *DeployOptions) Run() error {
 	}
 
 	return touch.Do(func() error {
-		return ctlcap.NewClusterChangeSet(changes, clusterChangeFactory, msgsUI).Apply()
+		return ctlcap.NewClusterChangeSet(changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI).Apply()
 	})
 }
 

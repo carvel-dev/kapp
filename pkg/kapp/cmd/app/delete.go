@@ -83,7 +83,7 @@ func (o *DeleteOptions) Run() error {
 	touch := ctlapp.Touch{App: app, Description: "delete", IgnoreSuccessErr: true}
 
 	return touch.Do(func() error {
-		err := ctlcap.NewClusterChangeSet(changes, clusterChangeFactory, msgsUI).Apply()
+		err := ctlcap.NewClusterChangeSet(changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI).Apply()
 		if err != nil {
 			return err
 		}
