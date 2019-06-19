@@ -8,6 +8,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -79,6 +80,9 @@ func (g *ResourceTypesImpl) serverResources() ([]*metav1.APIResourceList, error)
 		}
 		lastError = err
 		time.Sleep(1 * time.Second)
+	}
+	if discovery.IsGroupDiscoveryFailedError(lastError) {
+		lastError = fmt.Errorf("%s (possibly related issue: https://github.com/k14s/kapp/issues/12)", lastError)
 	}
 	return nil, lastError
 }
