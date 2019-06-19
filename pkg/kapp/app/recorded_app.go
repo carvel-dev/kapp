@@ -157,6 +157,9 @@ func (a *RecordedApp) meta() (AppMeta, error) {
 
 	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(a.name, metav1.GetOptions{})
 	if err != nil {
+		if errors.IsNotFound(err) {
+			return AppMeta{}, fmt.Errorf("App '%s' (namespace: %s) does not exist: %s", a.name, a.nsName, err)
+		}
 		return AppMeta{}, fmt.Errorf("Getting app: %s", err)
 	}
 
