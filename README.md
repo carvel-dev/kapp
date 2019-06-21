@@ -28,11 +28,7 @@ Features:
 
 ## Docs
 
-- [Docs](docs/README.md) with topics about diff, apply, gitops, config, talks
-- Blog posts
-  - [Introducing k14s (Kubernetes Tools): Simple and Composable Tools for Application Deployment](https://content.pivotal.io/blog/introducing-k14s-kubernetes-tools-simple-and-composable-tools-for-application-deployment)
-- Talks
-  - [TGI Kubernetes 079: YTT and Kapp](https://www.youtube.com/watch?v=CSglwNTQiYg) with Joe Beda
+- [Docs](docs/README.md) with topics about diff, apply, gitops, config, _blog posts and talks_ etc.
 
 ## Install
 
