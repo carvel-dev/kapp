@@ -6,6 +6,7 @@ import (
 
 type App interface {
 	Name() string
+	Namespace() string
 	Meta() (AppMeta, error)
 	LabelSelector() (labels.Selector, error)
 

@@ -17,6 +17,7 @@ type ListOptions struct {
 	depsFactory cmdcore.DepsFactory
 
 	NamespaceFlags cmdcore.NamespaceFlags
+	AllNamespaces  bool
 }
 
 func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *ListOptions {
@@ -31,6 +32,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
+	cmd.Flags().BoolVar(&o.AllNamespaces, "all-namespaces", false, "List apps in all namespaces")
 	return cmd
 }
 
@@ -45,7 +47,18 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
-	apps := ctlapp.NewApps(o.NamespaceFlags.Name, coreClient, dynamicClient)
+	nsName := o.NamespaceFlags.Name
+	tableTitle := fmt.Sprintf("Apps in namespace '%s'", o.NamespaceFlags.Name)
+	nsHeader := uitable.NewHeader("Namespace")
+	nsHeader.Hidden = true
+
+	if o.AllNamespaces {
+		nsName = ""
+		tableTitle = "Apps in all namespaces"
+		nsHeader.Hidden = false
+	}
+
+	apps := ctlapp.NewApps(nsName, coreClient, dynamicClient)
 
 	items, err := apps.List(nil)
 	if err != nil {
@@ -53,10 +66,11 @@ func (o *ListOptions) Run() error {
 	}
 
 	table := uitable.Table{
-		Title:   fmt.Sprintf("Apps in namespace '%s'", o.NamespaceFlags.Name),
+		Title:   tableTitle,
 		Content: "apps",
 
 		Header: []uitable.Header{
+			nsHeader,
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Label"),
 			uitable.NewHeader("Namespaces"),
@@ -66,6 +80,7 @@ func (o *ListOptions) Run() error {
 
 		SortBy: []uitable.ColumnSort{
 			{Column: 0, Asc: true},
+			{Column: 1, Asc: true},
 		},
 	}
 
@@ -76,6 +91,7 @@ func (o *ListOptions) Run() error {
 		}
 
 		row := []uitable.Value{
+			uitable.NewValueString(item.Namespace()),
 			uitable.NewValueString(item.Name()),
 			uitable.NewValueString(sel.String()),
 		}

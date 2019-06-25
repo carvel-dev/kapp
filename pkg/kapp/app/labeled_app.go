@@ -27,6 +27,8 @@ func (a *LabeledApp) Name() string {
 	return str
 }
 
+func (a *LabeledApp) Namespace() string { return "" }
+
 func (a *LabeledApp) LabelSelector() (labels.Selector, error) {
 	return a.labelSelector, nil
 }

@@ -42,6 +42,10 @@ func (a Apps) Find(name string) (App, error) {
 		return &LabeledApp{sel, a.coreClient, a.dynamicClient}, nil
 	}
 
+	if len(a.nsName) == 0 {
+		return nil, fmt.Errorf("Expected non-empty namespace")
+	}
+
 	return &RecordedApp{name, a.nsName, a.coreClient, a.dynamicClient, nil}, nil
 }
 
@@ -67,7 +71,7 @@ func (a Apps) List(additionalLabels map[string]string) ([]App, error) {
 
 	for _, app := range apps.Items {
 		meta := NewAppMetaFromData(app.Data)
-		result = append(result, &RecordedApp{app.Name, a.nsName, a.coreClient, a.dynamicClient, &meta})
+		result = append(result, &RecordedApp{app.Name, app.Namespace, a.coreClient, a.dynamicClient, &meta})
 	}
 
 	return result, nil
