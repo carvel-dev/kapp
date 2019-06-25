@@ -106,8 +106,9 @@ func (o *DeployOptions) Run() error {
 	}
 
 	newResources = resourceFilter.Apply(newResources)
+	matchingOpts := ctlres.AllAndMatchingOpts{SkipResourceOwnershipCheck: o.DeployFlags.OverrideOwnershipOfExistingResources}
 
-	existingResources, err := labeledResources.AllAndMatching(newResources)
+	existingResources, err := labeledResources.AllAndMatching(newResources, matchingOpts)
 	if err != nil {
 		return err
 	}

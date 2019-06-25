@@ -83,11 +83,15 @@ func (a *LabeledResources) All() ([]Resource, error) {
 	return resources, nil
 }
 
+type AllAndMatchingOpts struct {
+	SkipResourceOwnershipCheck bool
+}
+
 // AllAndMatching returns set of all labeled resources
 // plus resources that match newResources.
 // Returns errors if non-labeled resources were labeled
 // with a different value.
-func (a *LabeledResources) AllAndMatching(newResources []Resource) ([]Resource, error) {
+func (a *LabeledResources) AllAndMatching(newResources []Resource, opts AllAndMatchingOpts) ([]Resource, error) {
 	resources, err := a.All()
 	if err != nil {
 		return nil, err
@@ -98,7 +102,7 @@ func (a *LabeledResources) AllAndMatching(newResources []Resource) ([]Resource, 
 		return nil, err
 	}
 
-	if len(nonLabeledResources) > 0 {
+	if !opts.SkipResourceOwnershipCheck && len(nonLabeledResources) > 0 {
 		err := a.checkResourceOwnership(nonLabeledResources)
 		if err != nil {
 			return nil, err
@@ -109,7 +113,7 @@ func (a *LabeledResources) AllAndMatching(newResources []Resource) ([]Resource, 
 }
 
 func (a *LabeledResources) checkResourceOwnership(resources []Resource) error {
-	labelKey, labelVal, err := NewSimpleLabel(a.labelSelector).KV()
+	expectedLabelKey, expectedLabelVal, err := NewSimpleLabel(a.labelSelector).KV()
 	if err != nil {
 		return err
 	}
@@ -117,10 +121,10 @@ func (a *LabeledResources) checkResourceOwnership(resources []Resource) error {
 	var errs []error
 
 	for _, res := range resources {
-		if val, found := res.Labels()[labelKey]; found {
-			if val != labelVal {
+		if val, found := res.Labels()[expectedLabelKey]; found {
+			if val != expectedLabelVal {
 				errMsg := "Resource '%s' is associated with a different label value '%s=%s'"
-				errs = append(errs, fmt.Errorf(errMsg, res.Description(), labelKey, val))
+				errs = append(errs, fmt.Errorf(errMsg, res.Description(), expectedLabelKey, val))
 			}
 		}
 	}

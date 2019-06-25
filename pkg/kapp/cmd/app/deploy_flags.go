@@ -10,6 +10,8 @@ type DeployFlags struct {
 	ctlapp.PrepareResourcesOpts
 	Patch      bool
 	AllowEmpty bool
+
+	OverrideOwnershipOfExistingResources bool
 }
 
 func (s *DeployFlags) Set(cmd *cobra.Command) {
@@ -23,4 +25,7 @@ func (s *DeployFlags) Set(cmd *cobra.Command) {
 
 	cmd.Flags().BoolVarP(&s.Patch, "patch", "p", false, "Add or update provided resource")
 	cmd.Flags().BoolVar(&s.AllowEmpty, "allow-empty", false, "Allow to apply empty set of resources (which results in deletion of all cluster resources)")
+
+	cmd.Flags().BoolVar(&s.OverrideOwnershipOfExistingResources, "dangerous-override-ownership-of-existing-resources",
+		false, "Override ownership of existing resources. This option is useful to 'steal' existing resources from another app")
 }
