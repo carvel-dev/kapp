@@ -129,6 +129,65 @@ type SpecificResource interface {
 }
 
 func (c AddOrUpdateChange) IsDoneApplying() (ctlresm.DoneApplyState, error) {
+	parentRes, associatedRs, err := c.findParentAndAssociatedRes()
+	if err != nil {
+		return ctlresm.DoneApplyState{Done: true}, err
+	}
+
+	parentResState, err := c.isResourceDoneApplying(parentRes, true)
+	if err != nil {
+		return ctlresm.DoneApplyState{Done: true}, err
+	}
+
+	if parentResState != nil {
+		// If it is indeed done then take a quick way out and exit
+		if parentResState.Done {
+			return *parentResState, nil
+		}
+
+		if !parentResState.Successful && len(associatedRs) > 0 {
+			c.notify(parentRes, true, *parentResState)
+		}
+	}
+
+	associatedRsStates := []ctlresm.DoneApplyState{}
+
+	// Show associated resources even though we are waiting for the parent.
+	// This additional info may be helpful in identifying what parent is waiting for.
+	for _, res := range associatedRs {
+		state, err := c.isResourceDoneApplying(res, false)
+		if state == nil {
+			state = &ctlresm.DoneApplyState{Done: true, Successful: true}
+		}
+		if err != nil {
+			return *state, err
+		}
+
+		associatedRsStates = append(associatedRsStates, *state)
+		c.notify(res, false, *state)
+	}
+
+	// If parent state is present, ignore all associated resource states
+	if parentResState != nil {
+		return *parentResState, nil
+	}
+
+	for _, state := range associatedRsStates {
+		if state.TerminallyFailed() {
+			return state, nil
+		}
+	}
+
+	for _, state := range associatedRsStates {
+		if !state.Done {
+			return state, nil
+		}
+	}
+
+	return ctlresm.DoneApplyState{Done: true, Successful: true}, nil
+}
+
+func (c AddOrUpdateChange) findParentAndAssociatedRes() (ctlres.Resource, []ctlres.Resource, error) {
 	labeledResources := ctlres.NewLabeledResources(nil, c.identifiedResources)
 
 	parentRes := c.change.NewResource()
@@ -136,7 +195,7 @@ func (c AddOrUpdateChange) IsDoneApplying() (ctlresm.DoneApplyState, error) {
 
 	associatedRs, err := labeledResources.GetAssociated(parentRes)
 	if err != nil {
-		return ctlresm.DoneApplyState{}, err
+		return nil, nil, err
 	}
 
 	// Sort so that resources show up more or less consistently
@@ -152,68 +211,13 @@ func (c AddOrUpdateChange) IsDoneApplying() (ctlresm.DoneApplyState, error) {
 		}
 	}
 
-	// Prepend parent so it always shows up first
-	allRs := append([]ctlres.Resource{parentRes}, associatedRs...)
-	states := []ctlresm.DoneApplyState{}
-
-	// Associated resources should also be checked for example Deployment's Pods
-	for i, res := range allRs {
-		isParent := i == 0
-
-		state, err := c.isResourceDoneApplying(res, isParent)
-		if err != nil {
-			return state, err
-		}
-
-		// If it's successul and it's only parent
-		hideStatus := len(allRs) == 1 && (state.Done && state.Successful)
-
-		if !hideStatus {
-			// Start of notification
-			msg := fmt.Sprintf(uiWaitPrefix+"waiting on %s", res.Description())
-			if isParent {
-				msg = uiWaitParentPrefix
-			}
-			c.ui.NotifyBegin(msg)
-
-			// End of notification
-			msg = " ... "
-			if state.Done {
-				msg += "done"
-			} else {
-				msg += "in progress"
-				if len(state.Message) > 0 {
-					msg += ": " + state.Message
-				}
-			}
-			c.ui.NotifyEnd(msg)
-		}
-
-		states = append(states, state)
-	}
-
-	// Find terminal unsuccessful state
-	for _, state := range states {
-		if state.Done && !state.Successful {
-			return state, nil
-		}
-	}
-
-	// Find first non-done case
-	for _, state := range states {
-		if !state.Done {
-			return state, nil
-		}
-	}
-
-	return ctlresm.DoneApplyState{Done: true, Successful: true}, nil
+	return parentRes, associatedRs, nil
 }
 
-func (c AddOrUpdateChange) isResourceDoneApplying(res ctlres.Resource, isParent bool) (ctlresm.DoneApplyState, error) {
+func (c AddOrUpdateChange) isResourceDoneApplying(res ctlres.Resource, isParent bool) (*ctlresm.DoneApplyState, error) {
 	specificResFactories := []func(ctlres.Resource) SpecificResource{
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewDeleting(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCRDvX(res) },
-		// It's rare that Pod is directly created
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCorev1Pod(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCorev1Service(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewAppsv1Deployment(res) },
@@ -227,16 +231,37 @@ func (c AddOrUpdateChange) isResourceDoneApplying(res ctlres.Resource, isParent 
 			if err != nil {
 				// Non-parent resource may go away, and that can be ignored
 				if !isParent && errors.IsNotFound(err) {
-					return ctlresm.DoneApplyState{Done: true, Successful: true}, nil
+					return &ctlresm.DoneApplyState{Done: true, Successful: true}, nil
 				}
-				return ctlresm.DoneApplyState{}, err
+				return nil, err
 			}
 
-			return f(reloadedResource).IsDoneApplying(), nil
+			state := f(reloadedResource).IsDoneApplying()
+			return &state, nil
 		}
 	}
 
-	return ctlresm.DoneApplyState{Done: true, Successful: true}, nil
+	return nil, nil
+}
+
+func (c AddOrUpdateChange) notify(res ctlres.Resource, isParent bool, state ctlresm.DoneApplyState) {
+	msg := fmt.Sprintf(uiWaitPrefix+"waiting on %s", res.Description())
+	if isParent {
+		msg = uiWaitParentPrefix
+	}
+
+	// End of notification
+	msg += " ... "
+	if state.Done {
+		msg += "done"
+	} else {
+		msg += "in progress"
+		if len(state.Message) > 0 {
+			msg += ": " + state.Message
+		}
+	}
+
+	c.ui.Notify(msg)
 }
 
 func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error {
