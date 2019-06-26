@@ -1,0 +1,19 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: example-job
+  namespace: default
+  annotations:
+    kapp.k14s.io/update-strategy: always-replace
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      name: example-job
+    spec:
+      containers:
+      - name: hyperkube
+        image: "quay.io/coreos/hyperkube:v1.7.6_coreos.0"
+        command: ["/bin/bash", "-c", "sleep 11"]
+      restartPolicy: Never
