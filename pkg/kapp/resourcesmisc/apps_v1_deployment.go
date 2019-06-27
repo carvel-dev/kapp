@@ -7,22 +7,22 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 )
 
-type Appsv1Deployment struct {
+type AppsV1Deployment struct {
 	resource ctlres.Resource
 }
 
-func NewAppsv1Deployment(resource ctlres.Resource) *Appsv1Deployment {
+func NewAppsV1Deployment(resource ctlres.Resource) *AppsV1Deployment {
 	matcher := ctlres.APIVersionKindMatcher{
 		APIVersion: "apps/v1",
 		Kind:       "Deployment",
 	}
 	if matcher.Matches(resource) {
-		return &Appsv1Deployment{resource}
+		return &AppsV1Deployment{resource}
 	}
 	return nil
 }
 
-func (s Appsv1Deployment) IsDoneApplying() DoneApplyState {
+func (s AppsV1Deployment) IsDoneApplying() DoneApplyState {
 	dep := appsv1.Deployment{}
 
 	err := s.resource.AsTypedObj(&dep)

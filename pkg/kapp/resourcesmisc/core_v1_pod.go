@@ -8,22 +8,22 @@ import (
 )
 
 // https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
-type Corev1Pod struct {
+type CoreV1Pod struct {
 	resource ctlres.Resource
 }
 
-func NewCorev1Pod(resource ctlres.Resource) *Corev1Pod {
+func NewCoreV1Pod(resource ctlres.Resource) *CoreV1Pod {
 	matcher := ctlres.APIVersionKindMatcher{
 		APIVersion: "v1",
 		Kind:       "Pod",
 	}
 	if matcher.Matches(resource) {
-		return &Corev1Pod{resource}
+		return &CoreV1Pod{resource}
 	}
 	return nil
 }
 
-func (s Corev1Pod) IsDoneApplying() DoneApplyState {
+func (s CoreV1Pod) IsDoneApplying() DoneApplyState {
 	pod := corev1.Pod{}
 
 	err := s.resource.AsTypedObj(&pod)
@@ -65,14 +65,14 @@ func (s Corev1Pod) IsDoneApplying() DoneApplyState {
 	}
 }
 
-func (s Corev1Pod) detailedMsg(state, msg string) string {
+func (s CoreV1Pod) detailedMsg(state, msg string) string {
 	if len(msg) > 0 {
 		return state + ": " + msg
 	}
 	return state
 }
 
-func (s Corev1Pod) pendingDetailsReason(pod corev1.Pod) string {
+func (s CoreV1Pod) pendingDetailsReason(pod corev1.Pod) string {
 	statuses := append([]corev1.ContainerStatus{}, pod.Status.InitContainerStatuses...)
 	statuses = append(statuses, pod.Status.ContainerStatuses...)
 

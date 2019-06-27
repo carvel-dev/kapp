@@ -37,7 +37,7 @@ func (c ClusterChangeSet) Apply() error {
 	// TODO wait for apply/delete
 
 	isCRD := func(change ctldiff.Change) bool {
-		return ctlresm.NewCRDvX(change.NewOrExistingResource()) != nil
+		return ctlresm.NewApiExtensionsVxCRD(change.NewOrExistingResource()) != nil
 	}
 
 	splitChanges := SplitChanges{c.changes, []func(ctldiff.Change) bool{

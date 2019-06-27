@@ -10,17 +10,17 @@ import (
 )
 
 type ResourceTypes struct {
-	localCRDs      []*CRDvX
+	localCRDs      []*ApiExtensionsVxCRD
 	resourceTypes  ctlres.ResourceTypes
 	resources      ctlres.Resources
 	memoizedScopes map[string]bool
 }
 
 func NewResourceTypes(newResources []ctlres.Resource, coreClient kubernetes.Interface, dynamicClient dynamic.Interface) *ResourceTypes {
-	var localCRDs []*CRDvX
+	var localCRDs []*ApiExtensionsVxCRD
 
 	for _, newRes := range newResources {
-		crd := NewCRDvX(newRes)
+		crd := NewApiExtensionsVxCRD(newRes)
 		if crd != nil {
 			localCRDs = append(localCRDs, crd)
 		}

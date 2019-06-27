@@ -4,22 +4,22 @@ import (
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
-type BatchvxCronJob struct {
+type BatchVxCronJob struct {
 	resource ctlres.Resource
 }
 
-func NewBatchvxCronJob(resource ctlres.Resource) *BatchvxCronJob {
+func NewBatchVxCronJob(resource ctlres.Resource) *BatchVxCronJob {
 	matcher := ctlres.APIGroupKindMatcher{
 		APIGroup: "batch",
 		Kind:     "CronJob",
 	}
 	if matcher.Matches(resource) {
-		return &BatchvxCronJob{resource}
+		return &BatchVxCronJob{resource}
 	}
 	return nil
 }
 
-func (s BatchvxCronJob) IsDoneApplying() DoneApplyState {
+func (s BatchVxCronJob) IsDoneApplying() DoneApplyState {
 	// Always return success as we do not want to pick up associated
 	// pods that might have previously failed
 	return DoneApplyState{Done: true, Successful: true}

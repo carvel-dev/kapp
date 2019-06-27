@@ -8,22 +8,22 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-type Batchv1Job struct {
+type BatchV1Job struct {
 	resource ctlres.Resource
 }
 
-func NewBatchv1Job(resource ctlres.Resource) *Batchv1Job {
+func NewBatchV1Job(resource ctlres.Resource) *BatchV1Job {
 	matcher := ctlres.APIVersionKindMatcher{
 		APIVersion: "batch/v1",
 		Kind:       "Job",
 	}
 	if matcher.Matches(resource) {
-		return &Batchv1Job{resource}
+		return &BatchV1Job{resource}
 	}
 	return nil
 }
 
-func (s Batchv1Job) IsDoneApplying() DoneApplyState {
+func (s BatchV1Job) IsDoneApplying() DoneApplyState {
 	job := batchv1.Job{}
 
 	err := s.resource.AsTypedObj(&job)

@@ -7,22 +7,22 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-type Corev1Service struct {
+type CoreV1Service struct {
 	resource ctlres.Resource
 }
 
-func NewCorev1Service(resource ctlres.Resource) *Corev1Service {
+func NewCoreV1Service(resource ctlres.Resource) *CoreV1Service {
 	matcher := ctlres.APIVersionKindMatcher{
 		APIVersion: "v1",
 		Kind:       "Service",
 	}
 	if matcher.Matches(resource) {
-		return &Corev1Service{resource}
+		return &CoreV1Service{resource}
 	}
 	return nil
 }
 
-func (s Corev1Service) IsDoneApplying() DoneApplyState {
+func (s CoreV1Service) IsDoneApplying() DoneApplyState {
 	svc := corev1.Service{}
 
 	err := s.resource.AsTypedObj(&svc)

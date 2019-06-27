@@ -5,27 +5,27 @@ import (
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
-type CRDvX struct {
+type ApiExtensionsVxCRD struct {
 	resource ctlres.Resource
 }
 
-func NewCRDvX(resource ctlres.Resource) *CRDvX {
+func NewApiExtensionsVxCRD(resource ctlres.Resource) *ApiExtensionsVxCRD {
 	matcher := ctlres.APIGroupKindMatcher{
 		APIGroup: "apiextensions.k8s.io",
 		Kind:     "CustomResourceDefinition",
 	}
 	if matcher.Matches(resource) {
-		return &CRDvX{resource}
+		return &ApiExtensionsVxCRD{resource}
 	}
 	return nil
 }
 
-func (s CRDvX) IsDoneApplying() DoneApplyState {
+func (s ApiExtensionsVxCRD) IsDoneApplying() DoneApplyState {
 	allTrue, msg := Conditions{s.resource}.IsAllTrue()
 	return DoneApplyState{Done: allTrue, Successful: allTrue, Message: msg}
 }
 
-func (s CRDvX) contents() (crdObj, error) {
+func (s ApiExtensionsVxCRD) contents() (crdObj, error) {
 	bs, err := s.resource.AsYAMLBytes()
 	if err != nil {
 		return crdObj{}, err

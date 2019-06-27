@@ -237,13 +237,13 @@ func (c AddOrUpdateChange) findParentAndAssociatedRes() (ctlres.Resource, []ctlr
 func (c AddOrUpdateChange) isResourceDoneApplying(res ctlres.Resource, isParent bool) (*ctlresm.DoneApplyState, error) {
 	specificResFactories := []func(ctlres.Resource) SpecificResource{
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewDeleting(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCRDvX(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCorev1Pod(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCorev1Service(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewAppsv1Deployment(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewAppsv1DaemonSet(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewBatchv1Job(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewBatchvxCronJob(res) },
+		func(res ctlres.Resource) SpecificResource { return ctlresm.NewApiExtensionsVxCRD(res) },
+		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCoreV1Pod(res) },
+		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCoreV1Service(res) },
+		func(res ctlres.Resource) SpecificResource { return ctlresm.NewAppsV1Deployment(res) },
+		func(res ctlres.Resource) SpecificResource { return ctlresm.NewAppsV1DaemonSet(res) },
+		func(res ctlres.Resource) SpecificResource { return ctlresm.NewBatchV1Job(res) },
+		func(res ctlres.Resource) SpecificResource { return ctlresm.NewBatchVxCronJob(res) },
 	}
 
 	for _, f := range specificResFactories {
