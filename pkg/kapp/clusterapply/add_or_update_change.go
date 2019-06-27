@@ -277,9 +277,9 @@ func (c AddOrUpdateChange) notify(res ctlres.Resource, isParent bool, state ctlr
 		msg += "done"
 	} else {
 		msg += "in progress"
-		if len(state.Message) > 0 {
-			msg += ": " + state.Message
-		}
+	}
+	if len(state.Message) > 0 {
+		msg += ": " + state.Message
 	}
 
 	c.ui.Notify(msg)
