@@ -19,6 +19,8 @@ const (
 	updateStrategyUpdateAnnValue            = ""
 	updateStrategyFallbackOnReplaceAnnValue = "fallback-on-replace"
 	updateStrategyAlwaysReplaceAnnValue     = "always-replace"
+
+	disableAssociatedResourcesWaitingAnnKey = "kapp.k14s.io/disable-associated-resources-wait" // valid value is ''
 )
 
 var (
@@ -147,6 +149,24 @@ func (c AddOrUpdateChange) IsDoneApplying() (ctlresm.DoneApplyState, error) {
 
 		if !parentResState.Successful && len(associatedRs) > 0 {
 			c.notify(parentRes, true, *parentResState)
+		}
+	}
+
+	// If resource explicitly opts out of associated resource waiting
+	// exit quickly with parent resource state or success.
+	// For example, CronJobs should be annotated with this to avoid
+	// picking up failed Pods from previous runs.
+	disableARWVal, disableARWFound := parentRes.Annotations()[disableAssociatedResourcesWaitingAnnKey]
+	if disableARWFound {
+		if disableARWVal != "" {
+			return ctlresm.DoneApplyState{Done: true},
+				fmt.Errorf("Expected annotation '%s' on resource '%s' to have value ''",
+					disableAssociatedResourcesWaitingAnnKey, parentRes.Description())
+		} else {
+			if parentResState != nil {
+				return *parentResState, nil
+			}
+			return ctlresm.DoneApplyState{Done: true, Successful: true}, nil
 		}
 	}
 
