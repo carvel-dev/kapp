@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: example-job
+  name: failing-job
   namespace: default
   annotations:
     kapp.k14s.io/update-strategy: always-replace
@@ -10,10 +10,10 @@ spec:
   backoffLimit: 2
   template:
     metadata:
-      name: example-job
+      name: failing-job
     spec:
       containers:
-      - name: hyperkube
-        image: "quay.io/coreos/hyperkube:v1.7.6_coreos.0"
-        command: ["/bin/bash", "-c", "sleep 11"]
+      - name: failing-job
+        image: busybox
+        command: ["/bin/sh", "-c", "exit 1"]
       restartPolicy: Never

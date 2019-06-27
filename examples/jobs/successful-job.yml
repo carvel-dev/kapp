@@ -1,0 +1,19 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: successful-job
+  namespace: default
+  annotations:
+    kapp.k14s.io/update-strategy: always-replace
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      name: successful-job
+    spec:
+      containers:
+      - name: successful-job
+        image: busybox
+        command: ["/bin/sh", "-c", "sleep 11"]
+      restartPolicy: Never
