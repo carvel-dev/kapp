@@ -21,10 +21,10 @@ func NewFileResources(file string) ([]FileResource, error) {
 
 	switch {
 	case file == "-":
-		fileRs = append(fileRs, FileResource{NewStdinSource()})
+		fileRs = append(fileRs, NewFileResource(NewStdinSource()))
 
 	case strings.HasPrefix(file, "http://") || strings.HasPrefix(file, "https://"):
-		fileRs = append(fileRs, FileResource{NewHTTPFileSource(file)})
+		fileRs = append(fileRs, NewFileResource(NewHTTPFileSource(file)))
 
 	default:
 		fileInfo, err := os.Stat(file)
@@ -54,15 +54,17 @@ func NewFileResources(file string) ([]FileResource, error) {
 			sort.Strings(paths)
 
 			for _, path := range paths {
-				fileRs = append(fileRs, FileResource{NewLocalFileSource(path)})
+				fileRs = append(fileRs, NewFileResource(NewLocalFileSource(path)))
 			}
 		} else {
-			fileRs = append(fileRs, FileResource{NewLocalFileSource(file)})
+			fileRs = append(fileRs, NewFileResource(NewLocalFileSource(file)))
 		}
 	}
 
 	return fileRs, nil
 }
+
+func NewFileResource(fileSrc FileSource) FileResource { return FileResource{fileSrc} }
 
 func (r FileResource) Description() string { return r.fileSrc.Description() }
 

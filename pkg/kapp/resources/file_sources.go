@@ -12,17 +12,23 @@ type FileSource interface {
 	Bytes() ([]byte, error)
 }
 
+type BytesSource struct {
+	bytes []byte
+}
+
+var _ FileSource = BytesSource{}
+
+func NewBytesSource(bytes []byte) BytesSource { return BytesSource{bytes} }
+func (s BytesSource) Description() string     { return "bytes" }
+func (s BytesSource) Bytes() ([]byte, error)  { return s.bytes, nil }
+
 type StdinSource struct{}
 
 var _ FileSource = StdinSource{}
 
-func NewStdinSource() StdinSource { return StdinSource{} }
-
-func (s StdinSource) Description() string { return "stdin" }
-
-func (s StdinSource) Bytes() ([]byte, error) {
-	return ioutil.ReadAll(os.Stdin)
-}
+func NewStdinSource() StdinSource            { return StdinSource{} }
+func (s StdinSource) Description() string    { return "stdin" }
+func (s StdinSource) Bytes() ([]byte, error) { return ioutil.ReadAll(os.Stdin) }
 
 type LocalFileSource struct {
 	path string
@@ -31,14 +37,8 @@ type LocalFileSource struct {
 var _ FileSource = LocalFileSource{}
 
 func NewLocalFileSource(path string) LocalFileSource { return LocalFileSource{path} }
-
-func (s LocalFileSource) Description() string {
-	return fmt.Sprintf("file '%s'", s.path)
-}
-
-func (s LocalFileSource) Bytes() ([]byte, error) {
-	return ioutil.ReadFile(s.path)
-}
+func (s LocalFileSource) Description() string        { return fmt.Sprintf("file '%s'", s.path) }
+func (s LocalFileSource) Bytes() ([]byte, error)     { return ioutil.ReadFile(s.path) }
 
 type HTTPFileSource struct {
 	url string
