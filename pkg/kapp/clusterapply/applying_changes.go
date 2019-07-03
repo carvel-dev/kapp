@@ -31,8 +31,7 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 		return nil, nil
 	}
 
-	c.ui.Notify("")
-	c.ui.Notify(uiSepPrefix+"applying %d changes [%d/%d]",
+	c.ui.NotifySection("applying %d changes [%d/%d]",
 		len(nonAppliedChanges), c.NumApplied()+len(nonAppliedChanges), c.numTotal)
 
 	var wg sync.WaitGroup

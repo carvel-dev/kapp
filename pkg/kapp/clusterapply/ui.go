@@ -1,7 +1,6 @@
 package clusterapply
 
 type UI interface {
+	NotifySection(msg string, args ...interface{})
 	Notify(msg string, args ...interface{})
-	NotifyBegin(msg string, args ...interface{})
-	NotifyEnd(msg string, args ...interface{})
 }

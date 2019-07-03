@@ -8,10 +8,6 @@ import (
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
 )
 
-const (
-	uiSepPrefix = "--- "
-)
-
 type ClusterChangeSetOpts struct {
 	WaitTimeout       time.Duration
 	WaitCheckInterval time.Duration
@@ -59,7 +55,7 @@ func (c ClusterChangeSet) Apply() error {
 					expectedChangesLen, appliedChangesLen)
 			}
 
-			c.ui.Notify(uiSepPrefix + "changes applied")
+			c.ui.NotifySection("changes applied")
 			return nil
 		}
 

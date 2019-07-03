@@ -37,8 +37,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 	startTime := time.Now()
 
 	for {
-		c.ui.Notify("")
-		c.ui.Notify(uiSepPrefix+"waiting on %d changes [%d/%d]",
+		c.ui.NotifySection("waiting on %d changes [%d/%d]",
 			len(c.trackedChanges), c.numWaited, c.numTotal)
 
 		var newInProgressChanges []WaitingChange
