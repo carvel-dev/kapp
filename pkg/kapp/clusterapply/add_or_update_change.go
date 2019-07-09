@@ -2,11 +2,8 @@ package clusterapply
 
 import (
 	"fmt"
-	"reflect"
-	"sort"
 	"time"
 
-	"github.com/fatih/color"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
@@ -19,13 +16,6 @@ const (
 	updateStrategyUpdateAnnValue            = ""
 	updateStrategyFallbackOnReplaceAnnValue = "fallback-on-replace"
 	updateStrategyAlwaysReplaceAnnValue     = "always-replace"
-
-	disableAssociatedResourcesWaitingAnnKey = "kapp.k14s.io/disable-associated-resources-wait" // valid value is ''
-)
-
-var (
-	uiWaitPrefix       = color.New(color.Faint).Sprintf(" L ") // consistent with inspect tree view
-	uiWaitParentPrefix = color.New(color.Faint).Sprintf(" ^ ")
 )
 
 type AddOrUpdateChangeOpts struct {
@@ -131,158 +121,20 @@ type SpecificResource interface {
 }
 
 func (c AddOrUpdateChange) IsDoneApplying() (ctlresm.DoneApplyState, error) {
-	parentRes, associatedRs, err := c.findParentAndAssociatedRes()
-	if err != nil {
-		return ctlresm.DoneApplyState{Done: true}, err
-	}
-
-	parentResState, err := c.isResourceDoneApplying(parentRes, true)
-	if err != nil {
-		return ctlresm.DoneApplyState{Done: true}, err
-	}
-
-	if parentResState != nil {
-		// If it is indeed done then take a quick way out and exit
-		if parentResState.Done {
-			return *parentResState, nil
-		}
-
-		if !parentResState.Successful && len(associatedRs) > 0 {
-			c.notify(parentRes, true, *parentResState)
-		}
-	}
-
-	// If resource explicitly opts out of associated resource waiting
-	// exit quickly with parent resource state or success.
-	// For example, CronJobs should be annotated with this to avoid
-	// picking up failed Pods from previous runs.
-	disableARWVal, disableARWFound := parentRes.Annotations()[disableAssociatedResourcesWaitingAnnKey]
-	if disableARWFound {
-		if disableARWVal != "" {
-			return ctlresm.DoneApplyState{Done: true},
-				fmt.Errorf("Expected annotation '%s' on resource '%s' to have value ''",
-					disableAssociatedResourcesWaitingAnnKey, parentRes.Description())
-		} else {
-			if parentResState != nil {
-				return *parentResState, nil
-			}
-			return ctlresm.DoneApplyState{Done: true, Successful: true}, nil
-		}
-	}
-
-	associatedRsStates := []ctlresm.DoneApplyState{}
-
-	// Show associated resources even though we are waiting for the parent.
-	// This additional info may be helpful in identifying what parent is waiting for.
-	for _, res := range associatedRs {
-		state, err := c.isResourceDoneApplying(res, false)
-		if state == nil {
-			state = &ctlresm.DoneApplyState{Done: true, Successful: true}
-		}
-		if err != nil {
-			return *state, err
-		}
-
-		associatedRsStates = append(associatedRsStates, *state)
-		c.notify(res, false, *state)
-	}
-
-	// If parent state is present, ignore all associated resource states
-	if parentResState != nil {
-		return *parentResState, nil
-	}
-
-	for _, state := range associatedRsStates {
-		if state.TerminallyFailed() {
-			return state, nil
-		}
-	}
-
-	for _, state := range associatedRsStates {
-		if !state.Done {
-			return state, nil
-		}
-	}
-
-	return ctlresm.DoneApplyState{Done: true, Successful: true}, nil
-}
-
-func (c AddOrUpdateChange) findParentAndAssociatedRes() (ctlres.Resource, []ctlres.Resource, error) {
 	labeledResources := ctlres.NewLabeledResources(nil, c.identifiedResources)
 
-	parentRes := c.change.NewResource()
-	parentResKey := ctlres.NewUniqueResourceKey(parentRes).String()
+	// Refresh resource with latest changes from the server
+	parentRes, err := c.identifiedResources.Get(c.change.NewResource())
+	if err != nil {
+		return ctlresm.DoneApplyState{}, err
+	}
 
 	associatedRs, err := labeledResources.GetAssociated(parentRes)
 	if err != nil {
-		return nil, nil, err
+		return ctlresm.DoneApplyState{}, err
 	}
 
-	// Sort so that resources show up more or less consistently
-	sort.Slice(associatedRs, func(i, j int) bool {
-		return associatedRs[i].Description() > associatedRs[j].Description()
-	})
-
-	// Remove possibly found parent resource
-	for i, res := range associatedRs {
-		if parentResKey == ctlres.NewUniqueResourceKey(res).String() {
-			associatedRs = append(associatedRs[:i], associatedRs[i+1:]...)
-			break
-		}
-	}
-
-	return parentRes, associatedRs, nil
-}
-
-func (c AddOrUpdateChange) isResourceDoneApplying(res ctlres.Resource, isParent bool) (*ctlresm.DoneApplyState, error) {
-	specificResFactories := []func(ctlres.Resource) SpecificResource{
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewDeleting(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewApiExtensionsVxCRD(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCoreV1Pod(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCoreV1Service(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewAppsV1Deployment(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewAppsV1DaemonSet(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewBatchV1Job(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewBatchVxCronJob(res) },
-	}
-
-	for _, f := range specificResFactories {
-		if !reflect.ValueOf(f(res)).IsNil() { // checking if interface is nil
-			reloadedResource, err := c.identifiedResources.Get(res)
-			if err != nil {
-				// Non-parent resource may go away, and that can be ignored
-				if !isParent && errors.IsNotFound(err) {
-					return &ctlresm.DoneApplyState{Done: true, Successful: true}, nil
-				}
-				return nil, err
-			}
-
-			state := f(reloadedResource).IsDoneApplying()
-			return &state, nil
-		}
-	}
-
-	return nil, nil
-}
-
-func (c AddOrUpdateChange) notify(res ctlres.Resource, isParent bool, state ctlresm.DoneApplyState) {
-	msg := fmt.Sprintf(uiWaitPrefix+"waiting on %s", res.Description())
-	if isParent {
-		msg = uiWaitParentPrefix
-	}
-
-	// End of notification
-	msg += " ... "
-	if state.Done {
-		msg += "done"
-	} else {
-		msg += "in progress"
-	}
-	if len(state.Message) > 0 {
-		msg += ": " + state.Message
-	}
-
-	c.ui.Notify(msg)
+	return NewConvergedResource(parentRes, associatedRs).IsDoneApplying(c.ui)
 }
 
 func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error {

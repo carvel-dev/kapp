@@ -5,8 +5,13 @@ import (
 	"reflect"
 	"sort"
 
+	"github.com/fatih/color"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
+)
+
+const (
+	disableAssociatedResourcesWaitingAnnKey = "kapp.k14s.io/disable-associated-resources-wait" // valid value is ''
 )
 
 type ConvergedResource struct {
@@ -136,6 +141,11 @@ func (c ConvergedResource) isResourceDoneApplying(res ctlres.Resource) (*ctlresm
 
 	return nil, nil
 }
+
+var (
+	uiWaitPrefix       = color.New(color.Faint).Sprintf(" L ") // consistent with inspect tree view
+	uiWaitParentPrefix = color.New(color.Faint).Sprintf(" ^ ")
+)
 
 func (c ConvergedResource) notify(ui UI, res ctlres.Resource, isParent bool, state ctlresm.DoneApplyState) {
 	msg := fmt.Sprintf(uiWaitPrefix+"waiting on %s", res.Description())
