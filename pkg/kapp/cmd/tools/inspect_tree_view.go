@@ -37,6 +37,8 @@ func (v InspectTreeView) Print(ui ui.UI) {
 			versionHeader,
 			uitable.NewHeader("Managed by"),
 			uitable.NewHeader("Conditions"),
+			uitable.NewHeader("Sync\nstate"),
+			uitable.NewHeader("Sync\nmsg"),
 			uitable.NewHeader("Age"),
 		},
 
@@ -81,15 +83,20 @@ func (v InspectTreeView) Print(ui ui.UI) {
 
 		if resource.IsProvisioned() {
 			condVal := cmdcore.NewConditionsValue(resource.Status())
+			syncVal := NewValueResourceConverged(resource)
 
 			row = append(row,
 				// TODO erroneously colors empty value
 				uitable.ValueFmt{V: condVal, Error: condVal.NeedsAttention()},
+				syncVal.StateVal,
+				syncVal.ReasonVal,
 				cmdcore.NewValueAge(resource.CreatedAt()),
 			)
 		} else {
 			row = append(row,
 				uitable.ValueFmt{V: uitable.NewValueString(""), Error: false},
+				uitable.NewValueString(""),
+				uitable.NewValueString(""),
 				uitable.NewValueString(""),
 			)
 		}

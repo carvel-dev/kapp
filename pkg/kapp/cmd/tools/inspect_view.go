@@ -5,6 +5,7 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
+	ctlcap "github.com/k14s/kapp/pkg/kapp/clusterapply"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
@@ -30,6 +31,8 @@ func (v InspectView) Print(ui ui.UI) {
 			versionHeader,
 			uitable.NewHeader("Managed by"),
 			uitable.NewHeader("Conditions"),
+			uitable.NewHeader("Sync\nstate"),
+			uitable.NewHeader("Sync\nmsg"),
 			uitable.NewHeader("Age"),
 		},
 	}
@@ -57,15 +60,20 @@ func (v InspectView) Print(ui ui.UI) {
 
 		if resource.IsProvisioned() {
 			condVal := cmdcore.NewConditionsValue(resource.Status())
+			syncVal := NewValueResourceConverged(resource)
 
 			row = append(row,
 				// TODO erroneously colors empty value
 				uitable.ValueFmt{V: condVal, Error: condVal.NeedsAttention()},
+				syncVal.StateVal,
+				syncVal.ReasonVal,
 				cmdcore.NewValueAge(resource.CreatedAt()),
 			)
 		} else {
 			row = append(row,
 				uitable.ValueFmt{V: uitable.NewValueString(""), Error: false},
+				uitable.NewValueString(""),
+				uitable.NewValueString(""),
 				uitable.NewValueString(""),
 			)
 		}
@@ -74,4 +82,37 @@ func (v InspectView) Print(ui ui.UI) {
 	}
 
 	ui.PrintTable(table)
+}
+
+type noopUI struct{}
+
+func (b *noopUI) NotifySection(msg string, args ...interface{}) {}
+func (b *noopUI) Notify(msg string, args ...interface{})        {}
+
+type valueConverged struct {
+	StateVal  uitable.Value
+	ReasonVal uitable.Value
+}
+
+func NewValueResourceConverged(resource ctlres.Resource) valueConverged {
+	var stateVal, reasonVal uitable.Value
+
+	// TODO state vs err vs output
+	state, err := ctlcap.NewConvergedResource(resource, nil).IsDoneApplying(&noopUI{})
+	if err != nil {
+		stateVal = uitable.ValueFmt{V: uitable.NewValueString("ERR"), Error: true}
+		reasonVal = uitable.NewValueString(err.Error())
+	} else {
+		switch {
+		case state.Done && state.Successful:
+			stateVal = uitable.ValueFmt{V: uitable.NewValueString("OK"), Error: false}
+		case state.Done && !state.Successful:
+			stateVal = uitable.ValueFmt{V: uitable.NewValueString("FAIL"), Error: true}
+		case !state.Done:
+			stateVal = uitable.ValueFmt{V: uitable.NewValueString("In progress"), Error: true}
+		}
+		reasonVal = uitable.NewValueString(state.Message)
+	}
+
+	return valueConverged{stateVal, reasonVal}
 }
