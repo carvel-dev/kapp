@@ -84,17 +84,12 @@ func (v InspectView) Print(ui ui.UI) {
 	ui.PrintTable(table)
 }
 
-type noopUI struct{}
-
-func (b *noopUI) NotifySection(msg string, args ...interface{}) {}
-func (b *noopUI) Notify(msg string, args ...interface{})        {}
-
-type valueConverged struct {
+type ValueResourceConverged struct {
 	StateVal  uitable.Value
 	ReasonVal uitable.Value
 }
 
-func NewValueResourceConverged(resource ctlres.Resource) valueConverged {
+func NewValueResourceConverged(resource ctlres.Resource) ValueResourceConverged {
 	var stateVal, reasonVal uitable.Value
 
 	// TODO state vs err vs output
@@ -114,5 +109,20 @@ func NewValueResourceConverged(resource ctlres.Resource) valueConverged {
 		reasonVal = uitable.NewValueString(state.Message)
 	}
 
-	return valueConverged{stateVal, reasonVal}
+	return ValueResourceConverged{stateVal, reasonVal}
+}
+
+type noopUI struct{}
+
+func (b *noopUI) NotifySection(msg string, args ...interface{}) {}
+func (b *noopUI) Notify(msg string, args ...interface{})        {}
+
+func NewValueResourceManagedBy(resource ctlres.Resource) uitable.ValueString {
+	if resource.IsProvisioned() {
+		if resource.Transient() {
+			return uitable.NewValueString("cluster")
+		}
+		return uitable.NewValueString("kapp")
+	}
+	return uitable.NewValueString("")
 }

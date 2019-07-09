@@ -193,24 +193,10 @@ type ValueColored struct {
 	Func func(string, ...interface{}) string
 }
 
-func NewValueColored(str string, f func(string, ...interface{}) string) ValueColored {
-	return ValueColored{S: str, Func: f}
-}
-
 func (t ValueColored) String() string                  { return t.S }
 func (t ValueColored) Value() uitable.Value            { return t }
 func (t ValueColored) Compare(other uitable.Value) int { panic("Never called") }
 
 func (t ValueColored) Fprintf(w io.Writer, pattern string, rest ...interface{}) (int, error) {
 	return fmt.Fprintf(w, "%s", t.Func(pattern, rest...))
-}
-
-func NewValueResourceManagedBy(resource ctlres.Resource) uitable.ValueString {
-	if resource.IsProvisioned() {
-		if resource.Transient() {
-			return uitable.NewValueString("cluster")
-		}
-		return uitable.NewValueString("kapp")
-	}
-	return uitable.NewValueString("")
 }
