@@ -37,7 +37,7 @@ func (s AppsV1Deployment) IsDoneApplying() DoneApplyState {
 
 	if dep.Status.UnavailableReplicas > 0 {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(
-			"Waiting for unavailable replicas to go from %d to 0", dep.Status.UnavailableReplicas)}
+			"Waiting for %d unavailable replicas", dep.Status.UnavailableReplicas)}
 	}
 
 	return DoneApplyState{Done: true, Successful: true}

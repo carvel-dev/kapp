@@ -37,7 +37,7 @@ func (s AppsV1DaemonSet) IsDoneApplying() DoneApplyState {
 
 	if dset.Status.NumberUnavailable > 0 {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(
-			"Waiting for unavailable pods to go from %d to 0", dset.Status.NumberUnavailable)}
+			"Waiting for %d unavailable pods", dset.Status.NumberUnavailable)}
 	}
 
 	return DoneApplyState{Done: true, Successful: true}
