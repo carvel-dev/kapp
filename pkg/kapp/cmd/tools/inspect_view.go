@@ -29,7 +29,7 @@ func (v InspectView) Print(ui ui.UI) {
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Kind"),
 			versionHeader,
-			uitable.NewHeader("Managed by"),
+			uitable.NewHeader("Owner"),
 			uitable.NewHeader("Conditions"),
 			uitable.NewHeader("Sync\nstate"),
 			uitable.NewHeader("Sync\nmsg"),
@@ -55,7 +55,7 @@ func (v InspectView) Print(ui ui.UI) {
 			uitable.NewValueString(resource.Name()),
 			uitable.NewValueString(resource.Kind()),
 			uitable.NewValueString(resource.APIVersion()),
-			NewValueResourceManagedBy(resource),
+			NewValueResourceOwner(resource),
 		}
 
 		if resource.IsProvisioned() {
@@ -117,7 +117,7 @@ type noopUI struct{}
 func (b *noopUI) NotifySection(msg string, args ...interface{}) {}
 func (b *noopUI) Notify(msg string, args ...interface{})        {}
 
-func NewValueResourceManagedBy(resource ctlres.Resource) uitable.ValueString {
+func NewValueResourceOwner(resource ctlres.Resource) uitable.ValueString {
 	if resource.IsProvisioned() {
 		if resource.Transient() {
 			return uitable.NewValueString("cluster")

@@ -35,7 +35,7 @@ func (v InspectTreeView) Print(ui ui.UI) {
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Kind"),
 			versionHeader,
-			uitable.NewHeader("Managed by"),
+			uitable.NewHeader("Owner"),
 			uitable.NewHeader("Conditions"),
 			uitable.NewHeader("Sync\nstate"),
 			uitable.NewHeader("Sync\nmsg"),
@@ -78,7 +78,7 @@ func (v InspectTreeView) Print(ui ui.UI) {
 			},
 			uitable.NewValueString(resource.Kind()),
 			uitable.NewValueString(resource.APIVersion()),
-			NewValueResourceManagedBy(resource),
+			NewValueResourceOwner(resource),
 		}
 
 		if resource.IsProvisioned() {
