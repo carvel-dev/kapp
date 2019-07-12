@@ -12,9 +12,9 @@ type ChangeOp string
 
 const (
 	ChangeOpAdd    ChangeOp = "add"
-	ChangeOpDelete          = "delete"
-	ChangeOpUpdate          = "update"
-	ChangeOpKeep            = "keep" // unchanged
+	ChangeOpDelete ChangeOp = "delete"
+	ChangeOpUpdate ChangeOp = "update"
+	ChangeOpKeep   ChangeOp = "keep" // unchanged
 )
 
 var (

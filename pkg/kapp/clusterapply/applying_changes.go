@@ -52,7 +52,7 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 		go func() {
 			defer func() { wg.Done() }()
 
-			err := clusterChange.ApplyOp().Execute()
+			err := clusterChange.Apply()
 			applyErrCh <- err
 		}()
 

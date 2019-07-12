@@ -49,7 +49,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 				c.ui.Notify("waiting on %s", desc)
 			}
 
-			state, err := change.Cluster.IsDoneApplyingOp().Execute()
+			state, err := change.Cluster.IsDoneApplying()
 			if err != nil {
 				return nil, fmt.Errorf("waiting on %s errored: %s", desc, err)
 			}
