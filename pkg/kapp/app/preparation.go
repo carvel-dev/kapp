@@ -20,7 +20,12 @@ func NewPreparation(coreClient kubernetes.Interface, dynamicClient dynamic.Inter
 }
 
 func (a Preparation) PrepareResources(resources []ctlres.Resource, opts PrepareResourcesOpts) ([]ctlres.Resource, error) {
-	resources, err := ctlres.NewUniqueResources(resources).Resources()
+	err := a.validateBasicInfo(resources)
+	if err != nil {
+		return nil, err
+	}
+
+	resources, err = ctlres.NewUniqueResources(resources).Resources()
 	if err != nil {
 		return nil, err
 	}
@@ -79,6 +84,24 @@ func (a Preparation) placeIntoNamespace(resources []ctlres.Resource, opts Prepar
 	return resources, nil
 }
 
+func (a Preparation) validateBasicInfo(resources []ctlres.Resource) error {
+	var errs []error
+
+	for _, res := range resources {
+		if res.Kind() == "" {
+			errs = append(errs, fmt.Errorf("Expected 'kind' on resource '%s' to be non-empty", res.Description()))
+		}
+		if res.APIVersion() == "" {
+			errs = append(errs, fmt.Errorf("Expected 'apiVersion' on resource '%s' to be non-empty", res.Description()))
+		}
+		if res.Name() == "" {
+			errs = append(errs, fmt.Errorf("Expected 'metadata.name' on resource '%s' to be non-empty", res.Description()))
+		}
+	}
+
+	return a.combinedErr(errs)
+}
+
 func (a Preparation) ValidateResources(resources []ctlres.Resource, opts PrepareResourcesOpts) error {
 	return a.validateAllows(resources, opts)
 }
@@ -102,6 +125,10 @@ func (a Preparation) validateAllows(resources []ctlres.Resource, opts PrepareRes
 		}
 	}
 
+	return a.combinedErr(errs)
+}
+
+func (a Preparation) combinedErr(errs []error) error {
 	if len(errs) > 0 {
 		var msgs []string
 		for _, err := range errs {
