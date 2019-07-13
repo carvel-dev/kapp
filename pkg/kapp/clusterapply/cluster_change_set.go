@@ -26,6 +26,15 @@ func NewClusterChangeSet(changes []ctldiff.Change, opts ClusterChangeSetOpts,
 	return ClusterChangeSet{changes, opts, clusterChangeFactory, ui}
 }
 
+func (c ClusterChangeSet) Calculate() []ChangeView {
+	var result []ChangeView
+	for _, change := range c.changes {
+		clusterChange := c.clusterChangeFactory.NewClusterChange(change)
+		result = append(result, clusterChange)
+	}
+	return result
+}
+
 func (c ClusterChangeSet) Apply() error {
 	changesGraph, err := ctldgraph.NewChangeGraph(c.changes)
 	if err != nil {

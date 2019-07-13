@@ -72,7 +72,11 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	ctldiff.NewChangeSetView(changes, o.DiffFlags.ChangeSetViewOpts).Print(o.ui)
+	msgsUI := cmdcore.NewMessagesUI(o.ui)
+	clusterChangeFactory := ctlcap.NewClusterChangeFactory(o.ApplyFlags.ClusterChangeOpts, identifiedResources, changeFactory, msgsUI)
+	clusterChangeSet := ctlcap.NewClusterChangeSet(changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI)
+
+	ctlcap.NewChangeSetView(clusterChangeSet.Calculate(), o.DiffFlags.ChangeSetViewOpts).Print(o.ui)
 
 	if o.DiffFlags.Run {
 		return nil
@@ -83,13 +87,10 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	msgsUI := cmdcore.NewMessagesUI(o.ui)
-	clusterChangeFactory := ctlcap.NewClusterChangeFactory(o.ApplyFlags.ClusterChangeOpts, identifiedResources, changeFactory, msgsUI)
-
 	touch := ctlapp.Touch{App: app, Description: "delete", IgnoreSuccessErr: true}
 
 	return touch.Do(func() error {
-		err := ctlcap.NewClusterChangeSet(changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI).Apply()
+		err := clusterChangeSet.Apply()
 		if err != nil {
 			return err
 		}

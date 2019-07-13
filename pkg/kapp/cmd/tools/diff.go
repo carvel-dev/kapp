@@ -2,6 +2,7 @@ package tools
 
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
+	ctlcap "github.com/k14s/kapp/pkg/kapp/clusterapply"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
@@ -51,7 +52,13 @@ func (o *DiffOptions) Run() error {
 		return err
 	}
 
-	ctldiff.NewChangeSetView(changes, o.DiffFlags.ChangeSetViewOpts).Print(o.ui)
+	var changeViews []ctlcap.ChangeView
+
+	for _, change := range changes {
+		changeViews = append(changeViews, DiffChangeView{change})
+	}
+
+	ctlcap.NewChangeSetView(changeViews, o.DiffFlags.ChangeSetViewOpts).Print(o.ui)
 
 	return nil
 }
@@ -77,3 +84,34 @@ func (o *DiffOptions) fileResources(files []string) ([]ctlres.Resource, error) {
 
 	return newResources, nil
 }
+
+type DiffChangeView struct {
+	change ctldiff.Change
+}
+
+var _ ctlcap.ChangeView = DiffChangeView{}
+
+func (v DiffChangeView) Resource() ctlres.Resource { return v.change.NewOrExistingResource() }
+
+func (v DiffChangeView) ApplyOp() ctlcap.ClusterChangeApplyOp {
+	switch v.change.Op() {
+	case ctldiff.ChangeOpAdd:
+		return ctlcap.ClusterChangeApplyOpAdd
+	case ctldiff.ChangeOpDelete:
+		return ctlcap.ClusterChangeApplyOpDelete
+	case ctldiff.ChangeOpUpdate:
+		return ctlcap.ClusterChangeApplyOpUpdate
+	case ctldiff.ChangeOpKeep:
+		return ctlcap.ClusterChangeApplyOpNoop
+	default:
+		panic("Unknown change apply op")
+	}
+}
+
+// Since we are diffing changes without a cluster, there will be no wait operations
+func (v DiffChangeView) WaitOp() ctlcap.ClusterChangeWaitOp { return ctlcap.ClusterChangeWaitOpNoop }
+
+func (v DiffChangeView) TextDiff() ctldiff.TextDiff { return v.change.TextDiff() }
+
+func (v DiffChangeView) IsIgnored() bool       { return v.change.IsIgnored() }
+func (v DiffChangeView) IgnoredReason() string { return v.change.IgnoredReason() }

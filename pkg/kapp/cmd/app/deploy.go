@@ -134,7 +134,11 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	changeSetView := ctldiff.NewChangeSetView(changes, o.DiffFlags.ChangeSetViewOpts)
+	msgsUI := cmdcore.NewMessagesUI(o.ui)
+	clusterChangeFactory := ctlcap.NewClusterChangeFactory(o.ApplyFlags.ClusterChangeOpts, identifiedResources, changeFactory, msgsUI)
+	clusterChangeSet := ctlcap.NewClusterChangeSet(changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI)
+
+	changeSetView := ctlcap.NewChangeSetView(clusterChangeSet.Calculate(), o.DiffFlags.ChangeSetViewOpts)
 	changeSetView.Print(o.ui)
 
 	// Validate after showing change set to make it easier to see all resources
@@ -152,9 +156,6 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	msgsUI := cmdcore.NewMessagesUI(o.ui)
-	clusterChangeFactory := ctlcap.NewClusterChangeFactory(o.ApplyFlags.ClusterChangeOpts, identifiedResources, changeFactory, msgsUI)
-
 	touch := ctlapp.Touch{
 		App:              app,
 		Description:      "update: " + changeSetView.Summary(),
@@ -162,9 +163,7 @@ func (o *DeployOptions) Run() error {
 		IgnoreSuccessErr: true,
 	}
 
-	return touch.Do(func() error {
-		return ctlcap.NewClusterChangeSet(changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI).Apply()
-	})
+	return touch.Do(clusterChangeSet.Apply)
 }
 
 func (o *DeployOptions) newResources() ([]ctlres.Resource, error) {

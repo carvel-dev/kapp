@@ -18,6 +18,8 @@ const (
 	ClusterChangeApplyOpNoop   ClusterChangeApplyOp = "noop"
 )
 
+var allClusterChangeApplyOps = []ClusterChangeApplyOp{ClusterChangeApplyOpAdd, ClusterChangeApplyOpDelete, ClusterChangeApplyOpUpdate}
+
 type ClusterChangeWaitOp string
 
 const (
@@ -41,6 +43,8 @@ type ClusterChange struct {
 	changeFactory       ctldiff.ChangeFactory
 	ui                  UI
 }
+
+var _ ChangeView = ClusterChange{}
 
 func NewClusterChange(change ctldiff.Change, opts ClusterChangeOpts,
 	identifiedResources ctlres.IdentifiedResources, changeFactory ctldiff.ChangeFactory, ui UI) ClusterChange {
@@ -161,6 +165,11 @@ func (c ClusterChange) WaitDescription() string {
 		return fmt.Sprintf("%s %s", op, c.change.NewOrExistingResource().Description())
 	}
 }
+
+func (c ClusterChange) Resource() ctlres.Resource  { return c.change.NewOrExistingResource() }
+func (c ClusterChange) TextDiff() ctldiff.TextDiff { return c.change.TextDiff() }
+func (c ClusterChange) IsIgnored() bool            { return c.change.IsIgnored() }
+func (c ClusterChange) IgnoredReason() string      { return c.change.IgnoredReason() }
 
 func (c ClusterChange) applyErr(err error) error {
 	if err == nil {

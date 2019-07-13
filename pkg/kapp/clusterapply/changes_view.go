@@ -1,4 +1,4 @@
-package diff
+package clusterapply
 
 import (
 	"fmt"
@@ -7,12 +7,22 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
+type ChangeView interface {
+	Resource() ctlres.Resource
+	ApplyOp() ClusterChangeApplyOp
+	WaitOp() ClusterChangeWaitOp
+	TextDiff() ctldiff.TextDiff
+	IsIgnored() bool
+	IgnoredReason() string
+}
+
 type ChangesView struct {
-	Changes     []Change
+	ChangeViews []ChangeView
 	Sort        bool
-	IncludeFunc func(ch Change) bool
 
 	summary string
 }
@@ -35,7 +45,8 @@ func (v *ChangesView) Print(ui ui.UI) {
 			versionHeader,
 			uitable.NewHeader("Conditions"),
 			uitable.NewHeader("Age"),
-			uitable.NewHeader("Changed"),
+			uitable.NewHeader("Op"),
+			uitable.NewHeader("Wait\nfor"),
 			ignoredHeader,
 			uitable.NewHeader("Ignored Reason"),
 		},
@@ -55,15 +66,9 @@ func (v *ChangesView) Print(ui ui.UI) {
 
 	countsView := NewChangesCountsView()
 
-	for _, change := range v.Changes {
-		if !v.IncludeFunc(change) {
-			countsView.AddHidden(change.Op())
-			continue
-		}
-
-		countsView.Add(change.Op())
-
-		resource := change.NewOrExistingResource()
+	for _, view := range v.ChangeViews {
+		resource := view.Resource()
+		countsView.Add(view.ApplyOp())
 
 		row := []uitable.Value{
 			uitable.NewValueString(resource.Namespace()),
@@ -88,9 +93,10 @@ func (v *ChangesView) Print(ui ui.UI) {
 		}
 
 		row = append(row,
-			v.opCode(change),
-			uitable.NewValueBool(change.IsIgnored()),
-			uitable.NewValueString(change.IgnoredReason()),
+			v.applyOpCode(view.ApplyOp()),
+			v.waitOpCode(view.WaitOp()),
+			uitable.NewValueBool(view.IsIgnored()),
+			uitable.NewValueString(view.IgnoredReason()),
 		)
 
 		table.Rows = append(table.Rows, row)
@@ -105,41 +111,48 @@ func (v *ChangesView) Print(ui ui.UI) {
 
 func (v *ChangesView) Summary() string { return v.summary }
 
-func (v *ChangesView) opCode(change Change) uitable.Value {
-	switch change.Op() {
-	case ChangeOpAdd:
+func (v *ChangesView) applyOpCode(op ClusterChangeApplyOp) uitable.Value {
+	switch op {
+	case ClusterChangeApplyOpAdd:
 		return uitable.ValueFmt{V: uitable.NewValueString("add"), Error: false}
-	case ChangeOpDelete:
+	case ClusterChangeApplyOpDelete:
 		return uitable.ValueFmt{V: uitable.NewValueString("del"), Error: true}
-	case ChangeOpUpdate:
+	case ClusterChangeApplyOpUpdate:
 		return uitable.ValueFmt{V: uitable.NewValueString("mod"), Error: false}
-	case ChangeOpKeep:
+	case ClusterChangeApplyOpNoop:
 		return uitable.NewValueString("")
 	default:
 		return uitable.NewValueString("???")
-	} // TODO yellow color?
+	}
+}
+
+func (v *ChangesView) waitOpCode(op ClusterChangeWaitOp) uitable.Value {
+	switch op {
+	case ClusterChangeWaitOpOK:
+		return uitable.NewValueString("ok") // TODO highlight for apply op noop?
+	case ClusterChangeWaitOpDelete:
+		return uitable.NewValueString("del")
+	case ClusterChangeWaitOpNoop:
+		return uitable.NewValueString("")
+	default:
+		return uitable.NewValueString("???")
+	}
 }
 
 type ChangesCountsView struct {
-	all    map[ChangeOp]int
-	hidden map[ChangeOp]int
+	all map[ClusterChangeApplyOp]int
 }
 
 func NewChangesCountsView() *ChangesCountsView {
-	return &ChangesCountsView{map[ChangeOp]int{}, map[ChangeOp]int{}}
+	return &ChangesCountsView{map[ClusterChangeApplyOp]int{}}
 }
 
-func (v *ChangesCountsView) Add(op ChangeOp)       { v.all[op] += 1 }
-func (v *ChangesCountsView) AddHidden(op ChangeOp) { v.hidden[op] += 1 }
+func (v *ChangesCountsView) Add(op ClusterChangeApplyOp) { v.all[op] += 1 }
 
 func (v *ChangesCountsView) String() string {
 	result := []string{}
-	for _, op := range allChangeOps {
-		hiddenStr := ""
-		if v.hidden[op] > 0 {
-			hiddenStr = fmt.Sprintf(" (%d hidden)", v.hidden[op])
-		}
-		result = append(result, fmt.Sprintf("%d %s%s", v.all[op], op, hiddenStr))
+	for _, op := range allClusterChangeApplyOps {
+		result = append(result, fmt.Sprintf("%d %s", v.all[op], op))
 	}
 	return strings.Join(result, ", ")
 }
