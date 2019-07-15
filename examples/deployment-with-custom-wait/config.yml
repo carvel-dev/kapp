@@ -1,0 +1,29 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: default
+  name: deployment-with-custom-wait
+  annotations:
+    kapp.k14s.io/apps-v1-deployment-wait-minimum-replicas-available: "50%"
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: ""
+  template:
+    metadata:
+      labels:
+        app: ""
+    spec:
+      containers:
+      - name: master
+        image: ubuntu
+        command: ["/bin/sh", "-c", "sleep 100003"]
+        readinessProbe:
+          exec:
+            command: ["/bin/sh", "-c", "sleep 10"]
+          initialDelaySeconds: 5
+          timeoutSeconds: 13
+          periodSeconds: 15
+

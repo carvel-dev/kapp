@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -42,6 +43,7 @@ type Resource interface {
 	DeepCopyRaw() map[string]interface{}
 	AsYAMLBytes() ([]byte, error)
 	AsTypedObj(obj interface{}) error
+	AsUncheckedTypedObj(obj interface{}) error
 
 	Debug(string)
 
@@ -221,6 +223,14 @@ func (r *ResourceImpl) AsYAMLBytes() ([]byte, error) {
 
 func (r *ResourceImpl) AsTypedObj(obj interface{}) error {
 	return scheme.Scheme.Convert(r.unstructuredPtr(), obj, nil)
+}
+
+func (r *ResourceImpl) AsUncheckedTypedObj(obj interface{}) error {
+	jsonBs, err := json.Marshal(r.un.Object)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(jsonBs, obj)
 }
 
 func (r *ResourceImpl) Debug(title string) {

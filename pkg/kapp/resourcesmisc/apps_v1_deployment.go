@@ -2,22 +2,29 @@ package resourcesmisc
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	appsv1 "k8s.io/api/apps/v1"
 )
 
+const (
+	appsV1DeploymentWaitMinimumReplicasAvailableAnnKey = "kapp.k14s.io/apps-v1-deployment-wait-minimum-replicas-available" // values: "10", "5%"
+)
+
 type AppsV1Deployment struct {
-	resource ctlres.Resource
+	resource     ctlres.Resource
+	associatedRs []ctlres.Resource
 }
 
-func NewAppsV1Deployment(resource ctlres.Resource) *AppsV1Deployment {
+func NewAppsV1Deployment(resource ctlres.Resource, associatedRs []ctlres.Resource) *AppsV1Deployment {
 	matcher := ctlres.APIVersionKindMatcher{
 		APIVersion: "apps/v1",
 		Kind:       "Deployment",
 	}
 	if matcher.Matches(resource) {
-		return &AppsV1Deployment{resource}
+		return &AppsV1Deployment{resource, associatedRs}
 	}
 	return nil
 }
@@ -35,10 +42,72 @@ func (s AppsV1Deployment) IsDoneApplying() DoneApplyState {
 			"Waiting for generation %d to be observed", dep.Generation)}
 	}
 
+	minRepAvailable, found := s.resource.Annotations()[appsV1DeploymentWaitMinimumReplicasAvailableAnnKey]
+	if found {
+		return s.isMinReplicasAvailable(dep, minRepAvailable)
+	}
+
 	if dep.Status.UnavailableReplicas > 0 {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(
 			"Waiting for %d unavailable replicas", dep.Status.UnavailableReplicas)}
 	}
 
 	return DoneApplyState{Done: true, Successful: true}
+}
+
+func (s AppsV1Deployment) isMinReplicasAvailable(dep appsv1.Deployment, expectedMinRepAvailableStr string) DoneApplyState {
+	isPercent := strings.HasSuffix(expectedMinRepAvailableStr, "%")
+
+	minRepAvailable, err := strconv.Atoi(strings.TrimSuffix(expectedMinRepAvailableStr, "%"))
+	if err != nil {
+		return DoneApplyState{Done: true, Successful: false,
+			Message: fmt.Sprintf("Error: Failed to parse %s: %s", appsV1DeploymentWaitMinimumReplicasAvailableAnnKey, err)}
+	}
+
+	if dep.Spec.Replicas == nil {
+		return DoneApplyState{Done: true, Successful: false,
+			Message: fmt.Sprintf("Error: Failed to find spec.replicas")}
+	}
+
+	totalReplicas := int(*dep.Spec.Replicas)
+
+	if isPercent {
+		minRepAvailable = totalReplicas * minRepAvailable / 100
+	}
+
+	if minRepAvailable > totalReplicas {
+		minRepAvailable = totalReplicas
+	}
+	if totalReplicas > 0 && minRepAvailable <= 0 {
+		minRepAvailable = 1
+	}
+
+	rs, err := s.findLatestReplicaSet(dep)
+	if err != nil {
+		return DoneApplyState{Done: true, Successful: false,
+			Message: fmt.Sprintf("Error: Failed to find latest replicaset: %s", err)}
+	}
+
+	return rs.IsDoneApplyingWithMinimum(minRepAvailable)
+}
+
+const (
+	deploymentRevAnnKey = "deployment.kubernetes.io/revision"
+)
+
+func (s AppsV1Deployment) findLatestReplicaSet(dep appsv1.Deployment) (*ExtensionsAndAppsVxReplicaSet, error) {
+	expectedRevKey, found := dep.Annotations[deploymentRevAnnKey]
+	if !found {
+		return nil, fmt.Errorf("Expected to find '%s' but did not", deploymentRevAnnKey)
+	}
+
+	for _, res := range s.associatedRs {
+		// Cannot use appsv1 RS since no gurantee which versions are in associated resources
+		rs := NewExtensionsAndAppsVxReplicaSet(res)
+		if rs != nil && res.Annotations()[deploymentRevAnnKey] == expectedRevKey {
+			return rs, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Expected to find replica set (rev %s) in associated resources but did not", expectedRevKey)
 }
