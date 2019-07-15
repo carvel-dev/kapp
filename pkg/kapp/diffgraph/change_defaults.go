@@ -1,7 +1,6 @@
 package diffgraph
 
 import (
-	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 )
@@ -12,7 +11,7 @@ var (
 )
 
 type ChangeDefaults struct {
-	change ctldiff.Change
+	change ActualChange
 }
 
 func (d ChangeDefaults) Groups() ([]ChangeGroup, error) {
@@ -47,7 +46,7 @@ func (d ChangeDefaults) AllRules() ([]ChangeRule, error) {
 		})
 	}
 
-	if len(d.change.NewOrExistingResource().Namespace()) > 0 {
+	if len(d.change.Resource().Namespace()) > 0 {
 		rules = append(rules, ChangeRule{
 			Action:       ChangeRuleActionUpsert,
 			Order:        ChangeRuleOrderAfter,
@@ -60,9 +59,9 @@ func (d ChangeDefaults) AllRules() ([]ChangeRule, error) {
 }
 
 func (d ChangeDefaults) isCRD() bool {
-	return ctlresm.NewApiExtensionsVxCRD(d.change.NewOrExistingResource()) != nil
+	return ctlresm.NewApiExtensionsVxCRD(d.change.Resource()) != nil
 }
 
 func (d ChangeDefaults) isNs() bool {
-	return ctlres.APIGroupKindMatcher{Kind: "Namespace"}.Matches(d.change.NewOrExistingResource())
+	return ctlres.APIGroupKindMatcher{Kind: "Namespace"}.Matches(d.change.Resource())
 }

@@ -21,6 +21,6 @@ func NewClusterChangeFactory(
 	return ClusterChangeFactory{opts, identifiedResources, changeFactory, ui}
 }
 
-func (f ClusterChangeFactory) NewClusterChange(change ctldiff.Change) ClusterChange {
+func (f ClusterChangeFactory) NewClusterChange(change ctldiff.Change) *ClusterChange {
 	return NewClusterChange(change, f.opts, f.identifiedResources, f.changeFactory, f.ui)
 }

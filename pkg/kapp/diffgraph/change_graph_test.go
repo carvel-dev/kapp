@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
@@ -63,21 +62,21 @@ metadata:
 
 	output := strings.TrimSpace(graph.PrintStr())
 	expectedOutput := strings.TrimSpace(`
-(add) configmap/app-config () cluster
-(add) job/import-etcd-into-db () cluster
-(add) job/migrations () cluster
-  (add) job/import-etcd-into-db () cluster
-(add) service/app () cluster
-(add) ingress/app () cluster
-(add) deployment/app () cluster
-  (add) job/migrations () cluster
-    (add) job/import-etcd-into-db () cluster
-(add) job/app-health-check () cluster
-  (add) service/app () cluster
-  (add) ingress/app () cluster
-  (add) deployment/app () cluster
-    (add) job/migrations () cluster
-      (add) job/import-etcd-into-db () cluster
+(upsert) configmap/app-config () cluster
+(upsert) job/import-etcd-into-db () cluster
+(upsert) job/migrations () cluster
+  (upsert) job/import-etcd-into-db () cluster
+(upsert) service/app () cluster
+(upsert) ingress/app () cluster
+(upsert) deployment/app () cluster
+  (upsert) job/migrations () cluster
+    (upsert) job/import-etcd-into-db () cluster
+(upsert) job/app-health-check () cluster
+  (upsert) service/app () cluster
+  (upsert) ingress/app () cluster
+  (upsert) deployment/app () cluster
+    (upsert) job/migrations () cluster
+      (upsert) job/import-etcd-into-db () cluster
 `)
 
 	if output != expectedOutput {
@@ -136,11 +135,17 @@ func buildChangeGraph(resourcesBs string, t *testing.T) (*ctldgraph.ChangeGraph,
 		t.Fatalf("Expected resources to parse")
 	}
 
-	changeFactory := ctldiff.NewChangeFactory(nil)
-	changes, err := ctldiff.NewChangeSet(nil, newResources, ctldiff.ChangeSetOpts{}, changeFactory).Calculate()
-	if err != nil {
-		t.Fatalf("Expected changes to be calculated")
+	actualChanges := []ctldgraph.ActualChange{}
+	for _, res := range newResources {
+		actualChanges = append(actualChanges, actualChangeFromRes{res})
 	}
 
-	return ctldgraph.NewChangeGraph(changes)
+	return ctldgraph.NewChangeGraph(actualChanges)
 }
+
+type actualChangeFromRes struct {
+	res ctlres.Resource
+}
+
+func (a actualChangeFromRes) Resource() ctlres.Resource    { return a.res }
+func (a actualChangeFromRes) Op() ctldgraph.ActualChangeOp { return ctldgraph.ActualChangeOpUpsert }

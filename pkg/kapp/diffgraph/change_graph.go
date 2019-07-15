@@ -2,15 +2,13 @@ package diffgraph
 
 import (
 	"fmt"
-
-	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 )
 
 type ChangeGraph struct {
 	changes []*Change
 }
 
-func NewChangeGraph(changes []ctldiff.Change) (*ChangeGraph, error) {
+func NewChangeGraph(changes []ActualChange) (*ChangeGraph, error) {
 	graphChanges := []*Change{}
 
 	for _, change := range changes {
@@ -49,6 +47,10 @@ func NewChangeGraph(changes []ctldiff.Change) (*ChangeGraph, error) {
 	return graph, graph.checkCycles()
 }
 
+func (g *ChangeGraph) All() []*Change {
+	return g.AllMatching(func(_ *Change) bool { return true })
+}
+
 func (g *ChangeGraph) AllMatching(matchFunc func(*Change) bool) []*Change {
 	var result []*Change
 	// Need to do this _only_ at the first level since
@@ -59,6 +61,18 @@ func (g *ChangeGraph) AllMatching(matchFunc func(*Change) bool) []*Change {
 		}
 	}
 	return result
+}
+
+func (g *ChangeGraph) RemoveMatching(matchFunc func(*Change) bool) {
+	var result []*Change
+	// Need to do this _only_ at the first level since
+	// all changes are included at the top level
+	for _, change := range g.changes {
+		if !matchFunc(change) {
+			result = append(result, change)
+		}
+	}
+	g.changes = result
 }
 
 func (g *ChangeGraph) Print() {
@@ -72,7 +86,7 @@ func (g *ChangeGraph) PrintStr() string {
 func (g *ChangeGraph) printChanges(changes []*Change, indent string) string {
 	var result string
 	for _, change := range changes {
-		result += fmt.Sprintf("%s(%s) %s\n", indent, change.Change.Op(), change.Change.NewOrExistingResource().Description())
+		result += fmt.Sprintf("%s(%s) %s\n", indent, change.Change.Op(), change.Change.Resource().Description())
 		result += g.printChanges(change.WaitingFor, indent+"  ")
 	}
 	return result
@@ -80,7 +94,7 @@ func (g *ChangeGraph) printChanges(changes []*Change, indent string) string {
 
 func (g *ChangeGraph) checkCycles() error {
 	for _, change := range g.changes {
-		changeDesc := change.Change.NewOrExistingResource().Description()
+		changeDesc := change.Change.Resource().Description()
 
 		err := g.checkCyclesInChanges(change.WaitingFor, change, changeDesc)
 		if err != nil {
@@ -92,7 +106,7 @@ func (g *ChangeGraph) checkCycles() error {
 
 func (g *ChangeGraph) checkCyclesInChanges(changes []*Change, selfChange *Change, descPath string) error {
 	for _, change := range changes {
-		changeDesc := fmt.Sprintf("%s -> %s", descPath, change.Change.NewOrExistingResource().Description())
+		changeDesc := fmt.Sprintf("%s -> %s", descPath, change.Change.Resource().Description())
 		if change == selfChange {
 			return fmt.Errorf("Detected cycle in grouped changes: %s", changeDesc)
 		}

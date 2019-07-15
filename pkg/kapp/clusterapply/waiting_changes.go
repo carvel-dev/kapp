@@ -17,7 +17,7 @@ type WaitingChanges struct {
 
 type WaitingChange struct {
 	Graph   *ctldgraph.Change
-	Cluster ClusterChange
+	Cluster *ClusterChange
 }
 
 func NewWaitingChanges(numTotal int, opts ClusterChangeSetOpts, ui UI) *WaitingChanges {
@@ -25,7 +25,6 @@ func NewWaitingChanges(numTotal int, opts ClusterChangeSetOpts, ui UI) *WaitingC
 }
 
 func (c *WaitingChanges) Track(changes []WaitingChange) {
-	c.numWaited += len(changes)
 	c.trackedChanges = append(c.trackedChanges, changes...)
 }
 
@@ -37,7 +36,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 	startTime := time.Now()
 
 	for {
-		c.ui.NotifySection("waiting on %d changes [%d/%d]",
+		c.ui.NotifySection("waiting on %d changes [%d/%d done]",
 			len(c.trackedChanges), c.numWaited, c.numTotal)
 
 		var newInProgressChanges []WaitingChange
@@ -52,6 +51,9 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 			state, err := change.Cluster.IsDoneApplying()
 			if err != nil {
 				return nil, fmt.Errorf("waiting on %s errored: %s", desc, err)
+			}
+			if state.Done {
+				c.numWaited += 1
 			}
 
 			switch {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
 const (
@@ -15,8 +15,21 @@ const (
 	changeRuleAnnPrefixKey = "kapp.k14s.io/change-rule."
 )
 
+type ActualChange interface {
+	Resource() ctlres.Resource
+	Op() ActualChangeOp
+}
+
+type ActualChangeOp string
+
+const (
+	ActualChangeOpUpsert ActualChangeOp = "upsert"
+	ActualChangeOpDelete ActualChangeOp = "delete"
+	ActualChangeOpNoop   ActualChangeOp = "noop"
+)
+
 type Change struct {
-	Change     ctldiff.Change
+	Change     ActualChange
 	WaitingFor []*Change
 
 	groups *[]ChangeGroup
@@ -32,7 +45,7 @@ func (c *Change) Groups() ([]ChangeGroup, error) {
 
 	var groups []ChangeGroup
 
-	for k, v := range c.Change.NewOrExistingResource().Annotations() {
+	for k, v := range c.Change.Resource().Annotations() {
 		if k == changeGroupAnnKey || strings.HasPrefix(k, changeGroupAnnPrefixKey) {
 			groupKey, err := NewChangeGroupFromAnnString(v)
 			if err != nil {
@@ -60,7 +73,7 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 
 	var rules []ChangeRule
 
-	for k, v := range c.Change.NewOrExistingResource().Annotations() {
+	for k, v := range c.Change.Resource().Annotations() {
 		if k == changeRuleAnnKey || strings.HasPrefix(k, changeRuleAnnPrefixKey) {
 			rule, err := NewChangeRuleFromAnnString(v)
 			if err != nil {
@@ -82,15 +95,16 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 }
 
 func (c *Change) ApplicableRules() ([]ChangeRule, error) {
-	op := c.Change.Op()
 	var upsert, delete bool
 
+	op := c.Change.Op()
+
 	switch op {
-	case ctldiff.ChangeOpAdd, ctldiff.ChangeOpUpdate:
+	case ActualChangeOpUpsert:
 		upsert = true
-	case ctldiff.ChangeOpDelete:
+	case ActualChangeOpDelete:
 		delete = true
-	case ctldiff.ChangeOpKeep:
+	case ActualChangeOpNoop:
 	default:
 		return nil, fmt.Errorf("Unknown change operation: %s", op)
 	}
@@ -127,15 +141,15 @@ func (cs Changes) MatchesRule(rule ChangeRule, exceptChange *Change) ([]*Change,
 			op := change.Change.Op()
 
 			switch op {
-			case ctldiff.ChangeOpAdd, ctldiff.ChangeOpUpdate:
+			case ActualChangeOpUpsert:
 				if rule.TargetAction == ChangeRuleTargetActionUpserting {
 					result = append(result, change)
 				}
-			case ctldiff.ChangeOpDelete:
+			case ActualChangeOpDelete:
 				if rule.TargetAction == ChangeRuleTargetActionDeleting {
 					result = append(result, change)
 				}
-			case ctldiff.ChangeOpKeep:
+			case ActualChangeOpNoop:
 			default:
 				panic(fmt.Sprintf("Unknown change operation: %s", op))
 			}

@@ -138,7 +138,12 @@ func (o *DeployOptions) Run() error {
 	clusterChangeFactory := ctlcap.NewClusterChangeFactory(o.ApplyFlags.ClusterChangeOpts, identifiedResources, changeFactory, msgsUI)
 	clusterChangeSet := ctlcap.NewClusterChangeSet(changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI)
 
-	changeSetView := ctlcap.NewChangeSetView(clusterChangeSet.Calculate(), o.DiffFlags.ChangeSetViewOpts)
+	clusterChanges, clusterChangesGraph, err := clusterChangeSet.Calculate()
+	if err != nil {
+		return err
+	}
+
+	changeSetView := ctlcap.NewChangeSetView(ctlcap.ClusterChangesAsChangeViews(clusterChanges), o.DiffFlags.ChangeSetViewOpts)
 	changeSetView.Print(o.ui)
 
 	// Validate after showing change set to make it easier to see all resources
@@ -163,7 +168,9 @@ func (o *DeployOptions) Run() error {
 		IgnoreSuccessErr: true,
 	}
 
-	return touch.Do(clusterChangeSet.Apply)
+	return touch.Do(func() error {
+		return clusterChangeSet.Apply(clusterChangesGraph)
+	})
 }
 
 func (o *DeployOptions) newResources() ([]ctlres.Resource, error) {

@@ -24,10 +24,10 @@ func (c *BlockedChanges) Blocked() []*Change {
 func (c *BlockedChanges) WhyBlocked(changes []*Change) string {
 	var result string
 	for _, change := range changes {
-		result += fmt.Sprintf("%s\n", change.Change.NewOrExistingResource().Description())
+		result += fmt.Sprintf("%s\n", change.Change.Resource().Description())
 		for _, childChange := range change.WaitingFor {
 			if c.isBlocked(childChange) {
-				result += fmt.Sprintf("  [blocked] %s\n", childChange.Change.NewOrExistingResource().Description())
+				result += fmt.Sprintf("  [blocked] %s\n", childChange.Change.Resource().Description())
 			}
 		}
 	}

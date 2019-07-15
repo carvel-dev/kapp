@@ -31,8 +31,8 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 		return nil, nil
 	}
 
-	c.ui.NotifySection("applying %d changes [%d/%d]",
-		len(nonAppliedChanges), c.NumApplied()+len(nonAppliedChanges), c.numTotal)
+	c.ui.NotifySection("applying %d changes [%d/%d done]",
+		len(nonAppliedChanges), c.NumApplied(), c.numTotal)
 
 	var wg sync.WaitGroup
 	var result []WaitingChange
@@ -40,7 +40,7 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 
 	for _, change := range nonAppliedChanges {
 		c.markApplied(change)
-		clusterChange := c.clusterChangeFactory.NewClusterChange(change.Change)
+		clusterChange := change.Change.(wrappedClusterChange).ClusterChange
 
 		desc := clusterChange.ApplyDescription()
 		if len(desc) > 0 {
