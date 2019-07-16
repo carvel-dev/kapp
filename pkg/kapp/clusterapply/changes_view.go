@@ -31,8 +31,8 @@ func (v *ChangesView) Print(ui ui.UI) {
 	versionHeader := uitable.NewHeader("Version")
 	versionHeader.Hidden = true
 
-	ignoredHeader := uitable.NewHeader("Ignored")
-	ignoredHeader.Hidden = true
+	conditionsHeader := uitable.NewHeader("Conditions")
+	conditionsHeader.Title = "Conds."
 
 	table := uitable.Table{
 		Title:   "Changes",
@@ -43,12 +43,10 @@ func (v *ChangesView) Print(ui ui.UI) {
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Kind"),
 			versionHeader,
-			uitable.NewHeader("Conditions"),
+			conditionsHeader,
 			uitable.NewHeader("Age"),
 			uitable.NewHeader("Op"),
-			uitable.NewHeader("Wait\nfor"),
-			ignoredHeader,
-			uitable.NewHeader("Ignored Reason"),
+			uitable.NewHeader("Wait to"),
 		},
 	}
 
@@ -95,8 +93,6 @@ func (v *ChangesView) Print(ui ui.UI) {
 		row = append(row,
 			v.applyOpCode(view.ApplyOp()),
 			v.waitOpCode(view.WaitOp()),
-			uitable.NewValueBool(view.IsIgnored()),
-			uitable.NewValueString(view.IgnoredReason()),
 		)
 
 		table.Rows = append(table.Rows, row)
@@ -111,16 +107,31 @@ func (v *ChangesView) Print(ui ui.UI) {
 
 func (v *ChangesView) Summary() string { return v.summary }
 
+var (
+	applyOpCodeUI = map[ClusterChangeApplyOp]string{
+		ClusterChangeApplyOpAdd:    "create",
+		ClusterChangeApplyOpDelete: "delete",
+		ClusterChangeApplyOpUpdate: "update",
+		ClusterChangeApplyOpNoop:   "",
+	}
+
+	waitOpCodeUI = map[ClusterChangeWaitOp]string{
+		ClusterChangeWaitOpOK:     "reconcile",
+		ClusterChangeWaitOpDelete: "delete",
+		ClusterChangeWaitOpNoop:   "",
+	}
+)
+
 func (v *ChangesView) applyOpCode(op ClusterChangeApplyOp) uitable.Value {
 	switch op {
 	case ClusterChangeApplyOpAdd:
-		return uitable.ValueFmt{V: uitable.NewValueString("add"), Error: false}
+		return uitable.ValueFmt{V: uitable.NewValueString(applyOpCodeUI[op]), Error: false}
 	case ClusterChangeApplyOpDelete:
-		return uitable.ValueFmt{V: uitable.NewValueString("del"), Error: true}
+		return uitable.ValueFmt{V: uitable.NewValueString(applyOpCodeUI[op]), Error: true}
 	case ClusterChangeApplyOpUpdate:
-		return uitable.ValueFmt{V: uitable.NewValueString("mod"), Error: false}
+		return uitable.ValueFmt{V: uitable.NewValueString(applyOpCodeUI[op]), Error: false}
 	case ClusterChangeApplyOpNoop:
-		return uitable.NewValueString("")
+		return uitable.NewValueString(applyOpCodeUI[op])
 	default:
 		return uitable.NewValueString("???")
 	}
@@ -129,11 +140,11 @@ func (v *ChangesView) applyOpCode(op ClusterChangeApplyOp) uitable.Value {
 func (v *ChangesView) waitOpCode(op ClusterChangeWaitOp) uitable.Value {
 	switch op {
 	case ClusterChangeWaitOpOK:
-		return uitable.NewValueString("ok") // TODO highlight for apply op noop?
+		return uitable.NewValueString(waitOpCodeUI[op]) // TODO highlight for apply op noop?
 	case ClusterChangeWaitOpDelete:
-		return uitable.NewValueString("del")
+		return uitable.NewValueString(waitOpCodeUI[op])
 	case ClusterChangeWaitOpNoop:
-		return uitable.NewValueString("")
+		return uitable.NewValueString(waitOpCodeUI[op])
 	default:
 		return uitable.NewValueString("???")
 	}
@@ -152,7 +163,7 @@ func (v *ChangesCountsView) Add(op ClusterChangeApplyOp) { v.all[op] += 1 }
 func (v *ChangesCountsView) String() string {
 	result := []string{}
 	for _, op := range allClusterChangeApplyOps {
-		result = append(result, fmt.Sprintf("%d %s", v.all[op], op))
+		result = append(result, fmt.Sprintf("%d %s", v.all[op], applyOpCodeUI[op]))
 	}
 	return strings.Join(result, ", ")
 }

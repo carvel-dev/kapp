@@ -42,7 +42,7 @@ func (t ConditionsValue) String() string {
 				}
 			}
 		}
-		return fmt.Sprintf("%d OK / %d", okNum, totalNum)
+		return fmt.Sprintf("%d/%d ok", okNum, totalNum)
 	}
 	return ""
 }

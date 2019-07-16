@@ -26,7 +26,7 @@ func (v *ChangeSetView) Print(ui ui.UI) {
 	if v.opts.Changes {
 		for _, view := range v.changeViews {
 			textDiffView := ctldiff.NewTextDiffView(view.TextDiff(), v.opts.TextDiffViewOpts)
-			ui.BeginLinef("--- %s %s\n", view.ApplyOp(), view.Resource().Description())
+			ui.BeginLinef("--- %s %s\n", applyOpCodeUI[view.ApplyOp()], view.Resource().Description())
 			ui.PrintBlock([]byte(textDiffView.String()))
 		}
 	}

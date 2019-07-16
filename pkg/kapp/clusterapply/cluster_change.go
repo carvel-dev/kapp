@@ -168,7 +168,7 @@ func (c *ClusterChange) ApplyDescription() string {
 	case ClusterChangeApplyOpNoop:
 		return ""
 	default:
-		return fmt.Sprintf("%s %s", op, c.change.NewOrExistingResource().Description())
+		return fmt.Sprintf("%s %s", applyOpCodeUI[op], c.change.NewOrExistingResource().Description())
 	}
 }
 
@@ -178,7 +178,7 @@ func (c *ClusterChange) WaitDescription() string {
 	case ClusterChangeWaitOpNoop:
 		return ""
 	default:
-		return fmt.Sprintf("%s %s", op, c.change.NewOrExistingResource().Description())
+		return fmt.Sprintf("%s %s", waitOpCodeUI[op], c.change.NewOrExistingResource().Description())
 	}
 }
 

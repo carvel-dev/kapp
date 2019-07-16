@@ -20,6 +20,9 @@ func (v InspectView) Print(ui ui.UI) {
 	versionHeader := uitable.NewHeader("Version")
 	versionHeader.Hidden = true
 
+	conditionsHeader := uitable.NewHeader("Conditions")
+	conditionsHeader.Title = "Conds."
+
 	table := uitable.Table{
 		Title:   fmt.Sprintf("Resources in %s", v.Source),
 		Content: "resources",
@@ -30,11 +33,13 @@ func (v InspectView) Print(ui ui.UI) {
 			uitable.NewHeader("Kind"),
 			versionHeader,
 			uitable.NewHeader("Owner"),
-			uitable.NewHeader("Conditions"),
-			uitable.NewHeader("Sync\nstate"),
-			uitable.NewHeader("Sync\nmsg"),
+			conditionsHeader,
+			uitable.NewHeader("Rs"),
+			uitable.NewHeader("Ri"),
 			uitable.NewHeader("Age"),
 		},
+
+		Notes: []string{"Rs: Reconcile state", "Ri: Reconcile information"},
 	}
 
 	if v.Sort {
@@ -95,16 +100,16 @@ func NewValueResourceConverged(resource ctlres.Resource) ValueResourceConverged 
 	// TODO state vs err vs output
 	state, err := ctlcap.NewConvergedResource(resource, nil).IsDoneApplying(&noopUI{})
 	if err != nil {
-		stateVal = uitable.ValueFmt{V: uitable.NewValueString("ERR"), Error: true}
+		stateVal = uitable.ValueFmt{V: uitable.NewValueString("error"), Error: true}
 		reasonVal = uitable.NewValueString(err.Error())
 	} else {
 		switch {
 		case state.Done && state.Successful:
-			stateVal = uitable.ValueFmt{V: uitable.NewValueString("OK"), Error: false}
+			stateVal = uitable.ValueFmt{V: uitable.NewValueString("ok"), Error: false}
 		case state.Done && !state.Successful:
-			stateVal = uitable.ValueFmt{V: uitable.NewValueString("FAIL"), Error: true}
+			stateVal = uitable.ValueFmt{V: uitable.NewValueString("fail"), Error: true}
 		case !state.Done:
-			stateVal = uitable.ValueFmt{V: uitable.NewValueString("In progress"), Error: true}
+			stateVal = uitable.ValueFmt{V: uitable.NewValueString("ongoing"), Error: true}
 		}
 		reasonVal = uitable.NewValueString(state.Message)
 	}

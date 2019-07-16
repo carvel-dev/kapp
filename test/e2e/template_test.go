@@ -67,7 +67,7 @@ data:
 ` + depYAML
 
 	expectedYAML1Diff := `
---- add configmap/config-ver-1 (v1) namespace: kapp-test
+--- create configmap/config-ver-1 (v1) namespace: kapp-test
       0 + apiVersion: v1
       1 + data:
       2 +   key1: val1
@@ -81,7 +81,7 @@ data:
      10 +   name: config-ver-1
      11 +   namespace: kapp-test
      12 + 
---- add deployment/dep (apps/v1) namespace: kapp-test
+--- create deployment/dep (apps/v1) namespace: kapp-test
       0 + apiVersion: apps/v1
       1 + kind: Deployment
       2 + metadata:
@@ -118,7 +118,7 @@ data:
 `
 
 	expectedYAML2Diff := `
---- add configmap/config-ver-2 (v1) namespace: kapp-test
+--- create configmap/config-ver-2 (v1) namespace: kapp-test
   ...
   1,  1   data:
   2     -   key1: val1

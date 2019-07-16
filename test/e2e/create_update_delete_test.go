@@ -69,7 +69,7 @@ data:
 		NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
 	})
 
-	logger.Section("deploy update with 1 delete, 1 update, 1 add", func() {
+	logger.Section("deploy update with 1 delete, 1 update, 1 create", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 		NewMissingClusterResource(t, "service", "redis-master", env.Namespace, kubectl)

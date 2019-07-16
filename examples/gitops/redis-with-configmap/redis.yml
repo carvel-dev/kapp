@@ -6,7 +6,7 @@ metadata:
     kapp.k14s.io/versioned: ""
 data:
   redis-config: |
-    maxmemory 4mb
+    maxmemory 3mb
     maxmemory-policy allkeys-lru
 ---
 apiVersion: v1

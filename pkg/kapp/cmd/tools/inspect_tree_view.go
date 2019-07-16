@@ -25,6 +25,9 @@ func (v InspectTreeView) Print(ui ui.UI) {
 	versionHeader := uitable.NewHeader("Version")
 	versionHeader.Hidden = true
 
+	conditionsHeader := uitable.NewHeader("Conditions")
+	conditionsHeader.Title = "Conds."
+
 	table := uitable.Table{
 		Title:   fmt.Sprintf("Resources in %s", v.Source),
 		Content: "resources",
@@ -36,9 +39,9 @@ func (v InspectTreeView) Print(ui ui.UI) {
 			uitable.NewHeader("Kind"),
 			versionHeader,
 			uitable.NewHeader("Owner"),
-			uitable.NewHeader("Conditions"),
-			uitable.NewHeader("Sync\nstate"),
-			uitable.NewHeader("Sync\nmsg"),
+			conditionsHeader,
+			uitable.NewHeader("Rs"),
+			uitable.NewHeader("Ri"),
 			uitable.NewHeader("Age"),
 		},
 
@@ -49,6 +52,8 @@ func (v InspectTreeView) Print(ui ui.UI) {
 			{Column: 5, Asc: true},
 			{Column: 1, Asc: true},
 		},
+
+		Notes: []string{"Rs: Reconcile state", "Ri: Reconcile information"},
 	}
 
 	rsByUID := map[string]ctlres.Resource{}

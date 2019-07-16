@@ -76,35 +76,35 @@ data:
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 
 		expected := []map[string]string{{
-			"age":            "",
-			"changed":        "add",
-			"conditions":     "",
-			"ignored_reason": "",
-			"kind":           "ConfigMap",
-			"name":           "redis-config",
-			"namespace":      "kapp-test",
+			"age":        "",
+			"op":         "create",
+			"wait_to":    "reconcile",
+			"conditions": "",
+			"kind":       "ConfigMap",
+			"name":       "redis-config",
+			"namespace":  "kapp-test",
 		}, {
-			"age":            "",
-			"changed":        "add",
-			"conditions":     "",
-			"ignored_reason": "",
-			"kind":           "ConfigMap",
-			"name":           "redis-config1",
-			"namespace":      "kapp-test",
+			"age":        "",
+			"op":         "create",
+			"wait_to":    "reconcile",
+			"conditions": "",
+			"kind":       "ConfigMap",
+			"name":       "redis-config1",
+			"namespace":  "kapp-test",
 		}, {
-			"age":            "",
-			"changed":        "add",
-			"conditions":     "",
-			"ignored_reason": "",
-			"kind":           "ConfigMap",
-			"name":           "redis-config2",
-			"namespace":      "kapp-test",
+			"age":        "",
+			"op":         "create",
+			"wait_to":    "reconcile",
+			"conditions": "",
+			"kind":       "ConfigMap",
+			"name":       "redis-config2",
+			"namespace":  "kapp-test",
 		}}
 
 		if !reflect.DeepEqual(resp.Tables[0].Rows, expected) {
 			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
 		}
-		if resp.Tables[0].Notes[0] != "3 add, 0 delete, 0 update, 0 keep" {
+		if resp.Tables[0].Notes[0] != "3 create, 0 delete, 0 update" {
 			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
 		}
 	})
@@ -119,47 +119,47 @@ data:
 		if !reflect.DeepEqual(resp.Tables[0].Rows, expected) {
 			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
 		}
-		if resp.Tables[0].Notes[0] != "0 add, 0 delete, 0 update, 0 keep (3 hidden)" {
+		if resp.Tables[0].Notes[0] != "0 create, 0 delete, 0 update" {
 			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
 		}
 	})
 
-	logger.Section("deploy update with 1 delete, 1 update, 1 add", func() {
+	logger.Section("deploy update with 1 delete, 1 update, 1 create", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 
 		expected := []map[string]string{{
-			"age":            "<replaced>",
-			"changed":        "del",
-			"conditions":     "",
-			"ignored_reason": "",
-			"kind":           "ConfigMap",
-			"name":           "redis-config",
-			"namespace":      "kapp-test",
+			"age":        "<replaced>",
+			"op":         "delete",
+			"wait_to":    "delete",
+			"conditions": "",
+			"kind":       "ConfigMap",
+			"name":       "redis-config",
+			"namespace":  "kapp-test",
 		}, {
-			"age":            "<replaced>",
-			"changed":        "mod",
-			"conditions":     "",
-			"ignored_reason": "",
-			"kind":           "ConfigMap",
-			"name":           "redis-config1",
-			"namespace":      "kapp-test",
+			"age":        "<replaced>",
+			"op":         "update",
+			"wait_to":    "reconcile",
+			"conditions": "",
+			"kind":       "ConfigMap",
+			"name":       "redis-config1",
+			"namespace":  "kapp-test",
 		}, {
-			"age":            "",
-			"changed":        "add",
-			"conditions":     "",
-			"ignored_reason": "",
-			"kind":           "ConfigMap",
-			"name":           "redis-config3",
-			"namespace":      "kapp-test",
+			"age":        "",
+			"op":         "create",
+			"wait_to":    "reconcile",
+			"conditions": "",
+			"kind":       "ConfigMap",
+			"name":       "redis-config3",
+			"namespace":  "kapp-test",
 		}}
 
 		if !reflect.DeepEqual(replaceAge(resp.Tables[0].Rows), expected) {
 			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
 		}
-		if resp.Tables[0].Notes[0] != "1 add, 1 delete, 1 update, 0 keep (1 hidden)" {
+		if resp.Tables[0].Notes[0] != "1 create, 1 delete, 1 update" {
 			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
 		}
 	})
