@@ -12,7 +12,7 @@ type LabelFlags struct {
 }
 
 func (s *LabelFlags) Set(cmd *cobra.Command) {
-	cmd.Flags().StringSliceVar(&s.Labels, "labels", nil, "Set app label (format: key=val, key=) (can be specified multiple times)")
+	cmd.Flags().StringSliceVar(&s.Labels, "labels", nil, "Set app label (format: key=val, key=) (can repeat)")
 }
 
 func (s *LabelFlags) AsMap() (map[string]string, error) {

@@ -17,11 +17,11 @@ type ResourceFilterFlags struct {
 func (s *ResourceFilterFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&s.age, "filter-age", "", "Set age filter (example: 5m)")
 
-	cmd.Flags().StringSliceVar(&s.rf.Kinds, "filter-kind", nil, "Set kinds filter (example: CustomResourceDefinition) (can be specified multiple times)")
-	cmd.Flags().StringSliceVar(&s.rf.Namespaces, "filter-ns", nil, "Set namespace filter (example: knative-serving) (can be specified multiple times)")
-	cmd.Flags().StringSliceVar(&s.rf.Names, "filter-name", nil, "Set name filter (example: controller) (can be specified multiple times)")
-	cmd.Flags().StringSliceVar(&s.rf.KindNamespaces, "filter-kind-ns", nil, "Set kind-namespace filter (example: CustomResourceDefinition/, CustomResourceDefinition/knative-serving) (can be specified multiple times)")
-	cmd.Flags().StringSliceVar(&s.rf.KindNsNames, "filter-kind-ns-name", nil, "Set kind-namespace-name filter (example: Deployment/knative-serving/controller) (can be specified multiple times)")
+	cmd.Flags().StringSliceVar(&s.rf.Kinds, "filter-kind", nil, "Set kinds filter (example: Pod) (can repeat)")
+	cmd.Flags().StringSliceVar(&s.rf.Namespaces, "filter-ns", nil, "Set namespace filter (example: knative-serving) (can repeat)")
+	cmd.Flags().StringSliceVar(&s.rf.Names, "filter-name", nil, "Set name filter (example: controller) (can repeat)")
+	cmd.Flags().StringSliceVar(&s.rf.KindNamespaces, "filter-kind-ns", nil, "Set kind-namespace filter (example: Pod/, Pod/knative-serving) (can repeat)")
+	cmd.Flags().StringSliceVar(&s.rf.KindNsNames, "filter-kind-ns-name", nil, "Set kind-namespace-name filter (example: Deployment/knative-serving/controller) (can repeat)")
 
 	cmd.Flags().StringVar(&s.bf, "filter", "", `Set filter (example: {"and":[{"not":{"match":{kind":"foo%"}}},{"kind":"!foo"}]})`)
 }

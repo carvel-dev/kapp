@@ -23,9 +23,9 @@ func (s *DeployFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&s.IntoNamespace, "into-ns", "", "Place resources into namespace")
 	cmd.Flags().StringSliceVar(&s.MapNamespaces, "map-ns", nil, "Map resources from one namespace into another (could be specified multiple times)")
 
-	cmd.Flags().BoolVarP(&s.Patch, "patch", "p", false, "Add or update provided resource")
-	cmd.Flags().BoolVar(&s.AllowEmpty, "allow-empty", false, "Allow to apply empty set of resources (which results in deletion of all cluster resources)")
+	cmd.Flags().BoolVarP(&s.Patch, "patch", "p", false, "Add or update provided resources")
+	cmd.Flags().BoolVar(&s.AllowEmpty, "dangerous-allow-empty-list-of-resources", false, "Allow to apply empty set of resources (same as running kapp delete)")
 
 	cmd.Flags().BoolVar(&s.OverrideOwnershipOfExistingResources, "dangerous-override-ownership-of-existing-resources",
-		false, "Override ownership of existing resources. This option is useful to 'steal' existing resources from another app")
+		false, "Steal existing resources from another app")
 }
