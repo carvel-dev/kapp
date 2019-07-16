@@ -7,6 +7,7 @@ import (
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -40,6 +41,15 @@ func (s AppsV1Deployment) IsDoneApplying() DoneApplyState {
 	if dep.Generation != dep.Status.ObservedGeneration {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(
 			"Waiting for generation %d to be observed", dep.Generation)}
+	}
+
+	for _, cond := range dep.Status.Conditions {
+		if cond.Type == appsv1.DeploymentProgressing {
+			if cond.Status == corev1.ConditionFalse {
+				return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
+					"Deployment is not progressing: %s (message: %s)", cond.Reason, cond.Message)}
+			}
+		}
 	}
 
 	minRepAvailable, found := s.resource.Annotations()[appsV1DeploymentWaitMinimumReplicasAvailableAnnKey]
