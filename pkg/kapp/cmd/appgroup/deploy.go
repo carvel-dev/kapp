@@ -26,6 +26,7 @@ type DeployAppFlags struct {
 	DiffFlags           cmdtools.DiffFlags
 	ResourceFilterFlags cmdtools.ResourceFilterFlags
 	ApplyFlags          cmdapp.ApplyFlags
+	DeleteApplyFlags    cmdapp.ApplyFlags
 	DeployFlags         cmdapp.DeployFlags
 	LabelFlags          cmdapp.LabelFlags
 }
@@ -45,7 +46,8 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	o.DeployFlags.Set(cmd)
 	o.AppFlags.DiffFlags.SetWithPrefix("diff", cmd)
 	o.AppFlags.ResourceFilterFlags.Set(cmd)
-	o.AppFlags.ApplyFlags.SetWithDefaults(cmdapp.ApplyFlagsDeployDefaults, cmd)
+	o.AppFlags.ApplyFlags.SetWithDefaults("", cmdapp.ApplyFlagsDeployDefaults, cmd)
+	o.AppFlags.DeleteApplyFlags.SetWithDefaults("delete", cmdapp.ApplyFlagsDeleteDefaults, cmd)
 	o.AppFlags.DeployFlags.Set(cmd)
 	return cmd
 }
@@ -160,7 +162,7 @@ func (o *DeployOptions) deleteApp(name string) error {
 		NamespaceFlags: o.AppGroupFlags.NamespaceFlags,
 	}
 	deleteOpts.DiffFlags = o.AppFlags.DiffFlags
-	deleteOpts.ApplyFlags = cmdapp.ApplyFlagsDeleteDefaults // TODO better conf
+	deleteOpts.ApplyFlags = o.AppFlags.DeleteApplyFlags
 
 	return deleteOpts.Run()
 }

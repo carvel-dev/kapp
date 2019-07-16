@@ -32,7 +32,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	}
 	o.AppFlags.Set(cmd, flagsFactory)
 	o.DiffFlags.SetWithPrefix("diff", cmd)
-	o.ApplyFlags.SetWithDefaults(ApplyFlagsDeleteDefaults, cmd)
+	o.ApplyFlags.SetWithDefaults("", ApplyFlagsDeleteDefaults, cmd)
 	return cmd
 }
 

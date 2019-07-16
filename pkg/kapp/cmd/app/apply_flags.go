@@ -30,17 +30,21 @@ type ApplyFlags struct {
 	ctlcap.ClusterChangeOpts
 }
 
-func (s *ApplyFlags) SetWithDefaults(defaults ApplyFlags, cmd *cobra.Command) {
-	cmd.Flags().BoolVar(&s.ApplyIgnored, "apply-ignored", defaults.ApplyIgnored, "Set to apply ignored changes")
-	cmd.Flags().BoolVar(&s.Wait, "apply-wait", defaults.Wait, "Set to wait for changes to be applied")
-	cmd.Flags().BoolVar(&s.WaitIgnored, "apply-wait-ignored", defaults.WaitIgnored, "Set to wait for ignored changes to be applied")
+func (s *ApplyFlags) SetWithDefaults(prefix string, defaults ApplyFlags, cmd *cobra.Command) {
+	if len(prefix) > 0 {
+		prefix += "-"
+	}
 
-	cmd.Flags().DurationVar(&s.WaitTimeout, "apply-wait-timeout",
+	cmd.Flags().BoolVar(&s.ApplyIgnored, prefix+"apply-ignored", defaults.ApplyIgnored, "Set to apply ignored changes")
+	cmd.Flags().BoolVar(&s.Wait, prefix+"apply-wait", defaults.Wait, "Set to wait for changes to be applied")
+	cmd.Flags().BoolVar(&s.WaitIgnored, prefix+"apply-wait-ignored", defaults.WaitIgnored, "Set to wait for ignored changes to be applied")
+
+	cmd.Flags().DurationVar(&s.WaitTimeout, prefix+"apply-wait-timeout",
 		mustParseDuration("15m"), "Maximum amount of time to wait")
-	cmd.Flags().DurationVar(&s.WaitCheckInterval, "apply-wait-check-interval",
+	cmd.Flags().DurationVar(&s.WaitCheckInterval, prefix+"apply-wait-check-interval",
 		mustParseDuration("1s"), "Amount of time to sleep between checks while waiting")
 
-	cmd.Flags().StringVar(&s.AddOrUpdateChangeOpts.DefaultUpdateStrategy, "apply-default-update-strategy",
+	cmd.Flags().StringVar(&s.AddOrUpdateChangeOpts.DefaultUpdateStrategy, prefix+"apply-default-update-strategy",
 		defaults.AddOrUpdateChangeOpts.DefaultUpdateStrategy, "Change default update strategy")
 }
 

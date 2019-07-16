@@ -43,7 +43,7 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	o.FileFlags.Set(cmd)
 	o.DiffFlags.SetWithPrefix("diff", cmd)
 	o.ResourceFilterFlags.Set(cmd)
-	o.ApplyFlags.SetWithDefaults(ApplyFlagsDeployDefaults, cmd)
+	o.ApplyFlags.SetWithDefaults("", ApplyFlagsDeployDefaults, cmd)
 	o.DeployFlags.Set(cmd)
 	o.LabelFlags.Set(cmd)
 	return cmd
