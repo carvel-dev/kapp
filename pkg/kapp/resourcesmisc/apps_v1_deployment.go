@@ -52,9 +52,12 @@ func (s AppsV1Deployment) IsDoneApplying() DoneApplyState {
 		}
 	}
 
-	minRepAvailable, found := s.resource.Annotations()[appsV1DeploymentWaitMinimumReplicasAvailableAnnKey]
-	if found {
-		return s.isMinReplicasAvailable(dep, minRepAvailable)
+	// TODO ideally we would not condition this on len of associated resources
+	if len(s.associatedRs) > 0 {
+		minRepAvailable, found := s.resource.Annotations()[appsV1DeploymentWaitMinimumReplicasAvailableAnnKey]
+		if found {
+			return s.isMinReplicasAvailable(dep, minRepAvailable)
+		}
 	}
 
 	if dep.Status.UnavailableReplicas > 0 {
