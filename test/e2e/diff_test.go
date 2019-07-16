@@ -163,6 +163,45 @@ data:
 			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
 		}
 	})
+
+	logger.Section("delete", func() {
+		out, _ := kapp.RunWithOpts([]string{"delete", "-a", name, "--json"}, RunOpts{})
+
+		resp := uitest.JSONUIFromBytes(t, []byte(out))
+
+		expected := []map[string]string{{
+			"age":        "<replaced>",
+			"op":         "delete",
+			"wait_to":    "delete",
+			"conditions": "",
+			"kind":       "ConfigMap",
+			"name":       "redis-config1",
+			"namespace":  "kapp-test",
+		}, {
+			"age":        "<replaced>",
+			"op":         "delete",
+			"wait_to":    "delete",
+			"conditions": "",
+			"kind":       "ConfigMap",
+			"name":       "redis-config2",
+			"namespace":  "kapp-test",
+		}, {
+			"age":        "<replaced>",
+			"op":         "delete",
+			"wait_to":    "delete",
+			"conditions": "",
+			"kind":       "ConfigMap",
+			"name":       "redis-config3",
+			"namespace":  "kapp-test",
+		}}
+
+		if !reflect.DeepEqual(replaceAge(resp.Tables[0].Rows), expected) {
+			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
+		}
+		if resp.Tables[0].Notes[0] != "0 create, 3 delete, 0 update" {
+			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
+		}
+	})
 }
 
 func replaceAge(result []map[string]string) []map[string]string {
