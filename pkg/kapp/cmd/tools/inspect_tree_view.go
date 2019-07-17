@@ -28,6 +28,12 @@ func (v InspectTreeView) Print(ui ui.UI) {
 	conditionsHeader := uitable.NewHeader("Conditions")
 	conditionsHeader.Title = "Conds."
 
+	reconcileStateHeader := uitable.NewHeader("Reconcile state")
+	reconcileStateHeader.Title = "Rs"
+
+	reconcileInfoHeader := uitable.NewHeader("Reconcile info")
+	reconcileInfoHeader.Title = "Ri"
+
 	table := uitable.Table{
 		Title:   fmt.Sprintf("Resources in %s", v.Source),
 		Content: "resources",
@@ -40,8 +46,8 @@ func (v InspectTreeView) Print(ui ui.UI) {
 			versionHeader,
 			uitable.NewHeader("Owner"),
 			conditionsHeader,
-			uitable.NewHeader("Rs"),
-			uitable.NewHeader("Ri"),
+			reconcileStateHeader,
+			reconcileInfoHeader,
 			uitable.NewHeader("Age"),
 		},
 
