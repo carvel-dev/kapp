@@ -1,5 +1,11 @@
 #@ load("@ytt:overlay", "overlay")
 
+#@overlay/match by=overlay.subset({"kind": "HorizontalPodAutoscaler", "metadata":{"name": "istio-pilot"}})
+---
+metadata:
+  #@overlay/match expects=0
+  namespace: istio-system
+
 #! annotations should be a map
 #@overlay/match by=overlay.subset({"kind": "Service", "metadata":{"name": "istio-egressgateway"}})
 ---
