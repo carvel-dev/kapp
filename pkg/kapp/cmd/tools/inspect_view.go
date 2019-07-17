@@ -8,6 +8,7 @@ import (
 	ctlcap "github.com/k14s/kapp/pkg/kapp/clusterapply"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/mitchellh/go-wordwrap"
 )
 
 type InspectView struct {
@@ -101,7 +102,7 @@ func NewValueResourceConverged(resource ctlres.Resource) ValueResourceConverged 
 	state, err := ctlcap.NewConvergedResource(resource, nil).IsDoneApplying(&noopUI{})
 	if err != nil {
 		stateVal = uitable.ValueFmt{V: uitable.NewValueString("error"), Error: true}
-		reasonVal = uitable.NewValueString(err.Error())
+		reasonVal = uitable.NewValueString(wordwrap.WrapString(err.Error(), 35))
 	} else {
 		switch {
 		case state.Done && state.Successful:
@@ -111,7 +112,7 @@ func NewValueResourceConverged(resource ctlres.Resource) ValueResourceConverged 
 		case !state.Done:
 			stateVal = uitable.ValueFmt{V: uitable.NewValueString("ongoing"), Error: true}
 		}
-		reasonVal = uitable.NewValueString(state.Message)
+		reasonVal = uitable.NewValueString(wordwrap.WrapString(state.Message, 35))
 	}
 
 	return ValueResourceConverged{stateVal, reasonVal}
