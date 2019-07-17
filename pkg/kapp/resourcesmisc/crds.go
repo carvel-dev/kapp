@@ -12,7 +12,7 @@ import (
 type ResourceTypes struct {
 	localCRDs      []*ApiExtensionsVxCRD
 	resourceTypes  ctlres.ResourceTypes
-	resources      ctlres.Resources
+	resources      *ctlres.Resources
 	memoizedScopes map[string]bool
 }
 

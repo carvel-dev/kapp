@@ -10,7 +10,7 @@ type IdentifiedResources struct {
 	coreClient    kubernetes.Interface
 	dynamicClient dynamic.Interface
 	resourceTypes ResourceTypes
-	resources     Resources
+	resources     *Resources
 }
 
 func NewIdentifiedResources(coreClient kubernetes.Interface, dynamicClient dynamic.Interface) IdentifiedResources {

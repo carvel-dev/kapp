@@ -36,10 +36,13 @@ type Resources struct {
 	resourceTypes ResourceTypes
 	coreClient    kubernetes.Interface
 	dynamicClient dynamic.Interface
+
+	assumedAllowedNamespacesMemoLock sync.Mutex
+	assumedAllowedNamespacesMemo     *[]string
 }
 
-func NewResources(resourceTypes ResourceTypes, coreClient kubernetes.Interface, dynamicClient dynamic.Interface) Resources {
-	return Resources{resourceTypes, coreClient, dynamicClient}
+func NewResources(resourceTypes ResourceTypes, coreClient kubernetes.Interface, dynamicClient dynamic.Interface) *Resources {
+	return &Resources{resourceTypes: resourceTypes, coreClient: coreClient, dynamicClient: dynamicClient}
 }
 
 type gvrItems struct {
@@ -47,19 +50,23 @@ type gvrItems struct {
 	Items []unstructured.Unstructured
 }
 
-func (c Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resource, error) {
+func (c *Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resource, error) {
 	if opts.ListOpts == nil {
 		opts.ListOpts = &metav1.ListOptions{}
 	}
 
-	items := make(chan gvrItems, len(resTypes))
+	itemsCh := make(chan gvrItems, len(resTypes))
+	warnErrsCh := make(chan error, len(resTypes))
+	fatalErrsCh := make(chan error, len(resTypes))
 	var itemsDone sync.WaitGroup
 
 	for _, resType := range resTypes {
-		resType := resType
-
+		resType := resType // copy
 		itemsDone.Add(1)
+
 		go func() {
+			defer itemsDone.Done()
+
 			var list *unstructured.UnstructuredList
 			var err error
 
@@ -72,23 +79,40 @@ func (c Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resour
 			}
 
 			if err != nil {
-				errStr := fmt.Sprintf("%#v, namespaced: %t", resType.GroupVersionResource, resType.Namespaced())
-				fmt.Printf("%s: %s\n", errStr, err) // TODO
-			} else {
-				items <- gvrItems{resType.GroupVersionResource, list.Items}
+				if !errors.IsForbidden(err) {
+					fatalErrsCh <- fmt.Errorf("Listing %#v, namespaced: %t: %s", resType.GroupVersionResource, resType.Namespaced(), err)
+					return
+				}
+
+				if !resType.Namespaced() {
+					warnErrsCh <- fmt.Errorf("Listing %#v, namespaced: %t: %s", resType.GroupVersionResource, resType.Namespaced(), err)
+					return
+				}
+
+				// TODO improve perf somehow
+				list, err = c.allForNamespaces(client, opts.ListOpts)
+				if err != nil {
+					fatalErrsCh <- fmt.Errorf("Listing %#v, namespaced: %t: %s", resType.GroupVersionResource, resType.Namespaced(), err)
+					return
+				}
 			}
 
-			itemsDone.Done()
+			itemsCh <- gvrItems{resType.GroupVersionResource, list.Items}
 		}()
 	}
 
 	itemsDone.Wait()
+	close(itemsCh)
+	close(warnErrsCh)
+	close(fatalErrsCh)
 
-	close(items)
+	for err := range fatalErrsCh {
+		return nil, err // TODO consolidate
+	}
 
 	var resources []Resource
 
-	for itemNs := range items {
+	for itemNs := range itemsCh {
 		for _, item := range itemNs.Items {
 			resources = append(resources, NewResourceUnstructured(item, itemNs.GroupVersionResource))
 		}
@@ -97,7 +121,56 @@ func (c Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resour
 	return resources, nil
 }
 
-func (c Resources) Create(resource Resource) (Resource, error) {
+func (c *Resources) allForNamespaces(client dynamic.NamespaceableResourceInterface, listOpts *metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	allowedNs, err := c.assumedAllowedNamespaces()
+	if err != nil {
+		return nil, err
+	}
+
+	var itemsDone sync.WaitGroup
+	fatalErrsCh := make(chan error, len(allowedNs))
+	itemsCh := make(chan *unstructured.UnstructuredList, len(allowedNs))
+
+	for _, ns := range allowedNs {
+		ns := ns // copy
+		itemsDone.Add(1)
+
+		go func() {
+			defer itemsDone.Done()
+
+			resList, err := client.Namespace(ns).List(*listOpts)
+			if err != nil {
+				if !errors.IsForbidden(err) {
+					fatalErrsCh <- err
+					return
+				} else {
+					// TODO warnErrsCh <- fmt.Errorf("Listing %#v, namespaced: %t: %s", resType.GroupVersionResource, resType.Namespaced(), err)
+					// Continue trying other namespaces
+				}
+			} else {
+				itemsCh <- resList
+			}
+		}()
+	}
+
+	itemsDone.Wait()
+	close(fatalErrsCh)
+	close(itemsCh)
+
+	for fatalErr := range fatalErrsCh {
+		return nil, fatalErr
+	}
+
+	list := &unstructured.UnstructuredList{}
+
+	for resList := range itemsCh {
+		list.Items = append(list.Items, resList.Items...)
+	}
+
+	return list, nil
+}
+
+func (c *Resources) Create(resource Resource) (Resource, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { fmt.Printf("create %s\n", time.Now().UTC().Sub(t1)) }()
@@ -127,7 +200,7 @@ func (c Resources) Create(resource Resource) (Resource, error) {
 	return NewResourceUnstructured(*createdUn, resType.GroupVersionResource), nil
 }
 
-func (c Resources) Update(resource Resource) (Resource, error) {
+func (c *Resources) Update(resource Resource) (Resource, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { fmt.Printf("update %s\n", time.Now().UTC().Sub(t1)) }()
@@ -157,7 +230,7 @@ func (c Resources) Update(resource Resource) (Resource, error) {
 	return NewResourceUnstructured(*updatedUn, resType.GroupVersionResource), nil
 }
 
-func (c Resources) Patch(resource Resource, patchType types.PatchType, data []byte) (Resource, error) {
+func (c *Resources) Patch(resource Resource, patchType types.PatchType, data []byte) (Resource, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { fmt.Printf("patch %s\n", time.Now().UTC().Sub(t1)) }()
@@ -188,13 +261,13 @@ const (
 	admissionWebhookErrMsg = "Internal error occurred: failed calling admission webhook"
 )
 
-func (c Resources) doneRetryingErr(err error) bool {
+func (c *Resources) doneRetryingErr(err error) bool {
 	// TODO is there a better way to detect this error
 	retry := strings.Contains(err.Error(), admissionWebhookErrMsg)
 	return !retry
 }
 
-func (c Resources) Delete(resource Resource) error {
+func (c *Resources) Delete(resource Resource) error {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { fmt.Printf("delete %s\n", time.Now().UTC().Sub(t1)) }()
@@ -237,7 +310,7 @@ func (c Resources) Delete(resource Resource) error {
 	return nil
 }
 
-func (c Resources) Get(resource Resource) (Resource, error) {
+func (c *Resources) Get(resource Resource) (Resource, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { fmt.Printf("get %s\n", time.Now().UTC().Sub(t1)) }()
@@ -256,7 +329,7 @@ func (c Resources) Get(resource Resource) (Resource, error) {
 	return NewResourceUnstructured(*item, resType.GroupVersionResource), nil
 }
 
-func (c Resources) Exists(resource Resource) (bool, error) {
+func (c *Resources) Exists(resource Resource) (bool, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { fmt.Printf("exists %s\n", time.Now().UTC().Sub(t1)) }()
@@ -304,14 +377,14 @@ func (c Resources) Exists(resource Resource) (bool, error) {
 	return found, err
 }
 
-func (c Resources) resourceErr(err error, action string, resource Resource) error {
+func (c *Resources) resourceErr(err error, action string, resource Resource) error {
 	if typedErr, ok := err.(errors.APIStatus); ok {
 		return resourceStatusErr{resourcePlainErr{err, action, resource}, typedErr.Status()}
 	}
 	return resourcePlainErr{err, action, resource}
 }
 
-func (c Resources) resourceClient(resource Resource) (dynamic.ResourceInterface, ResourceType, error) {
+func (c *Resources) resourceClient(resource Resource) (dynamic.ResourceInterface, ResourceType, error) {
 	resType, err := c.resourceTypes.Find(resource)
 	if err != nil {
 		return nil, ResourceType{}, err
@@ -320,7 +393,7 @@ func (c Resources) resourceClient(resource Resource) (dynamic.ResourceInterface,
 	return c.dynamicClient.Resource(resType.GroupVersionResource).Namespace(resource.Namespace()), resType, nil
 }
 
-func (c Resources) expensiveExistsViaList(resType ResourceType, resource Resource) (bool, error) {
+func (c *Resources) expensiveExistsViaList(resType ResourceType, resource Resource) (bool, error) {
 	rs, err := c.All([]ResourceType{resType}, ResourcesAllOpts{})
 	if err != nil {
 		return false, err
@@ -337,6 +410,30 @@ func (c Resources) expensiveExistsViaList(resType ResourceType, resource Resourc
 	}
 
 	return false, nil
+}
+
+func (c *Resources) assumedAllowedNamespaces() ([]string, error) {
+	c.assumedAllowedNamespacesMemoLock.Lock()
+	defer c.assumedAllowedNamespacesMemoLock.Unlock()
+
+	if c.assumedAllowedNamespacesMemo != nil {
+		return *c.assumedAllowedNamespacesMemo, nil
+	}
+
+	nsList, err := c.coreClient.CoreV1().Namespaces().List(metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("fetching all namespaces: %s", err)
+	}
+
+	var nsNames []string
+
+	for _, ns := range nsList.Items {
+		nsNames = append(nsNames, ns.Name)
+	}
+
+	c.assumedAllowedNamespacesMemo = &nsNames
+
+	return nsNames, nil
 }
 
 type ResourcesAllOpts struct {
