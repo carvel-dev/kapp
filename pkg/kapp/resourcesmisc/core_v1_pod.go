@@ -76,6 +76,7 @@ func (s CoreV1Pod) pendingDetailsReason(pod corev1.Pod) string {
 	statuses := append([]corev1.ContainerStatus{}, pod.Status.InitContainerStatuses...)
 	statuses = append(statuses, pod.Status.ContainerStatuses...)
 
+	// See status example below
 	for _, st := range statuses {
 		if st.State.Waiting != nil {
 			msg := st.State.Waiting.Reason
@@ -86,11 +87,25 @@ func (s CoreV1Pod) pendingDetailsReason(pod corev1.Pod) string {
 		}
 	}
 
+	// See status example below
+	for _, cond := range pod.Status.Conditions {
+		if cond.Type == corev1.PodScheduled {
+			if cond.Reason == corev1.PodReasonUnschedulable {
+				msg := cond.Reason
+				if len(cond.Message) > 0 {
+					msg += fmt.Sprintf(" (message: %s)", cond.Message)
+				}
+				return msg
+			}
+		}
+	}
+
 	return ""
 }
 
 /*
 
+# Image cannot be pulled
 status:
   containerStatuses:
   - image: kbld:docker-io-...
@@ -104,5 +119,18 @@ status:
         message: 'rpc error: code = Unknown desc = Error response from daemon: repository
           kbld not found: does not exist or no pull access'
         reason: ErrImagePull
+
+# Unschedulable pod
+status:
+  conditions:
+  - lastProbeTime: "2019-07-16T23:53:29Z"
+    lastTransitionTime: "2019-07-16T23:51:54Z"
+    message: '0/4 nodes are available: 3 node(s) didn''t match node selector, 4 node(s)
+      didn''t have free ports for the requested pod ports.'
+    reason: Unschedulable
+    status: "False"
+    type: PodScheduled
+  phase: Pending
+  qosClass: Burstable
 
 */
