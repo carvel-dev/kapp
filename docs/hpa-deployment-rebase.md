@@ -7,8 +7,8 @@ apiVersion: kapp.k14s.io/v1alpha1
 kind: Config
 rebaseRules:
 - path: [spec, replicas]
-  merge: copy
-  sources: [new, existing]
+  type: copy
+  sources: [existing, new]
   resourceMatchers:
   - kindNamespaceNameMatcher:
       kind: Deployment
