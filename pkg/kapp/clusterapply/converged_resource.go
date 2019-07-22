@@ -123,6 +123,7 @@ func (c ConvergedResource) findParentAndAssociatedRes() (ctlres.Resource, []ctlr
 func (c ConvergedResource) isResourceDoneApplying(res ctlres.Resource) (*ctlresm.DoneApplyState, error) {
 	specificResFactories := []func(ctlres.Resource) SpecificResource{
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewDeleting(res) },
+		func(res ctlres.Resource) SpecificResource { return ctlresm.NewReconciling(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewApiExtensionsVxCRD(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCoreV1Pod(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCoreV1Service(res) },

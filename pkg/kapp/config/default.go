@@ -38,6 +38,17 @@ rebaseRules:
   resourceMatchers:
   - allResourceMatcher: {}
 
+- path: [metadata, annotations, "kapp.k14s.io/reconcile-state"]
+  type: copy
+  sources: [existing]
+  resourceMatchers:
+  - allResourceMatcher: {}
+- path: [metadata, annotations, "kapp.k14s.io/reconcile-info"]
+  type: copy
+  sources: [existing]
+  resourceMatchers:
+  - allResourceMatcher: {}
+
 # Copy over all status, since cluster owns that
 - path: [status]
   type: copy
