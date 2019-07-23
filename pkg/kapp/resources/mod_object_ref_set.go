@@ -18,7 +18,7 @@ func (t ObjectRefSetMod) Apply(res Resource) error {
 	}
 	err := t.apply(res.unstructured().Object, t.Path)
 	if err != nil {
-		return fmt.Errorf("ObjectRefSetMod for path '%s': %s", t.Path.AsString(), err)
+		return fmt.Errorf("ObjectRefSetMod for path '%s' on resource '%s': %s", t.Path.AsString(), res.Description(), err)
 	}
 	return nil
 }
@@ -29,7 +29,7 @@ func (t ObjectRefSetMod) apply(obj interface{}, path Path) error {
 		case part.MapKey != nil:
 			typedObj, ok := obj.(map[string]interface{})
 			if !ok {
-				return fmt.Errorf("Unexpected non-map found")
+				return fmt.Errorf("Unexpected non-map found: %T", obj)
 			}
 
 			var found bool
@@ -43,7 +43,7 @@ func (t ObjectRefSetMod) apply(obj interface{}, path Path) error {
 			case part.ArrayIndex.All != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
-					return fmt.Errorf("Unexpected non-map found")
+					return fmt.Errorf("Unexpected non-array found: %T", obj)
 				}
 
 				for _, obj := range typedObj {
@@ -58,7 +58,7 @@ func (t ObjectRefSetMod) apply(obj interface{}, path Path) error {
 			case part.ArrayIndex.Index != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
-					return fmt.Errorf("Unexpected non-map found")
+					return fmt.Errorf("Unexpected non-array found: %T", obj)
 				}
 
 				if *part.ArrayIndex.Index < len(typedObj) {
@@ -78,7 +78,7 @@ func (t ObjectRefSetMod) apply(obj interface{}, path Path) error {
 
 	typedObj, ok := obj.(map[string]interface{})
 	if !ok {
-		return fmt.Errorf("Unexpected non-map found")
+		return fmt.Errorf("Unexpected non-map found: %T", obj)
 	}
 
 	return t.ReplacementFunc(typedObj)

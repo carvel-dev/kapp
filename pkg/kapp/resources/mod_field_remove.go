@@ -22,7 +22,7 @@ func (t FieldRemoveMod) Apply(res Resource) error {
 	}
 	err := t.apply(res.unstructured().Object, t.Path)
 	if err != nil {
-		return fmt.Errorf("FieldRemoveMod for path '%s': %s", t.Path.AsString(), err)
+		return fmt.Errorf("FieldRemoveMod for path '%s' on resource '%s': %s", t.Path.AsString(), res.Description(), err)
 	}
 	return nil
 }
@@ -39,7 +39,7 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 				if typedObj == nil {
 					return nil // map is a nil, nothing to remove
 				}
-				return fmt.Errorf("Unexpected non-map found")
+				return fmt.Errorf("Unexpected non-map found: %T", obj)
 			}
 
 			if isLast {
@@ -62,7 +62,7 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 			case part.ArrayIndex.All != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
-					return fmt.Errorf("Unexpected non-array found")
+					return fmt.Errorf("Unexpected non-array found: %T", obj)
 				}
 
 				for _, obj := range typedObj {
@@ -77,7 +77,7 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 			case part.ArrayIndex.Index != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
-					return fmt.Errorf("Unexpected non-array found")
+					return fmt.Errorf("Unexpected non-array found: %T", obj)
 				}
 
 				if *part.ArrayIndex.Index < len(typedObj) {

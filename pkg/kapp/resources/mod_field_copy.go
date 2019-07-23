@@ -25,7 +25,7 @@ func (t FieldCopyMod) ApplyFromMultiple(res Resource, srcs map[FieldCopyModSourc
 	}
 	err := t.apply(res.unstructured().Object, t.Path, Path{}, srcs)
 	if err != nil {
-		return fmt.Errorf("FieldCopyMod for path '%s': %s", t.Path.AsString(), err)
+		return fmt.Errorf("FieldCopyMod for path '%s' on resource '%s': %s", t.Path.AsString(), res.Description(), err)
 	}
 	return nil
 }
@@ -39,7 +39,7 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 		case part.MapKey != nil:
 			typedObj, ok := obj.(map[string]interface{})
 			if !ok {
-				return fmt.Errorf("Unexpected non-map found")
+				return fmt.Errorf("Unexpected non-map found: %T", obj)
 			}
 
 			if isLast {
@@ -67,7 +67,7 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 			case part.ArrayIndex.All != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
-					return fmt.Errorf("Unexpected non-map found")
+					return fmt.Errorf("Unexpected non-array found: %T", obj)
 				}
 
 				for objI, obj := range typedObj {
@@ -87,7 +87,7 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 			case part.ArrayIndex.Index != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
-					return fmt.Errorf("Unexpected non-map found")
+					return fmt.Errorf("Unexpected non-array found: %T", obj)
 				}
 
 				if *part.ArrayIndex.Index < len(typedObj) {
@@ -143,7 +143,7 @@ func (t FieldCopyMod) obtainValue(obj interface{}, path Path) (interface{}, bool
 		case part.MapKey != nil:
 			typedObj, ok := obj.(map[string]interface{})
 			if !ok {
-				return nil, false, fmt.Errorf("Unexpected non-map found")
+				return nil, false, fmt.Errorf("Unexpected non-map found: %T", obj)
 			}
 
 			var found bool
@@ -161,7 +161,7 @@ func (t FieldCopyMod) obtainValue(obj interface{}, path Path) (interface{}, bool
 			case part.ArrayIndex.Index != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
-					return nil, false, fmt.Errorf("Unexpected non-array found")
+					return nil, false, fmt.Errorf("Unexpected non-array found: %T", obj)
 				}
 
 				if *part.ArrayIndex.Index < len(typedObj) {
