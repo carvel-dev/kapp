@@ -152,7 +152,7 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	if o.DiffFlags.Run {
+	if o.DiffFlags.Run || len(clusterChanges) == 0 {
 		return nil
 	}
 
