@@ -1,0 +1,56 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: default
+  name: redis-slave
+  annotations:
+    kapp.k14s.io/change-group: "redis-slave"
+spec:
+  ports:
+  - port: 6379
+  selector:
+    app: redis-slave
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: default
+  name: redis-slave
+  annotations:
+    kapp.k14s.io/change-group: "redis-slave"
+    kapp.k14s.io/change-rule: "upsert after upserting redis-master"
+spec:
+  selector:
+    matchLabels:
+      app: redis-slave
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: redis-slave
+    spec:
+      containers:
+      - name: slave
+        image: redis
+        command: [redis-server, --slaveof, redis-master, "6379"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 6379
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - redis-cli -p 6379 info | grep master_link_status:up
+          timeoutSeconds: 5
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - redis-cli -p 6379 info | grep master_link_status:up
+          timeoutSeconds: 5

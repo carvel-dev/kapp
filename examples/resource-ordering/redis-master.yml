@@ -1,0 +1,48 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: default
+  name: redis-master
+  annotations:
+    kapp.k14s.io/change-group: "redis-master"
+spec:
+  ports:
+  - port: 6379
+  selector:
+    app: redis-master
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: default
+  name: redis-master
+  annotations:
+    kapp.k14s.io/change-group: "redis-master"
+spec:
+  selector:
+    matchLabels:
+      app: redis-master
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redis-master
+    spec:
+      containers:
+      - name: master
+        image: redis
+        resources:
+          requests:
+            cpu: 120m
+            memory: 100Mi
+        ports:
+        - containerPort: 6379
+        readinessProbe:
+          exec:
+            command: [redis-cli, -p, "6379", ping]
+          timeoutSeconds: 5
+        livenessProbe:
+          exec:
+            command: [redis-cli, -p, "6379", ping]
+          timeoutSeconds: 5
