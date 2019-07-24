@@ -2,12 +2,7 @@
 
 Once change set is calculated (see [Diff](diff.md) section for details), kapp asks for user confirmation (unless `--yes` flag is specified) to proceed with changes.
 
-Changes are applied in particular order. Currently it is:
-
-1. CRDs creation/update
-1. Namespace creation/update
-1. other resources
-1. CRD deletion
+Changes are applied in particular order as described in [Apply ordering](apply-ordering.md).
 
 All created resources are labeled with several labels:
 
@@ -33,9 +28,13 @@ Related: [ownership label rules](config.md) and [label scoping rules](config.md)
 
 	Possible values: `` (default), `orphan`. By default resource is deleted, however; choosing `orphan` value will make kapp forget about this resource. Note that if this resource is owned by a different resource that's being deleted, it might still get deleted. Orphaned resources are annotated with `kapp.k14s.io/orphaned` annotation.
 
+- `kapp.k14s.io/nonce` annotation allows to inject unique ID
+
+    Possible values: `` (default). Annotation value will be replaced with a unique ID on each deploy. This allows to force resource update as value changes every time.
+
 ### Controlling apply via deploy flags
 
 - `--apply-ignored=bool` explicitly applies ignored changes; this is useful in cases when controllers lose track of some resources instead of for example deleting them
-- `--apply-wait=bool` (default `true`) controls whether kapp will wait for resource to "stabilize"
-- `--apply-wait-ignored=bool` controls whether kapp will wait for ignored changes (regardless whether they were initiated by kapp or by controllers)
 - `--apply-default-update-strategy=string` controls default strategy for all resources (see `kapp.k14s.io/update-strategy` annotation above)
+- `--wait=bool` (default `true`) controls whether kapp will wait for resource to "stabilize"
+- `--wait-ignored=bool` controls whether kapp will wait for ignored changes (regardless whether they were initiated by kapp or by controllers)

@@ -4,6 +4,7 @@
   - [Deploy command](apps.md#deploy)
     - [Diff](diff.md)
     - [Apply](apply.md)
+    - [Apply ordering](apply-ordering.md)
 - [Gitops](gitops.md)
 - [Config](config.md)
 - [FAQ](faq.md)
