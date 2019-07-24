@@ -3,11 +3,16 @@ package app
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+)
+
+const (
+	nonceAnnKey = "kapp.k14s.io/nonce"
 )
 
 type Preparation struct {
@@ -31,6 +36,11 @@ func (a Preparation) PrepareResources(resources []ctlres.Resource, opts PrepareR
 	}
 
 	resources, err = a.placeIntoNamespace(resources, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	resources, err = a.addNonce(resources)
 	if err != nil {
 		return nil, err
 	}
@@ -81,6 +91,31 @@ func (a Preparation) placeIntoNamespace(resources []ctlres.Resource, opts Prepar
 		}
 	}
 
+	return resources, nil
+}
+
+func (a Preparation) addNonce(resources []ctlres.Resource) ([]ctlres.Resource, error) {
+	addNonceMod := ctlres.StringMapAppendMod{
+		ResourceMatcher: ctlres.AllResourceMatcher{},
+		Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
+		KVs: map[string]string{
+			nonceAnnKey: fmt.Sprintf("%d", time.Now().UTC().UnixNano()),
+		},
+	}
+
+	for _, res := range resources {
+		if val, found := res.Annotations()[nonceAnnKey]; found {
+			if val != "" {
+				return nil, fmt.Errorf("Expected annotation '%s' on resource '%s' to have value ''",
+					nonceAnnKey, res.Description())
+			}
+
+			err := addNonceMod.Apply(res)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
 	return resources, nil
 }
 
