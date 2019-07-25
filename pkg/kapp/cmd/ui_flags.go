@@ -16,7 +16,8 @@ type UIFlags struct {
 }
 
 func (f *UIFlags) Set(cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
-	cmd.PersistentFlags().BoolVar(&f.TTY, "tty", false, "Force TTY-like output")
+	// Default tty to true: https://github.com/k14s/kapp/issues/28
+	cmd.PersistentFlags().BoolVar(&f.TTY, "tty", true, "Force TTY-like output")
 	cmd.PersistentFlags().BoolVar(&f.Color, "color", true, "Set color output")
 	cmd.PersistentFlags().BoolVar(&f.JSON, "json", false, "Output as JSON")
 	cmd.PersistentFlags().BoolVarP(&f.NonInteractive, "yes", "y", false, "Assume yes for any prompt")
