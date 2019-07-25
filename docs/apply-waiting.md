@@ -1,9 +1,9 @@
 ### Apply Waiting
 
-kapp has builtin knowledge on how to wait for the following resource types:
+kapp includes builtin rules on how to wait for the following resource types:
 
 - [any resource with `metadata.deletionTimestamp`](../pkg/kapp/resourcesmisc/deleting.go): wait for resource to be fully removed
-- [any resource with reconciling annotations](../pkg/kapp/resourcesmisc/reconciling.go): [see below](#reconciling-annotations)
+- [any resource with `kapp.k14s.io/reconcile-*` annotations](../pkg/kapp/resourcesmisc/reconciling.go): [see "Custom waiting behaviour" below](#custom-waiting-behaviour)
 - [`apiextensions.k8s.io/<any>/CustomResourceDefinition`](../pkg/kapp/resourcesmisc/api_extensions_vx_crd.go): wait for all conditions to turn `True`
 - [`apps/v1/DaemonSet`](../pkg/kapp/resourcesmisc/apps_v1_daemon_set.go): wait for `status.numberUnavailable` to be 0
 - [`apps/v1/Deployment`](../pkg/kapp/resourcesmisc/apps_v1_deployment.go): see below
@@ -19,9 +19,13 @@ kapp by default waits for `apps/v1/Deployment` resource to have `status.unavaila
 
 - `kapp.k14s.io/apps-v1-deployment-wait-minimum-replicas-available` annotation controls how many new available replicas are enough to consider waiting successful. Example values: `"10"`, `"5%"`.
 
-#### Reconciling annotations
+#### Custom waiting behaviour
 
-If resource has below annotations, kapp will wait for reconcile state to become either `ok` or `fail`. Typically these annotations will be controlled by a controller/operator running in cluster.
+kapp can be extended with custom waiting behaviour through resource annotations. Controllers/operators can update resource annotations to indicate resource's reconcilation state.
+
+If resource has below annotations, kapp will wait for reconcile state to become either `ok` or `fail`.
 
 - `kapp.k14s.io/reconcile-state`: indicates current reconcilation state. Possible values: `ok`, `fail`, `ongoing`.
 - `kapp.k14s.io/reconcile-info`: includes additional information about current reconcilation state.
+
+Note that it's recommended to have a mutating webhook hook to reset `kapp.k14s.io/reconcile-state` annotation to `ongoing` upon resource creation or update to avoid race between kapp and controller updating annotations.
