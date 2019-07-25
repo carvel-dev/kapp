@@ -5,6 +5,7 @@
     - [Diff](diff.md)
     - [Apply](apply.md)
     - [Apply ordering](apply-ordering.md)
+    - [Apply waiting](apply-waiting.md)
 - [Gitops](gitops.md)
 - [Config](config.md)
 - [FAQ](faq.md)
