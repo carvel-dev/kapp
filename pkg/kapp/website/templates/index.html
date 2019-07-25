@@ -56,6 +56,8 @@ $ ytt -f ./some-app | <span class="green">kapp -y deploy -a some-app -f -</span>
               <ul><li>based on comparison between provided files and live objects in the cluster</li></ul>
             </li>
             <li>Separates calculation of changes (<a href="https://github.com/k14s/kapp/blob/master/docs/diff.md">diff stage</a>) from application of changes (<a href="https://github.com/k14s/kapp/blob/master/docs/apply.md">apply stage</a>)</li>
+            <li><a href="https://github.com/k14s/kapp/blob/master/docs/apply-waiting.md">Waits for resources</a> to be "ready"</li>
+            <li>Creates CRDs and Namespaces first and supports <a href="https://github.com/k14s/kapp/blob/master/docs/apply-ordering.md">custom change ordering</a></li>
             <li>
               <em class="highlight">Works without admin privileges</em> and does not depend on any custom CRDs
               <ul><li>making it possible to use <code>kapp</code> as a regular user in a single namespace</li></ul>

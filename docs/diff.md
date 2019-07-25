@@ -37,12 +37,10 @@ You can control number of kept resource versions via `kapp.k14s.io/num-versions=
 Diff summary shows quick information about what's being changed:
 
 - `--diff-summary` (default `true`) shows diff summary, listing how resources have changed
-- `--diff-summary-full` includes ignored and unchanged resources in diff summary
 
 Diff changes (line-by-line diffs) are useful for looking at actual changes:
 
-- `--diff-changes=bool` shows line-by-line diffs
-- `--diff-changes-full=bool` includes ignored and unchanged resources in line-by-line diffs
+- `--diff-changes=bool` (`-c`) shows line-by-line diffs
 - `--diff-context=int` controls number of lines to show around changed lines
 
 Controlling how diffing is done:
