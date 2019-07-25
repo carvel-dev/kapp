@@ -29,7 +29,7 @@ metadata:
     label-key: existing-label-val`,
 		},
 		{
-			Description: "copy from existing, when destination is non-map",
+			Description: "when destination is non-map",
 			Res: `
 metadata:
   labels: null`,
@@ -37,7 +37,7 @@ metadata:
 metadata:
   labels:
     label-key: new-label-val`,
-			Sources: []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceExisting},
+			Sources: []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceNew, ctlres.FieldCopyModSourceExisting},
 			Path:    ctlres.NewPathFromStrings([]string{"metadata", "labels", "label-key"}),
 			NewRes: `
 metadata:
@@ -55,7 +55,7 @@ metadata:
 			Expected: `
 metadata:
   labels: null`,
-			Sources: []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceExisting},
+			Sources: []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceNew, ctlres.FieldCopyModSourceExisting},
 			Path:    ctlres.NewPathFromStrings([]string{"metadata", "labels", "label-key"}),
 			NewRes: `
 metadata:
