@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
@@ -13,12 +15,17 @@ func NewConfFromResources(resources []ctlres.Resource) ([]ctlres.Resource, Conf,
 	var configs []Config
 
 	for _, res := range resources {
-		if res.APIVersion() == configAPIVersion && res.Kind() == configKind {
-			config, err := NewConfigFromResource(res)
-			if err != nil {
-				return nil, Conf{}, err
+		if res.APIVersion() == configAPIVersion {
+			if res.Kind() == configKind {
+				config, err := NewConfigFromResource(res)
+				if err != nil {
+					return nil, Conf{}, err
+				}
+				configs = append(configs, config)
+			} else {
+				errMsg := "Unexpected kind in resource '%s', wanted '%s'"
+				return nil, Conf{}, fmt.Errorf(errMsg, res.Description(), configKind)
 			}
-			configs = append(configs, config)
 		} else {
 			rsWithoutConfigs = append(rsWithoutConfigs, res)
 		}
