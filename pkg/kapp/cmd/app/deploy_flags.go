@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 
 	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
@@ -12,6 +13,9 @@ type DeployFlags struct {
 	AllowEmpty bool
 
 	OverrideOwnershipOfExistingResources bool
+
+	Logs    bool
+	LogsAll bool
 }
 
 func (s *DeployFlags) Set(cmd *cobra.Command) {
@@ -28,4 +32,7 @@ func (s *DeployFlags) Set(cmd *cobra.Command) {
 
 	cmd.Flags().BoolVar(&s.OverrideOwnershipOfExistingResources, "dangerous-override-ownership-of-existing-resources",
 		false, "Steal existing resources from another app")
+
+	cmd.Flags().BoolVar(&s.Logs, "logs", true, fmt.Sprintf("Show logs from Pods annotated as '%s'", deployLogsAnnKey))
+	cmd.Flags().BoolVar(&s.LogsAll, "logs-all", false, "Show logs from all Pods")
 }

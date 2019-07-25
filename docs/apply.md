@@ -32,9 +32,15 @@ Related: [ownership label rules](config.md) and [label scoping rules](config.md)
 
     Possible values: `` (default). Annotation value will be replaced with a unique ID on each deploy. This allows to force resource update as value changes every time.
 
+- `kapp.k14s.io/deploy-logs` annotation indicates which Pods' log output to show during deploy
+
+    Possible values: `` (default). Especially useful when added to Jobs. For example, see [examples/resource-ordering/sync-check.yml](../examples/resource-ordering/sync-check.yml)
+
 ### Controlling apply via deploy flags
 
 - `--apply-ignored=bool` explicitly applies ignored changes; this is useful in cases when controllers lose track of some resources instead of for example deleting them
 - `--apply-default-update-strategy=string` controls default strategy for all resources (see `kapp.k14s.io/update-strategy` annotation above)
 - `--wait=bool` (default `true`) controls whether kapp will wait for resource to "stabilize". See [Apply waiting](apply-waiting.md)
 - `--wait-ignored=bool` controls whether kapp will wait for ignored changes (regardless whether they were initiated by kapp or by controllers)
+- `--logs` (default `true`) controls whether to show logs as part of deploy output for Pods annotated with `kapp.k14s.io/deploy-logs: ""`
+- `--logs-all` controls whether to show all logs as part of deploy output for all Pods

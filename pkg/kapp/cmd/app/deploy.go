@@ -11,8 +11,12 @@ import (
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
+	ctllogs "github.com/k14s/kapp/pkg/kapp/logs"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/kubernetes"
 )
 
 type DeployOptions struct {
@@ -161,6 +165,12 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
+	if o.DeployFlags.Logs {
+		cancelLogsCh := make(chan struct{})
+		defer func() { close(cancelLogsCh) }()
+		go o.showLogs(coreClient, identifiedResources, labelSelector, cancelLogsCh)
+	}
+
 	touch := ctlapp.Touch{
 		App:              app,
 		Description:      "update: " + changeSetView.Summary(),
@@ -210,4 +220,25 @@ func (o *DeployOptions) nsNames(resources []ctlres.Resource) []string {
 	}
 	sort.Strings(names)
 	return names
+}
+
+const (
+	deployLogsAnnKey = "kapp.k14s.io/deploy-logs" // valid value is ''
+)
+
+func (o *DeployOptions) showLogs(
+	coreClient kubernetes.Interface, identifiedResources ctlres.IdentifiedResources,
+	labelSelector labels.Selector, cancelCh chan struct{}) {
+
+	logOpts := ctllogs.PodLogOpts{Follow: true, ContainerTag: true, LinePrefix: "logs"}
+
+	podWatcher := ctlres.FilteringPodWatcher{
+		func(pod *corev1.Pod) bool {
+			_, found := pod.Annotations[deployLogsAnnKey]
+			return o.DeployFlags.LogsAll || found
+		},
+		identifiedResources.PodResources(labelSelector),
+	}
+
+	ctllogs.NewView(logOpts, podWatcher, coreClient, o.ui).Show(cancelCh)
 }

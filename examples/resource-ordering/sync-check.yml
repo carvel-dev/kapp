@@ -15,6 +15,8 @@ spec:
   template:
     metadata:
       name: sync-check
+      annotations:
+        kapp.k14s.io/deploy-logs: ""
     spec:
       containers:
       - name: sync-check
@@ -28,7 +30,7 @@ spec:
 
           redis-cli $master ping 2>&1
           redis-cli $slave ping 2>&1
-          redis-cli $slave info 2>&1
+          redis-cli $slave info 2>&1 | grep -A10 Replication
 
           redis-cli $master set key val 2>&1
           sleep 2

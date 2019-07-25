@@ -12,6 +12,7 @@ type PodLogOpts struct {
 	Follow       bool
 	Lines        *int64
 	ContainerTag bool
+	LinePrefix   string
 }
 
 type PodLog struct {

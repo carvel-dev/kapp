@@ -42,7 +42,12 @@ func NewPodContainerLog(
 func (l PodContainerLog) Tail(ui ui.UI, cancelCh chan struct{}) error {
 	var streamCanceled atomic.Value
 
-	stream, err := l.obtainStream(ui, cancelCh)
+	linePrefix := ""
+	if len(l.opts.LinePrefix) > 0 {
+		linePrefix = l.opts.LinePrefix + " | "
+	}
+
+	stream, err := l.obtainStream(ui, linePrefix, cancelCh)
 	if err != nil {
 		return err
 	}
@@ -61,13 +66,13 @@ func (l PodContainerLog) Tail(ui ui.UI, cancelCh chan struct{}) error {
 
 	reader := bufio.NewReader(stream)
 
-	ui.BeginLinef("# starting tailing '%s' logs\n", l.tag)
+	ui.BeginLinef("%s# starting tailing '%s' logs\n", linePrefix, l.tag)
 
 	for {
 		line, err := reader.ReadBytes('\n')
 		if err != nil {
 			if err == io.EOF {
-				ui.BeginLinef("# ending tailing '%s' logs\n", l.tag)
+				ui.BeginLinef("%s# ending tailing '%s' logs\n", linePrefix, l.tag)
 				return nil
 			}
 			typedCanceled, ok := streamCanceled.Load().(bool)
@@ -78,14 +83,14 @@ func (l PodContainerLog) Tail(ui ui.UI, cancelCh chan struct{}) error {
 		}
 
 		if l.opts.ContainerTag {
-			ui.PrintBlock([]byte(fmt.Sprintf("%s | %s", l.tag, line)))
+			ui.PrintBlock([]byte(fmt.Sprintf("%s%s | %s", linePrefix, l.tag, line)))
 		} else {
-			ui.PrintBlock(line)
+			ui.PrintBlock([]byte(fmt.Sprintf("%s%s", linePrefix, line)))
 		}
 	}
 }
 
-func (l PodContainerLog) obtainStream(ui ui.UI, cancelCh chan struct{}) (io.ReadCloser, error) {
+func (l PodContainerLog) obtainStream(ui ui.UI, linePrefix string, cancelCh chan struct{}) (io.ReadCloser, error) {
 	tryCount := 0
 
 	for {
@@ -111,7 +116,7 @@ func (l PodContainerLog) obtainStream(ui ui.UI, cancelCh chan struct{}) (io.Read
 		}
 
 		if tryCount%100 == 0 {
-			ui.BeginLinef("# waiting for '%s' logs to become available...\n", l.tag)
+			ui.BeginLinef("%s# waiting for '%s' logs to become available...\n", linePrefix, l.tag)
 			tryCount = 1
 		}
 
