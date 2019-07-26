@@ -22,8 +22,6 @@ const (
 	ClusterChangeApplyOpNoop   ClusterChangeApplyOp = "noop"
 )
 
-var allClusterChangeApplyOps = []ClusterChangeApplyOp{ClusterChangeApplyOpAdd, ClusterChangeApplyOpDelete, ClusterChangeApplyOpUpdate}
-
 type ClusterChangeWaitOp string
 
 const (

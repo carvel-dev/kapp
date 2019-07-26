@@ -68,7 +68,7 @@ func (v *ChangesView) Print(ui ui.UI) {
 
 	for _, view := range v.ChangeViews {
 		resource := view.Resource()
-		countsView.Add(view.ApplyOp())
+		countsView.Add(view.ApplyOp(), view.WaitOp())
 
 		row := []uitable.Value{
 			uitable.NewValueString(resource.Namespace()),
@@ -153,19 +153,31 @@ func (v *ChangesView) waitOpCode(op ClusterChangeWaitOp) uitable.Value {
 }
 
 type ChangesCountsView struct {
-	all map[ClusterChangeApplyOp]int
+	applyOps map[ClusterChangeApplyOp]int
+	waitOps  int
 }
 
 func NewChangesCountsView() *ChangesCountsView {
-	return &ChangesCountsView{map[ClusterChangeApplyOp]int{}}
+	return &ChangesCountsView{map[ClusterChangeApplyOp]int{}, 0}
 }
 
-func (v *ChangesCountsView) Add(op ClusterChangeApplyOp) { v.all[op] += 1 }
+func (v *ChangesCountsView) Add(applyOp ClusterChangeApplyOp, waitOp ClusterChangeWaitOp) {
+	v.applyOps[applyOp] += 1
+	if waitOp != ClusterChangeWaitOpNoop {
+		v.waitOps += 1
+	}
+}
 
 func (v *ChangesCountsView) String() string {
+	visibleApplyOps := []ClusterChangeApplyOp{
+		ClusterChangeApplyOpAdd, ClusterChangeApplyOpDelete, ClusterChangeApplyOpUpdate}
+
 	result := []string{}
-	for _, op := range allClusterChangeApplyOps {
-		result = append(result, fmt.Sprintf("%d %s", v.all[op], applyOpCodeUI[op]))
+	for _, op := range visibleApplyOps {
+		result = append(result, fmt.Sprintf("%d %s", v.applyOps[op], applyOpCodeUI[op]))
 	}
+
+	result = append(result, fmt.Sprintf("%d wait to", v.waitOps))
+
 	return strings.Join(result, ", ")
 }
