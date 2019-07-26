@@ -9,6 +9,10 @@ import (
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 )
 
+const (
+	disableWaitAnnKey = "kapp.k14s.io/disable-wait" // valid values: ''
+)
+
 type ClusterChangeApplyOp string
 
 const (
@@ -84,6 +88,10 @@ func (c *ClusterChange) WaitOp() ClusterChangeWaitOp {
 		if c.change.IsIgnored() {
 			return ClusterChangeWaitOpNoop
 		}
+	}
+
+	if _, found := c.Resource().Annotations()[disableWaitAnnKey]; found {
+		return ClusterChangeWaitOpNoop
 	}
 
 	switch c.change.Op() {
