@@ -35,8 +35,10 @@ func (v *ChangesView) Print(ui ui.UI) {
 	conditionsHeader.Title = "Conds."
 
 	table := uitable.Table{
-		Title:   "Changes",
-		Content: "changes",
+		Title: "Changes",
+		// TODO do not show total number of "changes" as it may
+		// be confusing that some changes are only waits
+		// Content: "changes",
 
 		Header: []uitable.Header{
 			uitable.NewHeader("Namespace"),
