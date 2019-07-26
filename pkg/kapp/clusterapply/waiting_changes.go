@@ -36,8 +36,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 	startTime := time.Now()
 
 	for {
-		c.ui.NotifySection("waiting on %d changes [%d/%d done]",
-			len(c.trackedChanges), c.numWaited, c.numTotal)
+		c.ui.NotifySection("waiting on %d changes %s", len(c.trackedChanges), c.stats())
 
 		var newInProgressChanges []WaitingChange
 		var doneChanges []WaitingChange
@@ -84,4 +83,13 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 
 		time.Sleep(c.opts.WaitCheckInterval)
 	}
+}
+
+func (c *WaitingChanges) Complete() error {
+	c.ui.NotifySection("waiting complete %s", c.stats())
+	return nil
+}
+
+func (c *WaitingChanges) stats() string {
+	return fmt.Sprintf("[%d/%d done]", c.numWaited, c.numTotal)
 }

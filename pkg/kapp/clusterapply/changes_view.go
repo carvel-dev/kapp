@@ -24,7 +24,7 @@ type ChangesView struct {
 	ChangeViews []ChangeView
 	Sort        bool
 
-	summary string
+	countsView *ChangesCountsView
 }
 
 func (v *ChangesView) Print(ui ui.UI) {
@@ -64,11 +64,11 @@ func (v *ChangesView) Print(ui ui.UI) {
 		table.FillFirstColumn = true
 	}
 
-	countsView := NewChangesCountsView()
+	v.countsView = NewChangesCountsView()
 
 	for _, view := range v.ChangeViews {
 		resource := view.Resource()
-		countsView.Add(view.ApplyOp(), view.WaitOp())
+		v.countsView.Add(view.ApplyOp(), view.WaitOp())
 
 		row := []uitable.Value{
 			uitable.NewValueString(resource.Namespace()),
@@ -100,27 +100,25 @@ func (v *ChangesView) Print(ui ui.UI) {
 		table.Rows = append(table.Rows, row)
 	}
 
-	v.summary = countsView.String()
-
-	table.Notes = []string{v.summary}
+	table.Notes = append(table.Notes, v.countsView.Strings(true)...)
 
 	ui.PrintTable(table)
 }
 
-func (v *ChangesView) Summary() string { return v.summary }
+func (v *ChangesView) Summary() string { return v.countsView.String() }
 
 var (
 	applyOpCodeUI = map[ClusterChangeApplyOp]string{
 		ClusterChangeApplyOpAdd:    "create",
 		ClusterChangeApplyOpDelete: "delete",
 		ClusterChangeApplyOpUpdate: "update",
-		ClusterChangeApplyOpNoop:   "",
+		ClusterChangeApplyOpNoop:   "noop",
 	}
 
 	waitOpCodeUI = map[ClusterChangeWaitOp]string{
 		ClusterChangeWaitOpOK:     "reconcile",
 		ClusterChangeWaitOpDelete: "delete",
-		ClusterChangeWaitOpNoop:   "",
+		ClusterChangeWaitOpNoop:   "noop",
 	}
 )
 
@@ -133,7 +131,7 @@ func (v *ChangesView) applyOpCode(op ClusterChangeApplyOp) uitable.Value {
 	case ClusterChangeApplyOpUpdate:
 		return uitable.ValueFmt{V: uitable.NewValueString(applyOpCodeUI[op]), Error: false}
 	case ClusterChangeApplyOpNoop:
-		return uitable.NewValueString(applyOpCodeUI[op])
+		return uitable.NewValueString("")
 	default:
 		return uitable.NewValueString("???")
 	}
@@ -146,7 +144,7 @@ func (v *ChangesView) waitOpCode(op ClusterChangeWaitOp) uitable.Value {
 	case ClusterChangeWaitOpDelete:
 		return uitable.NewValueString(waitOpCodeUI[op])
 	case ClusterChangeWaitOpNoop:
-		return uitable.NewValueString(waitOpCodeUI[op])
+		return uitable.NewValueString("")
 	default:
 		return uitable.NewValueString("???")
 	}
@@ -154,30 +152,46 @@ func (v *ChangesView) waitOpCode(op ClusterChangeWaitOp) uitable.Value {
 
 type ChangesCountsView struct {
 	applyOps map[ClusterChangeApplyOp]int
-	waitOps  int
+	waitOps  map[ClusterChangeWaitOp]int
 }
 
 func NewChangesCountsView() *ChangesCountsView {
-	return &ChangesCountsView{map[ClusterChangeApplyOp]int{}, 0}
+	return &ChangesCountsView{map[ClusterChangeApplyOp]int{}, map[ClusterChangeWaitOp]int{}}
 }
 
 func (v *ChangesCountsView) Add(applyOp ClusterChangeApplyOp, waitOp ClusterChangeWaitOp) {
 	v.applyOps[applyOp] += 1
-	if waitOp != ClusterChangeWaitOpNoop {
-		v.waitOps += 1
+	v.waitOps[waitOp] += 1
+}
+
+func (v *ChangesCountsView) Strings(table bool) []string {
+	applyOpsStats := []string{}
+	visibleApplyOps := []ClusterChangeApplyOp{
+		ClusterChangeApplyOpAdd, ClusterChangeApplyOpDelete, ClusterChangeApplyOpUpdate, ClusterChangeApplyOpNoop}
+
+	for _, op := range visibleApplyOps {
+		applyOpsStats = append(applyOpsStats, fmt.Sprintf("%d %s", v.applyOps[op], applyOpCodeUI[op]))
+	}
+
+	waitsOpStats := []string{}
+	visibleWaitOps := []ClusterChangeWaitOp{
+		ClusterChangeWaitOpOK, ClusterChangeWaitOpDelete, ClusterChangeWaitOpNoop}
+
+	for _, op := range visibleWaitOps {
+		waitsOpStats = append(waitsOpStats, fmt.Sprintf("%d %s", v.waitOps[op], waitOpCodeUI[op]))
+	}
+
+	padding := ""
+	if table {
+		padding = "     "
+	}
+
+	return []string{
+		"Op: " + padding + strings.Join(applyOpsStats, ", "),
+		"Wait to: " + strings.Join(waitsOpStats, ", "),
 	}
 }
 
 func (v *ChangesCountsView) String() string {
-	visibleApplyOps := []ClusterChangeApplyOp{
-		ClusterChangeApplyOpAdd, ClusterChangeApplyOpDelete, ClusterChangeApplyOpUpdate}
-
-	result := []string{}
-	for _, op := range visibleApplyOps {
-		result = append(result, fmt.Sprintf("%d %s", v.applyOps[op], applyOpCodeUI[op]))
-	}
-
-	result = append(result, fmt.Sprintf("%d wait to", v.waitOps))
-
-	return strings.Join(result, ", ")
+	return strings.Join(v.Strings(false), " / ")
 }

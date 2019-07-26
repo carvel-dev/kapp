@@ -1,6 +1,7 @@
 package clusterapply
 
 import (
+	"fmt"
 	"sync"
 
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
@@ -31,8 +32,7 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 		return nil, nil
 	}
 
-	c.ui.NotifySection("applying %d changes [%d/%d done]",
-		len(nonAppliedChanges), c.NumApplied(), c.numTotal)
+	c.ui.NotifySection("applying %d changes %s", len(nonAppliedChanges), c.stats())
 
 	var wg sync.WaitGroup
 	var result []WaitingChange
@@ -71,8 +71,15 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 	return result, nil
 }
 
-func (c *ApplyingChanges) NumApplied() int {
-	return len(c.applied)
+func (c *ApplyingChanges) Complete() error {
+	// Sanity check that we applied all changes
+	if c.numTotal != c.numApplied() {
+		return fmt.Errorf("Internal inconsistency: did not apply all changes: %d != %d",
+			c.numTotal, c.numApplied())
+	}
+
+	c.ui.NotifySection("applying complete %s", c.stats())
+	return nil
 }
 
 func (c *ApplyingChanges) isApplied(change *ctldgraph.Change) bool {
@@ -82,4 +89,10 @@ func (c *ApplyingChanges) isApplied(change *ctldgraph.Change) bool {
 
 func (c *ApplyingChanges) markApplied(change *ctldgraph.Change) {
 	c.applied[change] = struct{}{}
+}
+
+func (c *ApplyingChanges) numApplied() int { return len(c.applied) }
+
+func (c *ApplyingChanges) stats() string {
+	return fmt.Sprintf("[%d/%d done]", c.numApplied(), c.numTotal)
 }

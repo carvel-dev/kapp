@@ -1,32 +1,20 @@
 package core
 
 import (
-	"sync"
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 )
 
 type MessagesUI struct {
-	ui                  ui.UI
-	sawFirstSection     bool
-	sawFirstSectionLock sync.Mutex
+	ui ui.UI
 }
 
 func NewMessagesUI(ui ui.UI) *MessagesUI {
-	return &MessagesUI{ui: ui, sawFirstSection: false}
+	return &MessagesUI{ui: ui}
 }
 
 func (ui *MessagesUI) NotifySection(msg string, args ...interface{}) {
-	ui.sawFirstSectionLock.Lock()
-	defer ui.sawFirstSectionLock.Unlock()
-
-	if ui.sawFirstSection {
-		ui.ui.BeginLinef("\n")
-	} else {
-		ui.sawFirstSection = true
-	}
-
 	ui.notify("---- "+msg+" ----", args...)
 }
 

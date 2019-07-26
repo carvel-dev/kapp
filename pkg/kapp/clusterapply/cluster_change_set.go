@@ -93,17 +93,13 @@ func (c ClusterChangeSet) Apply(changesGraph *ctldgraph.ChangeGraph) error {
 		waitingChanges.Track(appliedChanges)
 
 		if waitingChanges.IsEmpty() {
-			// Sanity check that we applied all changes
-			appliedNumChanges := applyingChanges.NumApplied()
-
-			if expectedNumChanges != appliedNumChanges {
-				fmt.Printf("%s\n", blockedChanges.WhyBlocked(blockedChanges.Blocked()))
-				return fmt.Errorf("Internal inconsistency: did not apply all changes: %d != %d",
-					expectedNumChanges, appliedNumChanges)
+			err := applyingChanges.Complete()
+			if err != nil {
+				c.ui.Notify("Blocked changes:\n%s\n", blockedChanges.WhyBlocked(blockedChanges.Blocked()))
+				return err
 			}
 
-			c.ui.NotifySection("changes applied")
-			return nil
+			return waitingChanges.Complete()
 		}
 
 		doneChanges, err := waitingChanges.WaitForAny()

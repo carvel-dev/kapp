@@ -104,7 +104,10 @@ data:
 		if !reflect.DeepEqual(resp.Tables[0].Rows, expected) {
 			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
 		}
-		if resp.Tables[0].Notes[0] != "3 create, 0 delete, 0 update" {
+		if resp.Tables[0].Notes[0] != "Op:      3 create, 0 delete, 0 update, 0 noop" {
+			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
+		}
+		if resp.Tables[0].Notes[1] != "Wait to: 3 reconcile, 0 delete, 0 noop" {
 			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
 		}
 	})
@@ -119,7 +122,10 @@ data:
 		if !reflect.DeepEqual(resp.Tables[0].Rows, expected) {
 			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
 		}
-		if resp.Tables[0].Notes[0] != "0 create, 0 delete, 0 update" {
+		if resp.Tables[0].Notes[0] != "Op:      0 create, 0 delete, 0 update, 0 noop" {
+			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
+		}
+		if resp.Tables[0].Notes[1] != "Wait to: 0 reconcile, 0 delete, 0 noop" {
 			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
 		}
 	})
@@ -159,7 +165,10 @@ data:
 		if !reflect.DeepEqual(replaceAge(resp.Tables[0].Rows), expected) {
 			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
 		}
-		if resp.Tables[0].Notes[0] != "1 create, 1 delete, 1 update" {
+		if resp.Tables[0].Notes[0] != "Op:      1 create, 1 delete, 1 update, 0 noop" {
+			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
+		}
+		if resp.Tables[0].Notes[1] != "Wait to: 2 reconcile, 1 delete, 0 noop" {
 			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
 		}
 	})
@@ -198,7 +207,10 @@ data:
 		if !reflect.DeepEqual(replaceAge(resp.Tables[0].Rows), expected) {
 			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
 		}
-		if resp.Tables[0].Notes[0] != "0 create, 3 delete, 0 update" {
+		if resp.Tables[0].Notes[0] != "Op:      0 create, 3 delete, 0 update, 0 noop" {
+			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
+		}
+		if resp.Tables[0].Notes[1] != "Wait to: 0 reconcile, 3 delete, 0 noop" {
 			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
 		}
 	})
