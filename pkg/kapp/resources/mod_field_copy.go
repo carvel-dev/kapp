@@ -139,7 +139,7 @@ func (t FieldCopyMod) copyIntoMap(obj map[string]interface{}, fullPath Path, src
 
 		val, found, err := t.obtainValue(srcRes.unstructured().Object, fullPath)
 		if err != nil {
-			return false, fmt.Errorf("Obtaining value from '%s': %s", src, err)
+			return false, err
 		} else if !found {
 			continue
 		}
@@ -159,17 +159,13 @@ func (t FieldCopyMod) obtainValue(obj interface{}, path Path) (interface{}, bool
 		case part.MapKey != nil:
 			typedObj, ok := obj.(map[string]interface{})
 			if !ok {
-				return nil, false, fmt.Errorf("Unexpected non-map found for key '%s': %T", *part.MapKey, obj)
+				return nil, false, fmt.Errorf("Unexpected non-map found: %T", obj)
 			}
 
 			var found bool
 			obj, found = typedObj[*part.MapKey]
 			if !found {
 				return nil, false, nil // index is not found return
-			}
-			// TODO check strictness?
-			if !isLast && obj == nil {
-				return nil, false, nil // expected to be a map but was a nil value, return
 			}
 
 		case part.ArrayIndex != nil:
