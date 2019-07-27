@@ -52,7 +52,6 @@ type Resource interface {
 
 	unstructured() unstructured.Unstructured     // private
 	unstructuredPtr() *unstructured.Unstructured // private
-	setUnstructured(unstructured.Unstructured)   // private
 }
 
 type ResourceImpl struct {
@@ -242,6 +241,5 @@ func (r *ResourceImpl) Debug(title string) {
 	fmt.Printf("%s (%s):\n%s\n", title, r.Description(), bs)
 }
 
-func (r *ResourceImpl) unstructured() unstructured.Unstructured      { return r.un }
-func (r *ResourceImpl) unstructuredPtr() *unstructured.Unstructured  { return &r.un }
-func (r *ResourceImpl) setUnstructured(un unstructured.Unstructured) { r.un = un }
+func (r *ResourceImpl) unstructured() unstructured.Unstructured     { return r.un }
+func (r *ResourceImpl) unstructuredPtr() *unstructured.Unstructured { return &r.un }
