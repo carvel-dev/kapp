@@ -6,6 +6,7 @@
     - [Apply](apply.md)
     - [Apply ordering](apply-ordering.md)
     - [Apply waiting](apply-waiting.md)
+- [Integrating With Other Tools](integrating-with-other-tools.md)
 - [Gitops](gitops.md)
 - [Config](config.md)
 - [FAQ](faq.md)
