@@ -2,7 +2,7 @@
 
 kapp includes builtin rules to make sure certain changes are applied in particular order:
 
-- CRDs and namespaces are created before most resources
+- CRDs and namespaces (predefined `change-groups.kapp.k14s.io/crds` and `change-groups.kapp.k14s.io/namespaces` groups) are created before most resources
 - CRDs are deleted last (after CRs)
 
 Additionally kapp allows to customize order of changes via following resource annotations:
