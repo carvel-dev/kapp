@@ -44,10 +44,17 @@ func (s AppsV1Deployment) IsDoneApplying() DoneApplyState {
 	}
 
 	for _, cond := range dep.Status.Conditions {
-		if cond.Type == appsv1.DeploymentProgressing {
+		switch cond.Type {
+		case appsv1.DeploymentProgressing:
 			if cond.Status == corev1.ConditionFalse {
 				return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
 					"Deployment is not progressing: %s (message: %s)", cond.Reason, cond.Message)}
+			}
+
+		case "FailedDelete":
+			if cond.Status == corev1.ConditionTrue {
+				return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
+					"Deployment failed to delete pods: %s (message: %s)", cond.Reason, cond.Message)}
 			}
 		}
 	}
