@@ -42,5 +42,5 @@ Related: [ownership label rules](config.md) and [label scoping rules](config.md)
 - `--apply-default-update-strategy=string` controls default strategy for all resources (see `kapp.k14s.io/update-strategy` annotation above)
 - `--wait=bool` (default `true`) controls whether kapp will wait for resource to "stabilize". See [Apply waiting](apply-waiting.md)
 - `--wait-ignored=bool` controls whether kapp will wait for ignored changes (regardless whether they were initiated by kapp or by controllers)
-- `--logs` (default `true`) controls whether to show logs as part of deploy output for Pods annotated with `kapp.k14s.io/deploy-logs: ""`
-- `--logs-all` controls whether to show all logs as part of deploy output for all Pods
+- `--logs=bool` (default `true`) controls whether to show logs as part of deploy output for Pods annotated with `kapp.k14s.io/deploy-logs: ""`
+- `--logs-all=bool` (deafult `false`) controls whether to show all logs as part of deploy output for all Pods
