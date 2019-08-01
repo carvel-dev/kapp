@@ -15,13 +15,13 @@ Features:
 
 - Works with standard Kubernetes YAMLs
 - Focuses exclusively on deployment workflow, not packaging or templating
-  - but plays well with tools (such as ytt) that produce Kubernetes configuration
+  - but plays well with tools (such as [ytt](https://get-ytt.io)) that produce Kubernetes configuration
 - Converges application resources (creates, updates and/or deletes resources) in each deploy
   - based on comparison between provided files and live objects in the cluster
 - Separates calculation of changes ([diff stage](docs/diff.md)) from application of changes ([apply stage](docs/apply.md))
 - [Waits for resources](docs/apply-waiting.md) to be "ready"
 - Creates CRDs and Namespaces first and supports [custom change ordering](docs/apply-ordering.md)
-- Works without admin privileges and does not depend on any custom CRDs
+- Works [without admin privileges](docs/rbac.md) and does not use custom CRDs
   - making it possible to use kapp as a regular user in a single namespace
 - Records application deployment history
 - Opt-in resource version management

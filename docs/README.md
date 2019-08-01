@@ -7,7 +7,7 @@
     - [Apply ordering](apply-ordering.md)
     - [Apply waiting](apply-waiting.md)
 - [Integrating with other tools](integrating-with-other-tools.md)
-- [Running kapp under restricted permissions](restricted-permissions.md)
+- [Running kapp under restricted permissions](rbac.md)
 - [State namespace](state-namespace.md)
 - [Gitops](gitops.md)
 - [Config](config.md)
