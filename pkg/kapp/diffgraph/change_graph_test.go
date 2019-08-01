@@ -55,7 +55,7 @@ metadata:
     kapp.k14s.io/change-rule: "upsert after upserting apps.big.co/deployment"
 `
 
-	graph, err := buildChangeGraph(configYAML, t)
+	graph, err := buildChangeGraph(configYAML, ctldgraph.ActualChangeOpUpsert, t)
 	if err != nil {
 		t.Fatalf("Expected graph to build")
 	}
@@ -84,6 +84,83 @@ metadata:
 	}
 }
 
+func TestChangeGraphWithDeletes(t *testing.T) {
+	configYAML := `
+kind: ConfigMap
+metadata:
+  name: app-config
+  annotations: {}
+---
+kind: Job
+metadata:
+  name: import-etcd-into-db
+  annotations:
+    kapp.k14s.io/change-group: "apps.big.co/import-etcd-into-db"
+    kapp.k14s.io/change-rule: "upsert before deleting apps.big.co/etcd" # ref to removed object
+---
+kind: Job
+metadata:
+  name: migrations
+  annotations:
+    kapp.k14s.io/change-group: "apps.big.co/db-migrations"
+    kapp.k14s.io/change-rule: "upsert after upserting apps.big.co/import-etcd-into-db"
+    kapp.k14s.io/change-rule.0: "delete before deleting apps.big.co/deployment"
+---
+kind: Service
+metadata:
+  name: app
+  annotations:
+    kapp.k14s.io/change-group: "apps.big.co/deployment"
+---
+kind: Ingress
+metadata:
+  name: app
+  annotations:
+    kapp.k14s.io/change-group: "apps.big.co/deployment"
+---
+kind: Deployment
+metadata:
+  name: app
+  annotations:
+    kapp.k14s.io/change-group: "apps.big.co/deployment"
+    kapp.k14s.io/change-rule: "upsert after upserting apps.big.co/db-migrations"
+---
+kind: Job
+metadata:
+  name: app-health-check
+  annotations:
+    kapp.k14s.io/change-rule: "upsert after upserting apps.big.co/deployment"
+    kapp.k14s.io/change-rule.0: "delete before deleting apps.big.co/db-migrations"
+`
+
+	graph, err := buildChangeGraph(configYAML, ctldgraph.ActualChangeOpDelete, t)
+	if err != nil {
+		t.Fatalf("Expected graph to build")
+	}
+
+	output := strings.TrimSpace(graph.PrintStr())
+	expectedOutput := strings.TrimSpace(`
+(delete) configmap/app-config () cluster
+(delete) job/import-etcd-into-db () cluster
+(delete) job/migrations () cluster
+  (delete) job/app-health-check () cluster
+(delete) service/app () cluster
+  (delete) job/migrations () cluster
+    (delete) job/app-health-check () cluster
+(delete) ingress/app () cluster
+  (delete) job/migrations () cluster
+    (delete) job/app-health-check () cluster
+(delete) deployment/app () cluster
+  (delete) job/migrations () cluster
+    (delete) job/app-health-check () cluster
+(delete) job/app-health-check () cluster
+`)
+
+	if output != expectedOutput {
+		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", output, expectedOutput)
+	}
+}
+
 func TestChangeGraphCircularOther(t *testing.T) {
 	circularDep1YAML := `
 kind: Job
@@ -101,7 +178,7 @@ metadata:
     kapp.k14s.io/change-rule: "upsert before upserting apps.big.co/job1"
 `
 
-	_, err := buildChangeGraph(circularDep1YAML, t)
+	_, err := buildChangeGraph(circularDep1YAML, ctldgraph.ActualChangeOpUpsert, t)
 	if err == nil {
 		t.Fatalf("Expected graph to fail building")
 	}
@@ -120,7 +197,7 @@ metadata:
     kapp.k14s.io/change-rule: "upsert before upserting apps.big.co/job1"
 `
 
-	_, err := buildChangeGraph(circularDep2YAML, t)
+	_, err := buildChangeGraph(circularDep2YAML, ctldgraph.ActualChangeOpUpsert, t)
 	if err == nil {
 		t.Fatalf("Expected graph to fail building")
 	}
@@ -129,7 +206,7 @@ metadata:
 	}
 }
 
-func buildChangeGraph(resourcesBs string, t *testing.T) (*ctldgraph.ChangeGraph, error) {
+func buildChangeGraph(resourcesBs string, op ctldgraph.ActualChangeOp, t *testing.T) (*ctldgraph.ChangeGraph, error) {
 	newResources, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(resourcesBs))).Resources()
 	if err != nil {
 		t.Fatalf("Expected resources to parse")
@@ -137,7 +214,7 @@ func buildChangeGraph(resourcesBs string, t *testing.T) (*ctldgraph.ChangeGraph,
 
 	actualChanges := []ctldgraph.ActualChange{}
 	for _, res := range newResources {
-		actualChanges = append(actualChanges, actualChangeFromRes{res})
+		actualChanges = append(actualChanges, actualChangeFromRes{res, op})
 	}
 
 	return ctldgraph.NewChangeGraph(actualChanges)
@@ -145,7 +222,8 @@ func buildChangeGraph(resourcesBs string, t *testing.T) (*ctldgraph.ChangeGraph,
 
 type actualChangeFromRes struct {
 	res ctlres.Resource
+	op  ctldgraph.ActualChangeOp
 }
 
 func (a actualChangeFromRes) Resource() ctlres.Resource    { return a.res }
-func (a actualChangeFromRes) Op() ctldgraph.ActualChangeOp { return ctldgraph.ActualChangeOpUpsert }
+func (a actualChangeFromRes) Op() ctldgraph.ActualChangeOp { return a.op }
