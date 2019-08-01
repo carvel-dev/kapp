@@ -12,7 +12,6 @@ import (
 type ResourceTypes struct {
 	localCRDs      []*ApiExtensionsVxCRD
 	resourceTypes  ctlres.ResourceTypes
-	resources      *ctlres.Resources
 	memoizedScopes map[string]bool
 }
 
@@ -26,15 +25,7 @@ func NewResourceTypes(newResources []ctlres.Resource, coreClient kubernetes.Inte
 		}
 	}
 
-	// TODO inject instead of build
-	resTypes := ctlres.NewResourceTypesImpl(coreClient)
-
-	return &ResourceTypes{
-		localCRDs,
-		resTypes,
-		ctlres.NewResources(resTypes, coreClient, dynamicClient),
-		nil,
-	}
+	return &ResourceTypes{localCRDs, ctlres.NewResourceTypesImpl(coreClient), nil}
 }
 
 func (c *ResourceTypes) IsNamespaced(res ctlres.Resource) (bool, error) {
