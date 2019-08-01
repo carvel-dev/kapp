@@ -42,7 +42,7 @@ func (a *LabeledApp) Delete() error {
 		return err
 	}
 
-	rs, err := ctlres.NewIdentifiedResources(a.coreClient, a.dynamicClient).List(labelSelector)
+	rs, err := ctlres.NewIdentifiedResources(a.coreClient, a.dynamicClient, nil).List(labelSelector)
 	if err != nil {
 		return fmt.Errorf("Relisting app resources: %s", err)
 	}

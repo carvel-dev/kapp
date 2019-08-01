@@ -61,7 +61,7 @@ func (o *LogsOptions) Run() error {
 		return err
 	}
 
-	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient)
+	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient, []string{o.AppFlags.NamespaceFlags.Name})
 
 	podWatcher := ctlres.FilteringPodWatcher{
 		func(pod *corev1.Pod) bool {

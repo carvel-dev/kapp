@@ -13,14 +13,13 @@ type IdentifiedResources struct {
 	resources     *Resources
 }
 
-func NewIdentifiedResources(coreClient kubernetes.Interface, dynamicClient dynamic.Interface) IdentifiedResources {
+func NewIdentifiedResources(coreClient kubernetes.Interface,
+	dynamicClient dynamic.Interface, fallbackAllowedNamespaces []string) IdentifiedResources {
+
 	resTypes := NewResourceTypesImpl(coreClient)
-	return IdentifiedResources{
-		coreClient,
-		dynamicClient,
-		resTypes,
-		NewResources(resTypes, coreClient, dynamicClient),
-	}
+	resources := NewResources(resTypes, coreClient, dynamicClient, fallbackAllowedNamespaces)
+
+	return IdentifiedResources{coreClient, dynamicClient, resTypes, resources}
 }
 
 func (r IdentifiedResources) Create(resource Resource) (Resource, error) {

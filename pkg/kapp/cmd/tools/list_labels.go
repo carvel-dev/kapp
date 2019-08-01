@@ -122,7 +122,7 @@ func (o *ListLabelsOptions) listResources() ([]ctlres.Resource, error) {
 		return nil, err
 	}
 
-	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient)
+	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient, nil)
 
 	labelSelector, err := labels.Parse("!kapp")
 	if err != nil {

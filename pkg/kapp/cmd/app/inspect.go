@@ -50,7 +50,7 @@ func (o *InspectOptions) Run() error {
 		return err
 	}
 
-	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient)
+	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient, []string{o.AppFlags.NamespaceFlags.Name})
 
 	resources, err := identifiedResources.List(labelSelector)
 	if err != nil {

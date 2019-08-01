@@ -58,7 +58,7 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient)
+	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient, []string{o.AppFlags.NamespaceFlags.Name})
 
 	existingResources, err := identifiedResources.List(labelSelector)
 	if err != nil {

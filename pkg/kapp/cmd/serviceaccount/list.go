@@ -54,7 +54,7 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
-	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient)
+	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient, []string{o.AppFlags.NamespaceFlags.Name})
 
 	rbacResources := &RBACResources{}
 

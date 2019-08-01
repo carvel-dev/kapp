@@ -55,7 +55,7 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
-	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient)
+	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient, []string{o.AppFlags.NamespaceFlags.Name})
 
 	maps, err := identifiedResources.ConfigMapResources(labelSelector)
 	if err != nil {

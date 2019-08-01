@@ -39,10 +39,19 @@ type Resources struct {
 
 	assumedAllowedNamespacesMemoLock sync.Mutex
 	assumedAllowedNamespacesMemo     *[]string
+
+	fallbackAllowedNamespaces []string
 }
 
-func NewResources(resourceTypes ResourceTypes, coreClient kubernetes.Interface, dynamicClient dynamic.Interface) *Resources {
-	return &Resources{resourceTypes: resourceTypes, coreClient: coreClient, dynamicClient: dynamicClient}
+func NewResources(resourceTypes ResourceTypes, coreClient kubernetes.Interface,
+	dynamicClient dynamic.Interface, fallbackAllowedNamespaces []string) *Resources {
+
+	return &Resources{
+		resourceTypes:             resourceTypes,
+		coreClient:                coreClient,
+		dynamicClient:             dynamicClient,
+		fallbackAllowedNamespaces: fallbackAllowedNamespaces,
+	}
 }
 
 type gvrItems struct {
@@ -422,6 +431,11 @@ func (c *Resources) assumedAllowedNamespaces() ([]string, error) {
 
 	nsList, err := c.coreClient.CoreV1().Namespaces().List(metav1.ListOptions{})
 	if err != nil {
+		if errors.IsForbidden(err) {
+			if len(c.fallbackAllowedNamespaces) > 0 {
+				return c.fallbackAllowedNamespaces, nil
+			}
+		}
 		return nil, fmt.Errorf("fetching all namespaces: %s", err)
 	}
 
