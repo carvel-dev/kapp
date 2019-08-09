@@ -167,3 +167,55 @@ code, .terminal, .logo {
 }
 
 #footer { text-align: center; }
+
+/* Dark mode */
+body {
+  font-family: "Menlo", "DejaVu Sans Mono", "Lucida Console", monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  background: #000;
+  color: #aaa;
+}
+.hero { font-size: 16px; }
+.logo { color: #fff; }
+h2 {
+  color: #eee;
+  margin-top: 40px;
+}
+li code, p code {
+  background: #111;
+  border-color: #222;
+  font-size: 90%;
+}
+a, a:hover {
+  color: #eee;
+  text-decoration: underline;
+}
+a:visited { color: #999; }
+.link-button, .button { background: #222; }
+.try-online.link-button {
+  border: 2px solid #57edb2;
+  color: #57edb2;
+  background: none;
+}
+.terminal {
+  border: 1px dashed #333;
+  font-size: 100%;
+  color: #ccc;
+}
+.hero { border-bottom: 1px solid #333; }
+#features { border-width: 0; }
+#features .highlight { background: #333; }
+#playground { border-width: 0; }
+#workflow .terminal {
+  border-width: 0;
+  font-size: 80%;
+}
+.terminal .green { color: #AFCE5E; }
+.terminal .red { color: #ef4f4f; }
+.terminal .gray { color: #555; }
+.terminal .spacer-before {
+  margin-top: 8px;
+  display: inline-block;
+}
+#k14s-tools p a { color: #eee; }

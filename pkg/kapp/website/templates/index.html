@@ -32,14 +32,11 @@
           <pre class="terminal">
 <span class="gray"># Configurations picked up from a directory</span>
 $ <span class="green">kapp deploy -a cass1 -f examples/cassandra/</span>
-
-<span class="gray"># Can be used with helm charts, removing need for Tiller</span>
+<span class="gray spacer-before"># Can be used with helm charts, removing need for Tiller</span>
 $ helm template my-chart --values my-vals.yml | <span class="green">kapp -y deploy -a my-chart -f -</span>
-
-<span class="gray"># ... and with kustomize</span>
+<span class="gray spacer-before"># ... and with kustomize</span>
 $ kustomize build ./some-app | <span class="green">kapp -y deploy -a some-app -f -</span>
-
-<span class="gray"># ... or templated with ytt</span>
+<span class="gray spacer-before"># ... or templated with ytt</span>
 $ ytt -f ./some-app | <span class="green">kapp -y deploy -a some-app -f -</span></pre>
         </div>
 
@@ -513,7 +510,7 @@ Continue? [yN]:
         </div>
       </div>
 
-      <div id="footer">&#128077;</div>
+      <div id="footer">(c) 2019</div>
     </div>
   </body>
 </html>
