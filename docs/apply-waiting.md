@@ -28,6 +28,8 @@ kapp by default waits for `apps/v1/Deployment` resource to have `status.unavaila
 
 #### Custom waiting behaviour
 
+(This behaviour has not been enabled. Please reach out on slack for more info.)
+
 kapp can be extended with custom waiting behaviour through resource annotations. Controllers/operators can update resource annotations to indicate resource's reconcilation state.
 
 If resource has below annotations, kapp will wait for reconcile state to become either `ok` or `fail`.
