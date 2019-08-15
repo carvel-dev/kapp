@@ -26,3 +26,8 @@ Some fields on a resource are immutable. kapp provides a `kapp.k14s.io/update-st
 [via slack](https://kubernetes.slack.com/archives/CH8KCCKA5/p1565624685226400)
 
 kapp has a feature called [versioned resources](https://github.com/k14s/kapp/blob/master/docs/diff.md#versioned-resources) that allows kapp to create uniquely named resources instead of updating resources with changes. Resources referencing versioned resources are forced to be updated with new names, and therefore are changed, thus solving a problem of how to propagate changes safely.
+
+---
+### Quick way to find common kapp command variations
+
+See [cheatsheet](cheatsheet.md).
