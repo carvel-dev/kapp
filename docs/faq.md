@@ -31,3 +31,12 @@ kapp has a feature called [versioned resources](https://github.com/k14s/kapp/blo
 ### Quick way to find common kapp command variations
 
 See [cheatsheet](cheatsheet.md).
+
+---
+### Limit number of ReplicaSets for Deployments
+
+> Everytime I do a new deploy w/ kapp I see a new replicaset, along with all of the previous ones.
+
+[via slack](https://kubernetes.slack.com/archives/CH8KCCKA5/p1565887856281400)
+
+`Deployment` resource has a field `.spec.revisionHistoryLimit` that controls how many previous `ReplicaSets` to keep. See [Deployment's clean up polciy](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#clean-up-policy) for more details.
