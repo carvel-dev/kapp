@@ -16,7 +16,7 @@ build_values_path="../../../${BUILD_VALUES:-./hack/build-values-default.yml}"
 		-f . \
 		-f $build_values_path \
 		--file-mark 'generated.go.txt:exclusive-for-output=true' \
-		--output ../../../tmp/
+		--output-directory ../../../tmp/
 )
 mv tmp/generated.go.txt pkg/kapp/website/generated.go
 
