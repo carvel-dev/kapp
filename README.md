@@ -26,6 +26,7 @@ Features:
 - Records application deployment history
 - Opt-in resource version management
   - for example, to trigger Deployment rollout when ConfigMap changes
+- Optionally streams Pod logs during deploy
 - Works with any group of labeled resources (`kapp -a label:tier=web inspect -t`)
 - Works without server side components
 - GitOps friendly (`kapp app-group deploy -g all-apps --directory .`)
