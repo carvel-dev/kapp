@@ -97,22 +97,22 @@ Wait to: 7 reconcile, 0 delete, 0 noop
 <replaced>: create configmap/app-ing (v1) namespace: kapp-test
 <replaced>: create configmap/app-svc (v1) namespace: kapp-test
 <replaced>: ---- waiting on 4 changes [0/7 done] ----
-<replaced>: waiting on reconcile configmap/app-config (v1) namespace: kapp-test
-<replaced>: waiting on reconcile configmap/import-etcd-into-db (v1) namespace: kapp-test
-<replaced>: waiting on reconcile configmap/app-ing (v1) namespace: kapp-test
-<replaced>: waiting on reconcile configmap/app-svc (v1) namespace: kapp-test
+<replaced>: ok: reconcile configmap/app-config (v1) namespace: kapp-test
+<replaced>: ok: reconcile configmap/import-etcd-into-db (v1) namespace: kapp-test
+<replaced>: ok: reconcile configmap/app-ing (v1) namespace: kapp-test
+<replaced>: ok: reconcile configmap/app-svc (v1) namespace: kapp-test
 <replaced>: ---- applying 1 changes [4/7 done] ----
 <replaced>: create configmap/migrations (v1) namespace: kapp-test
 <replaced>: ---- waiting on 1 changes [4/7 done] ----
-<replaced>: waiting on reconcile configmap/migrations (v1) namespace: kapp-test
+<replaced>: ok: reconcile configmap/migrations (v1) namespace: kapp-test
 <replaced>: ---- applying 1 changes [5/7 done] ----
 <replaced>: create configmap/app (v1) namespace: kapp-test
 <replaced>: ---- waiting on 1 changes [5/7 done] ----
-<replaced>: waiting on reconcile configmap/app (v1) namespace: kapp-test
+<replaced>: ok: reconcile configmap/app (v1) namespace: kapp-test
 <replaced>: ---- applying 1 changes [6/7 done] ----
 <replaced>: create configmap/app-health-check (v1) namespace: kapp-test
 <replaced>: ---- waiting on 1 changes [6/7 done] ----
-<replaced>: waiting on reconcile configmap/app-health-check (v1) namespace: kapp-test
+<replaced>: ok: reconcile configmap/app-health-check (v1) namespace: kapp-test
 <replaced>: ---- applying complete [7/7 done] ----
 <replaced>: ---- waiting complete [7/7 done] ----
 
@@ -194,11 +194,11 @@ Wait to: 1 reconcile, 1 delete, 0 noop
 <replaced>: ---- applying 1 changes [0/2 done] ----
 <replaced>: create configmap/app-config2 (v1) namespace: kapp-test
 <replaced>: ---- waiting on 1 changes [0/2 done] ----
-<replaced>: waiting on reconcile configmap/app-config2 (v1) namespace: kapp-test
+<replaced>: ok: reconcile configmap/app-config2 (v1) namespace: kapp-test
 <replaced>: ---- applying 1 changes [1/2 done] ----
 <replaced>: delete configmap/import-etcd-into-db (v1) namespace: kapp-test
 <replaced>: ---- waiting on 1 changes [1/2 done] ----
-<replaced>: waiting on delete configmap/import-etcd-into-db (v1) namespace: kapp-test
+<replaced>: ok: delete configmap/import-etcd-into-db (v1) namespace: kapp-test
 <replaced>: ---- applying complete [2/2 done] ----
 <replaced>: ---- waiting complete [2/2 done] ----
 

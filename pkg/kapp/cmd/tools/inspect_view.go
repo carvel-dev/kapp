@@ -102,24 +102,12 @@ type ValueResourceConverged struct {
 }
 
 func NewValueResourceConverged(resource ctlres.Resource) ValueResourceConverged {
-	var stateVal, reasonVal uitable.Value
-
 	// TODO state vs err vs output
 	state, _, err := ctlcap.NewConvergedResource(resource, nil).IsDoneApplying()
-	if err != nil {
-		stateVal = uitable.ValueFmt{V: uitable.NewValueString("error"), Error: true}
-		reasonVal = uitable.NewValueString(wordwrap.WrapString(err.Error(), 35))
-	} else {
-		switch {
-		case state.Done && state.Successful:
-			stateVal = uitable.ValueFmt{V: uitable.NewValueString("ok"), Error: false}
-		case state.Done && !state.Successful:
-			stateVal = uitable.ValueFmt{V: uitable.NewValueString("fail"), Error: true}
-		case !state.Done:
-			stateVal = uitable.ValueFmt{V: uitable.NewValueString("ongoing"), Error: true}
-		}
-		reasonVal = uitable.NewValueString(wordwrap.WrapString(state.Message, 35))
-	}
+	stateUI := ctlcap.NewDoneApplyStateUI(state, err)
+
+	stateVal := uitable.ValueFmt{V: uitable.NewValueString(stateUI.State), Error: stateUI.Error}
+	reasonVal := uitable.NewValueString(wordwrap.WrapString(stateUI.Message, 35))
 
 	return ValueResourceConverged{stateVal, reasonVal}
 }

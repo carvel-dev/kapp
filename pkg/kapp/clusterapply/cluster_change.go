@@ -149,6 +149,12 @@ func (c *ClusterChange) Apply() error {
 }
 
 func (c *ClusterChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
+	state, descMsgs, err := c.isDoneApplying()
+	primaryDescMsg := fmt.Sprintf("%s: %s", NewDoneApplyStateUI(state, err).State, c.WaitDescription())
+	return state, append([]string{primaryDescMsg}, descMsgs...), err
+}
+
+func (c *ClusterChange) isDoneApplying() (ctlresm.DoneApplyState, []string, error) {
 	op := c.WaitOp()
 
 	switch op {

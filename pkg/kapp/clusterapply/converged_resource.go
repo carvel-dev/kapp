@@ -43,7 +43,7 @@ func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 		}
 
 		if !convergedResState.Successful && len(associatedRs) > 0 {
-			descMsgs = append(descMsgs, c.buildDescMsg(convergedRes, true, *convergedResState))
+			descMsgs = append(descMsgs, c.buildParentDescMsg(convergedRes, *convergedResState)...)
 		}
 	}
 
@@ -79,7 +79,7 @@ func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 		}
 
 		associatedRsStates = append(associatedRsStates, *state)
-		descMsgs = append(descMsgs, c.buildDescMsg(res, false, *state))
+		descMsgs = append(descMsgs, c.buildChildDescMsg(res, *state)...)
 	}
 
 	// If parent state is present, ignore all associated resource states
@@ -145,26 +145,24 @@ func (c ConvergedResource) isResourceDoneApplying(res ctlres.Resource) (*ctlresm
 }
 
 var (
-	uiWaitPrefix       = color.New(color.Faint).Sprintf(" L ") // consistent with inspect tree view
-	uiWaitParentPrefix = color.New(color.Faint).Sprintf(" ^ ")
+	uiWaitChildPrefix    = color.New(color.Faint).Sprintf(" L ") // consistent with inspect tree view
+	uiWaitMsgPrefix      = color.New(color.Faint).Sprintf(" ^ ")
+	uiWaitChildMsgPrefix = "   " + uiWaitMsgPrefix
 )
 
-func (c ConvergedResource) buildDescMsg(res ctlres.Resource, isParent bool, state ctlresm.DoneApplyState) string {
-	msg := fmt.Sprintf(uiWaitPrefix+"waiting on %s", res.Description())
-	if isParent {
-		msg = uiWaitParentPrefix
-	}
-
-	// End of notification
-	msg += " ... "
-	if state.Done {
-		msg += "done"
-	} else {
-		msg += "in progress"
-	}
+func (c ConvergedResource) buildParentDescMsg(res ctlres.Resource, state ctlresm.DoneApplyState) []string {
 	if len(state.Message) > 0 {
-		msg += ": " + state.Message
+		return []string{uiWaitMsgPrefix + state.Message}
+	}
+	return []string{}
+}
+
+func (c ConvergedResource) buildChildDescMsg(res ctlres.Resource, state ctlresm.DoneApplyState) []string {
+	msgs := []string{fmt.Sprintf(uiWaitChildPrefix+"%s: waiting on %s", NewDoneApplyStateUI(state, nil).State, res.Description())}
+
+	if len(state.Message) > 0 {
+		msgs = append(msgs, uiWaitChildMsgPrefix+state.Message)
 	}
 
-	return msg
+	return msgs
 }

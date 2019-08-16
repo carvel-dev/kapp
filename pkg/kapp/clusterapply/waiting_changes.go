@@ -45,7 +45,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 			desc := fmt.Sprintf("waiting on %s", change.Cluster.WaitDescription())
 
 			state, descMsgs, err := change.Cluster.IsDoneApplying()
-			c.ui.Notify(append([]string{desc}, descMsgs...))
+			c.ui.Notify(descMsgs)
 
 			if err != nil {
 				return nil, fmt.Errorf("%s: errored: %s", desc, err)
