@@ -1,6 +1,8 @@
 package resources
 
 import (
+	"sort"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -75,6 +77,8 @@ func (r IdentifiedResources) pickPreferredVersions(resources []Resource) ([]Reso
 		}
 
 		if !matched {
+			// Sort to have some stability
+			sort.Slice(rs, func(i, j int) bool { return rs[i].APIVersion() < rs[j].APIVersion() })
 			// TODO use preferred version from the api
 			result = append(result, rs[0])
 		}
