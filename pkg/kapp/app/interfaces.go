@@ -13,6 +13,7 @@ type App interface {
 	CreateOrUpdate(map[string]string) error
 	Exists() (bool, error)
 	Delete() error
+	Rename(string) error
 
 	Changes() ([]Change, error)
 	LastChange() (Change, error)

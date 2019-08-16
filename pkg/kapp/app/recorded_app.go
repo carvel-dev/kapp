@@ -137,6 +137,39 @@ func (a *RecordedApp) Delete() error {
 	return nil
 }
 
+func (a *RecordedApp) Rename(newName string) error {
+	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(a.name, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return fmt.Errorf("App '%s' (namespace: %s) does not exist: %s", a.name, a.nsName, err)
+		}
+		return fmt.Errorf("Getting app: %s", err)
+	}
+
+	// Clear out all existing meta fields
+	app.ObjectMeta = metav1.ObjectMeta{
+		Name:        newName,
+		Namespace:   a.nsName,
+		Labels:      app.ObjectMeta.Labels,
+		Annotations: app.ObjectMeta.Annotations,
+	}
+
+	_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(app)
+	if err != nil {
+		return fmt.Errorf("Creating app: %s", err)
+	}
+
+	err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(a.name, &metav1.DeleteOptions{})
+	if err != nil {
+		// TODO Do not clean up new config map as there is no gurantee it can be deleted either
+		return fmt.Errorf("Deleting app: %s", err)
+	}
+
+	// TODO deal with app history somehow?
+
+	return nil
+}
+
 func (a *RecordedApp) labeledApp() (*LabeledApp, error) {
 	meta, err := a.meta()
 	if err != nil {
