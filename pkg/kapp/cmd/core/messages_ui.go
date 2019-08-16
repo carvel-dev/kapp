@@ -18,8 +18,10 @@ func (ui *MessagesUI) NotifySection(msg string, args ...interface{}) {
 	ui.notify("---- "+msg+" ----", args...)
 }
 
-func (ui *MessagesUI) Notify(msg string, args ...interface{}) {
-	ui.notify(msg, args...)
+func (ui *MessagesUI) Notify(msgs []string) {
+	for _, msg := range msgs {
+		ui.notify("%s", msg)
+	}
 }
 
 func (ui *MessagesUI) notify(msg string, args ...interface{}) {

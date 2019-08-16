@@ -63,20 +63,20 @@ func (c DeleteChange) Apply() error {
 	return nil
 }
 
-func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, error) {
+func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
 	res := c.change.ExistingResource()
 
 	switch res.Annotations()[deleteStrategyAnnKey] {
 	case deleteStrategyOrphanAnnKey:
-		return ctlresm.DoneApplyState{Done: true, Successful: true, Message: "Resource orphaned"}, nil
+		return ctlresm.DoneApplyState{Done: true, Successful: true, Message: "Resource orphaned"}, nil, nil
 	}
 
 	// it should not matter if change is ignored or not
 	// because it should be deleted eventually anyway (thru GC)
 	exists, err := c.identifiedResources.Exists(res)
 	if err != nil {
-		return ctlresm.DoneApplyState{}, err
+		return ctlresm.DoneApplyState{}, nil, err
 	}
 
-	return ctlresm.DoneApplyState{Done: !exists, Successful: true}, nil
+	return ctlresm.DoneApplyState{Done: !exists, Successful: true}, nil, nil
 }

@@ -105,7 +105,7 @@ func NewValueResourceConverged(resource ctlres.Resource) ValueResourceConverged 
 	var stateVal, reasonVal uitable.Value
 
 	// TODO state vs err vs output
-	state, err := ctlcap.NewConvergedResource(resource, nil).IsDoneApplying(&noopUI{})
+	state, _, err := ctlcap.NewConvergedResource(resource, nil).IsDoneApplying()
 	if err != nil {
 		stateVal = uitable.ValueFmt{V: uitable.NewValueString("error"), Error: true}
 		reasonVal = uitable.NewValueString(wordwrap.WrapString(err.Error(), 35))

@@ -95,7 +95,7 @@ func (c ClusterChangeSet) Apply(changesGraph *ctldgraph.ChangeGraph) error {
 		if waitingChanges.IsEmpty() {
 			err := applyingChanges.Complete()
 			if err != nil {
-				c.ui.Notify("Blocked changes:\n%s\n", blockedChanges.WhyBlocked(blockedChanges.Blocked()))
+				c.ui.Notify([]string{fmt.Sprintf("Blocked changes:\n%s\n", blockedChanges.WhyBlocked(blockedChanges.Blocked()))})
 				return err
 			}
 

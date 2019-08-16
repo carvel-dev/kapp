@@ -115,7 +115,7 @@ func (c *ClusterChange) WaitOp() ClusterChangeWaitOp {
 		// TODO associated resources
 		// If existing resource is not in a "done successful" state,
 		// indicate that this will be something we need to wait for
-		existingResState, existingErr := NewConvergedResource(c.change.ExistingResource(), nil).IsDoneApplying(&noopUI{})
+		existingResState, _, existingErr := NewConvergedResource(c.change.ExistingResource(), nil).IsDoneApplying()
 		if existingErr != nil || !(existingResState.Done && existingResState.Successful) {
 			return ClusterChangeWaitOpOK
 		}
@@ -135,7 +135,7 @@ func (c *ClusterChange) Apply() error {
 	case ClusterChangeApplyOpAdd, ClusterChangeApplyOpUpdate:
 		return c.applyErr(AddOrUpdateChange{
 			c.change, c.identifiedResources, c.changeFactory,
-			c.opts.AddOrUpdateChangeOpts, c.ui}.Apply())
+			c.opts.AddOrUpdateChangeOpts}.Apply())
 
 	case ClusterChangeApplyOpDelete:
 		return c.applyErr(DeleteChange{c.change, c.identifiedResources}.Apply())
@@ -148,23 +148,23 @@ func (c *ClusterChange) Apply() error {
 	}
 }
 
-func (c *ClusterChange) IsDoneApplying() (ctlresm.DoneApplyState, error) {
+func (c *ClusterChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
 	op := c.WaitOp()
 
 	switch op {
 	case ClusterChangeWaitOpOK:
 		return AddOrUpdateChange{
 			c.change, c.identifiedResources, c.changeFactory,
-			c.opts.AddOrUpdateChangeOpts, c.ui}.IsDoneApplying()
+			c.opts.AddOrUpdateChangeOpts}.IsDoneApplying()
 
 	case ClusterChangeWaitOpDelete:
 		return DeleteChange{c.change, c.identifiedResources}.IsDoneApplying()
 
 	case ClusterChangeWaitOpNoop:
-		return ctlresm.DoneApplyState{Done: true, Successful: true}, nil
+		return ctlresm.DoneApplyState{Done: true, Successful: true}, nil, nil
 
 	default:
-		return ctlresm.DoneApplyState{}, fmt.Errorf("Unknown change wait operation: %s", op)
+		return ctlresm.DoneApplyState{}, nil, fmt.Errorf("Unknown change wait operation: %s", op)
 	}
 }
 
@@ -202,8 +202,3 @@ func (c *ClusterChange) applyErr(err error) error {
 
 	return fmt.Errorf("Applying %s: %s%s", c.ApplyDescription(), err, hintMsg)
 }
-
-type noopUI struct{}
-
-func (b *noopUI) NotifySection(msg string, args ...interface{}) {}
-func (b *noopUI) Notify(msg string, args ...interface{})        {}

@@ -42,14 +42,13 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 		var doneChanges []WaitingChange
 
 		for _, change := range c.trackedChanges {
-			desc := change.Cluster.WaitDescription()
-			if len(desc) > 0 {
-				c.ui.Notify("waiting on %s", desc)
-			}
+			desc := fmt.Sprintf("waiting on %s", change.Cluster.WaitDescription())
 
-			state, err := change.Cluster.IsDoneApplying()
+			state, descMsgs, err := change.Cluster.IsDoneApplying()
+			c.ui.Notify(append([]string{desc}, descMsgs...))
+
 			if err != nil {
-				return nil, fmt.Errorf("waiting on %s errored: %s", desc, err)
+				return nil, fmt.Errorf("%s: errored: %s", desc, err)
 			}
 			if state.Done {
 				c.numWaited += 1
@@ -64,7 +63,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 				if len(state.Message) > 0 {
 					msg += " (" + state.Message + ")"
 				}
-				return nil, fmt.Errorf("waiting on %s: finished unsuccessfully%s", desc, msg)
+				return nil, fmt.Errorf("%s: finished unsuccessfully%s", desc, msg)
 
 			case state.Done && state.Successful:
 				doneChanges = append(doneChanges, change)

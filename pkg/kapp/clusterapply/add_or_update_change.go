@@ -27,7 +27,6 @@ type AddOrUpdateChange struct {
 	identifiedResources ctlres.IdentifiedResources
 	changeFactory       ctldiff.ChangeFactory
 	opts                AddOrUpdateChangeOpts
-	ui                  UI
 }
 
 func (c AddOrUpdateChange) Apply() error {
@@ -120,21 +119,21 @@ type SpecificResource interface {
 	IsDoneApplying() ctlresm.DoneApplyState
 }
 
-func (c AddOrUpdateChange) IsDoneApplying() (ctlresm.DoneApplyState, error) {
+func (c AddOrUpdateChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
 	labeledResources := ctlres.NewLabeledResources(nil, c.identifiedResources)
 
 	// Refresh resource with latest changes from the server
 	parentRes, err := c.identifiedResources.Get(c.change.NewResource())
 	if err != nil {
-		return ctlresm.DoneApplyState{}, err
+		return ctlresm.DoneApplyState{}, nil, err
 	}
 
 	associatedRs, err := labeledResources.GetAssociated(parentRes)
 	if err != nil {
-		return ctlresm.DoneApplyState{}, err
+		return ctlresm.DoneApplyState{}, nil, err
 	}
 
-	return NewConvergedResource(parentRes, associatedRs).IsDoneApplying(c.ui)
+	return NewConvergedResource(parentRes, associatedRs).IsDoneApplying()
 }
 
 func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error {

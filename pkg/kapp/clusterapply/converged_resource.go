@@ -23,25 +23,27 @@ func NewConvergedResource(res ctlres.Resource, associatedRs []ctlres.Resource) C
 	return ConvergedResource{res, associatedRs}
 }
 
-func (c ConvergedResource) IsDoneApplying(ui UI) (ctlresm.DoneApplyState, error) {
+func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
+	var descMsgs []string
+
 	convergedRes, associatedRs, err := c.findParentAndAssociatedRes()
 	if err != nil {
-		return ctlresm.DoneApplyState{Done: true}, err
+		return ctlresm.DoneApplyState{Done: true}, descMsgs, err
 	}
 
 	convergedResState, err := c.isResourceDoneApplying(convergedRes)
 	if err != nil {
-		return ctlresm.DoneApplyState{Done: true}, err
+		return ctlresm.DoneApplyState{Done: true}, descMsgs, err
 	}
 
 	if convergedResState != nil {
 		// If it is indeed done then take a quick way out and exit
 		if convergedResState.Done {
-			return *convergedResState, nil
+			return *convergedResState, descMsgs, nil
 		}
 
 		if !convergedResState.Successful && len(associatedRs) > 0 {
-			c.notify(ui, convergedRes, true, *convergedResState)
+			descMsgs = append(descMsgs, c.buildDescMsg(convergedRes, true, *convergedResState))
 		}
 	}
 
@@ -52,14 +54,14 @@ func (c ConvergedResource) IsDoneApplying(ui UI) (ctlresm.DoneApplyState, error)
 	disableARWVal, disableARWFound := convergedRes.Annotations()[disableAssociatedResourcesWaitingAnnKey]
 	if disableARWFound {
 		if disableARWVal != "" {
-			return ctlresm.DoneApplyState{Done: true},
+			return ctlresm.DoneApplyState{Done: true}, descMsgs,
 				fmt.Errorf("Expected annotation '%s' on resource '%s' to have value ''",
 					disableAssociatedResourcesWaitingAnnKey, convergedRes.Description())
 		} else {
 			if convergedResState != nil {
-				return *convergedResState, nil
+				return *convergedResState, descMsgs, nil
 			}
-			return ctlresm.DoneApplyState{Done: true, Successful: true}, nil
+			return ctlresm.DoneApplyState{Done: true, Successful: true}, descMsgs, nil
 		}
 	}
 
@@ -73,31 +75,31 @@ func (c ConvergedResource) IsDoneApplying(ui UI) (ctlresm.DoneApplyState, error)
 			state = &ctlresm.DoneApplyState{Done: true, Successful: true}
 		}
 		if err != nil {
-			return *state, err
+			return *state, descMsgs, err
 		}
 
 		associatedRsStates = append(associatedRsStates, *state)
-		c.notify(ui, res, false, *state)
+		descMsgs = append(descMsgs, c.buildDescMsg(res, false, *state))
 	}
 
 	// If parent state is present, ignore all associated resource states
 	if convergedResState != nil {
-		return *convergedResState, nil
+		return *convergedResState, descMsgs, nil
 	}
 
 	for _, state := range associatedRsStates {
 		if state.TerminallyFailed() {
-			return state, nil
+			return state, descMsgs, nil
 		}
 	}
 
 	for _, state := range associatedRsStates {
 		if !state.Done {
-			return state, nil
+			return state, descMsgs, nil
 		}
 	}
 
-	return ctlresm.DoneApplyState{Done: true, Successful: true}, nil
+	return ctlresm.DoneApplyState{Done: true, Successful: true}, descMsgs, nil
 }
 
 func (c ConvergedResource) findParentAndAssociatedRes() (ctlres.Resource, []ctlres.Resource, error) {
@@ -147,7 +149,7 @@ var (
 	uiWaitParentPrefix = color.New(color.Faint).Sprintf(" ^ ")
 )
 
-func (c ConvergedResource) notify(ui UI, res ctlres.Resource, isParent bool, state ctlresm.DoneApplyState) {
+func (c ConvergedResource) buildDescMsg(res ctlres.Resource, isParent bool, state ctlresm.DoneApplyState) string {
 	msg := fmt.Sprintf(uiWaitPrefix+"waiting on %s", res.Description())
 	if isParent {
 		msg = uiWaitParentPrefix
@@ -164,5 +166,5 @@ func (c ConvergedResource) notify(ui UI, res ctlres.Resource, isParent bool, sta
 		msg += ": " + state.Message
 	}
 
-	ui.Notify(msg)
+	return msg
 }

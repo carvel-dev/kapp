@@ -42,10 +42,7 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 		c.markApplied(change)
 		clusterChange := change.Change.(wrappedClusterChange).ClusterChange
 
-		desc := clusterChange.ApplyDescription()
-		if len(desc) > 0 {
-			c.ui.Notify("%s", desc)
-		}
+		c.ui.Notify([]string{clusterChange.ApplyDescription()})
 
 		wg.Add(1)
 
