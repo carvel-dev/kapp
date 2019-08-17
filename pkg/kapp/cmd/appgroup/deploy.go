@@ -136,8 +136,7 @@ func (o *DeployOptions) deployApp(app appGroupApp) error {
 		NamespaceFlags: o.AppGroupFlags.NamespaceFlags,
 	}
 	deployOpts.FileFlags = cmdtools.FileFlags{
-		Files:     []string{app.Path},
-		Recursive: true,
+		Files: []string{app.Path},
 	}
 	deployOpts.DiffFlags = o.AppFlags.DiffFlags
 	deployOpts.ResourceFilterFlags = o.AppFlags.ResourceFilterFlags
