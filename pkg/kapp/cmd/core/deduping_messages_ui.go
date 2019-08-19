@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -11,9 +12,10 @@ const (
 )
 
 type DedupingMessagesUI struct {
-	ui          MessagesUI
-	lastSeen    map[string]time.Time
-	forgetAfter time.Duration
+	ui           MessagesUI
+	lastSeen     map[string]time.Time
+	lastSeenLock sync.Mutex
+	forgetAfter  time.Duration
 }
 
 var _ MessagesUI = &DedupingMessagesUI{}
@@ -30,8 +32,7 @@ func (ui *DedupingMessagesUI) NotifySection(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
 	id := msg
 
-	if ui.shouldSee(id) {
-		ui.markSeen(id)
+	if ui.shouldSeeAndMark(id) {
 		ui.ui.NotifySection(msg)
 	}
 }
@@ -39,20 +40,20 @@ func (ui *DedupingMessagesUI) NotifySection(msg string, args ...interface{}) {
 func (ui *DedupingMessagesUI) Notify(msgs []string) {
 	id := strings.Join(msgs, "\n")
 
-	if ui.shouldSee(id) {
-		ui.markSeen(id)
+	if ui.shouldSeeAndMark(id) {
 		ui.ui.Notify(msgs)
 	}
 }
 
-func (ui *DedupingMessagesUI) shouldSee(id string) bool {
+func (ui *DedupingMessagesUI) shouldSeeAndMark(id string) bool {
+	ui.lastSeenLock.Lock()
+	defer ui.lastSeenLock.Unlock()
+
 	when, found := ui.lastSeen[id]
-	if !found {
+	if !found || time.Now().Sub(when) > ui.forgetAfter {
+		ui.lastSeen[id] = time.Now()
 		return true
 	}
-	return time.Now().Sub(when) > ui.forgetAfter
-}
 
-func (ui *DedupingMessagesUI) markSeen(id string) {
-	ui.lastSeen[id] = time.Now()
+	return false
 }
