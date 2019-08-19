@@ -2,7 +2,6 @@ package clusterapply
 
 import (
 	"fmt"
-	"sync"
 
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
 )
@@ -34,9 +33,7 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 
 	c.ui.NotifySection("applying %d changes %s", len(nonAppliedChanges), c.stats())
 
-	var wg sync.WaitGroup
 	var result []WaitingChange
-	applyErrCh := make(chan error, len(nonAppliedChanges))
 
 	for _, change := range nonAppliedChanges {
 		c.markApplied(change)
@@ -44,25 +41,12 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 
 		c.ui.Notify([]string{clusterChange.ApplyDescription()})
 
-		wg.Add(1)
-
-		go func() {
-			defer func() { wg.Done() }()
-
-			err := clusterChange.Apply()
-			applyErrCh <- err
-		}()
-
-		result = append(result, WaitingChange{change, clusterChange})
-	}
-
-	wg.Wait()
-	close(applyErrCh)
-
-	for err := range applyErrCh {
+		err := clusterChange.Apply()
 		if err != nil {
 			return nil, err
 		}
+
+		result = append(result, WaitingChange{change, clusterChange})
 	}
 
 	return result, nil
