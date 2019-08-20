@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
+	"github.com/k14s/kapp/pkg/kapp/util"
 )
 
 type ApplyingChanges struct {
@@ -38,16 +39,26 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 	var result []WaitingChange
 	applyErrCh := make(chan error, len(nonAppliedChanges))
 
+	// Throttle number of changes are applied concurrently
+	// as it seems that client-go or api-server arent happy
+	// with large number of updates going at once.
+	// Example errors w/o throttling:
+	// - "...: grpc: the client connection is closing (reason: )"
+	// - "...: context canceled (reason: )"
+	applyThrottle := util.NewThrottle(5)
+
 	for _, change := range nonAppliedChanges {
 		c.markApplied(change)
 		clusterChange := change.Change.(wrappedClusterChange).ClusterChange
 
 		c.ui.Notify([]string{clusterChange.ApplyDescription()})
-
 		wg.Add(1)
 
 		go func() {
 			defer func() { wg.Done() }()
+
+			applyThrottle.Take()
+			defer applyThrottle.Done()
 
 			err := clusterChange.Apply()
 			applyErrCh <- err
