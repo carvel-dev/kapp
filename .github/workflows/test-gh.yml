@@ -18,7 +18,10 @@ jobs:
         set -e -x
         export GOPATH=$(echo `pwd`/../../../../)
         # install ytt for build
-        wget -O- https://k14s.io/install.sh | bash
+        mkdir -p tmp/bin/
+        wget -O- https://k14s.io/install.sh | K14SIO_INSTALL_BIN_DIR=tmp/bin bash
+        rm -f tmp/bin/kapp
+        export PATH=`pwd`/tmp/bin:$PATH
         ./hack/build.sh
         ./hack/test.sh
         # TODO no e2e since there is no k8s env
