@@ -1,8 +1,12 @@
 #!/bin/bash
 
-set -e -x -u
+set -e -x
 
-go clean -testcache
+if [ -z "$GITHUB_ACTION" ]; then
+  go clean -testcache
+fi
+
+set -u
 
 go test ./pkg/... -test.v $@
 

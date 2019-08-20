@@ -1,0 +1,24 @@
+name: test-gh
+on: [push]
+jobs:
+  test-all:
+    name: Test GH
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go 1.12
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.12
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v1
+      with:
+        path: src/github.com/k14s/kapp
+    - name: Run Tests
+      run: |
+        set -e -x
+        export GOPATH=$(echo `pwd`/../../../../)
+        # install ytt for build
+        wget -O- https://k14s.io/install.sh | bash
+        ./hack/build.sh
+        ./hack/test.sh
+        # TODO no e2e since there is no k8s env
