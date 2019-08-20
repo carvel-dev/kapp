@@ -36,6 +36,7 @@ func (s *ApplyFlags) SetWithDefaults(prefix string, defaults ApplyFlags, cmd *co
 	}
 
 	cmd.Flags().BoolVar(&s.ApplyIgnored, prefix+"apply-ignored", defaults.ApplyIgnored, "Set to apply ignored changes")
+	cmd.Flags().IntVar(&s.ApplyingChangesOpts.Concurrency, prefix+"apply-concurrency", 5, "Maximum number of concurrent apply operations")
 
 	cmd.Flags().StringVar(&s.AddOrUpdateChangeOpts.DefaultUpdateStrategy, prefix+"apply-default-update-strategy",
 		defaults.AddOrUpdateChangeOpts.DefaultUpdateStrategy, "Change default update strategy")
@@ -43,9 +44,9 @@ func (s *ApplyFlags) SetWithDefaults(prefix string, defaults ApplyFlags, cmd *co
 	cmd.Flags().BoolVar(&s.Wait, prefix+"wait", defaults.Wait, "Set to wait for changes to be applied")
 	cmd.Flags().BoolVar(&s.WaitIgnored, prefix+"wait-ignored", defaults.WaitIgnored, "Set to wait for ignored changes to be applied")
 
-	cmd.Flags().DurationVar(&s.WaitTimeout, prefix+"wait-timeout",
+	cmd.Flags().DurationVar(&s.WaitingChangesOpts.Timeout, prefix+"wait-timeout",
 		mustParseDuration("15m"), "Maximum amount of time to wait")
-	cmd.Flags().DurationVar(&s.WaitCheckInterval, prefix+"wait-check-interval",
+	cmd.Flags().DurationVar(&s.WaitingChangesOpts.CheckInterval, prefix+"wait-check-interval",
 		mustParseDuration("1s"), "Amount of time to sleep between checks while waiting")
 }
 

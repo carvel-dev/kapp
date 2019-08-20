@@ -2,15 +2,14 @@ package clusterapply
 
 import (
 	"fmt"
-	"time"
 
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
 )
 
 type ClusterChangeSetOpts struct {
-	WaitTimeout       time.Duration
-	WaitCheckInterval time.Duration
+	ApplyingChangesOpts
+	WaitingChangesOpts
 }
 
 type ClusterChangeSet struct {
@@ -81,8 +80,9 @@ func (c ClusterChangeSet) Apply(changesGraph *ctldgraph.ChangeGraph) error {
 	expectedNumChanges := len(changesGraph.All())
 
 	blockedChanges := ctldgraph.NewBlockedChanges(changesGraph)
-	applyingChanges := NewApplyingChanges(expectedNumChanges, c.clusterChangeFactory, c.ui)
-	waitingChanges := NewWaitingChanges(expectedNumChanges, c.opts, c.ui)
+	applyingChanges := NewApplyingChanges(
+		expectedNumChanges, c.opts.ApplyingChangesOpts, c.clusterChangeFactory, c.ui)
+	waitingChanges := NewWaitingChanges(expectedNumChanges, c.opts.WaitingChangesOpts, c.ui)
 
 	for {
 		appliedChanges, err := applyingChanges.Apply(blockedChanges.Unblocked())

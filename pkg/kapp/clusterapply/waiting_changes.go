@@ -7,11 +7,16 @@ import (
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
 )
 
+type WaitingChangesOpts struct {
+	Timeout       time.Duration
+	CheckInterval time.Duration
+}
+
 type WaitingChanges struct {
 	numTotal       int // for ui
 	numWaited      int // for ui
 	trackedChanges []WaitingChange
-	opts           ClusterChangeSetOpts
+	opts           WaitingChangesOpts
 	ui             UI
 }
 
@@ -20,7 +25,7 @@ type WaitingChange struct {
 	Cluster *ClusterChange
 }
 
-func NewWaitingChanges(numTotal int, opts ClusterChangeSetOpts, ui UI) *WaitingChanges {
+func NewWaitingChanges(numTotal int, opts WaitingChangesOpts, ui UI) *WaitingChanges {
 	return &WaitingChanges{numTotal, 0, nil, opts, ui}
 }
 
@@ -76,11 +81,11 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 			return doneChanges, nil
 		}
 
-		if time.Now().Sub(startTime) > c.opts.WaitTimeout {
-			return nil, fmt.Errorf("timed out waiting after %s", c.opts.WaitTimeout)
+		if time.Now().Sub(startTime) > c.opts.Timeout {
+			return nil, fmt.Errorf("timed out waiting after %s", c.opts.Timeout)
 		}
 
-		time.Sleep(c.opts.WaitCheckInterval)
+		time.Sleep(c.opts.CheckInterval)
 	}
 }
 

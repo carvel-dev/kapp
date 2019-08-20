@@ -8,15 +8,20 @@ import (
 	"github.com/k14s/kapp/pkg/kapp/util"
 )
 
+type ApplyingChangesOpts struct {
+	Concurrency int
+}
+
 type ApplyingChanges struct {
 	numTotal             int // for ui
+	opts                 ApplyingChangesOpts
 	applied              map[*ctldgraph.Change]struct{}
 	clusterChangeFactory ClusterChangeFactory
 	ui                   UI
 }
 
-func NewApplyingChanges(numTotal int, clusterChangeFactory ClusterChangeFactory, ui UI) *ApplyingChanges {
-	return &ApplyingChanges{numTotal, map[*ctldgraph.Change]struct{}{}, clusterChangeFactory, ui}
+func NewApplyingChanges(numTotal int, opts ApplyingChangesOpts, clusterChangeFactory ClusterChangeFactory, ui UI) *ApplyingChanges {
+	return &ApplyingChanges{numTotal, opts, map[*ctldgraph.Change]struct{}{}, clusterChangeFactory, ui}
 }
 
 func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange, error) {
@@ -45,7 +50,7 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 	// Example errors w/o throttling:
 	// - "...: grpc: the client connection is closing (reason: )"
 	// - "...: context canceled (reason: )"
-	applyThrottle := util.NewThrottle(5)
+	applyThrottle := util.NewThrottle(c.opts.Concurrency)
 
 	for _, change := range nonAppliedChanges {
 		c.markApplied(change)
