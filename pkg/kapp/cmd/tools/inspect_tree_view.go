@@ -8,6 +8,7 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	"github.com/fatih/color"
+	ctlcap "github.com/k14s/kapp/pkg/kapp/clusterapply"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
@@ -94,7 +95,7 @@ func (v InspectTreeView) Print(ui ui.UI) {
 
 		if resource.IsProvisioned() {
 			condVal := cmdcore.NewConditionsValue(resource.Status())
-			syncVal := NewValueResourceConverged(resource)
+			syncVal := ctlcap.NewValueResourceConverged(resource)
 
 			row = append(row,
 				// TODO erroneously colors empty value

@@ -8,7 +8,6 @@ import (
 	ctlcap "github.com/k14s/kapp/pkg/kapp/clusterapply"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	"github.com/mitchellh/go-wordwrap"
 )
 
 type InspectView struct {
@@ -72,7 +71,7 @@ func (v InspectView) Print(ui ui.UI) {
 
 		if resource.IsProvisioned() {
 			condVal := cmdcore.NewConditionsValue(resource.Status())
-			syncVal := NewValueResourceConverged(resource)
+			syncVal := ctlcap.NewValueResourceConverged(resource)
 
 			row = append(row,
 				// TODO erroneously colors empty value
@@ -94,22 +93,6 @@ func (v InspectView) Print(ui ui.UI) {
 	}
 
 	ui.PrintTable(table)
-}
-
-type ValueResourceConverged struct {
-	StateVal  uitable.Value
-	ReasonVal uitable.Value
-}
-
-func NewValueResourceConverged(resource ctlres.Resource) ValueResourceConverged {
-	// TODO state vs err vs output
-	state, _, err := ctlcap.NewConvergedResource(resource, nil).IsDoneApplying()
-	stateUI := ctlcap.NewDoneApplyStateUI(state, err)
-
-	stateVal := uitable.ValueFmt{V: uitable.NewValueString(stateUI.State), Error: stateUI.Error}
-	reasonVal := uitable.NewValueString(wordwrap.WrapString(stateUI.Message, 35))
-
-	return ValueResourceConverged{stateVal, reasonVal}
 }
 
 func NewValueResourceOwner(resource ctlres.Resource) uitable.ValueString {

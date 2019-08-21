@@ -9,6 +9,7 @@ import (
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/mitchellh/go-wordwrap"
 )
 
 type ChangeView interface {
@@ -192,4 +193,20 @@ func (v *ChangesCountsView) Strings(table bool) []string {
 
 func (v *ChangesCountsView) String() string {
 	return strings.Join(v.Strings(false), " / ")
+}
+
+type ValueResourceConverged struct {
+	StateVal  uitable.Value
+	ReasonVal uitable.Value
+}
+
+func NewValueResourceConverged(resource ctlres.Resource) ValueResourceConverged {
+	// TODO state vs err vs output
+	state, _, err := NewConvergedResource(resource, nil).IsDoneApplying()
+	stateUI := NewDoneApplyStateUI(state, err)
+
+	stateVal := uitable.ValueFmt{V: uitable.NewValueString(stateUI.State), Error: stateUI.Error}
+	reasonVal := uitable.NewValueString(wordwrap.WrapString(stateUI.Message, 35))
+
+	return ValueResourceConverged{stateVal, reasonVal}
 }
