@@ -91,7 +91,8 @@ type DiffChangeView struct {
 
 var _ ctlcap.ChangeView = DiffChangeView{}
 
-func (v DiffChangeView) Resource() ctlres.Resource { return v.change.NewOrExistingResource() }
+func (v DiffChangeView) Resource() ctlres.Resource         { return v.change.NewOrExistingResource() }
+func (v DiffChangeView) ExistingResource() ctlres.Resource { return v.change.ExistingResource() }
 
 func (v DiffChangeView) ApplyOp() ctlcap.ClusterChangeApplyOp {
 	switch v.change.Op() {

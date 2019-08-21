@@ -79,14 +79,14 @@ metadata:
 		expectedOutput := strings.TrimSpace(replaceSpaces(`
 Changes
 
-Namespace  Name                 Kind       Conds.  Age  Op      Wait to  $
-kapp-test  app                  ConfigMap  -       -    create  reconcile  $
-~          app-config           ConfigMap  -       -    create  reconcile  $
-~          app-health-check     ConfigMap  -       -    create  reconcile  $
-~          app-ing              ConfigMap  -       -    create  reconcile  $
-~          app-svc              ConfigMap  -       -    create  reconcile  $
-~          import-etcd-into-db  ConfigMap  -       -    create  reconcile  $
-~          migrations           ConfigMap  -       -    create  reconcile  $
+Namespace  Name                 Kind       Conds.  Age  Op      Wait to    Rs  Ri  $
+kapp-test  app                  ConfigMap  -       -    create  reconcile  -   -  $
+~          app-config           ConfigMap  -       -    create  reconcile  -   -  $
+~          app-health-check     ConfigMap  -       -    create  reconcile  -   -  $
+~          app-ing              ConfigMap  -       -    create  reconcile  -   -  $
+~          app-svc              ConfigMap  -       -    create  reconcile  -   -  $
+~          import-etcd-into-db  ConfigMap  -       -    create  reconcile  -   -  $
+~          migrations           ConfigMap  -       -    create  reconcile  -   -  $
 
 Op:      7 create, 0 delete, 0 update, 0 noop
 Wait to: 7 reconcile, 0 delete, 0 noop
@@ -184,9 +184,9 @@ metadata:
 		expectedOutput := strings.TrimSpace(replaceSpaces(`
 Changes
 
-Namespace  Name                 Kind       Conds.  Age  Op      Wait to  $
-kapp-test  app-config2          ConfigMap  -       -    create  reconcile  $
-~          import-etcd-into-db  ConfigMap  -       <replaced>   delete  delete  $
+Namespace  Name                 Kind       Conds.  Age  Op      Wait to    Rs  Ri  $
+kapp-test  app-config2          ConfigMap  -       -    create  reconcile  -   -  $
+~          import-etcd-into-db  ConfigMap  -       <replaced>   delete  delete     ok  -  $
 
 Op:      1 create, 1 delete, 0 update, 0 noop
 Wait to: 1 reconcile, 1 delete, 0 noop

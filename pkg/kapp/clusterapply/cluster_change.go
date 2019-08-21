@@ -182,7 +182,9 @@ func (c *ClusterChange) WaitDescription() string {
 	return fmt.Sprintf("%s %s", waitOpCodeUI[c.WaitOp()], c.change.NewOrExistingResource().Description())
 }
 
-func (c *ClusterChange) Resource() ctlres.Resource  { return c.change.NewOrExistingResource() }
+func (c *ClusterChange) Resource() ctlres.Resource         { return c.change.NewOrExistingResource() }
+func (c *ClusterChange) ExistingResource() ctlres.Resource { return c.change.ExistingResource() }
+
 func (c *ClusterChange) TextDiff() ctldiff.TextDiff { return c.change.TextDiff() }
 
 func (c *ClusterChange) applyErr(err error) error {

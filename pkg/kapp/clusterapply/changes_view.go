@@ -14,6 +14,8 @@ import (
 
 type ChangeView interface {
 	Resource() ctlres.Resource
+	ExistingResource() ctlres.Resource
+
 	ApplyOp() ClusterChangeApplyOp
 	WaitOp() ClusterChangeWaitOp
 	TextDiff() ctldiff.TextDiff
@@ -33,6 +35,12 @@ func (v *ChangesView) Print(ui ui.UI) {
 	conditionsHeader := uitable.NewHeader("Conditions")
 	conditionsHeader.Title = "Conds."
 
+	reconcileStateHeader := uitable.NewHeader("Reconcile state")
+	reconcileStateHeader.Title = "Rs"
+
+	reconcileInfoHeader := uitable.NewHeader("Reconcile info")
+	reconcileInfoHeader.Title = "Ri"
+
 	table := uitable.Table{
 		Title: "Changes",
 		// TODO do not show total number of "changes" as it may
@@ -48,6 +56,8 @@ func (v *ChangesView) Print(ui ui.UI) {
 			uitable.NewHeader("Age"),
 			uitable.NewHeader("Op"),
 			uitable.NewHeader("Wait to"),
+			reconcileStateHeader,
+			reconcileInfoHeader,
 		},
 	}
 
@@ -95,6 +105,16 @@ func (v *ChangesView) Print(ui ui.UI) {
 			v.applyOpCode(view.ApplyOp()),
 			v.waitOpCode(view.WaitOp()),
 		)
+
+		if resource.IsProvisioned() {
+			syncVal := NewValueResourceConverged(view.ExistingResource())
+			row = append(row, syncVal.StateVal, syncVal.ReasonVal)
+		} else {
+			row = append(row,
+				uitable.NewValueString(""),
+				uitable.NewValueString(""),
+			)
+		}
 
 		table.Rows = append(table.Rows, row)
 	}
