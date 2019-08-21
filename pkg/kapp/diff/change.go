@@ -32,7 +32,6 @@ type Change interface {
 	OpsDiff() OpsDiff
 
 	IsIgnored() bool
-	IgnoredReason() string
 }
 
 type ChangeImpl struct {
@@ -99,13 +98,6 @@ func (d *ChangeImpl) IsIgnored() bool { return d.isIgnoredTransient() }
 
 func (d *ChangeImpl) isIgnoredTransient() bool {
 	return d.existingRes != nil && d.newRes == nil && d.existingRes.Transient()
-}
-
-func (d *ChangeImpl) IgnoredReason() string {
-	if d.isIgnoredTransient() {
-		return "cluster managed"
-	}
-	return ""
 }
 
 func (d *ChangeImpl) TextDiff() TextDiff {

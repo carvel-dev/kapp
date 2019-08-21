@@ -16,8 +16,6 @@ type ChangeView interface {
 	ApplyOp() ClusterChangeApplyOp
 	WaitOp() ClusterChangeWaitOp
 	TextDiff() ctldiff.TextDiff
-	IsIgnored() bool
-	IgnoredReason() string
 }
 
 type ChangesView struct {

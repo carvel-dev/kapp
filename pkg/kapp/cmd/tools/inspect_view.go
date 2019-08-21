@@ -112,11 +112,6 @@ func NewValueResourceConverged(resource ctlres.Resource) ValueResourceConverged 
 	return ValueResourceConverged{stateVal, reasonVal}
 }
 
-type noopUI struct{}
-
-func (b *noopUI) NotifySection(msg string, args ...interface{}) {}
-func (b *noopUI) Notify(msg string, args ...interface{})        {}
-
 func NewValueResourceOwner(resource ctlres.Resource) uitable.ValueString {
 	if resource.IsProvisioned() {
 		if resource.Transient() {

@@ -112,6 +112,3 @@ func (v DiffChangeView) ApplyOp() ctlcap.ClusterChangeApplyOp {
 func (v DiffChangeView) WaitOp() ctlcap.ClusterChangeWaitOp { return ctlcap.ClusterChangeWaitOpNoop }
 
 func (v DiffChangeView) TextDiff() ctldiff.TextDiff { return v.change.TextDiff() }
-
-func (v DiffChangeView) IsIgnored() bool       { return v.change.IsIgnored() }
-func (v DiffChangeView) IgnoredReason() string { return v.change.IgnoredReason() }

@@ -53,5 +53,4 @@ func (d *ChangePrecalculated) Op() ChangeOp       { return d.op }
 func (d *ChangePrecalculated) TextDiff() TextDiff { return d.textDiff }
 func (d *ChangePrecalculated) OpsDiff() OpsDiff   { return d.opsDiff }
 
-func (d *ChangePrecalculated) IsIgnored() bool       { return false }
-func (d *ChangePrecalculated) IgnoredReason() string { return "" }
+func (d *ChangePrecalculated) IsIgnored() bool { return false }
