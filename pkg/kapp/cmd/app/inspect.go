@@ -17,8 +17,10 @@ type InspectOptions struct {
 
 	AppFlags            AppFlags
 	ResourceFilterFlags cmdtools.ResourceFilterFlags
-	Raw                 bool
-	Tree                bool
+
+	Raw    bool
+	Status bool
+	Tree   bool
 }
 
 func NewInspectOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *InspectOptions {
@@ -35,6 +37,7 @@ func NewInspectCmd(o *InspectOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 	o.AppFlags.Set(cmd, flagsFactory)
 	o.ResourceFilterFlags.Set(cmd)
 	cmd.Flags().BoolVar(&o.Raw, "raw", false, "Output raw YAML resource content")
+	cmd.Flags().BoolVar(&o.Status, "status", false, "Output status content")
 	cmd.Flags().BoolVarP(&o.Tree, "tree", "t", false, "Tree view")
 	return cmd
 }
@@ -63,8 +66,10 @@ func (o *InspectOptions) Run() error {
 	}
 
 	resources = resourceFilter.Apply(resources)
+	source := fmt.Sprintf("app '%s'", app.Name())
 
-	if o.Raw {
+	switch {
+	case o.Raw:
 		for _, res := range resources {
 			historylessRes, err := ctldiff.NewResourceWithHistory(res, nil).HistorylessResource()
 			if err != nil {
@@ -78,19 +83,15 @@ func (o *InspectOptions) Run() error {
 
 			o.ui.PrintBlock(append([]byte("---\n"), resBs...))
 		}
-	} else {
+
+	case o.Status:
+		InspectStatusView{Source: source, Resources: resources}.Print(o.ui)
+
+	default:
 		if o.Tree {
-			cmdtools.InspectTreeView{
-				Source:    fmt.Sprintf("app '%s'", app.Name()),
-				Resources: resources,
-				Sort:      true,
-			}.Print(o.ui)
+			cmdtools.InspectTreeView{Source: source, Resources: resources, Sort: true}.Print(o.ui)
 		} else {
-			cmdtools.InspectView{
-				Source:    fmt.Sprintf("app '%s'", app.Name()),
-				Resources: resources,
-				Sort:      true,
-			}.Print(o.ui)
+			cmdtools.InspectView{Source: source, Resources: resources, Sort: true}.Print(o.ui)
 		}
 	}
 
