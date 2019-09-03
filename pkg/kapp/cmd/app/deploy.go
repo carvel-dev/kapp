@@ -54,7 +54,7 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *DeployOptions) Run() error {
-	app, coreClient, dynamicClient, err := appFactory(o.depsFactory, o.AppFlags)
+	app, coreClient, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags)
 	if err != nil {
 		return err
 	}
@@ -79,6 +79,11 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
+	dynamicClient, err := o.depsFactory.DynamicClient()
+	if err != nil {
+		return err
+	}
+
 	prep := ctlapp.NewPreparation(coreClient, dynamicClient)
 
 	o.DeployFlags.PrepareResourcesOpts.DefaultNamespace = o.AppFlags.NamespaceFlags.Name
@@ -93,7 +98,6 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient, []string{o.AppFlags.NamespaceFlags.Name})
 	labeledResources := ctlres.NewLabeledResources(labelSelector, identifiedResources)
 
 	err = labeledResources.Prepare(newResources, conf.OwnershipLabelMods(), conf.LabelScopingMods(), conf.AdditionalLabels())

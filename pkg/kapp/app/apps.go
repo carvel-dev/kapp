@@ -4,27 +4,25 @@ import (
 	"fmt"
 	"strings"
 
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
 
 const (
 	kappIsAppLabelKey   = "kapp.k14s.io/is-app"
 	kappIsAppLabelValue = ""
-	// TODO kappRevisionAnnKey   = "kapp.k14s.io/revision"
-	// TODO kappLastDeployAnnKey = "kapp.k14s.io/last-deploy"
 )
 
 type Apps struct {
-	nsName        string
-	coreClient    kubernetes.Interface
-	dynamicClient dynamic.Interface
+	nsName              string
+	coreClient          kubernetes.Interface
+	identifiedResources ctlres.IdentifiedResources
 }
 
-func NewApps(nsName string, coreClient kubernetes.Interface, dynamicClient dynamic.Interface) Apps {
-	return Apps{nsName, coreClient, dynamicClient}
+func NewApps(nsName string, coreClient kubernetes.Interface, identifiedResources ctlres.IdentifiedResources) Apps {
+	return Apps{nsName, coreClient, identifiedResources}
 }
 
 func (a Apps) Find(name string) (App, error) {
@@ -39,14 +37,14 @@ func (a Apps) Find(name string) (App, error) {
 		if err != nil {
 			return nil, fmt.Errorf("Parsing app name (or label selector): %s", err)
 		}
-		return &LabeledApp{sel, a.coreClient, a.dynamicClient}, nil
+		return &LabeledApp{sel, a.identifiedResources}, nil
 	}
 
 	if len(a.nsName) == 0 {
 		return nil, fmt.Errorf("Expected non-empty namespace")
 	}
 
-	return &RecordedApp{name, a.nsName, a.coreClient, a.dynamicClient, nil}, nil
+	return &RecordedApp{name, a.nsName, a.coreClient, a.identifiedResources, nil}, nil
 }
 
 func (a Apps) List(additionalLabels map[string]string) ([]App, error) {
@@ -71,7 +69,7 @@ func (a Apps) List(additionalLabels map[string]string) ([]App, error) {
 
 	for _, app := range apps.Items {
 		meta := NewAppMetaFromData(app.Data)
-		result = append(result, &RecordedApp{app.Name, app.Namespace, a.coreClient, a.dynamicClient, &meta})
+		result = append(result, &RecordedApp{app.Name, app.Namespace, a.coreClient, a.identifiedResources, &meta})
 	}
 
 	return result, nil

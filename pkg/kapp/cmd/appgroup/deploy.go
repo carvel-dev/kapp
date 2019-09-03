@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/cppforlife/go-cli-ui/ui"
-	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
@@ -53,16 +52,6 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *DeployOptions) Run() error {
-	coreClient, err := o.depsFactory.CoreClient()
-	if err != nil {
-		return err
-	}
-
-	dynamicClient, err := o.depsFactory.DynamicClient()
-	if err != nil {
-		return err
-	}
-
 	// TODO what if app is renamed? currently it
 	// will have conflicting resources with new-named app
 	updatedApps, err := o.appsToUpdate()
@@ -78,7 +67,10 @@ func (o *DeployOptions) Run() error {
 		}
 	}
 
-	apps := ctlapp.NewApps(o.AppGroupFlags.NamespaceFlags.Name, coreClient, dynamicClient)
+	apps, _, _, err := cmdapp.AppFactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags)
+	if err != nil {
+		return err
+	}
 
 	existingAppsInGroup, err := apps.List(map[string]string{appGroupAnnKey: o.AppGroupFlags.Name})
 	if err != nil {

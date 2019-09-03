@@ -7,7 +7,6 @@ import (
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
 )
 
@@ -37,7 +36,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *DeleteOptions) Run() error {
-	app, coreClient, dynamicClient, err := appFactory(o.depsFactory, o.AppFlags)
+	app, _, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags)
 	if err != nil {
 		return err
 	}
@@ -57,8 +56,6 @@ func (o *DeleteOptions) Run() error {
 	if err != nil {
 		return err
 	}
-
-	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient, []string{o.AppFlags.NamespaceFlags.Name})
 
 	existingResources, err := identifiedResources.List(labelSelector)
 	if err != nil {

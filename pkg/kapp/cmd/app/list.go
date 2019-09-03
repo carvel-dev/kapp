@@ -7,7 +7,6 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
-	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	"github.com/spf13/cobra"
 )
@@ -32,33 +31,25 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
-	cmd.Flags().BoolVar(&o.AllNamespaces, "all-namespaces", false, "List apps in all namespaces")
+	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List apps in all namespaces")
 	return cmd
 }
 
 func (o *ListOptions) Run() error {
-	coreClient, err := o.depsFactory.CoreClient()
-	if err != nil {
-		return err
-	}
-
-	dynamicClient, err := o.depsFactory.DynamicClient()
-	if err != nil {
-		return err
-	}
-
-	nsName := o.NamespaceFlags.Name
 	tableTitle := fmt.Sprintf("Apps in namespace '%s'", o.NamespaceFlags.Name)
 	nsHeader := uitable.NewHeader("Namespace")
 	nsHeader.Hidden = true
 
 	if o.AllNamespaces {
-		nsName = ""
+		o.NamespaceFlags.Name = ""
 		tableTitle = "Apps in all namespaces"
 		nsHeader.Hidden = false
 	}
 
-	apps := ctlapp.NewApps(nsName, coreClient, dynamicClient)
+	apps, _, _, err := AppFactoryClients(o.depsFactory, o.NamespaceFlags)
+	if err != nil {
+		return err
+	}
 
 	items, err := apps.List(nil)
 	if err != nil {

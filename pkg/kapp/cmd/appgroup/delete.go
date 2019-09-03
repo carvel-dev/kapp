@@ -2,7 +2,6 @@ package appgroup
 
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
-	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
@@ -44,17 +43,10 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *DeleteOptions) Run() error {
-	coreClient, err := o.depsFactory.CoreClient()
+	apps, _, _, err := cmdapp.AppFactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags)
 	if err != nil {
 		return err
 	}
-
-	dynamicClient, err := o.depsFactory.DynamicClient()
-	if err != nil {
-		return err
-	}
-
-	apps := ctlapp.NewApps(o.AppGroupFlags.NamespaceFlags.Name, coreClient, dynamicClient)
 
 	appsInGroup, err := apps.List(map[string]string{appGroupAnnKey: o.AppGroupFlags.Name})
 	if err != nil {

@@ -7,7 +7,6 @@ import (
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
 )
 
@@ -43,7 +42,7 @@ func NewInspectCmd(o *InspectOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 }
 
 func (o *InspectOptions) Run() error {
-	app, coreClient, dynamicClient, err := appFactory(o.depsFactory, o.AppFlags)
+	app, _, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags)
 	if err != nil {
 		return err
 	}
@@ -52,8 +51,6 @@ func (o *InspectOptions) Run() error {
 	if err != nil {
 		return err
 	}
-
-	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient, []string{o.AppFlags.NamespaceFlags.Name})
 
 	resources, err := identifiedResources.List(labelSelector)
 	if err != nil {

@@ -2,7 +2,6 @@ package app
 
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
-	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	ctllogs "github.com/k14s/kapp/pkg/kapp/logs"
 	"github.com/k14s/kapp/pkg/kapp/matcher"
@@ -41,17 +40,7 @@ func (o *LogsOptions) Run() error {
 		return err
 	}
 
-	coreClient, err := o.depsFactory.CoreClient()
-	if err != nil {
-		return err
-	}
-
-	dynamicClient, err := o.depsFactory.DynamicClient()
-	if err != nil {
-		return err
-	}
-
-	app, err := ctlapp.NewApps(o.AppFlags.NamespaceFlags.Name, coreClient, dynamicClient).Find(o.AppFlags.Name)
+	app, coreClient, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags)
 	if err != nil {
 		return err
 	}
@@ -60,8 +49,6 @@ func (o *LogsOptions) Run() error {
 	if err != nil {
 		return err
 	}
-
-	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient, []string{o.AppFlags.NamespaceFlags.Name})
 
 	podWatcher := ctlres.FilteringPodWatcher{
 		func(pod *corev1.Pod) bool {

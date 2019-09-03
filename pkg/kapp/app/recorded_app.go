@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -20,8 +20,8 @@ type RecordedApp struct {
 	name   string
 	nsName string
 
-	coreClient    kubernetes.Interface
-	dynamicClient dynamic.Interface
+	coreClient          kubernetes.Interface
+	identifiedResources ctlres.IdentifiedResources
 
 	memoizedMeta *AppMeta
 }
@@ -128,7 +128,6 @@ func (a *RecordedApp) Delete() error {
 		return err
 	}
 
-	// TODO verify that there no more resources
 	err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(a.name, &metav1.DeleteOptions{})
 	if err != nil {
 		return fmt.Errorf("Deleting app: %s", err)
@@ -178,7 +177,7 @@ func (a *RecordedApp) labeledApp() (*LabeledApp, error) {
 
 	sel := labels.Set(meta.Labels()).AsSelector()
 
-	return &LabeledApp{sel, a.coreClient, a.dynamicClient}, nil
+	return &LabeledApp{sel, a.identifiedResources}, nil
 }
 
 func (a *RecordedApp) Meta() (AppMeta, error) { return a.meta() }

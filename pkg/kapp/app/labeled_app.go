@@ -6,15 +6,11 @@ import (
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 )
 
 type LabeledApp struct {
-	labelSelector labels.Selector
-
-	coreClient    kubernetes.Interface
-	dynamicClient dynamic.Interface
+	labelSelector       labels.Selector
+	identifiedResources ctlres.IdentifiedResources
 }
 
 var _ App = &LabeledApp{}
@@ -42,7 +38,7 @@ func (a *LabeledApp) Delete() error {
 		return err
 	}
 
-	rs, err := ctlres.NewIdentifiedResources(a.coreClient, a.dynamicClient, nil).List(labelSelector)
+	rs, err := a.identifiedResources.List(labelSelector)
 	if err != nil {
 		return fmt.Errorf("Relisting app resources: %s", err)
 	}

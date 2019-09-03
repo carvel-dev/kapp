@@ -3,10 +3,8 @@ package configmap
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
-	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
 )
 
@@ -35,17 +33,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 }
 
 func (o *ListOptions) Run() error {
-	coreClient, err := o.depsFactory.CoreClient()
-	if err != nil {
-		return err
-	}
-
-	dynamicClient, err := o.depsFactory.DynamicClient()
-	if err != nil {
-		return err
-	}
-
-	app, err := ctlapp.NewApps(o.AppFlags.NamespaceFlags.Name, coreClient, dynamicClient).Find(o.AppFlags.Name)
+	app, _, identifiedResources, err := cmdapp.AppFactory(o.depsFactory, o.AppFlags)
 	if err != nil {
 		return err
 	}
@@ -54,8 +42,6 @@ func (o *ListOptions) Run() error {
 	if err != nil {
 		return err
 	}
-
-	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient, []string{o.AppFlags.NamespaceFlags.Name})
 
 	maps, err := identifiedResources.ConfigMapResources(labelSelector)
 	if err != nil {

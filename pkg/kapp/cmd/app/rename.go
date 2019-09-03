@@ -32,7 +32,7 @@ func NewRenameCmd(o *RenameOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *RenameOptions) Run() error {
-	app, _, _, err := appFactory(o.depsFactory, o.AppFlags)
+	app, _, _, err := AppFactory(o.depsFactory, o.AppFlags)
 	if err != nil {
 		return err
 	}

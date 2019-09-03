@@ -3,29 +3,43 @@ package app
 import (
 	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	"k8s.io/client-go/dynamic"
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"k8s.io/client-go/kubernetes"
 )
 
-func appFactory(depsFactory cmdcore.DepsFactory, appFlags AppFlags) (
-	ctlapp.App, kubernetes.Interface, dynamic.Interface, error) {
+func AppFactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFlags) (
+	ctlapp.Apps, kubernetes.Interface, ctlres.IdentifiedResources, error) {
 
 	coreClient, err := depsFactory.CoreClient()
 	if err != nil {
-		return nil, nil, nil, err
+		return ctlapp.Apps{}, nil, ctlres.IdentifiedResources{}, err
 	}
 
 	dynamicClient, err := depsFactory.DynamicClient()
 	if err != nil {
-		return nil, nil, nil, err
+		return ctlapp.Apps{}, nil, ctlres.IdentifiedResources{}, err
 	}
 
-	apps := ctlapp.NewApps(appFlags.NamespaceFlags.Name, coreClient, dynamicClient)
+	identifiedResources := ctlres.NewIdentifiedResources(
+		coreClient, dynamicClient, []string{nsFlags.Name})
+
+	apps := ctlapp.NewApps(nsFlags.Name, coreClient, identifiedResources)
+
+	return apps, coreClient, identifiedResources, nil
+}
+
+func AppFactory(depsFactory cmdcore.DepsFactory, appFlags AppFlags) (
+	ctlapp.App, kubernetes.Interface, ctlres.IdentifiedResources, error) {
+
+	apps, coreClient, identifiedResources, err := AppFactoryClients(depsFactory, appFlags.NamespaceFlags)
+	if err != nil {
+		return nil, nil, ctlres.IdentifiedResources{}, err
+	}
 
 	app, err := apps.Find(appFlags.Name)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, ctlres.IdentifiedResources{}, err
 	}
 
-	return app, coreClient, dynamicClient, nil
+	return app, coreClient, identifiedResources, nil
 }
