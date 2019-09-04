@@ -128,7 +128,8 @@ func (o *DeployOptions) Run() error {
 		}
 	} else {
 		if len(newResources) == 0 && !o.DeployFlags.AllowEmpty {
-			return fmt.Errorf("Trying to apply empty set of resources. Refusing to continue unless --allow-empty is specified.")
+			return fmt.Errorf("Trying to apply empty set of resources which will delete cluster resources. " +
+				"Refusing to continue unless --dangerous-allow-empty-list-of-resources is specified.")
 		}
 	}
 
