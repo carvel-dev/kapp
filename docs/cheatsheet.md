@@ -26,3 +26,6 @@
 
 - `kapp inspect -a 'label:!kapp.k14s.io/app' --filter-kind Deployment`
   - Show all `Deployment` resources in the cluster **not** managed by kapp
+
+- `kapp deploy -a label:kapp.k14s.io/is-app-change= --filter-age 500h+ --dangerous-allow-empty-list-of-resources --apply-ignored`
+  - Delete all app changes older than 500h (v0.12.0+)
