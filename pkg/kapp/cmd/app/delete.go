@@ -14,9 +14,10 @@ type DeleteOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
 
-	AppFlags   AppFlags
-	DiffFlags  cmdtools.DiffFlags
-	ApplyFlags ApplyFlags
+	AppFlags            AppFlags
+	DiffFlags           cmdtools.DiffFlags
+	ResourceFilterFlags cmdtools.ResourceFilterFlags
+	ApplyFlags          ApplyFlags
 }
 
 func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *DeleteOptions {
@@ -31,6 +32,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	}
 	o.AppFlags.Set(cmd, flagsFactory)
 	o.DiffFlags.SetWithPrefix("diff", cmd)
+	o.ResourceFilterFlags.Set(cmd)
 	o.ApplyFlags.SetWithDefaults("", ApplyFlagsDeleteDefaults, cmd)
 	return cmd
 }
@@ -57,11 +59,26 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
+	resourceFilter, err := o.ResourceFilterFlags.ResourceFilter()
+	if err != nil {
+		return err
+	}
+
 	existingResources, err := identifiedResources.List(labelSelector)
 	if err != nil {
 		return err
 	}
 
+	fullyDeleteApp := true
+	applicableExistingResources := resourceFilter.Apply(existingResources)
+
+	if len(applicableExistingResources) != len(existingResources) {
+		fullyDeleteApp = false
+		o.ui.PrintLinef("App '%s' (namespace: %s) will not be fully deleted because some resources are excluded by filters",
+			app.Name(), o.AppFlags.NamespaceFlags.Name)
+	}
+
+	existingResources = applicableExistingResources
 	changeFactory := ctldiff.NewChangeFactory(nil)
 
 	changes, err := ctldiff.NewChangeSet(existingResources, nil, o.DiffFlags.ChangeSetOpts, changeFactory).Calculate()
@@ -97,6 +114,10 @@ func (o *DeleteOptions) Run() error {
 			return err
 		}
 
-		return app.Delete()
+		if fullyDeleteApp {
+			return app.Delete()
+		}
+
+		return nil
 	})
 }
