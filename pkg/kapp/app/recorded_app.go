@@ -291,6 +291,10 @@ func (c appTrackingChange) Succeed() error {
 	return err
 }
 
+func (c appTrackingChange) Delete() error {
+	return c.change.Delete()
+}
+
 func (c appTrackingChange) syncOnApp() error {
 	return c.app.update(func(meta *AppMeta) {
 		meta.LastChangeName = c.change.Name()

@@ -5,6 +5,7 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
+	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	"github.com/spf13/cobra"
@@ -15,7 +16,6 @@ type ListOptions struct {
 	depsFactory cmdcore.DepsFactory
 
 	AppFlags cmdapp.AppFlags
-	Values   bool
 }
 
 func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *ListOptions {
@@ -44,11 +44,22 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
+	AppChangesTable{"App changes", changes}.Print(o.ui)
+
+	return nil
+}
+
+type AppChangesTable struct {
+	Title   string
+	Changes []ctlapp.Change
+}
+
+func (t AppChangesTable) Print(ui ui.UI) {
 	nsHeader := uitable.NewHeader("Namespaces")
 	nsHeader.Hidden = true
 
 	table := uitable.Table{
-		Title:   "App changes",
+		Title:   t.Title,
 		Content: "app changes",
 
 		Header: []uitable.Header{
@@ -66,7 +77,7 @@ func (o *ListOptions) Run() error {
 		},
 	}
 
-	for _, change := range changes {
+	for _, change := range t.Changes {
 		table.Rows = append(table.Rows, []uitable.Value{
 			uitable.NewValueString(change.Name()),
 			uitable.NewValueTime(change.Meta().StartedAt),
@@ -80,7 +91,5 @@ func (o *ListOptions) Run() error {
 		})
 	}
 
-	o.ui.PrintTable(table)
-
-	return nil
+	ui.PrintTable(table)
 }

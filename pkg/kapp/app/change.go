@@ -14,6 +14,8 @@ type ChangeImpl struct {
 
 	coreClient kubernetes.Interface
 	meta       ChangeMeta
+
+	createdAt time.Time
 }
 
 var _ Change = &ChangeImpl{}
@@ -37,6 +39,15 @@ func (c *ChangeImpl) Succeed() error {
 		meta.Successful = &trueBool
 		meta.FinishedAt = time.Now().UTC()
 	})
+}
+
+func (c *ChangeImpl) Delete() error {
+	err := c.coreClient.CoreV1().ConfigMaps(c.nsName).Delete(c.name, &metav1.DeleteOptions{})
+	if err != nil {
+		return fmt.Errorf("Deleting app change: %s", err)
+	}
+
+	return nil
 }
 
 func (c *ChangeImpl) update(doFunc func(*ChangeMeta)) error {
@@ -67,3 +78,4 @@ func (NoopChange) Name() string     { return "" }
 func (NoopChange) Meta() ChangeMeta { return ChangeMeta{} }
 func (NoopChange) Fail() error      { return nil }
 func (NoopChange) Succeed() error   { return nil }
+func (NoopChange) Delete() error    { return nil }

@@ -83,6 +83,7 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 
 	acCmd := cmdac.NewCmd()
 	acCmd.AddCommand(cmdac.NewListCmd(cmdac.NewListOptions(o.ui, o.depsFactory), flagsFactory))
+	acCmd.AddCommand(cmdac.NewGCCmd(cmdac.NewGCOptions(o.ui, o.depsFactory), flagsFactory))
 	cmd.AddCommand(acCmd)
 
 	saCmd := cmdsa.NewCmd()

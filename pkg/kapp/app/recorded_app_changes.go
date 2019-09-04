@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -42,12 +43,19 @@ func (a RecordedAppChanges) List() ([]Change, error) {
 		return nil, err
 	}
 
+	sort.Slice(changes.Items, func(i, j int) bool {
+		iT := &changes.Items[i].CreationTimestamp
+		jT := &changes.Items[j].CreationTimestamp
+		return iT.Before(jT)
+	})
+
 	for _, change := range changes.Items {
 		result = append(result, &ChangeImpl{
 			name:       change.Name,
 			nsName:     a.nsName,
 			coreClient: a.coreClient,
 			meta:       NewChangeMetaFromData(change.Data),
+			createdAt:  change.CreationTimestamp.Time,
 		})
 	}
 

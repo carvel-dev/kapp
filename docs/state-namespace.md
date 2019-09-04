@@ -40,3 +40,9 @@ There are currently two approaches to deciding which namespace to use for storin
     ```
 
 Note: It's currently not possible to have kapp place app `ConfigMap` resource into `Namespace` that kapp creates for that application.
+
+### App Changes
+
+As mentioned above, app changes (stored as `ConfigMap`) are stored in state namespace. App changes do not store any information necessary for kapp to operate, but rather act as informational records. There is currently no cap on how many app changes are kept per app.
+
+To remove older app changes, use `kapp app-change gc -a app1` which by default will keep 200 most recent changes (as of v0.12.0).

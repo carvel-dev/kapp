@@ -15,6 +15,7 @@ type App interface {
 	Delete() error
 	Rename(string) error
 
+	// Sorted as first is oldest
 	Changes() ([]Change, error)
 	LastChange() (Change, error)
 	BeginChange(ChangeMeta) (Change, error)
@@ -26,4 +27,6 @@ type Change interface {
 
 	Fail() error
 	Succeed() error
+
+	Delete() error
 }
