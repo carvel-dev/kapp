@@ -199,11 +199,14 @@ a:visited { color: #999; }
   background: none;
 }
 .terminal {
-  border: 1px dashed #333;
+  border-width: 0;
+  border-radius: 0;
+  border-left: 3px solid #333;
+  padding-left: 15px;
   font-size: 100%;
   color: #ccc;
 }
-.hero { border-bottom: 1px solid #333; }
+.hero { border-width: 0; }
 #features { border-width: 0; }
 #features .highlight { background: #333; }
 #playground { border-width: 0; }

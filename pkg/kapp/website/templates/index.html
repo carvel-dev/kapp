@@ -27,19 +27,6 @@
       </div>
 
       <div id="intro">
-        <div id="basic-usage">
-          <h2>Basic Usage</h2>
-          <pre class="terminal">
-<span class="gray"># Configurations picked up from a directory</span>
-$ <span class="green">kapp deploy -a cass1 -f examples/cassandra/</span>
-<span class="gray spacer-before"># Can be used with helm charts, removing need for Tiller</span>
-$ helm template my-chart --values my-vals.yml | <span class="green">kapp -y deploy -a my-chart -f -</span>
-<span class="gray spacer-before"># ... and with kustomize</span>
-$ kustomize build ./some-app | <span class="green">kapp -y deploy -a some-app -f -</span>
-<span class="gray spacer-before"># ... or templated with ytt</span>
-$ ytt -f ./some-app | <span class="green">kapp -y deploy -a some-app -f -</span></pre>
-        </div>
-
         <div id="features">
           <h2>Features</h2>
           <ul>
@@ -68,6 +55,19 @@ $ ytt -f ./some-app | <span class="green">kapp -y deploy -a some-app -f -</span>
             <li>Works <em class="highlight">without server side components</em></li>
             <li><a href="https://github.com/k14s/kapp/blob/master/docs/gitops.md">GitOps friendly</a> (<code>kapp app-group deploy -g all-apps --directory .</code>)</li>
           </ul>
+        </div>
+
+        <div id="basic-usage">
+          <h2>Basic Usage</h2>
+          <pre class="terminal">
+<span class="gray"># Configurations picked up from a directory</span>
+$ <span class="green">kapp deploy -a cass1 -f examples/cassandra/</span>
+<span class="gray spacer-before"># Can be used with helm charts, removing need for Tiller</span>
+$ helm template my-chart --values my-vals.yml | <span class="green">kapp -y deploy -a my-chart -f -</span>
+<span class="gray spacer-before"># ... and with kustomize</span>
+$ kustomize build ./some-app | <span class="green">kapp -y deploy -a some-app -f -</span>
+<span class="gray spacer-before"># ... or templated with ytt</span>
+$ ytt -f ./some-app | <span class="green">kapp -y deploy -a some-app -f -</span></pre>
         </div>
 
         <div id="playground">
