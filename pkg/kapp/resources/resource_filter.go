@@ -8,12 +8,14 @@ import (
 )
 
 type ResourceFilter struct {
-	CreatedAtAfterTime *time.Time
-	Kinds              []string
-	Namespaces         []string
-	Names              []string
-	KindNamespaces     []string
-	KindNsNames        []string
+	CreatedAtBeforeTime *time.Time
+	CreatedAtAfterTime  *time.Time
+
+	Kinds          []string
+	Namespaces     []string
+	Names          []string
+	KindNamespaces []string
+	KindNsNames    []string
 
 	BoolFilter *BoolFilter
 }
@@ -33,6 +35,12 @@ func (f ResourceFilter) Apply(resources []Resource) []Resource {
 func (f ResourceFilter) Matches(resource Resource) bool {
 	if f.BoolFilter != nil {
 		return f.BoolFilter.Matches(resource)
+	}
+
+	if f.CreatedAtBeforeTime != nil {
+		if resource.CreatedAt().After(*f.CreatedAtBeforeTime) {
+			return false
+		}
 	}
 
 	if f.CreatedAtAfterTime != nil {

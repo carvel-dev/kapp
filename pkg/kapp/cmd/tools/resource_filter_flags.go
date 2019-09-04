@@ -15,7 +15,7 @@ type ResourceFilterFlags struct {
 }
 
 func (s *ResourceFilterFlags) Set(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&s.age, "filter-age", "", "Set age filter (example: 5m)")
+	cmd.Flags().StringVar(&s.age, "filter-age", "", "Set age filter (example: 5m, 500h+, 10m-)")
 
 	cmd.Flags().StringSliceVar(&s.rf.Kinds, "filter-kind", nil, "Set kinds filter (example: Pod) (can repeat)")
 	cmd.Flags().StringSliceVar(&s.rf.Namespaces, "filter-ns", nil, "Set namespace filter (example: knative-serving) (can repeat)")
@@ -27,13 +27,14 @@ func (s *ResourceFilterFlags) Set(cmd *cobra.Command) {
 }
 
 func (s *ResourceFilterFlags) ResourceFilter() (ctlres.ResourceFilter, error) {
-	createdAt, err := s.AfterTime()
+	createdAtBeforeTime, createdAtAfterTime, err := s.Times()
 	if err != nil {
 		return ctlres.ResourceFilter{}, err
 	}
 
 	rf := s.rf
-	rf.CreatedAtAfterTime = createdAt
+	rf.CreatedAtAfterTime = createdAtAfterTime
+	rf.CreatedAtBeforeTime = createdAtBeforeTime
 
 	if len(s.bf) > 0 {
 		boolFilter, err := ctlres.NewBoolFilterFromString(s.bf)
@@ -47,16 +48,33 @@ func (s *ResourceFilterFlags) ResourceFilter() (ctlres.ResourceFilter, error) {
 	return rf, nil
 }
 
-func (s *ResourceFilterFlags) AfterTime() (*time.Time, error) {
+func (s *ResourceFilterFlags) Times() (*time.Time, *time.Time, error) {
 	if len(s.age) == 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
 
-	dur, err := time.ParseDuration(s.age)
+	var ageStr string
+	var ageOlder bool
+
+	lastIdx := len(s.age) - 1
+
+	switch string(s.age[lastIdx]) {
+	case "+":
+		ageStr = s.age[:lastIdx]
+		ageOlder = true
+	case "-":
+		ageStr = s.age[:lastIdx]
+	}
+
+	dur, err := time.ParseDuration(ageStr)
 	if err == nil {
 		t1 := time.Now().UTC().Add(-dur)
-		return &t1, nil
+		if ageOlder {
+			return &t1, nil, nil
+		}
+		return nil, &t1, nil
 	}
 
-	return nil, fmt.Errorf("Expected age filter to be either empty or parseable time.Duration (eg 5m)")
+	return nil, nil, fmt.Errorf("Expected age filter to be either empty or " +
+		"parseable time.Duration (example: 5m; valid units: ns, us, ms, s, m, h)")
 }
