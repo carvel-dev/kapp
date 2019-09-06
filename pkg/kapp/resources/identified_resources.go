@@ -8,7 +8,6 @@ import (
 
 type IdentifiedResources struct {
 	coreClient    kubernetes.Interface
-	dynamicClient dynamic.Interface
 	resourceTypes ResourceTypes
 	resources     *Resources
 }
@@ -19,7 +18,7 @@ func NewIdentifiedResources(coreClient kubernetes.Interface,
 	resTypes := NewResourceTypesImpl(coreClient)
 	resources := NewResources(resTypes, coreClient, dynamicClient, fallbackAllowedNamespaces)
 
-	return IdentifiedResources{coreClient, dynamicClient, resTypes, resources}
+	return IdentifiedResources{coreClient, resTypes, resources}
 }
 
 func (r IdentifiedResources) Create(resource Resource) (Resource, error) {
