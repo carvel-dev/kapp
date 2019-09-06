@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -54,9 +53,9 @@ func NewResources(resourceTypes ResourceTypes, coreClient kubernetes.Interface,
 	}
 }
 
-type gvrItems struct {
-	schema.GroupVersionResource
-	Items []unstructured.Unstructured
+type unstructItems struct {
+	ResType ResourceType
+	Items   []unstructured.Unstructured
 }
 
 func (c *Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resource, error) {
@@ -64,7 +63,7 @@ func (c *Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resou
 		opts.ListOpts = &metav1.ListOptions{}
 	}
 
-	itemsCh := make(chan gvrItems, len(resTypes))
+	unstructItemsCh := make(chan unstructItems, len(resTypes))
 	warnErrsCh := make(chan error, len(resTypes))
 	fatalErrsCh := make(chan error, len(resTypes))
 	var itemsDone sync.WaitGroup
@@ -106,12 +105,12 @@ func (c *Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resou
 				}
 			}
 
-			itemsCh <- gvrItems{resType.GroupVersionResource, list.Items}
+			unstructItemsCh <- unstructItems{resType, list.Items}
 		}()
 	}
 
 	itemsDone.Wait()
-	close(itemsCh)
+	close(unstructItemsCh)
 	close(warnErrsCh)
 	close(fatalErrsCh)
 
@@ -121,9 +120,9 @@ func (c *Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resou
 
 	var resources []Resource
 
-	for itemNs := range itemsCh {
-		for _, item := range itemNs.Items {
-			resources = append(resources, NewResourceUnstructured(item, itemNs.GroupVersionResource))
+	for unstructItem := range unstructItemsCh {
+		for _, item := range unstructItem.Items {
+			resources = append(resources, NewResourceUnstructured(item, unstructItem.ResType))
 		}
 	}
 
@@ -138,7 +137,7 @@ func (c *Resources) allForNamespaces(client dynamic.NamespaceableResourceInterfa
 
 	var itemsDone sync.WaitGroup
 	fatalErrsCh := make(chan error, len(allowedNs))
-	itemsCh := make(chan *unstructured.UnstructuredList, len(allowedNs))
+	unstructItemsCh := make(chan *unstructured.UnstructuredList, len(allowedNs))
 
 	for _, ns := range allowedNs {
 		ns := ns // copy
@@ -157,14 +156,14 @@ func (c *Resources) allForNamespaces(client dynamic.NamespaceableResourceInterfa
 					// Continue trying other namespaces
 				}
 			} else {
-				itemsCh <- resList
+				unstructItemsCh <- resList
 			}
 		}()
 	}
 
 	itemsDone.Wait()
 	close(fatalErrsCh)
-	close(itemsCh)
+	close(unstructItemsCh)
 
 	for fatalErr := range fatalErrsCh {
 		return nil, fatalErr
@@ -172,7 +171,7 @@ func (c *Resources) allForNamespaces(client dynamic.NamespaceableResourceInterfa
 
 	list := &unstructured.UnstructuredList{}
 
-	for resList := range itemsCh {
+	for resList := range unstructItemsCh {
 		list.Items = append(list.Items, resList.Items...)
 	}
 
@@ -206,7 +205,7 @@ func (c *Resources) Create(resource Resource) (Resource, error) {
 		return nil, err
 	}
 
-	return NewResourceUnstructured(*createdUn, resType.GroupVersionResource), nil
+	return NewResourceUnstructured(*createdUn, resType), nil
 }
 
 func (c *Resources) Update(resource Resource) (Resource, error) {
@@ -236,7 +235,7 @@ func (c *Resources) Update(resource Resource) (Resource, error) {
 		return nil, err
 	}
 
-	return NewResourceUnstructured(*updatedUn, resType.GroupVersionResource), nil
+	return NewResourceUnstructured(*updatedUn, resType), nil
 }
 
 func (c *Resources) Patch(resource Resource, patchType types.PatchType, data []byte) (Resource, error) {
@@ -263,7 +262,7 @@ func (c *Resources) Patch(resource Resource, patchType types.PatchType, data []b
 		return nil, err
 	}
 
-	return NewResourceUnstructured(*patchedUn, resType.GroupVersionResource), nil
+	return NewResourceUnstructured(*patchedUn, resType), nil
 }
 
 const (
@@ -335,7 +334,7 @@ func (c *Resources) Get(resource Resource) (Resource, error) {
 		return nil, c.resourceErr(err, "Getting", resource)
 	}
 
-	return NewResourceUnstructured(*item, resType.GroupVersionResource), nil
+	return NewResourceUnstructured(*item, resType), nil
 }
 
 func (c *Resources) Exists(resource Resource) (bool, error) {

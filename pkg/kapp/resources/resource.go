@@ -56,14 +56,14 @@ type Resource interface {
 
 type ResourceImpl struct {
 	un        unstructured.Unstructured
-	gvr       schema.GroupVersionResource
+	resType   ResourceType
 	transient bool
 }
 
 var _ Resource = &ResourceImpl{}
 
-func NewResourceUnstructured(un unstructured.Unstructured, gvr schema.GroupVersionResource) *ResourceImpl {
-	return &ResourceImpl{un: un, gvr: gvr}
+func NewResourceUnstructured(un unstructured.Unstructured, resType ResourceType) *ResourceImpl {
+	return &ResourceImpl{un: un, resType: resType}
 }
 
 func NewResourceFromBytes(data []byte) (*ResourceImpl, error) {
@@ -123,7 +123,9 @@ func NewResourcesFromBytes(data []byte) ([]Resource, error) {
 	return rs, nil
 }
 
-func (r *ResourceImpl) GroupVersionResource() schema.GroupVersionResource { return r.gvr }
+func (r *ResourceImpl) GroupVersionResource() schema.GroupVersionResource {
+	return r.resType.GroupVersionResource
+}
 
 func (r *ResourceImpl) Kind() string       { return r.un.GetKind() }
 func (r *ResourceImpl) APIVersion() string { return r.un.GetAPIVersion() }
@@ -210,7 +212,7 @@ func (r *ResourceImpl) Equal(res Resource) bool {
 }
 
 func (r *ResourceImpl) DeepCopy() Resource {
-	return &ResourceImpl{*r.un.DeepCopy(), r.gvr, r.transient}
+	return &ResourceImpl{*r.un.DeepCopy(), r.resType, r.transient}
 }
 
 func (r *ResourceImpl) DeepCopyRaw() map[string]interface{} {
