@@ -186,7 +186,7 @@ Changes
 
 Namespace  Name                 Kind       Conds.  Age  Op      Wait to    Rs  Ri  $
 kapp-test  app-config2          ConfigMap  -       -    create  reconcile  -   -  $
-~          import-etcd-into-db  ConfigMap  -       <replaced>   delete  delete     ok  -  $
+~          import-etcd-into-db  ConfigMap  -       <replaced>  delete  delete     ok  -  $
 
 Op:      1 create, 1 delete, 0 update, 0 noop
 Wait to: 1 reconcile, 1 delete, 0 noop
@@ -217,7 +217,7 @@ func replaceTs(result string) string {
 }
 
 func replaceAgeStr(result string) string {
-	return regexp.MustCompile("\\d(s|m|h)").ReplaceAllString(result, "<replaced>")
+	return regexp.MustCompile("\\d+(s|m|h)").ReplaceAllString(result, "<replaced>")
 }
 
 func replaceSpaces(result string) string {
