@@ -7,6 +7,7 @@ import (
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
 )
 
@@ -81,6 +82,8 @@ func (o *DeleteOptions) Run() error {
 	existingResources = applicableExistingResources
 	changeFactory := ctldiff.NewChangeFactory(nil)
 
+	o.changeIgnored(existingResources)
+
 	changes, err := ctldiff.NewChangeSet(existingResources, nil, o.DiffFlags.ChangeSetOpts, changeFactory).Calculate()
 	if err != nil {
 		return err
@@ -120,4 +123,19 @@ func (o *DeleteOptions) Run() error {
 
 		return nil
 	})
+}
+
+const (
+	ownedForDeletionAnnKey = "kapp.k14s.io/owned-for-deletion" // valid values: ''
+)
+
+func (o *DeleteOptions) changeIgnored(resources []ctlres.Resource) {
+	// Good example for use of this annotation is PVCs created by StatefulSet
+	// (PVCs do not get deleted when StatefulSet is deleted:
+	// https://github.com/k14s/kapp/issues/36)
+	for _, res := range resources {
+		if _, found := res.Annotations()[ownedForDeletionAnnKey]; found {
+			res.MarkTransient(false)
+		}
+	}
 }

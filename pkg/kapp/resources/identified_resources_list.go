@@ -41,7 +41,7 @@ func (r IdentifiedResources) List(labelSelector labels.Selector) ([]Resource, er
 	// Mark resources that were not created by kapp as transient
 	for i, res := range resources {
 		if !NewIdentityAnnotation(res).Valid() {
-			res.markTransient()
+			res.MarkTransient(true)
 			resources[i] = res
 		}
 	}

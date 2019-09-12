@@ -99,6 +99,8 @@ spec:
       name: cassandra-data
       labels:
         testvct: test
+      annotations:
+        kapp.k14s.io/owned-for-deletion: ""
     spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:

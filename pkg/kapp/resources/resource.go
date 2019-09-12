@@ -47,7 +47,7 @@ type Resource interface {
 
 	Debug(string)
 
-	markTransient()
+	MarkTransient(bool)
 	Transient() bool
 
 	unstructured() unstructured.Unstructured     // private
@@ -186,8 +186,8 @@ func (r *ResourceImpl) IsProvisioned() bool {
 
 func (r *ResourceImpl) IsDeleting() bool { return r.un.GetDeletionTimestamp() != nil }
 
-func (r *ResourceImpl) markTransient()  { r.transient = true }
-func (r *ResourceImpl) Transient() bool { return r.transient }
+func (r *ResourceImpl) MarkTransient(transient bool) { r.transient = transient }
+func (r *ResourceImpl) Transient() bool              { return r.transient }
 
 func (r *ResourceImpl) Annotations() map[string]string     { return r.un.GetAnnotations() }
 func (r *ResourceImpl) Labels() map[string]string          { return r.un.GetLabels() }
