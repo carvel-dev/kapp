@@ -217,7 +217,7 @@ func replaceTs(result string) string {
 }
 
 func replaceAgeStr(result string) string {
-	return regexp.MustCompile("\\d+(s|m|h)").ReplaceAllString(result, "<replaced>")
+	return regexp.MustCompile("\\d+(s|m|h)\\s+").ReplaceAllString(result, "<replaced>  ")
 }
 
 func replaceSpaces(result string) string {
