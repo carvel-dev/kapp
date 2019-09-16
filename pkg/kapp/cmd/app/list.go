@@ -29,6 +29,9 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		Aliases: []string{"l", "ls"},
 		Short:   "List all apps in a namespace",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Annotations: map[string]string{
+			cmdcore.AppHelpGroup.Key: cmdcore.AppHelpGroup.Value,
+		},
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List apps in all namespaces")

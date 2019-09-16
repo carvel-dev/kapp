@@ -22,6 +22,9 @@ func NewLabelCmd(o *LabelOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 		Use:   "label",
 		Short: "Print specified app label",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Annotations: map[string]string{
+			cmdcore.AppSupportHelpGroup.Key: cmdcore.AppSupportHelpGroup.Value,
+		},
 	}
 	o.AppFlags.Set(cmd, flagsFactory)
 	return cmd

@@ -28,6 +28,9 @@ func NewLogsCmd(o *LogsOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		Aliases: []string{"l"},
 		Short:   "Print app's Pod logs",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Annotations: map[string]string{
+			cmdcore.AppHelpGroup.Key: cmdcore.AppHelpGroup.Value,
+		},
 	}
 	o.AppFlags.Set(cmd, flagsFactory)
 	o.LogsFlags.Set(cmd)

@@ -42,6 +42,9 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		Aliases: []string{"d", "dep"},
 		Short:   "Deploy app",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Annotations: map[string]string{
+			cmdcore.AppHelpGroup.Key: cmdcore.AppHelpGroup.Value,
+		},
 	}
 	o.AppFlags.Set(cmd, flagsFactory)
 	o.FileFlags.Set(cmd)

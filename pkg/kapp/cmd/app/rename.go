@@ -25,6 +25,9 @@ func NewRenameCmd(o *RenameOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		Use:   "rename",
 		Short: "Rename app",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Annotations: map[string]string{
+			cmdcore.AppSupportHelpGroup.Key: cmdcore.AppSupportHelpGroup.Value,
+		},
 	}
 	o.AppFlags.Set(cmd, flagsFactory)
 	cmd.Flags().StringVar(&o.NewName, "new-name", "", "Set new name (format: new-name)")

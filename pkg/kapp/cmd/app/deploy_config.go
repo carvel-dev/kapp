@@ -21,6 +21,9 @@ func NewDeployConfigCmd(o *DeployConfigOptions, flagsFactory cmdcore.FlagsFactor
 		Use:   "deploy-config",
 		Short: "Show default deploy config",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Annotations: map[string]string{
+			cmdcore.MiscHelpGroup.Key: cmdcore.MiscHelpGroup.Value,
+		},
 	}
 	return cmd
 }

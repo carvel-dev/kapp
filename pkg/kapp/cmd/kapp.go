@@ -55,6 +55,13 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 
 	cmd.SetOutput(uiBlockWriter{o.ui}) // setting output for cmd.Help()
 
+	cmd.SetUsageTemplate(cobrautil.HelpSectionsUsageTemplate([]cobrautil.HelpSection{
+		cmdcore.AppHelpGroup,
+		cmdcore.AppSupportHelpGroup,
+		cmdcore.MiscHelpGroup,
+		cmdcore.RestOfCommandsHelpGroup,
+	}))
+
 	o.UIFlags.Set(cmd, flagsFactory)
 	o.KubeconfigFlags.Set(cmd, flagsFactory)
 

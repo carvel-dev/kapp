@@ -30,6 +30,9 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		Use:   "delete",
 		Short: "Delete app",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Annotations: map[string]string{
+			cmdcore.AppHelpGroup.Key: cmdcore.AppHelpGroup.Value,
+		},
 	}
 	o.AppFlags.Set(cmd, flagsFactory)
 	o.DiffFlags.SetWithPrefix("diff", cmd)

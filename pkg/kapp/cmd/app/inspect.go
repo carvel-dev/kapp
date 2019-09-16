@@ -32,6 +32,9 @@ func NewInspectCmd(o *InspectOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 		Aliases: []string{"i", "is", "insp"},
 		Short:   "Inspect app",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Annotations: map[string]string{
+			cmdcore.AppHelpGroup.Key: cmdcore.AppHelpGroup.Value,
+		},
 	}
 	o.AppFlags.Set(cmd, flagsFactory)
 	o.ResourceFilterFlags.Set(cmd)
