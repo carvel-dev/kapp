@@ -21,7 +21,7 @@ func NewGCOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *GCOptions {
 
 func NewGCCmd(o *GCOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "garbare-collect",
+		Use:     "garbage-collect",
 		Aliases: []string{"gc"},
 		Short:   "Garbage collect app changes",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
