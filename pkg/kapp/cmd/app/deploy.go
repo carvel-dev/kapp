@@ -45,7 +45,21 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		Annotations: map[string]string{
 			cmdcore.AppHelpGroup.Key: cmdcore.AppHelpGroup.Value,
 		},
+		Example: `
+  # Deploy app 'app1' based on config files in config/
+  kapp deploy -a app1 -f config/
+
+  # Deploy app 'app1' while showing full text diff
+  kapp deploy -a app1 -f config/ --diff-changes
+
+  # Deploy app 'app1' based on remote file
+  kapp deploy -a app1 \
+    -f https://github.com/...download/v0.6.0/crds.yaml \
+    -f https://github.com/...download/v0.6.0/release.yaml`,
 	}
+
+	setDeployCmdFlags(cmd)
+
 	o.AppFlags.Set(cmd, flagsFactory)
 	o.FileFlags.Set(cmd)
 	o.DiffFlags.SetWithPrefix("diff", cmd)
@@ -53,6 +67,7 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	o.ApplyFlags.SetWithDefaults("", ApplyFlagsDeployDefaults, cmd)
 	o.DeployFlags.Set(cmd)
 	o.LabelFlags.Set(cmd)
+
 	return cmd
 }
 
