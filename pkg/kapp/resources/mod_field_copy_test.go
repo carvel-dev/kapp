@@ -29,6 +29,58 @@ metadata:
     label-key: existing-label-val`,
 		},
 		{
+			Description: "copy from existing, when destination is non-map",
+			Res: `
+metadata:
+  labels: null`,
+			Expected: `
+metadata:
+  labels:
+    label-key: new-label-val`,
+			Sources: []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceExisting},
+			Path:    ctlres.NewPathFromStrings([]string{"metadata", "labels", "label-key"}),
+			NewRes: `
+metadata:
+  labels: null`,
+			ExistingRes: `
+metadata:
+  labels:
+    label-key: new-label-val`,
+		},
+		{
+			Description: "leaves resource unmodified when nothing to copy, and destination is non-map",
+			Res: `
+metadata:
+  labels: null`,
+			Expected: `
+metadata:
+  labels: null`,
+			Sources: []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceExisting},
+			Path:    ctlres.NewPathFromStrings([]string{"metadata", "labels", "label-key"}),
+			NewRes: `
+metadata:
+  labels: null`,
+			ExistingRes: `
+metadata:
+  labels:
+    other-label-key: new-label-val`,
+		},
+		{
+			Description: "leaves resource unmodified when nothing to copy, and destination is non-map (2)",
+			Res: `
+metadata: {}
+status: null`,
+			Expected: `
+metadata: {}
+status: null`,
+			Sources: []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceNew, ctlres.FieldCopyModSourceExisting},
+			Path:    ctlres.NewPathFromStrings([]string{"status"}),
+			NewRes: `
+metadata: {}`,
+			ExistingRes: `
+metadata: {}`,
+		},
+		{
 			Description: "copy from existing, when new has it",
 			Res: `
 metadata:
