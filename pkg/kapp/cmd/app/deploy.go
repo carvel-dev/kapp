@@ -152,7 +152,7 @@ func (o *DeployOptions) Run() error {
 	}
 
 	existingResources = resourceFilter.Apply(existingResources)
-	changeFactory := ctldiff.NewChangeFactory(conf.RebaseMods())
+	changeFactory := ctldiff.NewChangeFactory(conf.RebaseMods(), conf.DiffAgainstLastAppliedFieldExclusionMods())
 
 	changes, err := ctldiff.NewChangeSetWithTemplates(
 		existingResources, newResources, conf.TemplateRules(),

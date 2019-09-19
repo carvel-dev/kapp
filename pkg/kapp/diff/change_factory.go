@@ -5,18 +5,21 @@ import (
 )
 
 type ChangeFactory struct {
-	mods []ctlres.ResourceModWithMultiple
+	rebaseMods                               []ctlres.ResourceModWithMultiple
+	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod
 }
 
-func NewChangeFactory(mods []ctlres.ResourceModWithMultiple) ChangeFactory {
-	return ChangeFactory{mods}
+func NewChangeFactory(rebaseMods []ctlres.ResourceModWithMultiple,
+	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod) ChangeFactory {
+
+	return ChangeFactory{rebaseMods, diffAgainstLastAppliedFieldExclusionMods}
 }
 
 func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Resource) (Change, error) {
 	if existingRes != nil {
 		lastAppliedRes := f.NewResourceWithHistory(existingRes).LastAppliedResource()
 		if lastAppliedRes != nil {
-			rebasedLastAppliedRes, err := NewRebasedResource(existingRes, lastAppliedRes, f.mods).Resource()
+			rebasedLastAppliedRes, err := NewRebasedResource(existingRes, lastAppliedRes, f.rebaseMods).Resource()
 			if err != nil {
 				return nil, err
 			}
@@ -40,7 +43,7 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Re
 		newRes = historylessNewRes
 	}
 
-	rebasedNewRes, err := NewRebasedResource(existingRes, newRes, f.mods).Resource()
+	rebasedNewRes, err := NewRebasedResource(existingRes, newRes, f.rebaseMods).Resource()
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +70,7 @@ func (f ChangeFactory) NewExactChange(existingRes, newRes ctlres.Resource) (Chan
 		newRes = historylessNewRes
 	}
 
-	rebasedNewRes, err := NewRebasedResource(existingRes, newRes, f.mods).Resource()
+	rebasedNewRes, err := NewRebasedResource(existingRes, newRes, f.rebaseMods).Resource()
 	if err != nil {
 		return nil, err
 	}
@@ -76,5 +79,5 @@ func (f ChangeFactory) NewExactChange(existingRes, newRes ctlres.Resource) (Chan
 }
 
 func (f ChangeFactory) NewResourceWithHistory(resource ctlres.Resource) ResourceWithHistory {
-	return NewResourceWithHistory(resource, &f)
+	return NewResourceWithHistory(resource, &f, f.diffAgainstLastAppliedFieldExclusionMods)
 }

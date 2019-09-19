@@ -91,11 +91,15 @@ rebaseRules:
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
   type: copy
   sources: [new, existing]
-  resourceMatchers: &recentAppsDeployments
+  resourceMatchers: &builtinAppsDeploymentWithRevAnnKey
   - apiVersionKindMatcher: {apiVersion: apps/v1, kind: Deployment}
   - apiVersionKindMatcher: {apiVersion: apps/v1beta1, kind: Deployment}
   - apiVersionKindMatcher: {apiVersion: apps/v1beta2, kind: Deployment}
   - apiVersionKindMatcher: {apiVersion: extensions/v1beta1, kind: Deployment}
+
+diffAgainstLastAppliedFieldExclusionRules:
+- path: [metadata, annotations, "deployment.kubernetes.io/revision"]
+  resourceMatchers: *builtinAppsDeploymentWithRevAnnKey
 
 ownershipLabelRules:
 - path: [metadata, labels]

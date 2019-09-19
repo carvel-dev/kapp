@@ -71,7 +71,7 @@ func (o *InspectOptions) Run() error {
 	switch {
 	case o.Raw:
 		for _, res := range resources {
-			historylessRes, err := ctldiff.NewResourceWithHistory(res, nil).HistorylessResource()
+			historylessRes, err := ctldiff.NewResourceWithHistory(res, nil, nil).HistorylessResource()
 			if err != nil {
 				return err
 			}

@@ -21,7 +21,8 @@ type Config struct {
 	LabelScopingRules   []LabelScopingRule
 	TemplateRules       []TemplateRule
 
-	AdditionalLabels map[string]string
+	AdditionalLabels                          map[string]string
+	DiffAgainstLastAppliedFieldExclusionRules []DiffAgainstLastAppliedFieldExclusionRule
 }
 
 type RebaseRule struct {
@@ -29,6 +30,11 @@ type RebaseRule struct {
 	Path             ctlres.Path
 	Type             string
 	Sources          []ctlres.FieldCopyModSource
+}
+
+type DiffAgainstLastAppliedFieldExclusionRule struct {
+	ResourceMatchers []ResourceMatcher
+	Path             ctlres.Path
 }
 
 type OwnershipLabelRule struct {
@@ -116,6 +122,17 @@ func (r RebaseRule) AsMods() []ctlres.ResourceModWithMultiple {
 		}
 	}
 
+	return mods
+}
+
+func (r DiffAgainstLastAppliedFieldExclusionRule) AsMods() []ctlres.FieldRemoveMod {
+	var mods []ctlres.FieldRemoveMod
+	for _, matcher := range r.ResourceMatchers {
+		mods = append(mods, ctlres.FieldRemoveMod{
+			ResourceMatcher: matcher.AsResourceMatcher(),
+			Path:            r.Path,
+		})
+	}
 	return mods
 }
 

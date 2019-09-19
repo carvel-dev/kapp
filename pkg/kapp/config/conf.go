@@ -44,6 +44,16 @@ func (c Conf) RebaseMods() []ctlres.ResourceModWithMultiple {
 	return mods
 }
 
+func (c Conf) DiffAgainstLastAppliedFieldExclusionMods() []ctlres.FieldRemoveMod {
+	var mods []ctlres.FieldRemoveMod
+	for _, config := range c.configs {
+		for _, rule := range config.DiffAgainstLastAppliedFieldExclusionRules {
+			mods = append(mods, rule.AsMods()...)
+		}
+	}
+	return mods
+}
+
 func (c Conf) OwnershipLabelMods() func(kvs map[string]string) []ctlres.StringMapAppendMod {
 	return func(kvs map[string]string) []ctlres.StringMapAppendMod {
 		var mods []ctlres.StringMapAppendMod

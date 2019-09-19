@@ -83,7 +83,7 @@ func (o *DeleteOptions) Run() error {
 	}
 
 	existingResources = applicableExistingResources
-	changeFactory := ctldiff.NewChangeFactory(nil)
+	changeFactory := ctldiff.NewChangeFactory(nil, nil)
 
 	o.changeIgnored(existingResources)
 

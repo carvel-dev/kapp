@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	resourceWithHistoryDebug = false
+	resourceWithHistoryDebug = true
 
 	appliedResAnnKey         = "kapp.k14s.io/original"
 	appliedResDiffAnnKey     = "kapp.k14s.io/original-diff" // useful for debugging
@@ -16,12 +16,15 @@ const (
 )
 
 type ResourceWithHistory struct {
-	resource      ctlres.Resource
-	changeFactory *ChangeFactory
+	resource                                 ctlres.Resource
+	changeFactory                            *ChangeFactory
+	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod
 }
 
-func NewResourceWithHistory(resource ctlres.Resource, changeFactory *ChangeFactory) ResourceWithHistory {
-	return ResourceWithHistory{resource.DeepCopy(), changeFactory}
+func NewResourceWithHistory(resource ctlres.Resource,
+	changeFactory *ChangeFactory, diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod) ResourceWithHistory {
+
+	return ResourceWithHistory{resource.DeepCopy(), changeFactory, diffAgainstLastAppliedFieldExclusionMods}
 }
 
 func (r ResourceWithHistory) HistorylessResource() (ctlres.Resource, error) {
@@ -29,26 +32,28 @@ func (r ResourceWithHistory) HistorylessResource() (ctlres.Resource, error) {
 }
 
 func (r ResourceWithHistory) LastAppliedResource() ctlres.Resource {
-	recalculatedPrevChange, prevDiffMD5, prevDiff := r.lastAppliedInfo()
-	if recalculatedPrevChange != nil {
-		md5Matches := recalculatedPrevChange.OpsDiff().MinimalMD5() == prevDiffMD5
+	recalculatedLastAppliedChanges, expectedDiffMD5, expectedDiff := r.recalculateLastAppliedChange()
+
+	for _, recalculatedLastAppliedChange := range recalculatedLastAppliedChanges {
+		md5Matches := recalculatedLastAppliedChange.OpsDiff().MinimalMD5() == expectedDiffMD5
 
 		if resourceWithHistoryDebug {
 			fmt.Printf("%s: md5 matches (%t) prev %s recalc %s\n----> pref diff\n%s\n----> recalc diff\n%s\n",
 				r.resource.Description(), md5Matches,
-				prevDiffMD5, recalculatedPrevChange.OpsDiff().MinimalMD5(),
-				prevDiff, recalculatedPrevChange.OpsDiff().MinimalString())
+				expectedDiffMD5, recalculatedLastAppliedChange.OpsDiff().MinimalMD5(),
+				expectedDiff, recalculatedLastAppliedChange.OpsDiff().MinimalString())
 		}
 
 		if md5Matches {
-			return recalculatedPrevChange.AppliedResource()
+			return recalculatedLastAppliedChange.AppliedResource()
 		}
 	}
+
 	return nil
 }
 
 func (r ResourceWithHistory) RecordLastAppliedResource(appliedRes ctlres.Resource) (ctlres.Resource, error) {
-	change, err := r.newExactHistorylessChange(r.resource, appliedRes)
+	change, err := r.lastAppliedChange(appliedRes)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +91,20 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedRes ctlres.Resourc
 	return resultRes, nil
 }
 
-func (r ResourceWithHistory) lastAppliedInfo() (Change, string, string) {
+func (r ResourceWithHistory) lastAppliedChange(appliedRes ctlres.Resource) (Change, error) {
+	// Remove fields specified to be excluded (as they may be generated
+	// by the server, hence would be racy to be rebased)
+	removeMods := r.diffAgainstLastAppliedFieldExclusionMods
+
+	existingRes, err := NewResourceWithRemovedFields(r.resource, removeMods).Resource()
+	if err != nil {
+		return nil, err
+	}
+
+	return r.newExactHistorylessChange(existingRes, appliedRes)
+}
+
+func (r ResourceWithHistory) recalculateLastAppliedChange() ([]Change, string, string) {
 	lastAppliedResBytes := r.resource.Annotations()[appliedResAnnKey]
 	lastAppliedDiff := r.resource.Annotations()[appliedResDiffAnnKey]
 	lastAppliedDiffMD5 := r.resource.Annotations()[appliedResDiffMD5AnnKey]
@@ -95,17 +113,25 @@ func (r ResourceWithHistory) lastAppliedInfo() (Change, string, string) {
 		return nil, "", ""
 	}
 
-	prevNewRes, err := ctlres.NewResourceFromBytes([]byte(lastAppliedResBytes))
+	lastAppliedRes, err := ctlres.NewResourceFromBytes([]byte(lastAppliedResBytes))
 	if err != nil {
 		return nil, "", ""
 	}
 
-	prevChange, err := r.newExactHistorylessChange(r.resource, prevNewRes)
+	// Continue to calculate historyless change with excluded fields
+	// (previous kapp versions did so, and we do not want to fallback
+	// to diffing against list resources).
+	recalculatedChange1, err := r.newExactHistorylessChange(r.resource, lastAppliedRes)
 	if err != nil {
-		return nil, "", ""
+		return nil, "", "" // TODO deal with error?
 	}
 
-	return prevChange, lastAppliedDiffMD5, lastAppliedDiff
+	recalculatedChange2, err := r.lastAppliedChange(lastAppliedRes)
+	if err != nil {
+		return nil, "", "" // TODO deal with error?
+	}
+
+	return []Change{recalculatedChange1, recalculatedChange2}, lastAppliedDiffMD5, lastAppliedDiff
 }
 
 func (r ResourceWithHistory) newExactHistorylessChange(existingRes, newRes ctlres.Resource) (Change, error) {
