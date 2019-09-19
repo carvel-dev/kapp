@@ -25,7 +25,7 @@ func NewResourceWithHistory(resource ctlres.Resource, changeFactory *ChangeFacto
 }
 
 func (r ResourceWithHistory) HistorylessResource() (ctlres.Resource, error) {
-	return r.resourceWithoutHistoryAnnotations(r.resource)
+	return resourceWithoutHistory{r.resource}.Resource()
 }
 
 func (r ResourceWithHistory) LastAppliedResource() ctlres.Resource {
@@ -110,12 +110,12 @@ func (r ResourceWithHistory) lastAppliedInfo() (Change, string, string) {
 
 func (r ResourceWithHistory) newExactHistorylessChange(existingRes, newRes ctlres.Resource) (Change, error) {
 	// If annotations are not removed line numbers will be mismatched
-	existingRes, err := r.resourceWithoutHistoryAnnotations(existingRes)
+	existingRes, err := resourceWithoutHistory{existingRes}.Resource()
 	if err != nil {
 		return nil, err
 	}
 
-	newRes, err = r.resourceWithoutHistoryAnnotations(newRes)
+	newRes, err = resourceWithoutHistory{newRes}.Resource()
 	if err != nil {
 		return nil, err
 	}
@@ -123,12 +123,14 @@ func (r ResourceWithHistory) newExactHistorylessChange(existingRes, newRes ctlre
 	return r.changeFactory.NewExactChange(existingRes, newRes)
 }
 
-func (ResourceWithHistory) resourceWithoutHistoryAnnotations(res ctlres.Resource) (ctlres.Resource, error) {
-	res = res.DeepCopy()
+type resourceWithoutHistory struct {
+	res ctlres.Resource
+}
 
-	// TODO remove since switched to ops diffing
-	// If annotations are not removed line numbers will be mismatched
-	for _, t := range removeAppliedResAnnKeysMods() {
+func (r resourceWithoutHistory) Resource() (ctlres.Resource, error) {
+	res := r.res.DeepCopy()
+
+	for _, t := range r.removeAppliedResAnnKeysMods() {
 		err := t.Apply(res)
 		if err != nil {
 			return nil, err
@@ -138,7 +140,7 @@ func (ResourceWithHistory) resourceWithoutHistoryAnnotations(res ctlres.Resource
 	return res, nil
 }
 
-func removeAppliedResAnnKeysMods() []ctlres.ResourceMod {
+func (resourceWithoutHistory) removeAppliedResAnnKeysMods() []ctlres.ResourceMod {
 	return []ctlres.ResourceMod{
 		ctlres.FieldRemoveMod{
 			ResourceMatcher: ctlres.AllResourceMatcher{},
