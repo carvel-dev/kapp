@@ -29,19 +29,19 @@ func (r ResourceWithHistory) HistorylessResource() (ctlres.Resource, error) {
 }
 
 func (r ResourceWithHistory) LastAppliedResource() ctlres.Resource {
-	prevChange, prevDiffMD5, prevDiff := r.lastAppliedInfo()
-	if prevChange != nil {
-		md5Matches := prevChange.OpsDiff().MinimalMD5() == prevDiffMD5
+	recalculatedPrevChange, prevDiffMD5, prevDiff := r.lastAppliedInfo()
+	if recalculatedPrevChange != nil {
+		md5Matches := recalculatedPrevChange.OpsDiff().MinimalMD5() == prevDiffMD5
 
 		if resourceWithHistoryDebug {
-			fmt.Printf("%s: md5 matches (%t) new %s prev %s\n ----> last applied\n%s\n----> new\n%s\n",
-				r.resource.Description(),
-				md5Matches, prevChange.OpsDiff().MinimalMD5(),
-				prevDiffMD5, prevDiff, prevChange.OpsDiff().MinimalString())
+			fmt.Printf("%s: md5 matches (%t) prev %s recalc %s\n----> pref diff\n%s\n----> recalc diff\n%s\n",
+				r.resource.Description(), md5Matches,
+				prevDiffMD5, recalculatedPrevChange.OpsDiff().MinimalMD5(),
+				prevDiff, recalculatedPrevChange.OpsDiff().MinimalString())
 		}
 
 		if md5Matches {
-			return prevChange.AppliedResource()
+			return recalculatedPrevChange.AppliedResource()
 		}
 	}
 	return nil
