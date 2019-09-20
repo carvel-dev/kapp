@@ -2,17 +2,20 @@ package diff
 
 import (
 	"fmt"
+	"os"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
 const (
-	resourceWithHistoryDebug = true
-
 	appliedResAnnKey         = "kapp.k14s.io/original"
 	appliedResDiffAnnKey     = "kapp.k14s.io/original-diff" // useful for debugging
 	appliedResDiffMD5AnnKey  = "kapp.k14s.io/original-diff-md5"
 	appliedResDiffFullAnnKey = "kapp.k14s.io/original-diff-full" // useful for debugging
+)
+
+var (
+	resourceWithHistoryDebug = os.Getenv("KAPP_DEBUG_RESOURCE_WITH_HISTORY") == "true"
 )
 
 type ResourceWithHistory struct {
