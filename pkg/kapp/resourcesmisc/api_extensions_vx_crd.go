@@ -47,14 +47,34 @@ type crdObj struct {
 }
 
 type crdSpec struct {
-	Group   string       `yaml:"group"`
-	Scope   string       `yaml:"scope"`
-	Version string       `yaml:"version"`
-	Names   crdSpecNames `yaml:"names"`
+	Group    string           `yaml:"group"`
+	Scope    string           `yaml:"scope"`
+	Version  string           `yaml:"version"`
+	Versions []crdSpecVersion `yaml:"versions"`
+	Names    crdSpecNames     `yaml:"names"`
+}
+
+type crdSpecVersion struct {
+	Name string `yaml:"name"`
 }
 
 type crdSpecNames struct {
 	Kind string `yaml:"kind"`
+}
+
+func (o crdObj) Versions() []string {
+	result := []string{}
+
+	if len(o.Spec.Version) > 0 {
+		result = append(result, o.Spec.Version)
+	}
+	if len(o.Spec.Versions) > 0 {
+		for _, ver := range o.Spec.Versions {
+			result = append(result, ver.Name)
+		}
+	}
+
+	return result
 }
 
 /*

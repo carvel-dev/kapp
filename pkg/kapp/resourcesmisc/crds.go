@@ -99,8 +99,10 @@ func (c *ResourceTypes) localCRDScopes() (map[string]bool, error) {
 			return nil, err
 		}
 
-		key := contents.Spec.Group + "/" + contents.Spec.Version + "/" + contents.Spec.Names.Kind
-		scopeMap[key] = contents.Spec.Scope == "Namespaced"
+		for _, ver := range contents.Versions() {
+			key := contents.Spec.Group + "/" + ver + "/" + contents.Spec.Names.Kind
+			scopeMap[key] = contents.Spec.Scope == "Namespaced"
+		}
 	}
 
 	return scopeMap, nil
