@@ -47,6 +47,9 @@ type Resource interface {
 
 	Debug(string)
 
+	SetOrigin(string)
+	Origin() string
+
 	MarkTransient(bool)
 	Transient() bool
 
@@ -59,6 +62,7 @@ type ResourceImpl struct {
 	un        unstructured.Unstructured
 	resType   ResourceType
 	transient bool
+	origin    string
 }
 
 var _ Resource = &ResourceImpl{}
@@ -213,7 +217,7 @@ func (r *ResourceImpl) Equal(res Resource) bool {
 }
 
 func (r *ResourceImpl) DeepCopy() Resource {
-	return &ResourceImpl{*r.un.DeepCopy(), r.resType, r.transient}
+	return &ResourceImpl{*r.un.DeepCopy(), r.resType, r.transient, ""}
 }
 
 func (r *ResourceImpl) DeepCopyRaw() map[string]interface{} {
@@ -243,6 +247,9 @@ func (r *ResourceImpl) Debug(title string) {
 	}
 	fmt.Printf("%s (%s):\n%s\n", title, r.Description(), bs)
 }
+
+func (r *ResourceImpl) SetOrigin(origin string) { r.origin = origin }
+func (r *ResourceImpl) Origin() string          { return r.origin }
 
 func (r *ResourceImpl) unstructured() unstructured.Unstructured      { return r.un }
 func (r *ResourceImpl) unstructuredPtr() *unstructured.Unstructured  { return &r.un }

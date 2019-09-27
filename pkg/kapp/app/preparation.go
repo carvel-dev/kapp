@@ -124,13 +124,13 @@ func (a Preparation) validateBasicInfo(resources []ctlres.Resource) error {
 
 	for _, res := range resources {
 		if res.Kind() == "" {
-			errs = append(errs, fmt.Errorf("Expected 'kind' on resource '%s' to be non-empty", res.Description()))
+			errs = append(errs, fmt.Errorf("Expected 'kind' on resource '%s' to be non-empty (%s)", res.Description(), res.Origin()))
 		}
 		if res.APIVersion() == "" {
-			errs = append(errs, fmt.Errorf("Expected 'apiVersion' on resource '%s' to be non-empty", res.Description()))
+			errs = append(errs, fmt.Errorf("Expected 'apiVersion' on resource '%s' to be non-empty (%s)", res.Description(), res.Origin()))
 		}
 		if res.Name() == "" {
-			errs = append(errs, fmt.Errorf("Expected 'metadata.name' on resource '%s' to be non-empty", res.Description()))
+			errs = append(errs, fmt.Errorf("Expected 'metadata.name' on resource '%s' to be non-empty (%s)", res.Description(), res.Origin()))
 		}
 	}
 
@@ -151,11 +151,11 @@ func (a Preparation) validateAllows(resources []ctlres.Resource, opts PrepareRes
 	for _, res := range resources {
 		if res.Namespace() == "" {
 			if !opts.AllowCluster {
-				errs = append(errs, fmt.Errorf("Cluster level resource '%s' is not allowed", res.Description()))
+				errs = append(errs, fmt.Errorf("Cluster level resource '%s' is not allowed (%s)", res.Description(), res.Origin()))
 			}
 		} else {
 			if !opts.InAllowedNamespaces(res.Namespace()) {
-				errs = append(errs, fmt.Errorf("Resource '%s' is outside of allowed namespaces", res.Description()))
+				errs = append(errs, fmt.Errorf("Resource '%s' is outside of allowed namespaces (%s)", res.Description(), res.Origin()))
 			}
 		}
 	}
