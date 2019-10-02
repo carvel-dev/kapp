@@ -4,19 +4,21 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
 )
 
 type GCOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
+	logger      logger.Logger
 
 	AppFlags cmdapp.AppFlags
 	Max      int
 }
 
-func NewGCOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *GCOptions {
-	return &GCOptions{ui: ui, depsFactory: depsFactory}
+func NewGCOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *GCOptions {
+	return &GCOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
 
 func NewGCCmd(o *GCOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -32,7 +34,7 @@ func NewGCCmd(o *GCOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 }
 
 func (o *GCOptions) Run() error {
-	app, _, _, err := cmdapp.AppFactory(o.depsFactory, o.AppFlags)
+	app, _, _, err := cmdapp.AppFactory(o.depsFactory, o.AppFlags, o.logger)
 	if err != nil {
 		return err
 	}

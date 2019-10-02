@@ -5,19 +5,21 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
 )
 
 type RenameOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
+	logger      logger.Logger
 
 	AppFlags AppFlags
 	NewName  string
 }
 
-func NewRenameOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *RenameOptions {
-	return &RenameOptions{ui: ui, depsFactory: depsFactory}
+func NewRenameOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *RenameOptions {
+	return &RenameOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
 
 func NewRenameCmd(o *RenameOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -35,7 +37,7 @@ func NewRenameCmd(o *RenameOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *RenameOptions) Run() error {
-	app, _, _, err := AppFactory(o.depsFactory, o.AppFlags)
+	app, _, _, err := AppFactory(o.depsFactory, o.AppFlags, o.logger)
 	if err != nil {
 		return err
 	}

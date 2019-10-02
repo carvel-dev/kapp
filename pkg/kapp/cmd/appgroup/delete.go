@@ -5,6 +5,7 @@ import (
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -15,6 +16,7 @@ const (
 type DeleteOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
+	logger      logger.Logger
 
 	AppGroupFlags AppGroupFlags
 	DeployFlags   DeployFlags
@@ -26,8 +28,8 @@ type DeleteAppFlags struct {
 	ApplyFlags cmdapp.ApplyFlags
 }
 
-func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *DeleteOptions {
-	return &DeleteOptions{ui: ui, depsFactory: depsFactory}
+func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeleteOptions {
+	return &DeleteOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
 
 func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -43,7 +45,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *DeleteOptions) Run() error {
-	apps, _, _, err := cmdapp.AppFactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags)
+	apps, _, _, err := cmdapp.AppFactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, o.logger)
 	if err != nil {
 		return err
 	}
@@ -67,7 +69,7 @@ func (o *DeleteOptions) deleteApp(name string) error {
 	o.ui.PrintLinef("--- deleting app '%s' (namespace: %s)",
 		name, o.AppGroupFlags.NamespaceFlags.Name)
 
-	deleteOpts := cmdapp.NewDeleteOptions(o.ui, o.depsFactory)
+	deleteOpts := cmdapp.NewDeleteOptions(o.ui, o.depsFactory, o.logger)
 	deleteOpts.AppFlags = cmdapp.AppFlags{
 		Name:           name,
 		NamespaceFlags: o.AppGroupFlags.NamespaceFlags,

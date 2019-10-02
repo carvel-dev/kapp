@@ -8,19 +8,21 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
 )
 
 type ListOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
+	logger      logger.Logger
 
 	NamespaceFlags cmdcore.NamespaceFlags
 	AllNamespaces  bool
 }
 
-func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *ListOptions {
-	return &ListOptions{ui: ui, depsFactory: depsFactory}
+func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ListOptions {
+	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
 
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -49,7 +51,7 @@ func (o *ListOptions) Run() error {
 		nsHeader.Hidden = false
 	}
 
-	apps, _, _, err := AppFactoryClients(o.depsFactory, o.NamespaceFlags)
+	apps, _, _, err := AppFactoryClients(o.depsFactory, o.NamespaceFlags, o.logger)
 	if err != nil {
 		return err
 	}

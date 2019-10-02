@@ -77,31 +77,31 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 
 	cmd.AddCommand(NewVersionCmd(NewVersionOptions(o.ui), flagsFactory))
 
-	cmd.AddCommand(cmdapp.NewListCmd(cmdapp.NewListOptions(o.ui, o.depsFactory), flagsFactory))
-	cmd.AddCommand(cmdapp.NewInspectCmd(cmdapp.NewInspectOptions(o.ui, o.depsFactory), flagsFactory))
+	cmd.AddCommand(cmdapp.NewListCmd(cmdapp.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	cmd.AddCommand(cmdapp.NewInspectCmd(cmdapp.NewInspectOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	cmd.AddCommand(cmdapp.NewDeployCmd(cmdapp.NewDeployOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	cmd.AddCommand(cmdapp.NewDeployConfigCmd(cmdapp.NewDeployConfigOptions(o.ui, o.depsFactory), flagsFactory))
-	cmd.AddCommand(cmdapp.NewDeleteCmd(cmdapp.NewDeleteOptions(o.ui, o.depsFactory), flagsFactory))
-	cmd.AddCommand(cmdapp.NewRenameCmd(cmdapp.NewRenameOptions(o.ui, o.depsFactory), flagsFactory))
-	cmd.AddCommand(cmdapp.NewLogsCmd(cmdapp.NewLogsOptions(o.ui, o.depsFactory), flagsFactory))
-	cmd.AddCommand(cmdapp.NewLabelCmd(cmdapp.NewLabelOptions(o.ui, o.depsFactory), flagsFactory))
+	cmd.AddCommand(cmdapp.NewDeleteCmd(cmdapp.NewDeleteOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	cmd.AddCommand(cmdapp.NewRenameCmd(cmdapp.NewRenameOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	cmd.AddCommand(cmdapp.NewLogsCmd(cmdapp.NewLogsOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	cmd.AddCommand(cmdapp.NewLabelCmd(cmdapp.NewLabelOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 
 	agCmd := cmdag.NewCmd()
 	agCmd.AddCommand(cmdag.NewDeployCmd(cmdag.NewDeployOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-	agCmd.AddCommand(cmdag.NewDeleteCmd(cmdag.NewDeleteOptions(o.ui, o.depsFactory), flagsFactory))
+	agCmd.AddCommand(cmdag.NewDeleteCmd(cmdag.NewDeleteOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	cmd.AddCommand(agCmd)
 
 	cmCmd := cmdcm.NewCmd()
-	cmCmd.AddCommand(cmdcm.NewListCmd(cmdcm.NewListOptions(o.ui, o.depsFactory), flagsFactory))
+	cmCmd.AddCommand(cmdcm.NewListCmd(cmdcm.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	cmd.AddCommand(cmCmd)
 
 	acCmd := cmdac.NewCmd()
-	acCmd.AddCommand(cmdac.NewListCmd(cmdac.NewListOptions(o.ui, o.depsFactory), flagsFactory))
-	acCmd.AddCommand(cmdac.NewGCCmd(cmdac.NewGCOptions(o.ui, o.depsFactory), flagsFactory))
+	acCmd.AddCommand(cmdac.NewListCmd(cmdac.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	acCmd.AddCommand(cmdac.NewGCCmd(cmdac.NewGCOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	cmd.AddCommand(acCmd)
 
 	saCmd := cmdsa.NewCmd()
-	saCmd.AddCommand(cmdsa.NewListCmd(cmdsa.NewListOptions(o.ui, o.depsFactory), flagsFactory))
+	saCmd.AddCommand(cmdsa.NewListCmd(cmdsa.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	cmd.AddCommand(saCmd)
 
 	appCmd := cmdtools.NewCmd()

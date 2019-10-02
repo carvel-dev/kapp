@@ -7,12 +7,14 @@ import (
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
 )
 
 type InspectOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
+	logger      logger.Logger
 
 	AppFlags            AppFlags
 	ResourceFilterFlags cmdtools.ResourceFilterFlags
@@ -22,8 +24,8 @@ type InspectOptions struct {
 	Tree   bool
 }
 
-func NewInspectOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *InspectOptions {
-	return &InspectOptions{ui: ui, depsFactory: depsFactory}
+func NewInspectOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *InspectOptions {
+	return &InspectOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
 
 func NewInspectCmd(o *InspectOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -45,7 +47,7 @@ func NewInspectCmd(o *InspectOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 }
 
 func (o *InspectOptions) Run() error {
-	app, _, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags)
+	app, _, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags, o.logger)
 	if err != nil {
 		return err
 	}

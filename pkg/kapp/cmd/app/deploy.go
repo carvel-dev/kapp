@@ -74,7 +74,7 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *DeployOptions) Run() error {
-	app, coreClient, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags)
+	app, coreClient, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags, o.logger)
 	if err != nil {
 		return err
 	}

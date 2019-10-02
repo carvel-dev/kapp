@@ -7,6 +7,7 @@ import (
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
 )
@@ -14,6 +15,7 @@ import (
 type DeleteOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
+	logger      logger.Logger
 
 	AppFlags            AppFlags
 	DiffFlags           cmdtools.DiffFlags
@@ -21,8 +23,8 @@ type DeleteOptions struct {
 	ApplyFlags          ApplyFlags
 }
 
-func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *DeleteOptions {
-	return &DeleteOptions{ui: ui, depsFactory: depsFactory}
+func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeleteOptions {
+	return &DeleteOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
 
 func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -42,7 +44,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *DeleteOptions) Run() error {
-	app, _, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags)
+	app, _, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags, o.logger)
 	if err != nil {
 		return err
 	}

@@ -8,18 +8,20 @@ import (
 	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
 )
 
 type ListOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
+	logger      logger.Logger
 
 	AppFlags cmdapp.AppFlags
 }
 
-func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *ListOptions {
-	return &ListOptions{ui: ui, depsFactory: depsFactory}
+func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ListOptions {
+	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
 
 func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -34,7 +36,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 }
 
 func (o *ListOptions) Run() error {
-	app, _, _, err := cmdapp.AppFactory(o.depsFactory, o.AppFlags)
+	app, _, _, err := cmdapp.AppFactory(o.depsFactory, o.AppFlags, o.logger)
 	if err != nil {
 		return err
 	}

@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctllogs "github.com/k14s/kapp/pkg/kapp/logs"
 	"github.com/k14s/kapp/pkg/kapp/matcher"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
@@ -13,13 +14,14 @@ import (
 type LogsOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
+	logger      logger.Logger
 
 	AppFlags  AppFlags
 	LogsFlags LogsFlags
 }
 
-func NewLogsOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *LogsOptions {
-	return &LogsOptions{ui: ui, depsFactory: depsFactory}
+func NewLogsOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *LogsOptions {
+	return &LogsOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
 
 func NewLogsCmd(o *LogsOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -43,7 +45,7 @@ func (o *LogsOptions) Run() error {
 		return err
 	}
 
-	app, coreClient, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags)
+	app, coreClient, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags, o.logger)
 	if err != nil {
 		return err
 	}

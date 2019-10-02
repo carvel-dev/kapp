@@ -8,7 +8,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func AppFactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFlags) (
+func AppFactoryClients(depsFactory cmdcore.DepsFactory,
+	nsFlags cmdcore.NamespaceFlags, logger logger.Logger) (
+
 	ctlapp.Apps, kubernetes.Interface, ctlres.IdentifiedResources, error) {
 
 	coreClient, err := depsFactory.CoreClient()
@@ -22,17 +24,17 @@ func AppFactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.Namespac
 	}
 
 	identifiedResources := ctlres.NewIdentifiedResources(
-		coreClient, dynamicClient, []string{nsFlags.Name}, logger.NewTODOLogger())
+		coreClient, dynamicClient, []string{nsFlags.Name}, logger)
 
 	apps := ctlapp.NewApps(nsFlags.Name, coreClient, identifiedResources)
 
 	return apps, coreClient, identifiedResources, nil
 }
 
-func AppFactory(depsFactory cmdcore.DepsFactory, appFlags AppFlags) (
+func AppFactory(depsFactory cmdcore.DepsFactory, appFlags AppFlags, logger logger.Logger) (
 	ctlapp.App, kubernetes.Interface, ctlres.IdentifiedResources, error) {
 
-	apps, coreClient, identifiedResources, err := AppFactoryClients(depsFactory, appFlags.NamespaceFlags)
+	apps, coreClient, identifiedResources, err := AppFactoryClients(depsFactory, appFlags.NamespaceFlags, logger)
 	if err != nil {
 		return nil, nil, ctlres.IdentifiedResources{}, err
 	}

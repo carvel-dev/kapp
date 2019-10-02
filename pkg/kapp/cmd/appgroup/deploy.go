@@ -69,7 +69,7 @@ func (o *DeployOptions) Run() error {
 		}
 	}
 
-	apps, _, _, err := cmdapp.AppFactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags)
+	apps, _, _, err := cmdapp.AppFactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, o.logger)
 	if err != nil {
 		return err
 	}
@@ -149,7 +149,7 @@ func (o *DeployOptions) deleteApp(name string) error {
 	o.ui.PrintLinef("--- deleting app '%s' (namespace: %s)",
 		name, o.AppGroupFlags.NamespaceFlags.Name)
 
-	deleteOpts := cmdapp.NewDeleteOptions(o.ui, o.depsFactory)
+	deleteOpts := cmdapp.NewDeleteOptions(o.ui, o.depsFactory, o.logger)
 	deleteOpts.AppFlags = cmdapp.AppFlags{
 		Name:           name,
 		NamespaceFlags: o.AppGroupFlags.NamespaceFlags,
