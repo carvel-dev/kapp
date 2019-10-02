@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -19,10 +20,13 @@ type Apps struct {
 	nsName              string
 	coreClient          kubernetes.Interface
 	identifiedResources ctlres.IdentifiedResources
+	logger              logger.Logger
 }
 
-func NewApps(nsName string, coreClient kubernetes.Interface, identifiedResources ctlres.IdentifiedResources) Apps {
-	return Apps{nsName, coreClient, identifiedResources}
+func NewApps(nsName string, coreClient kubernetes.Interface,
+	identifiedResources ctlres.IdentifiedResources, logger logger.Logger) Apps {
+
+	return Apps{nsName, coreClient, identifiedResources, logger}
 }
 
 func (a Apps) Find(name string) (App, error) {
@@ -44,7 +48,8 @@ func (a Apps) Find(name string) (App, error) {
 		return nil, fmt.Errorf("Expected non-empty namespace")
 	}
 
-	return &RecordedApp{name, a.nsName, a.coreClient, a.identifiedResources, nil}, nil
+	return &RecordedApp{name, a.nsName, a.coreClient,
+		a.identifiedResources, nil, a.logger.NewPrefixed("RecordedApp")}, nil
 }
 
 func (a Apps) List(additionalLabels map[string]string) ([]App, error) {
@@ -69,7 +74,8 @@ func (a Apps) List(additionalLabels map[string]string) ([]App, error) {
 
 	for _, app := range apps.Items {
 		meta := NewAppMetaFromData(app.Data)
-		result = append(result, &RecordedApp{app.Name, app.Namespace, a.coreClient, a.identifiedResources, &meta})
+		result = append(result, &RecordedApp{app.Name, app.Namespace, a.coreClient,
+			a.identifiedResources, &meta, a.logger.NewPrefixed("RecordedApp")})
 	}
 
 	return result, nil

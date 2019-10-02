@@ -26,7 +26,7 @@ func AppFactoryClients(depsFactory cmdcore.DepsFactory,
 	identifiedResources := ctlres.NewIdentifiedResources(
 		coreClient, dynamicClient, []string{nsFlags.Name}, logger)
 
-	apps := ctlapp.NewApps(nsFlags.Name, coreClient, identifiedResources)
+	apps := ctlapp.NewApps(nsFlags.Name, coreClient, identifiedResources, logger)
 
 	return apps, coreClient, identifiedResources, nil
 }

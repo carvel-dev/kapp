@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -24,6 +25,7 @@ type RecordedApp struct {
 	identifiedResources ctlres.IdentifiedResources
 
 	memoizedMeta *AppMeta
+	logger       logger.Logger
 }
 
 var _ App = &RecordedApp{}
@@ -41,6 +43,8 @@ func (a *RecordedApp) LabelSelector() (labels.Selector, error) {
 }
 
 func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
+	defer a.logger.DebugFunc("CreateOrUpdate").Finish()
+
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      a.name,
