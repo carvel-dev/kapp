@@ -113,6 +113,14 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	cmd.AddCommand(NewWebsiteCmd(NewWebsiteOptions()))
 
 	// Last one runs first
+	cobrautil.VisitCommands(cmd, func(cmd *cobra.Command) {
+		origRunE := cmd.RunE
+		cmd.RunE = func(cmd2 *cobra.Command, args []string) error {
+			defer o.logger.DebugFunc("CommandRun").Finish()
+			return origRunE(cmd2, args)
+		}
+	})
+
 	cobrautil.VisitCommands(cmd, cobrautil.ReconfigureCmdWithSubcmd)
 	cobrautil.VisitCommands(cmd, cobrautil.ReconfigureLeafCmd)
 
