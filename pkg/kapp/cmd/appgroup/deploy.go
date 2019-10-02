@@ -9,12 +9,14 @@ import (
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
 )
 
 type DeployOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
+	logger      logger.Logger
 
 	AppGroupFlags AppGroupFlags
 	DeployFlags   DeployFlags
@@ -30,8 +32,8 @@ type DeployAppFlags struct {
 	LabelFlags          cmdapp.LabelFlags
 }
 
-func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *DeployOptions {
-	return &DeployOptions{ui: ui, depsFactory: depsFactory}
+func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeployOptions {
+	return &DeployOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
 
 func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -122,7 +124,7 @@ func (o *DeployOptions) deployApp(app appGroupApp) error {
 	o.ui.PrintLinef("--- deploying app '%s' (namespace: %s) from %s",
 		app.Name, o.AppGroupFlags.NamespaceFlags.Name, app.Path)
 
-	deployOpts := cmdapp.NewDeployOptions(o.ui, o.depsFactory)
+	deployOpts := cmdapp.NewDeployOptions(o.ui, o.depsFactory, o.logger)
 	deployOpts.AppFlags = cmdapp.AppFlags{
 		Name:           app.Name,
 		NamespaceFlags: o.AppGroupFlags.NamespaceFlags,

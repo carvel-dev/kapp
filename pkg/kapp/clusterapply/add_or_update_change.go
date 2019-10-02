@@ -5,6 +5,7 @@ import (
 	"time"
 
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 	"github.com/k14s/kapp/pkg/kapp/util"
@@ -120,7 +121,7 @@ type SpecificResource interface {
 }
 
 func (c AddOrUpdateChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
-	labeledResources := ctlres.NewLabeledResources(nil, c.identifiedResources)
+	labeledResources := ctlres.NewLabeledResources(nil, c.identifiedResources, logger.NewTODOLogger())
 
 	// Refresh resource with latest changes from the server
 	parentRes, err := c.identifiedResources.Get(c.change.NewResource())

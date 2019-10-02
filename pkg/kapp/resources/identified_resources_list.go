@@ -9,6 +9,8 @@ import (
 )
 
 func (r IdentifiedResources) List(labelSelector labels.Selector) ([]Resource, error) {
+	defer r.logger.DebugFunc("List").Finish()
+
 	resTypes, err := r.resourceTypes.All()
 	if err != nil {
 		return nil, err

@@ -6,6 +6,7 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/labels"
@@ -14,14 +15,15 @@ import (
 type ListLabelsOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
+	logger      logger.Logger
 
 	FileFlags FileFlags
 	Accessor  string
 	Values    bool
 }
 
-func NewListLabelsOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *ListLabelsOptions {
-	return &ListLabelsOptions{ui: ui, depsFactory: depsFactory}
+func NewListLabelsOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ListLabelsOptions {
+	return &ListLabelsOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
 
 func NewListLabelsCmd(o *ListLabelsOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -122,14 +124,14 @@ func (o *ListLabelsOptions) listResources() ([]ctlres.Resource, error) {
 		return nil, err
 	}
 
-	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient, nil)
+	identifiedResources := ctlres.NewIdentifiedResources(coreClient, dynamicClient, nil, o.logger)
 
 	labelSelector, err := labels.Parse("!kapp")
 	if err != nil {
 		return nil, err
 	}
 
-	return ctlres.NewLabeledResources(labelSelector, identifiedResources).All()
+	return ctlres.NewLabeledResources(labelSelector, identifiedResources, o.logger).All()
 }
 
 type resourceAccessor struct {

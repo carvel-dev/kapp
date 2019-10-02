@@ -3,6 +3,7 @@ package app
 import (
 	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"k8s.io/client-go/kubernetes"
 )
@@ -21,7 +22,7 @@ func AppFactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.Namespac
 	}
 
 	identifiedResources := ctlres.NewIdentifiedResources(
-		coreClient, dynamicClient, []string{nsFlags.Name})
+		coreClient, dynamicClient, []string{nsFlags.Name}, logger.NewTODOLogger())
 
 	apps := ctlapp.NewApps(nsFlags.Name, coreClient, identifiedResources)
 

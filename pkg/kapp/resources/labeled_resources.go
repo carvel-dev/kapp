@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -18,14 +19,19 @@ type LabelScopingModsFunc func(kvs map[string]string) []StringMapAppendMod
 type LabeledResources struct {
 	labelSelector       labels.Selector
 	identifiedResources IdentifiedResources
+	logger              logger.Logger
 }
 
-func NewLabeledResources(labelSelector labels.Selector, identifiedResources IdentifiedResources) *LabeledResources {
-	return &LabeledResources{labelSelector, identifiedResources}
+func NewLabeledResources(labelSelector labels.Selector,
+	identifiedResources IdentifiedResources, logger logger.Logger) *LabeledResources {
+
+	return &LabeledResources{labelSelector, identifiedResources, logger.NewPrefixed("LabeledResources")}
 }
 
 func (a *LabeledResources) Prepare(resources []Resource, olmFunc OwnershipLabelModsFunc,
 	lsmFunc LabelScopingModsFunc, additionalLabels map[string]string) error {
+
+	defer a.logger.DebugFunc("Prepare").Finish()
 
 	labelKey, labelVal, err := NewSimpleLabel(a.labelSelector).KV()
 	if err != nil {
@@ -71,10 +77,13 @@ func (a *LabeledResources) Prepare(resources []Resource, olmFunc OwnershipLabelM
 }
 
 func (a *LabeledResources) GetAssociated(resource Resource) ([]Resource, error) {
+	defer a.logger.DebugFunc("GetAssociated").Finish()
 	return a.identifiedResources.List(NewAssociationLabel(resource).AsSelector())
 }
 
 func (a *LabeledResources) All() ([]Resource, error) {
+	defer a.logger.DebugFunc("All").Finish()
+
 	resources, err := a.identifiedResources.List(a.labelSelector)
 	if err != nil {
 		return nil, err
@@ -92,6 +101,8 @@ type AllAndMatchingOpts struct {
 // Returns errors if non-labeled resources were labeled
 // with a different value.
 func (a *LabeledResources) AllAndMatching(newResources []Resource, opts AllAndMatchingOpts) ([]Resource, error) {
+	defer a.logger.DebugFunc("AllAndMatching").Finish()
+
 	resources, err := a.All()
 	if err != nil {
 		return nil, err
@@ -141,6 +152,8 @@ func (a *LabeledResources) checkResourceOwnership(resources []Resource) error {
 }
 
 func (a *LabeledResources) findNonLabeledResources(labeledResources, newResources []Resource) ([]Resource, error) {
+	defer a.logger.DebugFunc("findNonLabeledResources").Finish()
+
 	var foundResources []Resource
 	rsMap := map[string]struct{}{}
 

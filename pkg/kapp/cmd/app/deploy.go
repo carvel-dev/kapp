@@ -11,6 +11,7 @@ import (
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctllogs "github.com/k14s/kapp/pkg/kapp/logs"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
@@ -22,6 +23,7 @@ import (
 type DeployOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
+	logger      logger.Logger
 
 	AppFlags            AppFlags
 	FileFlags           cmdtools.FileFlags
@@ -32,8 +34,8 @@ type DeployOptions struct {
 	LabelFlags          LabelFlags
 }
 
-func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *DeployOptions {
-	return &DeployOptions{ui: ui, depsFactory: depsFactory}
+func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeployOptions {
+	return &DeployOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
 
 func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -116,7 +118,7 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	labeledResources := ctlres.NewLabeledResources(labelSelector, identifiedResources)
+	labeledResources := ctlres.NewLabeledResources(labelSelector, identifiedResources, o.logger)
 
 	err = labeledResources.Prepare(newResources, conf.OwnershipLabelMods(), conf.LabelScopingMods(), conf.AdditionalLabels())
 	if err != nil {
