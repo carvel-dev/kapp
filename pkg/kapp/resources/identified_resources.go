@@ -1,6 +1,8 @@
 package resources
 
 import (
+	"fmt"
+
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
@@ -24,7 +26,7 @@ func NewIdentifiedResources(coreClient kubernetes.Interface,
 }
 
 func (r IdentifiedResources) Create(resource Resource) (Resource, error) {
-	defer r.logger.DebugFunc("Create").Finish()
+	defer r.logger.DebugFunc(fmt.Sprintf("Create(%s)", resource.Description())).Finish()
 
 	resource = resource.DeepCopy()
 
@@ -47,7 +49,7 @@ func (r IdentifiedResources) Create(resource Resource) (Resource, error) {
 }
 
 func (r IdentifiedResources) Update(resource Resource) (Resource, error) {
-	defer r.logger.DebugFunc("Update").Finish()
+	defer r.logger.DebugFunc(fmt.Sprintf("Update(%s)", resource.Description())).Finish()
 
 	resource = resource.DeepCopy()
 
@@ -70,17 +72,17 @@ func (r IdentifiedResources) Update(resource Resource) (Resource, error) {
 }
 
 func (r IdentifiedResources) Patch(resource Resource, patchType types.PatchType, data []byte) (Resource, error) {
-	defer r.logger.DebugFunc("Patch").Finish()
+	defer r.logger.DebugFunc(fmt.Sprintf("Patch(%s)", resource.Description())).Finish()
 	return r.resources.Patch(resource, patchType, data)
 }
 
 func (r IdentifiedResources) Delete(resource Resource) error {
-	defer r.logger.DebugFunc("Delete").Finish()
+	defer r.logger.DebugFunc(fmt.Sprintf("Delete(%s)", resource.Description())).Finish()
 	return r.resources.Delete(resource)
 }
 
 func (r IdentifiedResources) Get(resource Resource) (Resource, error) {
-	defer r.logger.DebugFunc("Get").Finish()
+	defer r.logger.DebugFunc(fmt.Sprintf("Get(%s)", resource.Description())).Finish()
 
 	resource, err := r.resources.Get(resource)
 	if err != nil {
@@ -96,6 +98,6 @@ func (r IdentifiedResources) Get(resource Resource) (Resource, error) {
 }
 
 func (r IdentifiedResources) Exists(resource Resource) (bool, error) {
-	defer r.logger.DebugFunc("Exists").Finish()
+	defer r.logger.DebugFunc(fmt.Sprintf("Exists(%s)", resource.Description())).Finish()
 	return r.resources.Exists(resource)
 }
