@@ -58,7 +58,11 @@ func (t Table) AsRows() [][]Value {
 			if lastVal == nil {
 				lastVal = r[0]
 			} else if lastVal.String() == r[0].String() {
-				r[0] = ValueString{"~"}
+				if len(t.DuplicateStr) > 0 {
+					r[0] = ValueString{t.DuplicateStr}
+				} else {
+					r[0] = ValueString{"^"}
+				}
 			} else {
 				lastVal = r[0]
 			}

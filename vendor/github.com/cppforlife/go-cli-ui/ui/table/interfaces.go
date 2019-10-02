@@ -22,6 +22,7 @@ type Table struct {
 	HeaderFormatFunc func(string, ...interface{}) string
 	DataOnly         bool
 	FillFirstColumn  bool
+	DuplicateStr string
 	BackgroundStr    string
 	BorderStr        string
 	Transpose        bool
