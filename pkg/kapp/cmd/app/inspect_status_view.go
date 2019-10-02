@@ -5,6 +5,7 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
+	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
@@ -42,7 +43,7 @@ func (v InspectStatusView) Print(ui ui.UI) {
 
 	for _, resource := range v.Resources {
 		table.Rows = append(table.Rows, []uitable.Value{
-			uitable.NewValueString(resource.Namespace()),
+			cmdcore.NewValueNamespace(resource.Namespace()),
 			uitable.NewValueString(resource.Name()),
 			uitable.NewValueString(resource.Kind()),
 			uitable.NewValueString(resource.APIVersion()),

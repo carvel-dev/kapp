@@ -85,7 +85,7 @@ func (o *ListOptions) Run() error {
 		}
 
 		row := []uitable.Value{
-			uitable.NewValueString(item.Namespace()),
+			cmdcore.NewValueNamespace(item.Namespace()),
 			uitable.NewValueString(item.Name()),
 			uitable.NewValueString(sel.String()),
 		}

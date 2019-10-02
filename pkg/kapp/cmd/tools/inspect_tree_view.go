@@ -79,7 +79,7 @@ func (v InspectTreeView) Print(ui ui.UI) {
 
 		row := []uitable.Value{
 			uitable.NewValueString(assocSortingVal.Value()),
-			uitable.NewValueString(resource.Namespace()),
+			cmdcore.NewValueNamespace(resource.Namespace()),
 			ValueColored{
 				// TODO better composability
 				S: prefix + resource.Name(),

@@ -62,7 +62,7 @@ func (v InspectView) Print(ui ui.UI) {
 
 	for _, resource := range v.Resources {
 		row := []uitable.Value{
-			uitable.NewValueString(resource.Namespace()),
+			cmdcore.NewValueNamespace(resource.Namespace()),
 			uitable.NewValueString(resource.Name()),
 			uitable.NewValueString(resource.Kind()),
 			uitable.NewValueString(resource.APIVersion()),

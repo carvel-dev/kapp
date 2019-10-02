@@ -80,7 +80,7 @@ func (v *ChangesView) Print(ui ui.UI) {
 		v.countsView.Add(view.ApplyOp(), view.WaitOp())
 
 		row := []uitable.Value{
-			uitable.NewValueString(resource.Namespace()),
+			cmdcore.NewValueNamespace(resource.Namespace()),
 			uitable.NewValueString(resource.Name()),
 			uitable.NewValueString(resource.Kind()),
 			uitable.NewValueString(resource.APIVersion()),

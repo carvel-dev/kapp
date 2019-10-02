@@ -102,9 +102,9 @@ func (o *ListOptions) Run() error {
 				roleBinding.MarkUsed()
 
 				table.Rows = append(table.Rows, []uitable.Value{
-					uitable.NewValueString(sa.Namespace()),
+					cmdcore.NewValueNamespace(sa.Namespace()),
 					uitable.NewValueString(sa.Name()),
-					uitable.NewValueString(role.Namespace()),
+					cmdcore.NewValueNamespace(role.Namespace()),
 					uitable.NewValueString(roleBinding.Name()),
 					uitable.NewValueString(role.Name()),
 					// uitable.NewValueStrings(role.APIGroups()),
@@ -118,7 +118,7 @@ func (o *ListOptions) Run() error {
 	for _, sa := range rbacResources.ServiceAccounts {
 		if !sa.Used() {
 			table.Rows = append(table.Rows, []uitable.Value{
-				uitable.NewValueString(sa.Namespace()),
+				cmdcore.NewValueNamespace(sa.Namespace()),
 				uitable.NewValueString(sa.Name()),
 				uitable.NewValueString("?"),
 				uitable.NewValueString("?"),
@@ -132,7 +132,7 @@ func (o *ListOptions) Run() error {
 			table.Rows = append(table.Rows, []uitable.Value{
 				uitable.NewValueString("?"),
 				uitable.NewValueString("?"),
-				uitable.NewValueString(roleBinding.Namespace()),
+				cmdcore.NewValueNamespace(roleBinding.Namespace()),
 				uitable.NewValueString(roleBinding.Name()),
 				uitable.NewValueString("?"),
 			})
@@ -144,7 +144,7 @@ func (o *ListOptions) Run() error {
 			table.Rows = append(table.Rows, []uitable.Value{
 				uitable.NewValueString("?"),
 				uitable.NewValueString("?"),
-				uitable.NewValueString(role.Namespace()),
+				cmdcore.NewValueNamespace(role.Namespace()),
 				uitable.NewValueString("?"),
 				uitable.NewValueString(role.Name()),
 			})

@@ -73,7 +73,7 @@ func (o *ListOptions) Run() error {
 		// Show config map info even if it's empty
 		if len(m.Data) == 0 {
 			row := []uitable.Value{
-				uitable.NewValueString(m.Namespace),
+				cmdcore.NewValueNamespace(m.Namespace),
 				uitable.NewValueString(m.Name),
 				uitable.NewValueString(""),
 				uitable.NewValueString(""),
@@ -84,7 +84,7 @@ func (o *ListOptions) Run() error {
 
 		for k, v := range m.Data {
 			row := []uitable.Value{
-				uitable.NewValueString(m.Namespace),
+				cmdcore.NewValueNamespace(m.Namespace),
 				uitable.NewValueString(m.Name),
 				uitable.NewValueString(k),
 				uitable.NewValueString(v),
