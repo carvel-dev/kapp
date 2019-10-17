@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/k14s/kapp/pkg/kapp/util"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,16 +41,19 @@ type Resources struct {
 	assumedAllowedNamespacesMemo     *[]string
 
 	fallbackAllowedNamespaces []string
+
+	logger logger.Logger
 }
 
 func NewResources(resourceTypes ResourceTypes, coreClient kubernetes.Interface,
-	dynamicClient dynamic.Interface, fallbackAllowedNamespaces []string) *Resources {
+	dynamicClient dynamic.Interface, fallbackAllowedNamespaces []string, logger logger.Logger) *Resources {
 
 	return &Resources{
 		resourceTypes:             resourceTypes,
 		coreClient:                coreClient,
 		dynamicClient:             dynamicClient,
 		fallbackAllowedNamespaces: fallbackAllowedNamespaces,
+		logger:                    logger.NewPrefixed("Resources"),
 	}
 }
 
@@ -59,6 +63,8 @@ type unstructItems struct {
 }
 
 func (c *Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resource, error) {
+	defer c.logger.DebugFunc("All").Finish()
+
 	if opts.ListOpts == nil {
 		opts.ListOpts = &metav1.ListOptions{}
 	}
@@ -74,6 +80,8 @@ func (c *Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resou
 
 		go func() {
 			defer itemsDone.Done()
+
+			defer c.logger.DebugFunc(resType.GroupVersionResource.String()).Finish()
 
 			var list *unstructured.UnstructuredList
 			var err error
@@ -130,6 +138,8 @@ func (c *Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resou
 }
 
 func (c *Resources) allForNamespaces(client dynamic.NamespaceableResourceInterface, listOpts *metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	defer c.logger.DebugFunc("allForNamespaces").Finish()
+
 	allowedNs, err := c.assumedAllowedNamespaces()
 	if err != nil {
 		return nil, err

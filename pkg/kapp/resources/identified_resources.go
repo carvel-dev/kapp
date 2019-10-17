@@ -20,7 +20,7 @@ func NewIdentifiedResources(coreClient kubernetes.Interface,
 	dynamicClient dynamic.Interface, fallbackAllowedNamespaces []string, logger logger.Logger) IdentifiedResources {
 
 	resTypes := NewResourceTypesImpl(coreClient)
-	resources := NewResources(resTypes, coreClient, dynamicClient, fallbackAllowedNamespaces)
+	resources := NewResources(resTypes, coreClient, dynamicClient, fallbackAllowedNamespaces, logger)
 
 	return IdentifiedResources{coreClient, resTypes, resources, logger.NewPrefixed("IdentifiedResources")}
 }
