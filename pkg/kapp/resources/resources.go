@@ -74,12 +74,17 @@ func (c *Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resou
 	fatalErrsCh := make(chan error, len(resTypes))
 	var itemsDone sync.WaitGroup
 
+	listThrottle := util.NewThrottle(10)
+
 	for _, resType := range resTypes {
 		resType := resType // copy
 		itemsDone.Add(1)
 
 		go func() {
 			defer itemsDone.Done()
+
+			listThrottle.Take()
+			defer listThrottle.Done()
 
 			defer c.logger.DebugFunc(resType.GroupVersionResource.String()).Finish()
 
