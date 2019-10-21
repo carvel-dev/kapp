@@ -40,3 +40,24 @@ See [cheatsheet](cheatsheet.md).
 [via slack](https://kubernetes.slack.com/archives/CH8KCCKA5/p1565887856281400)
 
 `Deployment` resource has a field `.spec.revisionHistoryLimit` that controls how many previous `ReplicaSets` to keep. See [Deployment's clean up polciy](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#clean-up-policy) for more details.
+
+---
+### Changes detected immediately after successful deploy
+
+Sometimes Kubernetes API server will convert submitted field values into their canonical form server-side. This will be detected by kapp as a change during a next deploy. To avoid such changes in future, you will have to change your provided field values to what API server considers as canonical.
+
+```
+...
+186     -  cpu: "2"
+187     -  memory: 1Gi
+    170 +  cpu: 2000m
+    171 +  memory: 1024Mi
+...
+```
+
+Consider using [ytt](https://get-ytt.io) and [its overlay feature](https://github.com/k14s/ytt/blob/master/docs/lang-ref-ytt-overlay.md) to change values if you do not control source configuration.
+
+---
+### Changes detected after resource is modified server-side
+
+There might be cases where other system actors (various controllers) may modify resource outside of kapp. Common example is Deployment's `spec.replicas` field is modified by Horizontal Pod Autoscaler controller. To let kapp know of such external behaviour use custom `rebaseRules` configuration (see [HPA and Deployment rebase](https://github.com/k14s/kapp/blob/master/docs/hpa-deployment-rebase.md) for details).
