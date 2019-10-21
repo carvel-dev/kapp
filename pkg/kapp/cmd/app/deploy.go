@@ -243,7 +243,7 @@ func (o *DeployOptions) nsNames(resources []ctlres.Resource) []string {
 	for _, res := range resources {
 		ns := res.Namespace()
 		if ns == "" {
-			ns = "<cluster>"
+			ns = "(cluster)"
 		}
 		if _, found := uniqNames[ns]; !found {
 			names = append(names, ns)
