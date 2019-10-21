@@ -61,3 +61,6 @@ func (a *LabeledApp) Meta() (AppMeta, error) { return AppMeta{}, nil }
 func (a *LabeledApp) Changes() ([]Change, error)             { return nil, nil }
 func (a *LabeledApp) LastChange() (Change, error)            { return nil, nil }
 func (a *LabeledApp) BeginChange(ChangeMeta) (Change, error) { return NoopChange{}, nil }
+func (a *LabeledApp) GCChanges(max int, reviewFunc func(changesToDelete []Change) error) (int, int, error) {
+	return 0, 0, nil
+}

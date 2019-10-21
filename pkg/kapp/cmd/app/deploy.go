@@ -196,6 +196,13 @@ func (o *DeployOptions) Run() error {
 		go o.showLogs(coreClient, identifiedResources, labelSelector, cancelLogsCh)
 	}
 
+	defer func() {
+		_, numDeleted, _ := app.GCChanges(o.DeployFlags.AppChangesMaxToKeep, nil)
+		if numDeleted > 0 {
+			o.ui.PrintLinef("Deleted %d older app changes", numDeleted)
+		}
+	}()
+
 	touch := ctlapp.Touch{
 		App:              app,
 		Description:      "update: " + changeSetView.Summary(),

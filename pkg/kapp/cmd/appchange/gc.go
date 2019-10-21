@@ -2,6 +2,7 @@ package appchange
 
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
+	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	"github.com/k14s/kapp/pkg/kapp/logger"
@@ -29,7 +30,7 @@ func NewGCCmd(o *GCOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	o.AppFlags.Set(cmd, flagsFactory)
-	cmd.Flags().IntVar(&o.Max, "max", 200, "Maximum number of app changes to keep")
+	cmd.Flags().IntVar(&o.Max, "max", ctlapp.AppChangesMaxToKeepDefault, "Maximum number of app changes to keep")
 	return cmd
 }
 
@@ -39,31 +40,22 @@ func (o *GCOptions) Run() error {
 		return err
 	}
 
-	changes, err := app.Changes()
-	if err != nil {
-		return err
-	}
+	reviewFunc := func(changesToDelete []ctlapp.Change) error {
+		AppChangesTable{"App changes to delete", changesToDelete}.Print(o.ui)
 
-	if len(changes) < o.Max {
-		o.ui.PrintLinef("Keeping %d app changes", len(changes))
-		return nil
-	}
-
-	changes = changes[0 : len(changes)-o.Max]
-
-	AppChangesTable{"App changes to delete", changes}.Print(o.ui)
-
-	err = o.ui.AskForConfirmation()
-	if err != nil {
-		return err
-	}
-
-	for _, change := range changes {
-		err := change.Delete()
+		err = o.ui.AskForConfirmation()
 		if err != nil {
 			return err
 		}
+
+		return nil
 	}
 
+	numKept, numDeleted, err := app.GCChanges(o.Max, reviewFunc)
+	if err != nil {
+		return err
+	}
+
+	o.ui.PrintLinef("Kept %d, deleted %d app changes", numKept, numDeleted)
 	return nil
 }

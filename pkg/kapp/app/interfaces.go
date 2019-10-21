@@ -19,6 +19,7 @@ type App interface {
 	Changes() ([]Change, error)
 	LastChange() (Change, error)
 	BeginChange(ChangeMeta) (Change, error)
+	GCChanges(max int, reviewFunc func(changesToDelete []Change) error) (int, int, error)
 }
 
 type Change interface {

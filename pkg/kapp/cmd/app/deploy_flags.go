@@ -14,6 +14,8 @@ type DeployFlags struct {
 
 	OverrideOwnershipOfExistingResources bool
 
+	AppChangesMaxToKeep int
+
 	Logs    bool
 	LogsAll bool
 }
@@ -32,6 +34,8 @@ func (s *DeployFlags) Set(cmd *cobra.Command) {
 
 	cmd.Flags().BoolVar(&s.OverrideOwnershipOfExistingResources, "dangerous-override-ownership-of-existing-resources",
 		false, "Steal existing resources from another app")
+
+	cmd.Flags().IntVar(&s.AppChangesMaxToKeep, "app-changes-max-to-keep", ctlapp.AppChangesMaxToKeepDefault, "Maximum number of app changes to keep")
 
 	cmd.Flags().BoolVar(&s.Logs, "logs", true, fmt.Sprintf("Show logs from Pods annotated as '%s'", deployLogsAnnKey))
 	cmd.Flags().BoolVar(&s.LogsAll, "logs-all", false, "Show logs from all Pods")
