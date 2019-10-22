@@ -93,7 +93,8 @@ func (a *LabeledResources) All() ([]Resource, error) {
 }
 
 type AllAndMatchingOpts struct {
-	SkipResourceOwnershipCheck bool
+	SkipResourceOwnershipCheck      bool
+	BlacklistedResourcesByLabelKeys []string
 }
 
 // AllAndMatching returns set of all labeled resources
@@ -120,7 +121,14 @@ func (a *LabeledResources) AllAndMatching(newResources []Resource, opts AllAndMa
 		}
 	}
 
-	return append(resources, nonLabeledResources...), nil
+	resources = append(resources, nonLabeledResources...)
+
+	err = a.checkBlacklistedLabels(resources, opts.BlacklistedResourcesByLabelKeys)
+	if err != nil {
+		return nil, err
+	}
+
+	return resources, nil
 }
 
 func (a *LabeledResources) checkResourceOwnership(resources []Resource) error {
@@ -146,6 +154,30 @@ func (a *LabeledResources) checkResourceOwnership(resources []Resource) error {
 			msgs = append(msgs, "- "+err.Error())
 		}
 		return fmt.Errorf("Ownership errors:\n%s", strings.Join(msgs, "\n"))
+	}
+
+	return nil
+}
+
+func (a *LabeledResources) checkBlacklistedLabels(resources []Resource, blacklistedLblKeys []string) error {
+	var errs []error
+
+	for _, res := range resources {
+		labels := res.Labels()
+		for _, blacklistedLblKey := range blacklistedLblKeys {
+			if _, found := labels[blacklistedLblKey]; found {
+				errMsg := "Resource '%s' has a blacklisted label '%s'"
+				errs = append(errs, fmt.Errorf(errMsg, res.Description(), blacklistedLblKey))
+			}
+		}
+	}
+
+	if len(errs) > 0 {
+		var msgs []string
+		for _, err := range errs {
+			msgs = append(msgs, "- "+err.Error())
+		}
+		return fmt.Errorf("Blacklist errors:\n%s", strings.Join(msgs, "\n"))
 	}
 
 	return nil

@@ -134,7 +134,11 @@ func (o *DeployOptions) Run() error {
 	}
 
 	newResources = resourceFilter.Apply(newResources)
-	matchingOpts := ctlres.AllAndMatchingOpts{SkipResourceOwnershipCheck: o.DeployFlags.OverrideOwnershipOfExistingResources}
+	matchingOpts := ctlres.AllAndMatchingOpts{
+		SkipResourceOwnershipCheck: o.DeployFlags.OverrideOwnershipOfExistingResources,
+		// Prevent accidently overriding kapp state records
+		BlacklistedResourcesByLabelKeys: []string{ctlapp.KappIsAppLabelKey},
+	}
 
 	existingResources, err := labeledResources.AllAndMatching(newResources, matchingOpts)
 	if err != nil {

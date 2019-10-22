@@ -50,7 +50,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 			Name:      a.name,
 			Namespace: a.nsName,
 			Labels: map[string]string{
-				kappIsAppLabelKey: kappIsAppLabelValue,
+				KappIsAppLabelKey: kappIsAppLabelValue,
 			},
 		},
 		Data: AppMeta{

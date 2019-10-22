@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	kappIsAppLabelKey   = "kapp.k14s.io/is-app"
+	KappIsAppLabelKey   = "kapp.k14s.io/is-app"
 	kappIsAppLabelValue = ""
 )
 
@@ -56,7 +56,7 @@ func (a Apps) List(additionalLabels map[string]string) ([]App, error) {
 	var result []App
 
 	filterLabels := map[string]string{
-		kappIsAppLabelKey: kappIsAppLabelValue,
+		KappIsAppLabelKey: kappIsAppLabelValue,
 	}
 
 	for k, v := range additionalLabels {
