@@ -21,8 +21,8 @@ Related: [ownership label rules](config.md) and [label scoping rules](config.md)
 	Possible values: `` (default), `fallback-on-replace`, `always-replace`. In some cases entire resources or subset resource fields are immutable which forces kapp users to specify how to apply wanted update.
 
 	- `` means to issue plain update call
-	- `fallback-on-replace` causes kapp to fallback to resource replacement if update call results in `Invalid` error
-	- `always-replace` causes kapp to always delete and then create resource
+	- `fallback-on-replace` causes kapp to fallback to resource replacement if update call results in `Invalid` error. Note that if resource is replaced (= delete + create), it may be negatively affected (loss of persistent data, loss of availability, etc.). For example, if Deployment or DaemonSet is first deleted and then created then associated Pods will be recreated as well, but all at the same time (even if rolling update is enabled), which likely causes an availability gap.
+	- `always-replace` causes kapp to always delete and then create resource (See note above as well.)
 
 - `kapp.k14s.io/delete-strategy` annotation controls deletion behaviour
 
