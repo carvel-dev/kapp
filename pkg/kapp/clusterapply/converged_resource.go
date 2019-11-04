@@ -132,6 +132,7 @@ func (c ConvergedResource) isResourceDoneApplying(res ctlres.Resource) (*ctlresm
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewAppsV1DaemonSet(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewBatchV1Job(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewBatchVxCronJob(res) },
+		func(res ctlres.Resource) SpecificResource { return ctlresm.NewKappctrlK14sIoV1alpha1App(res) },
 	}
 
 	for _, f := range specificResFactories {
