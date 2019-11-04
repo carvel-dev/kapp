@@ -56,6 +56,9 @@ func (c AddOrUpdateChange) Apply() error {
 		case updateStrategyUpdateAnnValue:
 			updatedRes, err := c.identifiedResources.Update(newRes)
 			if err != nil {
+				if errors.IsConflict(err) {
+					return c.tryToResolveConflict(err)
+				}
 				return err
 			}
 
@@ -114,6 +117,41 @@ func (c AddOrUpdateChange) replace() error {
 	}
 
 	return c.recordAppliedResource(updatedRes)
+}
+
+func (a AddOrUpdateChange) tryToResolveConflict(origErr error) error {
+	errMsgPrefix := "Failed to update due to resource conflict "
+
+	for i := 0; i < 10; i++ {
+		latestExistingRes, err := a.identifiedResources.Get(a.change.ExistingResource())
+		if err != nil {
+			return err
+		}
+
+		// TODO exact change vs last applied change
+		changeFactoryFunc := a.changeFactory.NewChangeAgainstLastApplied
+
+		recalcChange, err := changeFactoryFunc(latestExistingRes, a.change.AppliedResource())
+		if err != nil {
+			return err
+		}
+
+		if recalcChange.OpsDiff().MinimalMD5() != a.change.OpsDiff().MinimalMD5() {
+			return fmt.Errorf(errMsgPrefix+"(approved diff no longer matches): %s", origErr)
+		}
+
+		updatedRes, err := a.identifiedResources.Update(recalcChange.NewResource())
+		if err != nil {
+			if errors.IsConflict(err) {
+				continue
+			}
+			return err
+		}
+
+		return a.recordAppliedResource(updatedRes)
+	}
+
+	return fmt.Errorf(errMsgPrefix+"(tried multiple times): %s", origErr)
 }
 
 type SpecificResource interface {

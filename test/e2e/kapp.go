@@ -25,6 +25,7 @@ type RunOpts struct {
 	StdinReader  io.Reader
 	CancelCh     chan struct{}
 	Redact       bool
+	Interactive  bool
 }
 
 func (k Kapp) Run(args []string) string {
@@ -39,7 +40,9 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 	if opts.IntoNs {
 		args = append(args, []string{"--into-ns", k.namespace}...)
 	}
-	args = append(args, "--yes")
+	if !opts.Interactive {
+		args = append(args, "--yes")
+	}
 
 	k.l.Debugf("Running '%s'...\n", k.cmdDesc(args, opts))
 
