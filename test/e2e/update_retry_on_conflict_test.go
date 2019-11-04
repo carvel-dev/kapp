@@ -1,10 +1,10 @@
 package e2e
 
 import (
+	"bufio"
+	"io"
 	"io/ioutil"
 	"os"
-	"io"
-	"bufio"
 	"strings"
 	"testing"
 )
@@ -99,7 +99,7 @@ spec:
 
 		kapp.RunWithOpts([]string{"deploy", "--tty", "-f", tmpFile.Name(), "-a", name},
 			RunOpts{IntoNs: true, StdinReader: promptOutput.YesReader(),
-			StdoutWriter: promptOutput.OutputWriter(), Interactive: true})
+				StdoutWriter: promptOutput.OutputWriter(), Interactive: true})
 	})
 }
 
@@ -178,7 +178,7 @@ spec:
 
 		_, err := kapp.RunWithOpts([]string{"deploy", "--tty", "-f", tmpFile.Name(), "-a", name},
 			RunOpts{IntoNs: true, StdinReader: promptOutput.YesReader(),
-			StdoutWriter: promptOutput.OutputWriter(), Interactive: true, AllowError: true})
+				StdoutWriter: promptOutput.OutputWriter(), Interactive: true, AllowError: true})
 		if err == nil {
 			t.Fatalf("Expected error, but err was nil")
 		}
@@ -275,14 +275,14 @@ spec:
 
 		kapp.RunWithOpts([]string{"deploy", "--tty", "-f", tmpFile.Name(), "-a", name},
 			RunOpts{IntoNs: true, StdinReader: promptOutput.YesReader(),
-			StdoutWriter: promptOutput.OutputWriter(), Interactive: true})
+				StdoutWriter: promptOutput.OutputWriter(), Interactive: true})
 	})
 }
 
 type promptOutput struct {
-	t *testing.T
-	yesWriter io.Writer
-	yesReader io.Reader
+	t            *testing.T
+	yesWriter    io.Writer
+	yesReader    io.Reader
 	outputWriter io.Writer
 	outputReader io.Reader
 }
@@ -299,7 +299,7 @@ func newPromptOutput(t *testing.T) promptOutput {
 	return promptOutput{t, yesWriter, yesReader, outputWriter, outputReader}
 }
 
-func (p promptOutput) WriteYes() { p.yesWriter.Write([]byte("y\n")) }
+func (p promptOutput) WriteYes()            { p.yesWriter.Write([]byte("y\n")) }
 func (p promptOutput) YesReader() io.Reader { return p.yesReader }
 
 func (p promptOutput) OutputWriter() io.Writer { return p.outputWriter }

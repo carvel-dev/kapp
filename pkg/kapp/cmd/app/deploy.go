@@ -158,7 +158,9 @@ func (o *DeployOptions) Run() error {
 	}
 
 	existingResources = resourceFilter.Apply(existingResources)
+
 	changeFactory := ctldiff.NewChangeFactory(conf.RebaseMods(), conf.DiffAgainstLastAppliedFieldExclusionMods())
+	changeSetFactory := ctldiff.NewChangeSetFactory(o.DiffFlags.ChangeSetOpts, changeFactory)
 
 	changes, err := ctldiff.NewChangeSetWithTemplates(
 		existingResources, newResources, conf.TemplateRules(),
@@ -168,7 +170,7 @@ func (o *DeployOptions) Run() error {
 	}
 
 	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
-	clusterChangeFactory := ctlcap.NewClusterChangeFactory(o.ApplyFlags.ClusterChangeOpts, identifiedResources, changeFactory, msgsUI)
+	clusterChangeFactory := ctlcap.NewClusterChangeFactory(o.ApplyFlags.ClusterChangeOpts, identifiedResources, changeFactory, changeSetFactory, msgsUI)
 	clusterChangeSet := ctlcap.NewClusterChangeSet(changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI)
 
 	clusterChanges, clusterChangesGraph, err := clusterChangeSet.Calculate()

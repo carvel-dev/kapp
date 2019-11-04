@@ -27,6 +27,7 @@ type AddOrUpdateChange struct {
 	change              ctldiff.Change
 	identifiedResources ctlres.IdentifiedResources
 	changeFactory       ctldiff.ChangeFactory
+	changeSetFactory    ctldiff.ChangeSetFactory
 	opts                AddOrUpdateChangeOpts
 }
 
@@ -128,19 +129,24 @@ func (a AddOrUpdateChange) tryToResolveConflict(origErr error) error {
 			return err
 		}
 
-		// TODO exact change vs last applied change
-		changeFactoryFunc := a.changeFactory.NewChangeAgainstLastApplied
+		changeSet := a.changeSetFactory.New([]ctlres.Resource{latestExistingRes}, []ctlres.Resource{a.change.AppliedResource()})
 
-		recalcChange, err := changeFactoryFunc(latestExistingRes, a.change.AppliedResource())
+		recalcChanges, err := changeSet.Calculate()
 		if err != nil {
 			return err
 		}
 
-		if recalcChange.OpsDiff().MinimalMD5() != a.change.OpsDiff().MinimalMD5() {
+		if len(recalcChanges) != 1 {
+			return fmt.Errorf("Expected exactly one change when recalculating conflicting change")
+		}
+		if recalcChanges[0].Op() != ctldiff.ChangeOpUpdate {
+			return fmt.Errorf("Expected recalculated change to be an update")
+		}
+		if recalcChanges[0].OpsDiff().MinimalMD5() != a.change.OpsDiff().MinimalMD5() {
 			return fmt.Errorf(errMsgPrefix+"(approved diff no longer matches): %s", origErr)
 		}
 
-		updatedRes, err := a.identifiedResources.Update(recalcChange.NewResource())
+		updatedRes, err := a.identifiedResources.Update(recalcChanges[0].NewResource())
 		if err != nil {
 			if errors.IsConflict(err) {
 				continue

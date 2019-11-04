@@ -89,13 +89,15 @@ func (o *DeleteOptions) Run() error {
 
 	o.changeIgnored(existingResources)
 
-	changes, err := ctldiff.NewChangeSet(existingResources, nil, o.DiffFlags.ChangeSetOpts, changeFactory).Calculate()
+	changeSetFactory := ctldiff.NewChangeSetFactory(o.DiffFlags.ChangeSetOpts, changeFactory)
+
+	changes, err := changeSetFactory.New(existingResources, nil).Calculate()
 	if err != nil {
 		return err
 	}
 
 	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
-	clusterChangeFactory := ctlcap.NewClusterChangeFactory(o.ApplyFlags.ClusterChangeOpts, identifiedResources, changeFactory, msgsUI)
+	clusterChangeFactory := ctlcap.NewClusterChangeFactory(o.ApplyFlags.ClusterChangeOpts, identifiedResources, changeFactory, changeSetFactory, msgsUI)
 	clusterChangeSet := ctlcap.NewClusterChangeSet(changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI)
 
 	clusterChanges, clusterChangesGraph, err := clusterChangeSet.Calculate()

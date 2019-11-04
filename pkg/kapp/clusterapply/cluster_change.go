@@ -43,6 +43,7 @@ type ClusterChange struct {
 	opts                ClusterChangeOpts
 	identifiedResources ctlres.IdentifiedResources
 	changeFactory       ctldiff.ChangeFactory
+	changeSetFactory    ctldiff.ChangeSetFactory
 	ui                  UI
 
 	markedNeedsWaiting bool
@@ -51,9 +52,12 @@ type ClusterChange struct {
 var _ ChangeView = &ClusterChange{}
 
 func NewClusterChange(change ctldiff.Change, opts ClusterChangeOpts,
-	identifiedResources ctlres.IdentifiedResources, changeFactory ctldiff.ChangeFactory, ui UI) *ClusterChange {
+	identifiedResources ctlres.IdentifiedResources,
+	changeFactory ctldiff.ChangeFactory,
+	changeSetFactory ctldiff.ChangeSetFactory, ui UI) *ClusterChange {
 
-	return &ClusterChange{change, opts, identifiedResources, changeFactory, ui, false}
+	return &ClusterChange{change, opts, identifiedResources,
+		changeFactory, changeSetFactory, ui, false}
 }
 
 func (c *ClusterChange) ApplyOp() ClusterChangeApplyOp {
@@ -135,7 +139,7 @@ func (c *ClusterChange) Apply() error {
 	case ClusterChangeApplyOpAdd, ClusterChangeApplyOpUpdate:
 		return c.applyErr(AddOrUpdateChange{
 			c.change, c.identifiedResources, c.changeFactory,
-			c.opts.AddOrUpdateChangeOpts}.Apply())
+			c.changeSetFactory, c.opts.AddOrUpdateChangeOpts}.Apply())
 
 	case ClusterChangeApplyOpDelete:
 		return c.applyErr(DeleteChange{c.change, c.identifiedResources}.Apply())
@@ -161,7 +165,7 @@ func (c *ClusterChange) isDoneApplying() (ctlresm.DoneApplyState, []string, erro
 	case ClusterChangeWaitOpOK:
 		return AddOrUpdateChange{
 			c.change, c.identifiedResources, c.changeFactory,
-			c.opts.AddOrUpdateChangeOpts}.IsDoneApplying()
+			c.changeSetFactory, c.opts.AddOrUpdateChangeOpts}.IsDoneApplying()
 
 	case ClusterChangeWaitOpDelete:
 		return DeleteChange{c.change, c.identifiedResources}.IsDoneApplying()
