@@ -6,7 +6,7 @@
 - `ytt -f config/ | kapp deploy -a app1 -f- -c -y`
   - Deploy app named `app1` with configuration piped in
 
-- `kapp deploy -a app1 -f- <(ytt -f config/ )`
+- `kapp deploy -a app1 -f <(ytt -f config/ )`
   - Deploy app named `app1` with configuration generated inline and with confirmation dialog
 
 - `kapp deploy -a app1 -f config/ -c --diff-context=10`
