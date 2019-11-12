@@ -18,3 +18,7 @@
 - Talks
   - [sig-apps presentation (starts at 7:26)](https://www.youtube.com/watch?v=lYrt1cF6IoE&feature=youtu.be&t=446)
   - [TGI Kubernetes 079: YTT and Kapp](https://www.youtube.com/watch?v=CSglwNTQiYg) with Joe Beda
+
+### Misc
+
+- [Development details](dev.md)
