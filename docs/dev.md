@@ -36,3 +36,12 @@ For those interested in extending and improving `kapp`, below is a quick referen
 - [pkg/kapp/logs](https://github.com/k14s/kapp/tree/master/pkg/kapp/logs) supports log streaming for `kapp logs` command
 - [test/e2e](https://github.com/k14s/kapp/tree/master/test/e2e) includes e2e tests that can run against any k8s cluster.
 - [pkg/kapp/website](https://github.com/k14s/kapp/tree/master/pkg/kapp/website) has HTML and JS assets used by `kapp website` command and ultimately https://get-kapp.io.
+
+### Design Principles
+
+- clearly separate diff and apply stages (in code and UI)
+  - diffing should not require k8s cluster access beyond initial resource fetching
+- all k8s cluster changes must be presented in the UI
+  - to make this work as reliably as possible, UI presents ClusterChanges
+  - 1 violation: state management of app records and app changes (as ConfigMaps)
+- isolate k8s cluster modification to single package (`pkg/kapp/clusterapply`)
