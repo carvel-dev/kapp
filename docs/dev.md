@@ -45,3 +45,5 @@ For those interested in extending and improving `kapp`, below is a quick referen
   - to make this work as reliably as possible, UI presents ClusterChanges
   - 1 violation: state management of app records and app changes (as ConfigMaps)
 - isolate k8s cluster modification to single package (`pkg/kapp/clusterapply`)
+- app delete = deploy with no resources + state records deletion
+  - i.e. deploy and delete should follow same semantics and code path (`ClusterChangeSet`)
