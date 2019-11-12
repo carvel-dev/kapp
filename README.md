@@ -33,14 +33,4 @@ Features:
 
 ## Development
 
-```bash
-./hack/build.sh
-export KAPP_E2E_NAMESPACE=kapp-test
-./hack/test-all.sh
-
-# include goog analytics in 'kapp website' command for https://get-kapp.io
-# (goog analytics is _not_ included in release binaries)
-BUILD_VALUES=./hack/build-values-get-kapp-io.yml ./hack/build.sh
-```
-
-`build.sh` depends on [ytt](https://github.com/k14s/ytt).
+Consult [docs/dev.md](docs/dev.md) for build instructions, code structure details.
