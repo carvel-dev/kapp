@@ -47,3 +47,4 @@ For those interested in extending and improving `kapp`, below is a quick referen
 - isolate k8s cluster modification to single package (`pkg/kapp/clusterapply`)
 - app delete = deploy with no resources + state records deletion
   - i.e. deploy and delete should follow same semantics and code path (`ClusterChangeSet`)
+- non-admin users must be able to use kapp against their cluster (single locked down namespace)
