@@ -21,8 +21,20 @@
 - `kapp deploy -a app1 -f config/ --into-ns app1-ns`
   - Rewrite all resources to specify `app1-ns` namespace
 
+- `kapp inspect -a app1`
+  - Show summary of all resources in app `app1`
+
+- `kapp inspect -a app1 --tree`
+  - Show summary organized as a tree of all resources in app `app1`
+
+- `kapp inspect -a app1 --status`
+  - Show status subresources for each resource in app `app1`
+
 - `kapp inspect -a 'label:'`
   - Show all resources in the cluster
+
+- `kapp inspect -a 'label:' --filter-ns some-ns`
+  - Show all resources in particular namespace (note that it currently does namespace filtering client-side)
 
 - `kapp inspect -a 'label:tier=web'`
   - Show all resources labeled `tier=web` in the cluster
