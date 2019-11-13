@@ -1,5 +1,7 @@
 ## Cheatsheet
 
+### Deploy
+
 - `kapp deploy -a app1 -f config/ -c`
   - Deploy app named `app1` with configuration from `config/`
 
@@ -21,6 +23,8 @@
 - `kapp deploy -a app1 -f config/ --into-ns app1-ns`
   - Rewrite all resources to specify `app1-ns` namespace
 
+### Inspect
+
 - `kapp inspect -a app1`
   - Show summary of all resources in app `app1`
 
@@ -41,6 +45,8 @@
 
 - `kapp inspect -a 'label:!kapp.k14s.io/app' --filter-kind Deployment`
   - Show all `Deployment` resources in the cluster **not** managed by kapp
+
+### Misc
 
 - `kapp deploy -a label:kapp.k14s.io/is-app-change= --filter-age 500h+ --dangerous-allow-empty-list-of-resources --apply-ignored`
   - Delete all app changes older than 500h (v0.12.0+)
