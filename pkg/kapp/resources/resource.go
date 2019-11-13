@@ -42,6 +42,7 @@ type Resource interface {
 	DeepCopy() Resource
 	DeepCopyRaw() map[string]interface{}
 	AsYAMLBytes() ([]byte, error)
+	AsCompactBytes() ([]byte, error)
 	AsTypedObj(obj interface{}) error
 	AsUncheckedTypedObj(obj interface{}) error
 
@@ -226,6 +227,13 @@ func (r *ResourceImpl) DeepCopyRaw() map[string]interface{} {
 
 func (r *ResourceImpl) AsYAMLBytes() ([]byte, error) {
 	return yaml.Marshal(r.un.Object)
+}
+
+func (r *ResourceImpl) AsCompactBytes() ([]byte, error) {
+	// Use compact representation to take as little space as possible
+	// because annotation value max length is 262144 characters
+	// (https://github.com/k14s/kapp/issues/48).
+	return json.Marshal(r.un.Object)
 }
 
 func (r *ResourceImpl) AsTypedObj(obj interface{}) error {

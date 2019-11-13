@@ -61,7 +61,10 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedRes ctlres.Resourc
 		return nil, err
 	}
 
-	appliedResBytes, err := change.AppliedResource().AsYAMLBytes()
+	// Use compact representation to take as little space as possible
+	// because annotation value max length is 262144 characters
+	// (https://github.com/k14s/kapp/issues/48).
+	appliedResBytes, err := change.AppliedResource().AsCompactBytes()
 	if err != nil {
 		return nil, err
 	}
