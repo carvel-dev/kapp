@@ -34,7 +34,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 }
 
 func (o *ListOptions) Run() error {
-	app, _, identifiedResources, err := cmdapp.AppFactory(o.depsFactory, o.AppFlags, o.logger)
+	app, _, identifiedResources, err := cmdapp.AppFactory(o.depsFactory, o.AppFlags, cmdapp.ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}

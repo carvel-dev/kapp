@@ -45,7 +45,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *DeleteOptions) Run() error {
-	apps, _, _, err := cmdapp.AppFactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, o.logger)
+	apps, _, _, err := cmdapp.AppFactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}

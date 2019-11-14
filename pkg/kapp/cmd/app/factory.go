@@ -8,9 +8,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func AppFactoryClients(depsFactory cmdcore.DepsFactory,
-	nsFlags cmdcore.NamespaceFlags, logger logger.Logger) (
-
+func AppFactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFlags,
+	resTypesFlags ResourceTypesFlags, logger logger.Logger) (
 	ctlapp.Apps, kubernetes.Interface, ctlres.IdentifiedResources, error) {
 
 	coreClient, err := depsFactory.CoreClient()
@@ -23,7 +22,10 @@ func AppFactoryClients(depsFactory cmdcore.DepsFactory,
 		return ctlapp.Apps{}, nil, ctlres.IdentifiedResources{}, err
 	}
 
-	resTypes := ctlres.NewResourceTypesImpl(coreClient, ctlres.ResourceTypesImplOpts{})
+	resTypes := ctlres.NewResourceTypesImpl(coreClient, ctlres.ResourceTypesImplOpts{
+		IgnoreFailingAPIServices: resTypesFlags.IgnoreFailingAPIServices,
+	})
+
 	identifiedResources := ctlres.NewIdentifiedResources(
 		coreClient, dynamicClient, resTypes, []string{nsFlags.Name}, logger)
 
@@ -32,10 +34,12 @@ func AppFactoryClients(depsFactory cmdcore.DepsFactory,
 	return apps, coreClient, identifiedResources, nil
 }
 
-func AppFactory(depsFactory cmdcore.DepsFactory, appFlags AppFlags, logger logger.Logger) (
+func AppFactory(depsFactory cmdcore.DepsFactory, appFlags AppFlags,
+	resTypesFlags ResourceTypesFlags, logger logger.Logger) (
 	ctlapp.App, kubernetes.Interface, ctlres.IdentifiedResources, error) {
 
-	apps, coreClient, identifiedResources, err := AppFactoryClients(depsFactory, appFlags.NamespaceFlags, logger)
+	apps, coreClient, identifiedResources, err := AppFactoryClients(
+		depsFactory, appFlags.NamespaceFlags, resTypesFlags, logger)
 	if err != nil {
 		return nil, nil, ctlres.IdentifiedResources{}, err
 	}

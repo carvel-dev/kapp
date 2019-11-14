@@ -18,7 +18,7 @@ type ResourceTypes interface {
 }
 
 type ResourceTypesImplOpts struct {
-	IgnoreGroupDiscoveryErrs bool
+	IgnoreFailingAPIServices bool
 }
 
 type ResourceTypesImpl struct {
@@ -78,19 +78,23 @@ func (g *ResourceTypesImpl) All() ([]ResourceType, error) {
 }
 
 func (g *ResourceTypesImpl) serverResources() ([]*metav1.APIResourceList, error) {
-	var lastError error
+	var serverResources []*metav1.APIResourceList
+	var lastErr error
+
 	for i := 0; i < 5; i++ {
-		serverResources, err := g.coreClient.Discovery().ServerResources()
-		if err == nil {
+		serverResources, lastErr = g.coreClient.Discovery().ServerResources()
+		if lastErr == nil {
 			return serverResources, nil
+		} else if discovery.IsGroupDiscoveryFailedError(lastErr) {
+			if len(serverResources) > 0 && g.opts.IgnoreFailingAPIServices {
+				return serverResources, nil
+			}
+			lastErr = fmt.Errorf("%s (possibly related issue: https://github.com/k14s/kapp/issues/12)", lastErr)
 		}
-		lastError = err
 		time.Sleep(1 * time.Second)
 	}
-	if discovery.IsGroupDiscoveryFailedError(lastError) {
-		lastError = fmt.Errorf("%s (possibly related issue: https://github.com/k14s/kapp/issues/12)", lastError)
-	}
-	return nil, lastError
+
+	return nil, lastErr
 }
 
 func (g *ResourceTypesImpl) memoizedAll() ([]ResourceType, error) {

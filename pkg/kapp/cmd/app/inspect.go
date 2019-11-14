@@ -18,6 +18,7 @@ type InspectOptions struct {
 
 	AppFlags            AppFlags
 	ResourceFilterFlags cmdtools.ResourceFilterFlags
+	ResourceTypesFlags  ResourceTypesFlags
 
 	Raw    bool
 	Status bool
@@ -40,6 +41,7 @@ func NewInspectCmd(o *InspectOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 	}
 	o.AppFlags.Set(cmd, flagsFactory)
 	o.ResourceFilterFlags.Set(cmd)
+	o.ResourceTypesFlags.Set(cmd)
 	cmd.Flags().BoolVar(&o.Raw, "raw", false, "Output raw YAML resource content")
 	cmd.Flags().BoolVar(&o.Status, "status", false, "Output status content")
 	cmd.Flags().BoolVarP(&o.Tree, "tree", "t", false, "Tree view")
@@ -47,7 +49,7 @@ func NewInspectCmd(o *InspectOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 }
 
 func (o *InspectOptions) Run() error {
-	app, _, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags, o.logger)
+	app, _, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
 	if err != nil {
 		return err
 	}

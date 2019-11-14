@@ -31,6 +31,7 @@ type DeployOptions struct {
 	ResourceFilterFlags cmdtools.ResourceFilterFlags
 	ApplyFlags          ApplyFlags
 	DeployFlags         DeployFlags
+	ResourceTypesFlags  ResourceTypesFlags
 	LabelFlags          LabelFlags
 }
 
@@ -68,13 +69,14 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	o.ResourceFilterFlags.Set(cmd)
 	o.ApplyFlags.SetWithDefaults("", ApplyFlagsDeployDefaults, cmd)
 	o.DeployFlags.Set(cmd)
+	o.ResourceTypesFlags.Set(cmd)
 	o.LabelFlags.Set(cmd)
 
 	return cmd
 }
 
 func (o *DeployOptions) Run() error {
-	app, coreClient, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags, o.logger)
+	app, coreClient, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
 	if err != nil {
 		return err
 	}

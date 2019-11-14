@@ -21,6 +21,7 @@ type DeleteOptions struct {
 	DiffFlags           cmdtools.DiffFlags
 	ResourceFilterFlags cmdtools.ResourceFilterFlags
 	ApplyFlags          ApplyFlags
+	ResourceTypesFlags  ResourceTypesFlags
 }
 
 func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeleteOptions {
@@ -40,11 +41,12 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	o.DiffFlags.SetWithPrefix("diff", cmd)
 	o.ResourceFilterFlags.Set(cmd)
 	o.ApplyFlags.SetWithDefaults("", ApplyFlagsDeleteDefaults, cmd)
+	o.ResourceTypesFlags.Set(cmd)
 	return cmd
 }
 
 func (o *DeleteOptions) Run() error {
-	app, _, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags, o.logger)
+	app, _, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
 	if err != nil {
 		return err
 	}

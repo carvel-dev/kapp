@@ -45,7 +45,7 @@ func (o *LogsOptions) Run() error {
 		return err
 	}
 
-	app, coreClient, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags, o.logger)
+	app, coreClient, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags, ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}
