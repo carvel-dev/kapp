@@ -13,19 +13,15 @@ type AppMeta struct {
 	LastChange     ChangeMeta `json:"lastChange,omitempty"`
 }
 
-func NewAppMetaFromString(data string) AppMeta {
+func NewAppMetaFromData(data map[string]string) (AppMeta, error) {
 	var meta AppMeta
 
-	err := json.Unmarshal([]byte(data), &meta)
+	err := json.Unmarshal([]byte(data["spec"]), &meta)
 	if err != nil {
-		panic(fmt.Sprintf("Decoding app meta: %s", err))
+		return AppMeta{}, fmt.Errorf("Parsing app metadata: %s", err)
 	}
 
-	return meta
-}
-
-func NewAppMetaFromData(data map[string]string) AppMeta {
-	return NewAppMetaFromString(data["spec"])
+	return meta, nil
 }
 
 func (m AppMeta) AsString() string {

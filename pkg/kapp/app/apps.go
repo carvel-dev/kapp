@@ -73,9 +73,12 @@ func (a Apps) List(additionalLabels map[string]string) ([]App, error) {
 	}
 
 	for _, app := range apps.Items {
-		meta := NewAppMetaFromData(app.Data)
-		result = append(result, &RecordedApp{app.Name, app.Namespace, a.coreClient,
-			a.identifiedResources, &meta, a.logger.NewPrefixed("RecordedApp")})
+		recordedApp := &RecordedApp{app.Name, app.Namespace, a.coreClient,
+			a.identifiedResources, nil, a.logger.NewPrefixed("RecordedApp")}
+
+		recordedApp.setMeta(app)
+
+		result = append(result, recordedApp)
 	}
 
 	return result, nil

@@ -186,6 +186,19 @@ func (a *RecordedApp) labeledApp() (*LabeledApp, error) {
 
 func (a *RecordedApp) Meta() (AppMeta, error) { return a.meta() }
 
+func (a *RecordedApp) setMeta(app corev1.ConfigMap) (AppMeta, error) {
+	meta, err := NewAppMetaFromData(app.Data)
+	if err != nil {
+		errMsg := "App '%s' (namespace: %s) backed by ConfigMap '%s' did not contain parseable app metadata: %s"
+		hintText := " (hint: ConfigMap was overriden by another user?)"
+		return AppMeta{}, fmt.Errorf(errMsg+hintText, a.name, a.nsName, a.name, err)
+	}
+
+	a.memoizedMeta = &meta
+
+	return meta, nil
+}
+
 func (a *RecordedApp) meta() (AppMeta, error) {
 	if a.memoizedMeta != nil {
 		// set if bulk read on initialization
@@ -200,7 +213,7 @@ func (a *RecordedApp) meta() (AppMeta, error) {
 		return AppMeta{}, fmt.Errorf("Getting app: %s", err)
 	}
 
-	return NewAppMetaFromData(app.Data), nil
+	return a.setMeta(*app)
 }
 
 func (a *RecordedApp) Changes() ([]Change, error) {
@@ -250,7 +263,11 @@ func (a *RecordedApp) update(doFunc func(*AppMeta)) error {
 		return fmt.Errorf("Getting app: %s", err)
 	}
 
-	meta := NewAppMetaFromData(change.Data)
+	meta, err := NewAppMetaFromData(change.Data)
+	if err != nil {
+		return err
+	}
+
 	doFunc(&meta)
 
 	change.Data = meta.AsData()
