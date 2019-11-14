@@ -230,8 +230,9 @@ func (r *ResourceImpl) AsYAMLBytes() ([]byte, error) {
 }
 
 func (r *ResourceImpl) AsCompactBytes() ([]byte, error) {
-	// Use compact representation to take as little space as possible
-	// because annotation value max length is 262144 characters
+	// For larger resources (especially very indented ones),
+	// JSON representation seems to be more space effecient.
+	// It's also chosed by kubectl's last-applied-configuration annotation.
 	// (https://github.com/k14s/kapp/issues/48).
 	return json.Marshal(r.un.Object)
 }
