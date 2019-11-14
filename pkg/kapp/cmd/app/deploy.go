@@ -99,12 +99,8 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	dynamicClient, err := o.depsFactory.DynamicClient()
-	if err != nil {
-		return err
-	}
-
-	prep := ctlapp.NewPreparation(coreClient, dynamicClient)
+	resTypes := ctlres.NewResourceTypesImpl(coreClient, ctlres.ResourceTypesImplOpts{})
+	prep := ctlapp.NewPreparation(resTypes)
 
 	o.DeployFlags.PrepareResourcesOpts.DefaultNamespace = o.AppFlags.NamespaceFlags.Name
 

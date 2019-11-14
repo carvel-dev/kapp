@@ -5,8 +5,6 @@ import (
 	"strings"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 )
 
 type ResourceTypes struct {
@@ -15,7 +13,7 @@ type ResourceTypes struct {
 	memoizedScopes map[string]bool
 }
 
-func NewResourceTypes(newResources []ctlres.Resource, coreClient kubernetes.Interface, dynamicClient dynamic.Interface) *ResourceTypes {
+func NewResourceTypes(newResources []ctlres.Resource, resourceTypes ctlres.ResourceTypes) *ResourceTypes {
 	var localCRDs []*ApiExtensionsVxCRD
 
 	for _, newRes := range newResources {
@@ -25,7 +23,7 @@ func NewResourceTypes(newResources []ctlres.Resource, coreClient kubernetes.Inte
 		}
 	}
 
-	return &ResourceTypes{localCRDs, ctlres.NewResourceTypesImpl(coreClient), nil}
+	return &ResourceTypes{localCRDs, resourceTypes, nil}
 }
 
 func (c *ResourceTypes) IsNamespaced(res ctlres.Resource) (bool, error) {

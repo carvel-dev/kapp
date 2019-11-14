@@ -17,8 +17,14 @@ type ResourceTypes interface {
 	Find(Resource) (ResourceType, error)
 }
 
+type ResourceTypesImplOpts struct {
+	IgnoreGroupDiscoveryErrs bool
+}
+
 type ResourceTypesImpl struct {
-	coreClient           kubernetes.Interface
+	coreClient kubernetes.Interface
+	opts       ResourceTypesImplOpts
+
 	memoizedResTypes     *[]ResourceType
 	memoizedResTypesLock sync.RWMutex
 }
@@ -30,8 +36,8 @@ type ResourceType struct {
 	metav1.APIResource
 }
 
-func NewResourceTypesImpl(coreClient kubernetes.Interface) *ResourceTypesImpl {
-	return &ResourceTypesImpl{coreClient: coreClient}
+func NewResourceTypesImpl(coreClient kubernetes.Interface, opts ResourceTypesImplOpts) *ResourceTypesImpl {
+	return &ResourceTypesImpl{coreClient: coreClient, opts: opts}
 }
 
 func (g *ResourceTypesImpl) All() ([]ResourceType, error) {

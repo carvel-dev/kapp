@@ -7,8 +7,6 @@ import (
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -16,12 +14,11 @@ const (
 )
 
 type Preparation struct {
-	coreClient    kubernetes.Interface
-	dynamicClient dynamic.Interface
+	resourceTypes ctlres.ResourceTypes
 }
 
-func NewPreparation(coreClient kubernetes.Interface, dynamicClient dynamic.Interface) Preparation {
-	return Preparation{coreClient, dynamicClient}
+func NewPreparation(resourceTypes ctlres.ResourceTypes) Preparation {
+	return Preparation{resourceTypes}
 }
 
 func (a Preparation) PrepareResources(resources []ctlres.Resource, opts PrepareResourcesOpts) ([]ctlres.Resource, error) {
@@ -58,7 +55,7 @@ func (a Preparation) placeIntoNamespace(resources []ctlres.Resource, opts Prepar
 		nsMap[pieces[0]] = pieces[1]
 	}
 
-	resTypes := ctlresm.NewResourceTypes(resources, a.coreClient, a.dynamicClient)
+	resTypes := ctlresm.NewResourceTypes(resources, a.resourceTypes)
 
 	for i, res := range resources {
 		isNsed, err := resTypes.IsNamespaced(res)

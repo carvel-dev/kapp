@@ -17,12 +17,12 @@ type IdentifiedResources struct {
 }
 
 func NewIdentifiedResources(coreClient kubernetes.Interface,
-	dynamicClient dynamic.Interface, fallbackAllowedNamespaces []string, logger logger.Logger) IdentifiedResources {
+	dynamicClient dynamic.Interface, resourceTypes ResourceTypes,
+	fallbackAllowedNamespaces []string, logger logger.Logger) IdentifiedResources {
 
-	resTypes := NewResourceTypesImpl(coreClient)
-	resources := NewResources(resTypes, coreClient, dynamicClient, fallbackAllowedNamespaces, logger)
+	resources := NewResources(resourceTypes, coreClient, dynamicClient, fallbackAllowedNamespaces, logger)
 
-	return IdentifiedResources{coreClient, resTypes, resources, logger.NewPrefixed("IdentifiedResources")}
+	return IdentifiedResources{coreClient, resourceTypes, resources, logger.NewPrefixed("IdentifiedResources")}
 }
 
 func (r IdentifiedResources) Create(resource Resource) (Resource, error) {
