@@ -124,7 +124,13 @@ func (c ConvergedResource) findParentAndAssociatedRes() (ctlres.Resource, []ctlr
 
 func (c ConvergedResource) isResourceDoneApplying(res ctlres.Resource) (*ctlresm.DoneApplyState, error) {
 	specificResFactories := []func(ctlres.Resource) SpecificResource{
+		// kapp-controller app resource waiter deals with reconciliation _and_ deletion
+		func(res ctlres.Resource) SpecificResource { return ctlresm.NewKappctrlK14sIoV1alpha1App(res) },
+
+		// Deal with deletion generically since below resource waiters do not not know about that
+		// TODO shoud we make all of them deal with deletion internally?
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewDeleting(res) },
+
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewApiExtensionsVxCRD(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCoreV1Pod(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCoreV1Service(res) },
@@ -132,7 +138,6 @@ func (c ConvergedResource) isResourceDoneApplying(res ctlres.Resource) (*ctlresm
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewAppsV1DaemonSet(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewBatchV1Job(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewBatchVxCronJob(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewKappctrlK14sIoV1alpha1App(res) },
 	}
 
 	for _, f := range specificResFactories {

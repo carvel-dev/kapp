@@ -45,16 +45,16 @@ type AppSpec struct {
 type AppStatus struct {
 	ManagedAppName string `json:"managedAppName,omitempty"`
 
-	Fetch    *AppStatusLastFetch    `json:"fetch,omitempty"`
-	Template *AppStatusLastTemplate `json:"template,omitempty"`
-	Deploy   *AppStatusLastDeploy   `json:"deploy,omitempty"`
-	Inspect  *AppStatusInspect      `json:"inspect,omitempty"`
+	Fetch    *AppStatusFetch    `json:"fetch,omitempty"`
+	Template *AppStatusTemplate `json:"template,omitempty"`
+	Deploy   *AppStatusDeploy   `json:"deploy,omitempty"`
+	Inspect  *AppStatusInspect  `json:"inspect,omitempty"`
 
 	ObservedGeneration int64          `json:"observedGeneration"`
 	Conditions         []AppCondition `json:"conditions"`
 }
 
-type AppStatusLastFetch struct {
+type AppStatusFetch struct {
 	Stderr    string      `json:"stderr,omitempty"`
 	ExitCode  int         `json:"exitCode"`
 	Error     string      `json:"error,omitempty"`
@@ -62,14 +62,14 @@ type AppStatusLastFetch struct {
 	UpdatedAt metav1.Time `json:"updatedAt,omitempty"`
 }
 
-type AppStatusLastTemplate struct {
+type AppStatusTemplate struct {
 	Stderr    string      `json:"stderr,omitempty"`
 	ExitCode  int         `json:"exitCode"`
 	Error     string      `json:"error,omitempty"`
 	UpdatedAt metav1.Time `json:"updatedAt,omitempty"`
 }
 
-type AppStatusLastDeploy struct {
+type AppStatusDeploy struct {
 	Stdout    string      `json:"stdout,omitempty"`
 	Stderr    string      `json:"stderr,omitempty"`
 	Finished  bool        `json:"finished"`
@@ -90,8 +90,12 @@ type AppStatusInspect struct {
 type AppConditionType string
 
 const (
-	Reconciling     AppConditionType = "Reconciling"
-	ReconcileFailed AppConditionType = "ReconcileFailed"
+	Reconciling        AppConditionType = "Reconciling"
+	ReconcileFailed    AppConditionType = "ReconcileFailed"
+	ReconcileSucceeded AppConditionType = "ReconcileSucceeded"
+
+	Deleting     AppConditionType = "Deleting"
+	DeleteFailed AppConditionType = "DeleteFailed"
 )
 
 type AppCondition struct {

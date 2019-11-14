@@ -50,7 +50,16 @@ func (s KappctrlK14sIoV1alpha1App) IsDoneApplying() DoneApplyState {
 		case cond.Type == kcv1alpha1.ReconcileFailed && cond.Status == corev1.ConditionTrue:
 			return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
 				"Reconcile failed: %s (message: %s)", cond.Reason, cond.Message)}
+
+		case cond.Type == kcv1alpha1.DeleteFailed && cond.Status == corev1.ConditionTrue:
+			return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
+				"Delete failed: %s (message: %s)", cond.Reason, cond.Message)}
 		}
+	}
+
+	deletingRes := NewDeleting(s.resource)
+	if deletingRes != nil {
+		return deletingRes.IsDoneApplying()
 	}
 
 	return DoneApplyState{Done: true, Successful: true}
