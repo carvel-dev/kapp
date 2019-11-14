@@ -61,6 +61,12 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
+	lcsHeader := uitable.NewHeader("Last Change Successful")
+	lcsHeader.Title = "Lcs"
+
+	lcaHeader := uitable.NewHeader("Last Change Age")
+	lcaHeader.Title = "Lca"
+
 	table := uitable.Table{
 		Title:   tableTitle,
 		Content: "apps",
@@ -70,13 +76,18 @@ func (o *ListOptions) Run() error {
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Label"),
 			uitable.NewHeader("Namespaces"),
-			uitable.NewHeader("Last Change Successful"),
-			uitable.NewHeader("Last Change Age"),
+			lcsHeader,
+			lcaHeader,
 		},
 
 		SortBy: []uitable.ColumnSort{
 			{Column: 0, Asc: true},
 			{Column: 1, Asc: true},
+		},
+
+		Notes: []string{
+			lcsHeader.Title + ": Last Change Successful",
+			lcaHeader.Title + ": Last Change Age",
 		},
 	}
 
