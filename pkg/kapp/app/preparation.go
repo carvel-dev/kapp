@@ -15,13 +15,14 @@ const (
 
 type Preparation struct {
 	resourceTypes ctlres.ResourceTypes
+	opts          PrepareResourcesOpts
 }
 
-func NewPreparation(resourceTypes ctlres.ResourceTypes) Preparation {
-	return Preparation{resourceTypes}
+func NewPreparation(resourceTypes ctlres.ResourceTypes, opts PrepareResourcesOpts) Preparation {
+	return Preparation{resourceTypes, opts}
 }
 
-func (a Preparation) PrepareResources(resources []ctlres.Resource, opts PrepareResourcesOpts) ([]ctlres.Resource, error) {
+func (a Preparation) PrepareResources(resources []ctlres.Resource) ([]ctlres.Resource, error) {
 	err := a.validateBasicInfo(resources)
 	if err != nil {
 		return nil, err
@@ -32,7 +33,7 @@ func (a Preparation) PrepareResources(resources []ctlres.Resource, opts PrepareR
 		return nil, err
 	}
 
-	resources, err = a.placeIntoNamespace(resources, opts)
+	resources, err = a.placeIntoNamespace(resources)
 	if err != nil {
 		return nil, err
 	}
@@ -45,9 +46,9 @@ func (a Preparation) PrepareResources(resources []ctlres.Resource, opts PrepareR
 	return resources, nil
 }
 
-func (a Preparation) placeIntoNamespace(resources []ctlres.Resource, opts PrepareResourcesOpts) ([]ctlres.Resource, error) {
+func (a Preparation) placeIntoNamespace(resources []ctlres.Resource) ([]ctlres.Resource, error) {
 	nsMap := map[string]string{}
-	for _, nsKV := range opts.MapNamespaces {
+	for _, nsKV := range a.opts.MapNamespaces {
 		pieces := strings.SplitN(nsKV, "=", 2)
 		if len(pieces) != 2 {
 			return nil, fmt.Errorf("Expected map namespace '%s' to be in 'src-ns=dst-ns' format", nsKV)
@@ -65,13 +66,13 @@ func (a Preparation) placeIntoNamespace(resources []ctlres.Resource, opts Prepar
 
 		if isNsed {
 			if len(res.Namespace()) == 0 {
-				if len(opts.DefaultNamespace) > 0 {
-					res.SetNamespace(opts.DefaultNamespace)
+				if len(a.opts.DefaultNamespace) > 0 {
+					res.SetNamespace(a.opts.DefaultNamespace)
 				}
 			}
 
-			if len(opts.IntoNamespace) > 0 {
-				res.SetNamespace(opts.IntoNamespace)
+			if len(a.opts.IntoNamespace) > 0 {
+				res.SetNamespace(a.opts.IntoNamespace)
 			}
 
 			if len(nsMap) > 0 {
@@ -134,12 +135,12 @@ func (a Preparation) validateBasicInfo(resources []ctlres.Resource) error {
 	return a.combinedErr(errs)
 }
 
-func (a Preparation) ValidateResources(resources []ctlres.Resource, opts PrepareResourcesOpts) error {
-	return a.validateAllows(resources, opts)
+func (a Preparation) ValidateResources(resources []ctlres.Resource) error {
+	return a.validateAllows(resources)
 }
 
-func (a Preparation) validateAllows(resources []ctlres.Resource, opts PrepareResourcesOpts) error {
-	if !opts.AllowCheck {
+func (a Preparation) validateAllows(resources []ctlres.Resource) error {
+	if !a.opts.AllowCheck {
 		return nil
 	}
 
@@ -147,11 +148,11 @@ func (a Preparation) validateAllows(resources []ctlres.Resource, opts PrepareRes
 
 	for _, res := range resources {
 		if res.Namespace() == "" {
-			if !opts.AllowCluster {
+			if !a.opts.AllowCluster {
 				errs = append(errs, fmt.Errorf("Cluster level resource '%s' is not allowed (%s)", res.Description(), res.Origin()))
 			}
 		} else {
-			if !opts.InAllowedNamespaces(res.Namespace()) {
+			if !a.opts.InAllowedNamespaces(res.Namespace()) {
 				errs = append(errs, fmt.Errorf("Resource '%s' is outside of allowed namespaces (%s)", res.Description(), res.Origin()))
 			}
 		}

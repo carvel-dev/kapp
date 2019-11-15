@@ -11,6 +11,7 @@ import (
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
+	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctllogs "github.com/k14s/kapp/pkg/kapp/logs"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
@@ -91,24 +92,9 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	newResources, err := o.newResources()
-	if err != nil {
-		return err
-	}
-
-	newResources, conf, err := ctlconf.NewConfFromResourcesWithDefaults(newResources)
-	if err != nil {
-		return err
-	}
-
-	prep := ctlapp.NewPreparation(supportObjs.ResourceTypes)
-
 	o.DeployFlags.PrepareResourcesOpts.DefaultNamespace = o.AppFlags.NamespaceFlags.Name
 
-	newResources, err = prep.PrepareResources(newResources, o.DeployFlags.PrepareResourcesOpts)
-	if err != nil {
-		return err
-	}
+	prep := ctlapp.NewPreparation(supportObjs.ResourceTypes, o.DeployFlags.PrepareResourcesOpts)
 
 	labelSelector, err := app.LabelSelector()
 	if err != nil {
@@ -117,74 +103,34 @@ func (o *DeployOptions) Run() error {
 
 	labeledResources := ctlres.NewLabeledResources(labelSelector, supportObjs.IdentifiedResources, o.logger)
 
-	err = labeledResources.Prepare(newResources, conf.OwnershipLabelMods(), conf.LabelScopingMods(), conf.AdditionalLabels())
-	if err != nil {
-		return err
-	}
-
-	// Grab ns names before they applying filtering
-	nsNames := o.nsNames(newResources)
-
 	resourceFilter, err := o.ResourceFilterFlags.ResourceFilter()
 	if err != nil {
 		return err
 	}
 
-	newResources = resourceFilter.Apply(newResources)
-	matchingOpts := ctlres.AllAndMatchingOpts{
-		SkipResourceOwnershipCheck: o.DeployFlags.OverrideOwnershipOfExistingResources,
-		// Prevent accidently overriding kapp state records
-		BlacklistedResourcesByLabelKeys: []string{ctlapp.KappIsAppLabelKey},
-	}
-
-	existingResources, err := labeledResources.AllAndMatching(newResources, matchingOpts)
+	newResources, conf, nsNames, err := o.newResources(prep, labeledResources, resourceFilter)
 	if err != nil {
 		return err
 	}
 
-	if o.DeployFlags.Patch {
-		existingResources, err = ctlres.NewUniqueResources(existingResources).Match(newResources)
-		if err != nil {
-			return err
-		}
-	} else {
-		if len(newResources) == 0 && !o.DeployFlags.AllowEmpty {
-			return fmt.Errorf("Trying to apply empty set of resources which will delete cluster resources. " +
-				"Refusing to continue unless --dangerous-allow-empty-list-of-resources is specified.")
-		}
-	}
-
-	existingResources = resourceFilter.Apply(existingResources)
-
-	changeFactory := ctldiff.NewChangeFactory(conf.RebaseMods(), conf.DiffAgainstLastAppliedFieldExclusionMods())
-	changeSetFactory := ctldiff.NewChangeSetFactory(o.DiffFlags.ChangeSetOpts, changeFactory)
-
-	changes, err := ctldiff.NewChangeSetWithTemplates(
-		existingResources, newResources, conf.TemplateRules(),
-		o.DiffFlags.ChangeSetOpts, changeFactory).Calculate()
+	existingResources, err := o.existingResources(newResources, labeledResources, resourceFilter)
 	if err != nil {
 		return err
 	}
 
-	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
-	clusterChangeFactory := ctlcap.NewClusterChangeFactory(o.ApplyFlags.ClusterChangeOpts, supportObjs.IdentifiedResources, changeFactory, changeSetFactory, msgsUI)
-	clusterChangeSet := ctlcap.NewClusterChangeSet(changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI)
-
-	clusterChanges, clusterChangesGraph, err := clusterChangeSet.Calculate()
+	clusterChangeSet, clusterChangesGraph, hasNoChanges, changeSummary, err :=
+		o.calculateAndPresentChanges(existingResources, newResources, conf, supportObjs)
 	if err != nil {
 		return err
 	}
 
-	changeSetView := ctlcap.NewChangeSetView(ctlcap.ClusterChangesAsChangeViews(clusterChanges), o.DiffFlags.ChangeSetViewOpts)
-	changeSetView.Print(o.ui)
-
-	// Validate after showing change set to make it easier to see all resources
-	err = prep.ValidateResources(newResources, o.DeployFlags.PrepareResourcesOpts)
+	// Validate new resources _after_ presenting changes to make it easier to see big picture
+	err = prep.ValidateResources(newResources)
 	if err != nil {
 		return err
 	}
 
-	if o.DiffFlags.Run || len(clusterChanges) == 0 {
+	if o.DiffFlags.Run || hasNoChanges {
 		return nil
 	}
 
@@ -208,7 +154,7 @@ func (o *DeployOptions) Run() error {
 
 	touch := ctlapp.Touch{
 		App:              app,
-		Description:      "update: " + changeSetView.Summary(),
+		Description:      "update: " + changeSummary,
 		Namespaces:       nsNames,
 		IgnoreSuccessErr: true,
 	}
@@ -218,7 +164,38 @@ func (o *DeployOptions) Run() error {
 	})
 }
 
-func (o *DeployOptions) newResources() ([]ctlres.Resource, error) {
+func (o *DeployOptions) newResources(
+	prep ctlapp.Preparation, labeledResources *ctlres.LabeledResources,
+	resourceFilter ctlres.ResourceFilter) ([]ctlres.Resource, ctlconf.Conf, []string, error) {
+
+	newResources, err := o.newResourcesFromFiles()
+	if err != nil {
+		return nil, ctlconf.Conf{}, nil, err
+	}
+
+	newResources, conf, err := ctlconf.NewConfFromResourcesWithDefaults(newResources)
+	if err != nil {
+		return nil, ctlconf.Conf{}, nil, err
+	}
+
+	newResources, err = prep.PrepareResources(newResources)
+	if err != nil {
+		return nil, ctlconf.Conf{}, nil, err
+	}
+
+	err = labeledResources.Prepare(newResources, conf.OwnershipLabelMods(),
+		conf.LabelScopingMods(), conf.AdditionalLabels())
+	if err != nil {
+		return nil, ctlconf.Conf{}, nil, err
+	}
+
+	// Grab ns names before resource filtering is applied
+	nsNames := o.nsNames(newResources)
+
+	return resourceFilter.Apply(newResources), conf, nsNames, nil
+}
+
+func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
 	var allResources []ctlres.Resource
 
 	for _, file := range o.FileFlags.Files {
@@ -240,21 +217,77 @@ func (o *DeployOptions) newResources() ([]ctlres.Resource, error) {
 	return allResources, nil
 }
 
-func (o *DeployOptions) nsNames(resources []ctlres.Resource) []string {
-	uniqNames := map[string]struct{}{}
-	names := []string{}
-	for _, res := range resources {
-		ns := res.Namespace()
-		if ns == "" {
-			ns = "(cluster)"
+func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
+	labeledResources *ctlres.LabeledResources, resourceFilter ctlres.ResourceFilter) ([]ctlres.Resource, error) {
+
+	matchingOpts := ctlres.AllAndMatchingOpts{
+		SkipResourceOwnershipCheck: o.DeployFlags.OverrideOwnershipOfExistingResources,
+		// Prevent accidently overriding kapp state records
+		BlacklistedResourcesByLabelKeys: []string{ctlapp.KappIsAppLabelKey},
+	}
+
+	existingResources, err := labeledResources.AllAndMatching(newResources, matchingOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	if o.DeployFlags.Patch {
+		existingResources, err = ctlres.NewUniqueResources(existingResources).Match(newResources)
+		if err != nil {
+			return nil, err
 		}
-		if _, found := uniqNames[ns]; !found {
-			names = append(names, ns)
-			uniqNames[ns] = struct{}{}
+	} else {
+		if len(newResources) == 0 && !o.DeployFlags.AllowEmpty {
+			return nil, fmt.Errorf("Trying to apply empty set of resources which will delete cluster resources. " +
+				"Refusing to continue unless --dangerous-allow-empty-list-of-resources is specified.")
 		}
 	}
-	sort.Strings(names)
-	return names
+
+	return resourceFilter.Apply(existingResources), nil
+}
+
+func (o *DeployOptions) calculateAndPresentChanges(existingResources,
+	newResources []ctlres.Resource, conf ctlconf.Conf, supportObjs AppFactorySupportObjs) (
+	ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, bool, string, error) {
+
+	var clusterChangeSet ctlcap.ClusterChangeSet
+
+	{ // Figure out changes for X existing resources -> X new resources
+		changeFactory := ctldiff.NewChangeFactory(conf.RebaseMods(), conf.DiffAgainstLastAppliedFieldExclusionMods())
+		changeSetFactory := ctldiff.NewChangeSetFactory(o.DiffFlags.ChangeSetOpts, changeFactory)
+
+		changes, err := ctldiff.NewChangeSetWithTemplates(
+			existingResources, newResources, conf.TemplateRules(),
+			o.DiffFlags.ChangeSetOpts, changeFactory).Calculate()
+		if err != nil {
+			return clusterChangeSet, nil, false, "", err
+		}
+
+		msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
+
+		clusterChangeFactory := ctlcap.NewClusterChangeFactory(
+			o.ApplyFlags.ClusterChangeOpts, supportObjs.IdentifiedResources,
+			changeFactory, changeSetFactory, msgsUI)
+
+		clusterChangeSet = ctlcap.NewClusterChangeSet(
+			changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI)
+	}
+
+	clusterChanges, clusterChangesGraph, err := clusterChangeSet.Calculate()
+	if err != nil {
+		return clusterChangeSet, nil, false, "", err
+	}
+
+	var changesSummary string
+
+	{ // Present cluster changes in UI
+		changeViews := ctlcap.ClusterChangesAsChangeViews(clusterChanges)
+		changeSetView := ctlcap.NewChangeSetView(changeViews, o.DiffFlags.ChangeSetViewOpts)
+		changeSetView.Print(o.ui)
+		changesSummary = changeSetView.Summary()
+	}
+
+	return clusterChangeSet, clusterChangesGraph, (len(clusterChanges) == 0), changesSummary, err
 }
 
 const (
@@ -276,4 +309,21 @@ func (o *DeployOptions) showLogs(
 	}
 
 	ctllogs.NewView(logOpts, podWatcher, coreClient, o.ui).Show(cancelCh)
+}
+
+func (o *DeployOptions) nsNames(resources []ctlres.Resource) []string {
+	uniqNames := map[string]struct{}{}
+	names := []string{}
+	for _, res := range resources {
+		ns := res.Namespace()
+		if ns == "" {
+			ns = "(cluster)"
+		}
+		if _, found := uniqNames[ns]; !found {
+			names = append(names, ns)
+			uniqNames[ns] = struct{}{}
+		}
+	}
+	sort.Strings(names)
+	return names
 }
