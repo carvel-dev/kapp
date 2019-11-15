@@ -8,18 +8,24 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+type AppFactorySupportObjs struct {
+	CoreClient          kubernetes.Interface
+	ResourceTypes       *ctlres.ResourceTypesImpl
+	IdentifiedResources ctlres.IdentifiedResources
+	Apps                ctlapp.Apps
+}
+
 func AppFactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFlags,
-	resTypesFlags ResourceTypesFlags, logger logger.Logger) (
-	ctlapp.Apps, kubernetes.Interface, ctlres.IdentifiedResources, error) {
+	resTypesFlags ResourceTypesFlags, logger logger.Logger) (AppFactorySupportObjs, error) {
 
 	coreClient, err := depsFactory.CoreClient()
 	if err != nil {
-		return ctlapp.Apps{}, nil, ctlres.IdentifiedResources{}, err
+		return AppFactorySupportObjs{}, err
 	}
 
 	dynamicClient, err := depsFactory.DynamicClient()
 	if err != nil {
-		return ctlapp.Apps{}, nil, ctlres.IdentifiedResources{}, err
+		return AppFactorySupportObjs{}, err
 	}
 
 	resTypes := ctlres.NewResourceTypesImpl(coreClient, ctlres.ResourceTypesImplOpts{
@@ -29,25 +35,28 @@ func AppFactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.Namespac
 	identifiedResources := ctlres.NewIdentifiedResources(
 		coreClient, dynamicClient, resTypes, []string{nsFlags.Name}, logger)
 
-	apps := ctlapp.NewApps(nsFlags.Name, coreClient, identifiedResources, logger)
+	result := AppFactorySupportObjs{
+		CoreClient:          coreClient,
+		ResourceTypes:       resTypes,
+		IdentifiedResources: identifiedResources,
+		Apps:                ctlapp.NewApps(nsFlags.Name, coreClient, identifiedResources, logger),
+	}
 
-	return apps, coreClient, identifiedResources, nil
+	return result, nil
 }
 
 func AppFactory(depsFactory cmdcore.DepsFactory, appFlags AppFlags,
-	resTypesFlags ResourceTypesFlags, logger logger.Logger) (
-	ctlapp.App, kubernetes.Interface, ctlres.IdentifiedResources, error) {
+	resTypesFlags ResourceTypesFlags, logger logger.Logger) (ctlapp.App, AppFactorySupportObjs, error) {
 
-	apps, coreClient, identifiedResources, err := AppFactoryClients(
-		depsFactory, appFlags.NamespaceFlags, resTypesFlags, logger)
+	supportingObjs, err := AppFactoryClients(depsFactory, appFlags.NamespaceFlags, resTypesFlags, logger)
 	if err != nil {
-		return nil, nil, ctlres.IdentifiedResources{}, err
+		return nil, AppFactorySupportObjs{}, err
 	}
 
-	app, err := apps.Find(appFlags.Name)
+	app, err := supportingObjs.Apps.Find(appFlags.Name)
 	if err != nil {
-		return nil, nil, ctlres.IdentifiedResources{}, err
+		return nil, AppFactorySupportObjs{}, err
 	}
 
-	return app, coreClient, identifiedResources, nil
+	return app, supportingObjs, nil
 }

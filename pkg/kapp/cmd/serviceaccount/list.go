@@ -34,7 +34,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 }
 
 func (o *ListOptions) Run() error {
-	app, _, identifiedResources, err := cmdapp.AppFactory(o.depsFactory, o.AppFlags, cmdapp.ResourceTypesFlags{}, o.logger)
+	app, supportObjs, err := cmdapp.AppFactory(o.depsFactory, o.AppFlags, cmdapp.ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (o *ListOptions) Run() error {
 
 	rbacResources := &RBACResources{}
 
-	resources, err := identifiedResources.List(labelSelector)
+	resources, err := supportObjs.IdentifiedResources.List(labelSelector)
 	if err != nil {
 		return err
 	}

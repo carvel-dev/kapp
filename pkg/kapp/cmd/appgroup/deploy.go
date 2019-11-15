@@ -69,12 +69,12 @@ func (o *DeployOptions) Run() error {
 		}
 	}
 
-	apps, _, _, err := cmdapp.AppFactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger)
+	supportObjs, err := cmdapp.AppFactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}
 
-	existingAppsInGroup, err := apps.List(map[string]string{appGroupAnnKey: o.AppGroupFlags.Name})
+	existingAppsInGroup, err := supportObjs.Apps.List(map[string]string{appGroupAnnKey: o.AppGroupFlags.Name})
 	if err != nil {
 		return err
 	}

@@ -76,7 +76,7 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *DeployOptions) Run() error {
-	app, coreClient, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
+	app, supportObjs, err := AppFactory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
 	if err != nil {
 		return err
 	}
@@ -101,11 +101,7 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	resTypes := ctlres.NewResourceTypesImpl(coreClient, ctlres.ResourceTypesImplOpts{
-		IgnoreFailingAPIServices: o.ResourceTypesFlags.IgnoreFailingAPIServices,
-	})
-
-	prep := ctlapp.NewPreparation(resTypes)
+	prep := ctlapp.NewPreparation(supportObjs.ResourceTypes)
 
 	o.DeployFlags.PrepareResourcesOpts.DefaultNamespace = o.AppFlags.NamespaceFlags.Name
 
@@ -119,7 +115,7 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	labeledResources := ctlres.NewLabeledResources(labelSelector, identifiedResources, o.logger)
+	labeledResources := ctlres.NewLabeledResources(labelSelector, supportObjs.IdentifiedResources, o.logger)
 
 	err = labeledResources.Prepare(newResources, conf.OwnershipLabelMods(), conf.LabelScopingMods(), conf.AdditionalLabels())
 	if err != nil {
@@ -171,7 +167,7 @@ func (o *DeployOptions) Run() error {
 	}
 
 	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
-	clusterChangeFactory := ctlcap.NewClusterChangeFactory(o.ApplyFlags.ClusterChangeOpts, identifiedResources, changeFactory, changeSetFactory, msgsUI)
+	clusterChangeFactory := ctlcap.NewClusterChangeFactory(o.ApplyFlags.ClusterChangeOpts, supportObjs.IdentifiedResources, changeFactory, changeSetFactory, msgsUI)
 	clusterChangeSet := ctlcap.NewClusterChangeSet(changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI)
 
 	clusterChanges, clusterChangesGraph, err := clusterChangeSet.Calculate()
@@ -200,7 +196,7 @@ func (o *DeployOptions) Run() error {
 	if o.DeployFlags.Logs {
 		cancelLogsCh := make(chan struct{})
 		defer func() { close(cancelLogsCh) }()
-		go o.showLogs(coreClient, identifiedResources, labelSelector, cancelLogsCh)
+		go o.showLogs(supportObjs.CoreClient, supportObjs.IdentifiedResources, labelSelector, cancelLogsCh)
 	}
 
 	defer func() {

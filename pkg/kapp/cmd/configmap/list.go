@@ -35,7 +35,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 }
 
 func (o *ListOptions) Run() error {
-	app, _, identifiedResources, err := cmdapp.AppFactory(o.depsFactory, o.AppFlags, cmdapp.ResourceTypesFlags{}, o.logger)
+	app, supportObjs, err := cmdapp.AppFactory(o.depsFactory, o.AppFlags, cmdapp.ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
-	maps, err := identifiedResources.ConfigMapResources(labelSelector)
+	maps, err := supportObjs.IdentifiedResources.ConfigMapResources(labelSelector)
 	if err != nil {
 		return err
 	}

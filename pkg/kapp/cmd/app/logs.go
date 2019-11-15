@@ -45,7 +45,7 @@ func (o *LogsOptions) Run() error {
 		return err
 	}
 
-	app, coreClient, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags, ResourceTypesFlags{}, o.logger)
+	app, supportObjs, err := AppFactory(o.depsFactory, o.AppFlags, ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}
@@ -62,10 +62,10 @@ func (o *LogsOptions) Run() error {
 			}
 			return true
 		},
-		identifiedResources.PodResources(labelSelector),
+		supportObjs.IdentifiedResources.PodResources(labelSelector),
 	}
 
-	logsView := ctllogs.NewView(logOpts, podWatcher, coreClient, o.ui)
+	logsView := ctllogs.NewView(logOpts, podWatcher, supportObjs.CoreClient, o.ui)
 
 	return logsView.Show(make(chan struct{}))
 }

@@ -51,12 +51,12 @@ func (o *ListOptions) Run() error {
 		nsHeader.Hidden = false
 	}
 
-	apps, _, _, err := AppFactoryClients(o.depsFactory, o.NamespaceFlags, ResourceTypesFlags{}, o.logger)
+	supportObjs, err := AppFactoryClients(o.depsFactory, o.NamespaceFlags, ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}
 
-	items, err := apps.List(nil)
+	items, err := supportObjs.Apps.List(nil)
 	if err != nil {
 		return err
 	}

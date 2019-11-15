@@ -46,7 +46,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *DeleteOptions) Run() error {
-	app, _, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
+	app, supportObjs, err := AppFactory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	existingResources, err := identifiedResources.List(labelSelector)
+	existingResources, err := supportObjs.IdentifiedResources.List(labelSelector)
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func (o *DeleteOptions) Run() error {
 	}
 
 	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
-	clusterChangeFactory := ctlcap.NewClusterChangeFactory(o.ApplyFlags.ClusterChangeOpts, identifiedResources, changeFactory, changeSetFactory, msgsUI)
+	clusterChangeFactory := ctlcap.NewClusterChangeFactory(o.ApplyFlags.ClusterChangeOpts, supportObjs.IdentifiedResources, changeFactory, changeSetFactory, msgsUI)
 	clusterChangeSet := ctlcap.NewClusterChangeSet(changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI)
 
 	clusterChanges, clusterChangesGraph, err := clusterChangeSet.Calculate()

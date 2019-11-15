@@ -49,7 +49,7 @@ func NewInspectCmd(o *InspectOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 }
 
 func (o *InspectOptions) Run() error {
-	app, _, identifiedResources, err := AppFactory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
+	app, supportObjs, err := AppFactory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (o *InspectOptions) Run() error {
 		return err
 	}
 
-	resources, err := identifiedResources.List(labelSelector)
+	resources, err := supportObjs.IdentifiedResources.List(labelSelector)
 	if err != nil {
 		return err
 	}
