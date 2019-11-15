@@ -7,6 +7,7 @@ import (
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
+	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
@@ -62,52 +63,15 @@ func (o *DeleteOptions) Run() error {
 		return nil
 	}
 
-	labelSelector, err := app.LabelSelector()
+	existingResources, fullyDeleteApp, err := o.existingResources(app, supportObjs)
 	if err != nil {
 		return err
 	}
 
-	resourceFilter, err := o.ResourceFilterFlags.ResourceFilter()
+	clusterChangeSet, clusterChangesGraph, err := o.calculateAndPresentChanges(existingResources, supportObjs)
 	if err != nil {
 		return err
 	}
-
-	existingResources, err := supportObjs.IdentifiedResources.List(labelSelector)
-	if err != nil {
-		return err
-	}
-
-	fullyDeleteApp := true
-	applicableExistingResources := resourceFilter.Apply(existingResources)
-
-	if len(applicableExistingResources) != len(existingResources) {
-		fullyDeleteApp = false
-		o.ui.PrintLinef("App '%s' (namespace: %s) will not be fully deleted because some resources are excluded by filters",
-			app.Name(), o.AppFlags.NamespaceFlags.Name)
-	}
-
-	existingResources = applicableExistingResources
-	changeFactory := ctldiff.NewChangeFactory(nil, nil)
-
-	o.changeIgnored(existingResources)
-
-	changeSetFactory := ctldiff.NewChangeSetFactory(o.DiffFlags.ChangeSetOpts, changeFactory)
-
-	changes, err := changeSetFactory.New(existingResources, nil).Calculate()
-	if err != nil {
-		return err
-	}
-
-	msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
-	clusterChangeFactory := ctlcap.NewClusterChangeFactory(o.ApplyFlags.ClusterChangeOpts, supportObjs.IdentifiedResources, changeFactory, changeSetFactory, msgsUI)
-	clusterChangeSet := ctlcap.NewClusterChangeSet(changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI)
-
-	clusterChanges, clusterChangesGraph, err := clusterChangeSet.Calculate()
-	if err != nil {
-		return err
-	}
-
-	ctlcap.NewChangeSetView(ctlcap.ClusterChangesAsChangeViews(clusterChanges), o.DiffFlags.ChangeSetViewOpts).Print(o.ui)
 
 	if o.DiffFlags.Run {
 		return nil
@@ -132,6 +96,81 @@ func (o *DeleteOptions) Run() error {
 
 		return nil
 	})
+}
+
+func (o *DeleteOptions) existingResources(app ctlapp.App,
+	supportObjs AppFactorySupportObjs) ([]ctlres.Resource, bool, error) {
+
+	labelSelector, err := app.LabelSelector()
+	if err != nil {
+		return nil, false, err
+	}
+
+	existingResources, err := supportObjs.IdentifiedResources.List(labelSelector)
+	if err != nil {
+		return nil, false, err
+	}
+
+	resourceFilter, err := o.ResourceFilterFlags.ResourceFilter()
+	if err != nil {
+		return nil, false, err
+	}
+
+	fullyDeleteApp := true
+	applicableExistingResources := resourceFilter.Apply(existingResources)
+
+	if len(applicableExistingResources) != len(existingResources) {
+		fullyDeleteApp = false
+		o.ui.PrintLinef("App '%s' (namespace: %s) will not be fully deleted "+
+			"because some resources are excluded by filters",
+			app.Name(), o.AppFlags.NamespaceFlags.Name)
+	}
+
+	existingResources = applicableExistingResources
+
+	o.changeIgnored(existingResources)
+
+	return existingResources, fullyDeleteApp, nil
+}
+
+func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Resource,
+	supportObjs AppFactorySupportObjs) (ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, error) {
+
+	var clusterChangeSet ctlcap.ClusterChangeSet
+
+	{ // Figure out changes for X existing resources -> 0 new resources
+		changeFactory := ctldiff.NewChangeFactory(nil, nil)
+		changeSetFactory := ctldiff.NewChangeSetFactory(o.DiffFlags.ChangeSetOpts, changeFactory)
+
+		changes, err := changeSetFactory.New(existingResources, nil).Calculate()
+		if err != nil {
+			return ctlcap.ClusterChangeSet{}, nil, err
+		}
+
+		{ // Build cluster changes based on diff changes
+			msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
+
+			clusterChangeFactory := ctlcap.NewClusterChangeFactory(
+				o.ApplyFlags.ClusterChangeOpts, supportObjs.IdentifiedResources,
+				changeFactory, changeSetFactory, msgsUI)
+
+			clusterChangeSet = ctlcap.NewClusterChangeSet(
+				changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI)
+		}
+	}
+
+	clusterChanges, clusterChangesGraph, err := clusterChangeSet.Calculate()
+	if err != nil {
+		return ctlcap.ClusterChangeSet{}, nil, err
+	}
+
+	{ // Present cluster changes in UI
+		changeViews := ctlcap.ClusterChangesAsChangeViews(clusterChanges)
+		changeSetView := ctlcap.NewChangeSetView(changeViews, o.DiffFlags.ChangeSetViewOpts)
+		changeSetView.Print(o.ui)
+	}
+
+	return clusterChangeSet, clusterChangesGraph, nil
 }
 
 const (
