@@ -101,7 +101,10 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	resTypes := ctlres.NewResourceTypesImpl(coreClient, ctlres.ResourceTypesImplOpts{})
+	resTypes := ctlres.NewResourceTypesImpl(coreClient, ctlres.ResourceTypesImplOpts{
+		IgnoreFailingAPIServices: o.ResourceTypesFlags.IgnoreFailingAPIServices,
+	})
+
 	prep := ctlapp.NewPreparation(resTypes)
 
 	o.DeployFlags.PrepareResourcesOpts.DefaultNamespace = o.AppFlags.NamespaceFlags.Name
