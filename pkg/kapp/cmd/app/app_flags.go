@@ -13,5 +13,5 @@ type AppFlags struct {
 func (s *AppFlags) Set(cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
 	s.NamespaceFlags.Set(cmd, flagsFactory)
 
-	cmd.Flags().StringVarP(&s.Name, "app", "a", "", "Set app name (or label selector) (format: name, key=val, !key)")
+	cmd.Flags().StringVarP(&s.Name, "app", "a", "", "Set app name (or label selector) (format: name, label:key=val, !key)")
 }
