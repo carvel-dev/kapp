@@ -182,30 +182,41 @@ func (c AddOrUpdateChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 }
 
 func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error {
-	reloadedSavedRes := savedRes // first time, try using memory copy
+	savedResWithHistory := c.changeFactory.NewResourceWithHistory(savedRes)
+
+	// Calculate change _once_ against what was returned from the server
+	// (ie changes applied by the webhooks on the server, etc _but
+	// not by other controllers)
+	applyChange, err := savedResWithHistory.CalculateChange(c.change.AppliedResource())
+	if err != nil {
+		return err
+	}
+
+	// first time, try using memory copy
+	latestResWithHistory := &savedResWithHistory
 
 	return util.Retry(time.Second, time.Minute, func() (bool, error) {
 		// subsequent times try to retrieve latest copy,
 		// for example, ServiceAccount seems to change immediately
-		if reloadedSavedRes == nil {
+		if latestResWithHistory == nil {
 			res, err := c.identifiedResources.Get(savedRes)
 			if err != nil {
 				return false, err
 			}
 
-			reloadedSavedRes = res
+			resWithHistory := c.changeFactory.NewResourceWithHistory(res)
+			latestResWithHistory = &resWithHistory
 		}
 
-		savedResWithHistory := c.changeFactory.NewResourceWithHistory(reloadedSavedRes)
-
-		resWithHistory, err := savedResWithHistory.RecordLastAppliedResource(c.change.AppliedResource())
+		// Record last applied change on the latest version of a resource
+		latestResWithHistoryUpdated, err := latestResWithHistory.RecordLastAppliedResource(applyChange)
 		if err != nil {
 			return true, fmt.Errorf("Recording last applied resource: %s", err)
 		}
 
-		_, err = c.identifiedResources.Update(resWithHistory)
+		_, err = c.identifiedResources.Update(latestResWithHistoryUpdated)
 		if err != nil {
-			reloadedSavedRes = nil // Get again
+			latestResWithHistory = nil // Get again
 			return false, fmt.Errorf("Saving record of last applied resource: %s", err)
 		}
 

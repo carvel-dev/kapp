@@ -55,21 +55,16 @@ func (r ResourceWithHistory) LastAppliedResource() ctlres.Resource {
 	return nil
 }
 
-func (r ResourceWithHistory) RecordLastAppliedResource(appliedRes ctlres.Resource) (ctlres.Resource, error) {
-	change, err := r.lastAppliedChange(appliedRes)
-	if err != nil {
-		return nil, err
-	}
-
+func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ctlres.Resource, error) {
 	// Use compact representation to take as little space as possible
 	// because annotation value max length is 262144 characters
 	// (https://github.com/k14s/kapp/issues/48).
-	appliedResBytes, err := change.AppliedResource().AsCompactBytes()
+	appliedResBytes, err := appliedChange.AppliedResource().AsCompactBytes()
 	if err != nil {
 		return nil, err
 	}
 
-	diff := change.OpsDiff()
+	diff := appliedChange.OpsDiff()
 
 	if resourceWithHistoryDebug {
 		fmt.Printf("%s: recording md5 %s\n---> \n%s\n",
@@ -97,7 +92,7 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedRes ctlres.Resourc
 	return resultRes, nil
 }
 
-func (r ResourceWithHistory) lastAppliedChange(appliedRes ctlres.Resource) (Change, error) {
+func (r ResourceWithHistory) CalculateChange(appliedRes ctlres.Resource) (Change, error) {
 	// Remove fields specified to be excluded (as they may be generated
 	// by the server, hence would be racy to be rebased)
 	removeMods := r.diffAgainstLastAppliedFieldExclusionMods
@@ -132,7 +127,7 @@ func (r ResourceWithHistory) recalculateLastAppliedChange() ([]Change, string, s
 		return nil, "", "" // TODO deal with error?
 	}
 
-	recalculatedChange2, err := r.lastAppliedChange(lastAppliedRes)
+	recalculatedChange2, err := r.CalculateChange(lastAppliedRes)
 	if err != nil {
 		return nil, "", "" // TODO deal with error?
 	}
