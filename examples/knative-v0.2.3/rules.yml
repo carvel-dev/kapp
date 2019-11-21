@@ -1,0 +1,21 @@
+apiVersion: kapp.k14s.io/v1alpha1
+kind: Config
+
+# knative-serving-admin ClusterRole get aggregated by the RBAC controller
+rebaseRules:
+- type: copy
+  sources: [existing, new]
+  path: [rules]
+  resourceMatchers:
+  - kindNamespaceNameMatcher:
+      name: knative-serving-admin
+      kind: ClusterRole
+
+- type: copy
+  sources: [existing, new]
+  path: [spec, replicas]
+  resourceMatchers:
+  - kindNamespaceNameMatcher:
+      name: knative-ingressgateway
+      kind: Deployment
+      namespace: istio-system
