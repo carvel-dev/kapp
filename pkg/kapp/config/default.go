@@ -185,11 +185,13 @@ templateRules:
     - path: [spec, template, spec, containers, {allIndexes: true}, envFrom, {allIndexes: true}, secretRef]
       resourceMatchers: *builtinAppsControllers
     # TODO uses secretName instead of name
-    #- path: [spec, template, spec, volumes, {allIndexes: true}, secret]
-    #  resourceMatchers: *builtinAppsControllers
-    #- path: [spec, volumes, {allIndexes: true}, secret]
-    #  resourceMatchers:
-    #  - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
+    - path: [spec, template, spec, volumes, {allIndexes: true}, secret]
+      resourceMatchers: *builtinAppsControllers
+      nameKey: secretName
+    - path: [spec, volumes, {allIndexes: true}, secret]
+      resourceMatchers:
+      - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
+      nameKey: secretName
 `
 
 var defaultConfigRes = ctlres.MustNewResourceFromBytes([]byte(defaultConfigYAML))

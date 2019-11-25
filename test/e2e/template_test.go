@@ -42,6 +42,10 @@ spec:
         envFrom:
         - configMapRef:
             name: config
+      volumes:
+      - name: vol1
+        secret:
+          secretName: secret
 `
 
 	yaml1 := `
@@ -53,6 +57,15 @@ metadata:
     kapp.k14s.io/versioned: ""
 data:
   key1: val1
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret
+  annotations:
+    kapp.k14s.io/versioned: ""
+data:
+  key1: val1
 ` + depYAML
 
 	yaml2 := `
@@ -60,6 +73,15 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: config
+  annotations:
+    kapp.k14s.io/versioned: ""
+data:
+  key1: val2
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret
   annotations:
     kapp.k14s.io/versioned: ""
 data:
@@ -79,6 +101,20 @@ data:
       8 +     -replaced-
       9 +     -replaced-
      10 +   name: config-ver-1
+     11 +   namespace: kapp-test
+     12 + 
+--- create secret/secret-ver-1 (v1) namespace: kapp-test
+      0 + apiVersion: v1
+      1 + data:
+      2 +   key1: val1
+      3 + kind: Secret
+      4 + metadata:
+      5 +   annotations:
+      6 +     kapp.k14s.io/versioned: ""
+      7 +   labels:
+      8 +     -replaced-
+      9 +     -replaced-
+     10 +   name: secret-ver-1
      11 +   namespace: kapp-test
      12 + 
 --- create deployment/dep (apps/v1) namespace: kapp-test
@@ -114,7 +150,11 @@ data:
      29 +         name: echo
      30 +         ports:
      31 +         - containerPort: 80
-     32 +
+     32 +       volumes:
+     33 +       - name: vol1
+     34 +         secret:
+     35 +           secretName: secret-ver-1
+     36 +
 `
 
 	expectedYAML2Diff := `
@@ -125,6 +165,13 @@ data:
       2 +   key1: val2
   3,  3   kind: ConfigMap
   4,  4   metadata:
+--- create secret/secret-ver-2 (v1) namespace: kapp-test
+  ...
+  1,  1   data:
+  2     -   key1: val1
+      2 +   key1: val2
+  3,  3   kind: Secret
+  4,  4   metadata:
 --- update deployment/dep (apps/v1) namespace: kapp-test
   ...
  33, 33           - configMapRef:
@@ -132,6 +179,12 @@ data:
      34 +             name: config-ver-2
  35, 35           image: hashicorp/http-echo
  36, 36           name: echo
+  ...
+ 41, 41           secret:
+ 42     -           secretName: secret-ver-1
+     42 +           secretName: secret-ver-2
+ 43, 43   status:
+ 44, 44     availableReplicas: 1
 `
 
 	name := "test-template"

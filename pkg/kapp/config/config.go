@@ -60,6 +60,7 @@ type TemplateAffectedResources struct {
 type TemplateAffectedObjRef struct {
 	ResourceMatchers []ResourceMatcher
 	Path             ctlres.Path
+	NameKey          string `json:"nameKey"`
 }
 
 type ResourceMatchers []ResourceMatcher

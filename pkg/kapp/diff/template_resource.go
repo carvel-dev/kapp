@@ -110,9 +110,16 @@ func (d TemplateResource) buildObjRefReplacementFunc(
 		}
 
 		// Check as many rules as possible
-		if objRef.Name != nonTemplatedName {
-			return nil
+		if len(affectedObjRef.NameKey) > 0 {
+			if typedObj[affectedObjRef.NameKey] != nonTemplatedName {
+				return nil
+			}
+		} else {
+			if objRef.Name != nonTemplatedName {
+				return nil
+			}
 		}
+
 		if len(objRef.Namespace) > 0 && objRef.Namespace != d.res.Namespace() {
 			return nil
 		}
@@ -123,7 +130,11 @@ func (d TemplateResource) buildObjRefReplacementFunc(
 			return nil
 		}
 
-		typedObj["name"] = d.res.Name()
+		if len(affectedObjRef.NameKey) > 0 {
+			typedObj[affectedObjRef.NameKey] = d.res.Name()
+		} else {
+			typedObj["name"] = d.res.Name()
+		}
 
 		return nil
 	}
