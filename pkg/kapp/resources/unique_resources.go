@@ -38,34 +38,19 @@ func NewUniqueResources(resources []Resource) UniqueResources {
 func (r UniqueResources) Resources() ([]Resource, error) {
 	var result []Resource
 
-	uniqRs := map[string]struct{}{}
-	dupRs := map[string][]Resource{}
+	uniqRs := map[string]Resource{}
 
 	for _, res := range r.resources {
 		resKey := NewUniqueResourceKey(res).String()
-		if _, found := uniqRs[resKey]; found {
-			dupRs[resKey] = append(dupRs[resKey], res)
-		} else {
-			uniqRs[resKey] = struct{}{}
-		}
-	}
-
-	// Check if all duplicate resources are same
-	for _, rs := range dupRs {
-		for i := 1; i < len(rs); i++ {
-			if !rs[i-1].Equal(rs[i]) {
-				return nil, fmt.Errorf("Expected not to find same resource '%s' with different content", rs[i].Description())
+		if uRes, found := uniqRs[resKey]; found {
+			// Check if duplicate resources are same
+			if !uRes.Equal(res) {
+				return nil, fmt.Errorf("Expected not to find same resource '%s' with different content", res.Description())
 			}
-		}
-	}
-
-	// Preserve ordering and only keep one resource copy
-	for _, res := range r.resources {
-		resKey := NewUniqueResourceKey(res).String()
-		if _, found := uniqRs[resKey]; found {
+		} else {
+			uniqRs[resKey] = res
 			result = append(result, res)
 		}
-		delete(uniqRs, resKey)
 	}
 
 	return result, nil
