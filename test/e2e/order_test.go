@@ -9,7 +9,7 @@ import (
 func TestOrder(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
 
 	name := "test-order"
 	cleanUp := func() {
