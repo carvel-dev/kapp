@@ -13,6 +13,7 @@ import (
 type Kapp struct {
 	t         *testing.T
 	namespace string
+	kappPath  string
 	l         Logger
 }
 
@@ -46,8 +47,7 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 
 	k.l.Debugf("Running '%s'...\n", k.cmdDesc(args, opts))
 
-	cmdName := "kapp"
-	cmd := exec.Command(cmdName, args...)
+	cmd := exec.Command(k.kappPath, args...)
 	cmd.Stdin = opts.StdinReader
 
 	var stderr, stdout bytes.Buffer

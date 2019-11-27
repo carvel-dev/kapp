@@ -12,7 +12,7 @@ import (
 func TestUpdateRetryOnConflict_WithoutConflict(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
 
 	yaml1 := `
 ---
@@ -106,7 +106,7 @@ spec:
 func TestUpdateRetryOnConflict_WithConflict(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
 
 	yaml1 := `
 ---
@@ -194,7 +194,7 @@ spec:
 func TestUpdateRetryOnConflict_WithConflictRebasedAway(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
 
 	yaml1 := `
 ---

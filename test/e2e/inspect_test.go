@@ -11,7 +11,7 @@ import (
 func TestInspect(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, logger}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
 
 	yaml1 := `
 ---
