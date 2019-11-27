@@ -46,6 +46,9 @@
 - `kapp inspect -a 'label:!kapp.k14s.io/app' --filter-kind Deployment`
   - Show all `Deployment` resources in the cluster **not** managed by kapp
 
+- `kapp tools list-labels`
+  - See which labels are used in your cluster (add `--values` to see label values)
+
 ### Misc
 
 - `kapp deploy -a label:kapp.k14s.io/is-app-change= --filter-age 500h+ --dangerous-allow-empty-list-of-resources --apply-ignored`
