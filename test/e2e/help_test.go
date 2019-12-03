@@ -7,7 +7,7 @@ import (
 
 func TestHelpCommandGroup(t *testing.T) {
 	env := BuildEnv(t)
-	kapp := Kapp{t, env.Namespace, Logger{}}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, Logger{}}
 
 	_, err := kapp.RunWithOpts([]string{"app-group"}, RunOpts{NoNamespace: true, AllowError: true})
 	if err == nil {
