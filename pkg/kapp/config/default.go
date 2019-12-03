@@ -170,6 +170,10 @@ templateRules:
       resourceMatchers: *builtinAppsControllers
     - path: [spec, template, spec, containers, {allIndexes: true}, envFrom, {allIndexes: true}, configMapRef]
       resourceMatchers: *builtinAppsControllers
+    - path: [spec, template, spec, initContainers, {allIndexes: true}, env, {allIndexes: true}, valueFrom, configMapKeyRef]
+      resourceMatchers: *builtinAppsControllers
+    - path: [spec, template, spec, initContainers, {allIndexes: true}, envFrom, {allIndexes: true}, configMapRef]
+      resourceMatchers: *builtinAppsControllers
     - path: [spec, template, spec, volumes, {allIndexes: true}, configMap]
       resourceMatchers: *builtinAppsControllers
     - path: [spec, volumes, {allIndexes: true}, configMap]
@@ -183,6 +187,10 @@ templateRules:
     - path: [spec, template, spec, containers, {allIndexes: true}, env, {allIndexes: true}, valueFrom, secretKeyRef]
       resourceMatchers: *builtinAppsControllers
     - path: [spec, template, spec, containers, {allIndexes: true}, envFrom, {allIndexes: true}, secretRef]
+      resourceMatchers: *builtinAppsControllers
+    - path: [spec, template, spec, initContainers, {allIndexes: true}, env, {allIndexes: true}, valueFrom, secretKeyRef]
+      resourceMatchers: *builtinAppsControllers
+    - path: [spec, template, spec, initContainers, {allIndexes: true}, envFrom, {allIndexes: true}, secretRef]
       resourceMatchers: *builtinAppsControllers
     # TODO uses secretName instead of name
     - path: [spec, template, spec, volumes, {allIndexes: true}, secret]
