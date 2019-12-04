@@ -132,6 +132,7 @@ func (c ConvergedResource) isResourceDoneApplying(res ctlres.Resource) (*ctlresm
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewDeleting(res) },
 
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewApiExtensionsVxCRD(res) },
+		func(res ctlres.Resource) SpecificResource { return ctlresm.NewAPIRegistrationV1APIService(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCoreV1Pod(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCoreV1Service(res) },
 		func(res ctlres.Resource) SpecificResource { return ctlresm.NewAppsV1Deployment(res, c.associatedRs) },
