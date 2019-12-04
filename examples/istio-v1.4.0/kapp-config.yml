@@ -1,0 +1,13 @@
+---
+apiVersion: kapp.k14s.io/v1alpha1
+kind: Config
+
+rebaseRules:
+#! It seems that caBundle is automatically populated
+- path: [webhooks, {allIndexes: true}, clientConfig, caBundle]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers:
+  - apiVersionKindMatcher:
+      apiVersion: admissionregistration.k8s.io/v1beta1
+      kind: MutatingWebhookConfiguration

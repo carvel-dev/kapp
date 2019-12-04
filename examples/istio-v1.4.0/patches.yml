@@ -1,0 +1,17 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.subset({"kind": "MutatingWebhookConfiguration"})
+---
+webhooks:
+#@overlay/match by="name"
+- name: sidecar-injector.istio.io
+  clientConfig:
+    #! caBundle is populated by the cluster
+    #@overlay/remove
+    caBundle:
+
+#@overlay/match by=overlay.subset({"kind": "CustomResourceDefinition"}),expects="1+"
+---
+#@overlay/remove
+#@overlay/match missing_ok=True
+status:
