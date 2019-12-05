@@ -42,6 +42,14 @@ spec:
         envFrom:
         - configMapRef:
             name: config
+      initContainers:
+      - name: echo-init
+        image: hashicorp/http-echo
+        args:
+        - -version
+        envFrom:
+        - configMapRef:
+            name: config
       volumes:
       - name: vol1
         secret:
@@ -150,11 +158,19 @@ data:
      29 +         name: echo
      30 +         ports:
      31 +         - containerPort: 80
-     32 +       volumes:
-     33 +       - name: vol1
-     34 +         secret:
-     35 +           secretName: secret-ver-1
-     36 +
+     32 +       initContainers:
+     33 +       - args:
+     34 +         - -version
+     35 +         envFrom:
+     36 +         - configMapRef:
+     37 +             name: config-ver-1
+     38 +         image: hashicorp/http-echo
+     39 +         name: echo-init
+     40 +       volumes:
+     41 +       - name: vol1
+     42 +         secret:
+     43 +           secretName: secret-ver-1
+     44 + 
 `
 
 	expectedYAML2Diff := `
@@ -180,11 +196,17 @@ data:
  35, 35           image: hashicorp/http-echo
  36, 36           name: echo
   ...
- 41, 41           secret:
- 42     -           secretName: secret-ver-1
-     42 +           secretName: secret-ver-2
- 43, 43   status:
- 44, 44     availableReplicas: 1
+ 43, 43           - configMapRef:
+ 44     -             name: config-ver-1
+     44 +             name: config-ver-2
+ 45, 45           image: hashicorp/http-echo
+ 46, 46           name: echo-init
+  ...
+ 49, 49           secret:
+ 50     -           secretName: secret-ver-1
+     50 +           secretName: secret-ver-2
+ 51, 51   status:
+ 52, 52     availableReplicas: 1
 `
 
 	name := "test-template"
