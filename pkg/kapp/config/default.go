@@ -192,7 +192,6 @@ templateRules:
       resourceMatchers: *builtinAppsControllers
     - path: [spec, template, spec, initContainers, {allIndexes: true}, envFrom, {allIndexes: true}, secretRef]
       resourceMatchers: *builtinAppsControllers
-    # TODO uses secretName instead of name
     - path: [spec, template, spec, volumes, {allIndexes: true}, secret]
       resourceMatchers: *builtinAppsControllers
       nameKey: secretName
