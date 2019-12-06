@@ -1,5 +1,10 @@
 ## Cheatsheet
 
+### List
+
+- `kapp ls -A`
+  - List all app in the cluster (across all namespaces)
+
 ### Deploy
 
 - `kapp deploy -a app1 -f config/ -c`
