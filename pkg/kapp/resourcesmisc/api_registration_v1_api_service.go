@@ -1,26 +1,34 @@
 package resourcesmisc
 
 import (
+	"fmt"
+
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
 type APIRegistrationV1APIService struct {
-	resource ctlres.Resource
+	resource      ctlres.Resource
+	ignoreFailing bool
 }
 
-func NewAPIRegistrationV1APIService(resource ctlres.Resource) *APIRegistrationV1APIService {
+func NewAPIRegistrationV1APIService(resource ctlres.Resource, ignoreFailing bool) *APIRegistrationV1APIService {
 	matcher := ctlres.APIVersionKindMatcher{
 		APIVersion: "apiregistration.k8s.io/v1",
 		Kind:       "APIService",
 	}
 	if matcher.Matches(resource) {
-		return &APIRegistrationV1APIService{resource}
+		return &APIRegistrationV1APIService{resource, ignoreFailing}
 	}
 	return nil
 }
 
 func (s APIRegistrationV1APIService) IsDoneApplying() DoneApplyState {
 	allTrue, msg := Conditions{s.resource}.IsSelectedTrue([]string{"Available"})
+
+	if !allTrue && s.ignoreFailing {
+		return DoneApplyState{Done: true, Successful: true, Message: fmt.Sprintf("Ignoring (%s)", msg)}
+	}
+
 	return DoneApplyState{Done: allTrue, Successful: allTrue, Message: msg}
 }
 
