@@ -20,6 +20,7 @@ func (s *ResourceFilterFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().StringSliceVar(&s.rf.Kinds, "filter-kind", nil, "Set kinds filter (example: Pod) (can repeat)")
 	cmd.Flags().StringSliceVar(&s.rf.Namespaces, "filter-ns", nil, "Set namespace filter (example: knative-serving) (can repeat)")
 	cmd.Flags().StringSliceVar(&s.rf.Names, "filter-name", nil, "Set name filter (example: controller) (can repeat)")
+	cmd.Flags().StringSliceVar(&s.rf.KindNames, "filter-kind-name", nil, "Set kind-name filter (example: Pod/controller) (can repeat)")
 	cmd.Flags().StringSliceVar(&s.rf.KindNamespaces, "filter-kind-ns", nil, "Set kind-namespace filter (example: Pod/, Pod/knative-serving) (can repeat)")
 	cmd.Flags().StringSliceVar(&s.rf.KindNsNames, "filter-kind-ns-name", nil, "Set kind-namespace-name filter (example: Deployment/knative-serving/controller) (can repeat)")
 

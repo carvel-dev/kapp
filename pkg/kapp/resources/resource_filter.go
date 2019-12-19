@@ -14,6 +14,7 @@ type ResourceFilter struct {
 	Kinds          []string
 	Namespaces     []string
 	Names          []string
+	KindNames      []string
 	KindNamespaces []string
 	KindNsNames    []string
 
@@ -79,6 +80,20 @@ func (f ResourceFilter) Matches(resource Resource) bool {
 		var matched bool
 		for _, name := range f.Names {
 			if matcher.NewStringMatcher(name).Matches(resource.Name()) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	if len(f.KindNames) > 0 {
+		key := resource.Kind() + "/" + resource.Name()
+		var matched bool
+		for _, k := range f.KindNames {
+			if key == k {
 				matched = true
 				break
 			}
