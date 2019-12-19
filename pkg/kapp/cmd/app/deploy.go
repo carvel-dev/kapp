@@ -265,9 +265,13 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 
 		msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
 
+		convergedResFactory := ctlcap.NewConvergedResourceFactory(ctlcap.ConvergedResourceFactoryOpts{
+			IgnoreFailingAPIServices: o.ResourceTypesFlags.IgnoreFailingAPIServices,
+		})
+
 		clusterChangeFactory := ctlcap.NewClusterChangeFactory(
 			o.ApplyFlags.ClusterChangeOpts, supportObjs.IdentifiedResources,
-			changeFactory, changeSetFactory, msgsUI)
+			changeFactory, changeSetFactory, convergedResFactory, msgsUI)
 
 		clusterChangeSet = ctlcap.NewClusterChangeSet(
 			changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI)

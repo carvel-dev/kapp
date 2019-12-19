@@ -15,12 +15,16 @@ const (
 )
 
 type ConvergedResource struct {
-	res          ctlres.Resource
-	associatedRs []ctlres.Resource
+	res                  ctlres.Resource
+	associatedRs         []ctlres.Resource
+	specificResFactories []SpecificResFactory
 }
 
-func NewConvergedResource(res ctlres.Resource, associatedRs []ctlres.Resource) ConvergedResource {
-	return ConvergedResource{res, associatedRs}
+type SpecificResFactory func(ctlres.Resource, []ctlres.Resource) SpecificResource
+
+func NewConvergedResource(res ctlres.Resource, associatedRs []ctlres.Resource,
+	specificResFactories []SpecificResFactory) ConvergedResource {
+	return ConvergedResource{res, associatedRs, specificResFactories}
 }
 
 func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
@@ -123,27 +127,10 @@ func (c ConvergedResource) findParentAndAssociatedRes() (ctlres.Resource, []ctlr
 }
 
 func (c ConvergedResource) isResourceDoneApplying(res ctlres.Resource) (*ctlresm.DoneApplyState, error) {
-	specificResFactories := []func(ctlres.Resource) SpecificResource{
-		// kapp-controller app resource waiter deals with reconciliation _and_ deletion
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewKappctrlK14sIoV1alpha1App(res) },
-
-		// Deal with deletion generically since below resource waiters do not not know about that
-		// TODO shoud we make all of them deal with deletion internally?
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewDeleting(res) },
-
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewApiExtensionsVxCRD(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewAPIRegistrationV1APIService(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCoreV1Pod(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewCoreV1Service(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewAppsV1Deployment(res, c.associatedRs) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewAppsV1DaemonSet(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewBatchV1Job(res) },
-		func(res ctlres.Resource) SpecificResource { return ctlresm.NewBatchVxCronJob(res) },
-	}
-
-	for _, f := range specificResFactories {
-		if !reflect.ValueOf(f(res)).IsNil() { // checking if interface is nil
-			state := f(res).IsDoneApplying()
+	for _, f := range c.specificResFactories {
+		// checking if interface is nil
+		if !reflect.ValueOf(f(res, c.associatedRs)).IsNil() {
+			state := f(res, c.associatedRs).IsDoneApplying()
 			return &state, nil
 		}
 	}

@@ -221,8 +221,10 @@ type ValueResourceConverged struct {
 }
 
 func NewValueResourceConverged(resource ctlres.Resource) ValueResourceConverged {
+	convergedResFactory := NewConvergedResourceFactory(ConvergedResourceFactoryOpts{})
+
 	// TODO state vs err vs output
-	state, _, err := NewConvergedResource(resource, nil).IsDoneApplying()
+	state, _, err := convergedResFactory.New(resource, nil).IsDoneApplying()
 	stateUI := NewDoneApplyStateUI(state, err)
 
 	stateVal := uitable.ValueFmt{V: uitable.NewValueString(stateUI.State), Error: stateUI.Error}

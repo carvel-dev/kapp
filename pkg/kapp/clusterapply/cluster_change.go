@@ -44,6 +44,7 @@ type ClusterChange struct {
 	identifiedResources ctlres.IdentifiedResources
 	changeFactory       ctldiff.ChangeFactory
 	changeSetFactory    ctldiff.ChangeSetFactory
+	convergedResFactory ConvergedResourceFactory
 	ui                  UI
 
 	markedNeedsWaiting bool
@@ -54,10 +55,11 @@ var _ ChangeView = &ClusterChange{}
 func NewClusterChange(change ctldiff.Change, opts ClusterChangeOpts,
 	identifiedResources ctlres.IdentifiedResources,
 	changeFactory ctldiff.ChangeFactory,
-	changeSetFactory ctldiff.ChangeSetFactory, ui UI) *ClusterChange {
+	changeSetFactory ctldiff.ChangeSetFactory,
+	convergedResFactory ConvergedResourceFactory, ui UI) *ClusterChange {
 
 	return &ClusterChange{change, opts, identifiedResources,
-		changeFactory, changeSetFactory, ui, false}
+		changeFactory, changeSetFactory, convergedResFactory, ui, false}
 }
 
 func (c *ClusterChange) ApplyOp() ClusterChangeApplyOp {
@@ -119,7 +121,7 @@ func (c *ClusterChange) WaitOp() ClusterChangeWaitOp {
 		// TODO associated resources
 		// If existing resource is not in a "done successful" state,
 		// indicate that this will be something we need to wait for
-		existingResState, _, existingErr := NewConvergedResource(c.change.ExistingResource(), nil).IsDoneApplying()
+		existingResState, _, existingErr := c.convergedResFactory.New(c.change.ExistingResource(), nil).IsDoneApplying()
 		if existingErr != nil || !(existingResState.Done && existingResState.Successful) {
 			return ClusterChangeWaitOpOK
 		}
@@ -139,7 +141,8 @@ func (c *ClusterChange) Apply() error {
 	case ClusterChangeApplyOpAdd, ClusterChangeApplyOpUpdate:
 		return c.applyErr(AddOrUpdateChange{
 			c.change, c.identifiedResources, c.changeFactory,
-			c.changeSetFactory, c.opts.AddOrUpdateChangeOpts}.Apply())
+			c.changeSetFactory, c.convergedResFactory,
+			c.opts.AddOrUpdateChangeOpts}.Apply())
 
 	case ClusterChangeApplyOpDelete:
 		return c.applyErr(DeleteChange{c.change, c.identifiedResources}.Apply())
@@ -165,7 +168,8 @@ func (c *ClusterChange) isDoneApplying() (ctlresm.DoneApplyState, []string, erro
 	case ClusterChangeWaitOpOK:
 		return AddOrUpdateChange{
 			c.change, c.identifiedResources, c.changeFactory,
-			c.changeSetFactory, c.opts.AddOrUpdateChangeOpts}.IsDoneApplying()
+			c.changeSetFactory, c.convergedResFactory,
+			c.opts.AddOrUpdateChangeOpts}.IsDoneApplying()
 
 	case ClusterChangeWaitOpDelete:
 		return DeleteChange{c.change, c.identifiedResources}.IsDoneApplying()

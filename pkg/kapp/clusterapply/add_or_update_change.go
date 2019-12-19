@@ -28,6 +28,7 @@ type AddOrUpdateChange struct {
 	identifiedResources ctlres.IdentifiedResources
 	changeFactory       ctldiff.ChangeFactory
 	changeSetFactory    ctldiff.ChangeSetFactory
+	convergedResFactory ConvergedResourceFactory
 	opts                AddOrUpdateChangeOpts
 }
 
@@ -178,7 +179,7 @@ func (c AddOrUpdateChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 		return ctlresm.DoneApplyState{}, nil, err
 	}
 
-	return NewConvergedResource(parentRes, associatedRs).IsDoneApplying()
+	return c.convergedResFactory.New(parentRes, associatedRs).IsDoneApplying()
 }
 
 func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error {

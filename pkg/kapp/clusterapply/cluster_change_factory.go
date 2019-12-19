@@ -10,6 +10,7 @@ type ClusterChangeFactory struct {
 	identifiedResources ctlres.IdentifiedResources
 	changeFactory       ctldiff.ChangeFactory
 	changeSetFactory    ctldiff.ChangeSetFactory
+	convergedResFactory ConvergedResourceFactory
 	ui                  UI
 }
 
@@ -17,12 +18,14 @@ func NewClusterChangeFactory(
 	opts ClusterChangeOpts,
 	identifiedResources ctlres.IdentifiedResources,
 	changeFactory ctldiff.ChangeFactory,
-	changeSetFactory ctldiff.ChangeSetFactory, ui UI,
+	changeSetFactory ctldiff.ChangeSetFactory,
+	convergedResFactory ConvergedResourceFactory, ui UI,
 ) ClusterChangeFactory {
-	return ClusterChangeFactory{opts, identifiedResources, changeFactory, changeSetFactory, ui}
+	return ClusterChangeFactory{opts, identifiedResources,
+		changeFactory, changeSetFactory, convergedResFactory, ui}
 }
 
 func (f ClusterChangeFactory) NewClusterChange(change ctldiff.Change) *ClusterChange {
 	return NewClusterChange(change, f.opts, f.identifiedResources,
-		f.changeFactory, f.changeSetFactory, f.ui)
+		f.changeFactory, f.changeSetFactory, f.convergedResFactory, f.ui)
 }
