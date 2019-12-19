@@ -85,8 +85,8 @@ spec:
 			"name":            "v1.dummykapptest",
 			"namespace":       "(cluster)",
 			"owner":           "kapp",
-			"reconcile_info":  "",
-			"reconcile_state": "ok",
+			"reconcile_info":  "Condition Available is not True\n(False)",
+			"reconcile_state": "ongoing",
 		}, {
 			"age":             "<replaced>",
 			"conditions":      "",
