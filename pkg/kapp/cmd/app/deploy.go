@@ -238,7 +238,7 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 		}
 	} else {
 		if len(newResources) == 0 && !o.DeployFlags.AllowEmpty {
-			return nil, fmt.Errorf("Trying to apply empty set of resources which will delete cluster resources. " +
+			return nil, fmt.Errorf("Trying to apply empty set of resources will result in deletion of resources on cluster. " +
 				"Refusing to continue unless --dangerous-allow-empty-list-of-resources is specified.")
 		}
 	}
