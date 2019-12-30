@@ -38,11 +38,11 @@ Diff summary shows quick information about what's being changed:
 
 Diff changes (line-by-line diffs) are useful for looking at actual changes:
 
-- `--diff-changes=bool` (`-c`) (deafult `false`) shows line-by-line diffs
-- `--diff-context=int` (deafult `2`) controls number of lines to show around changed lines
+- `--diff-changes=bool` (`-c`) (default `false`) shows line-by-line diffs
+- `--diff-context=int` (default `2`) controls number of lines to show around changed lines
 
 Controlling how diffing is done:
 
-- `--diff-against-last-applied=bool` (deafult `false`) forces kapp to use particular diffing strategy (see above)
-- `--diff-run=bool` (deafult `false`) stops after showing diff information
+- `--diff-against-last-applied=bool` (default `false`) forces kapp to use particular diffing strategy (see above)
+- `--diff-run=bool` (default `false`) stops after showing diff information
 - `--diff-exit-status=bool` (default `false`) controls exit status for diff runs (`0`: unused, `1`: any error, `2`: no changes, `3`: pending changes)
