@@ -77,7 +77,13 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 	stdoutStr := stdout.String()
 
 	if err != nil {
-		err = fmt.Errorf("Execution error: stdout: '%s' stderr: '%s' error: '%s'", stdoutStr, stderr.String(), err)
+		exitCode := -1
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			exitCode = exitErr.ExitCode()
+		}
+
+		err = fmt.Errorf("Execution error: stdout: '%s' stderr: '%s' error: '%s' exit code: '%d'",
+			stdoutStr, stderr.String(), err, exitCode)
 
 		if !opts.AllowError {
 			k.t.Fatalf("Failed to successfully execute '%s': %v", k.cmdDesc(args, opts), err)

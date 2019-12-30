@@ -234,6 +234,54 @@ data:
 	})
 }
 
+func TestDiffExitStatus(t *testing.T) {
+	env := BuildEnv(t)
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, Logger{}}
+
+	name := "test-diff-exit-status"
+	cleanUp := func() {
+		kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{AllowError: true})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
+		"--diff-run", "--diff-exit-status", "--dangerous-allow-empty-list-of-resources"},
+		RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader("---\n")})
+	if err == nil {
+		t.Fatalf("Expected to receive error")
+	}
+
+	if !strings.Contains(err.Error(), "Exiting after diffing with no pending changes (exit status 2)") {
+		t.Fatalf("Expected to find stderr output")
+	}
+	if !strings.Contains(err.Error(), "exit code: '2'") {
+		t.Fatalf("Expected to find exit code")
+	}
+
+	yaml1 := `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config
+`
+
+	_, err = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
+		"--diff-run", "--diff-exit-status"},
+		RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
+	if err == nil {
+		t.Fatalf("Expected to receive error")
+	}
+
+	if !strings.Contains(err.Error(), "Exiting after diffing with pending changes (exit status 3)") {
+		t.Fatalf("Expected to find stderr output")
+	}
+	if !strings.Contains(err.Error(), "exit code: '3'") {
+		t.Fatalf("Expected to find exit code")
+	}
+}
+
 func replaceAge(result []map[string]string) []map[string]string {
 	for i, row := range result {
 		if len(row["age"]) > 0 {

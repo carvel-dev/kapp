@@ -10,7 +10,8 @@ type DiffFlags struct {
 	ctlcap.ChangeSetViewOpts
 	ctldiff.ChangeSetOpts
 
-	Run bool
+	Run        bool
+	ExitStatus bool
 }
 
 func (s *DiffFlags) SetWithPrefix(prefix string, cmd *cobra.Command) {
@@ -19,6 +20,7 @@ func (s *DiffFlags) SetWithPrefix(prefix string, cmd *cobra.Command) {
 	}
 
 	cmd.Flags().BoolVar(&s.Run, prefix+"run", false, "Show diff and exit successfully without any further action")
+	cmd.Flags().BoolVar(&s.ExitStatus, prefix+"exit-status", false, "Return specific exit status based on number of changes")
 
 	cmd.Flags().BoolVar(&s.Summary, prefix+"summary", true, "Show diff summary")
 	cmd.Flags().BoolVarP(&s.Changes, prefix+"changes", "c", false, "Show changes")

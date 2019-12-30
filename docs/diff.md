@@ -45,3 +45,4 @@ Controlling how diffing is done:
 
 - `--diff-against-last-applied=bool` (deafult `false`) forces kapp to use particular diffing strategy (see above)
 - `--diff-run=bool` (deafult `false`) stops after showing diff information
+- `--diff-exit-status=bool` (default `false`) controls exit status for diff runs (`0`: unused, `1`: any error, `2`: no changes, `3`: pending changes)

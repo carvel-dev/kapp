@@ -131,6 +131,9 @@ func (o *DeployOptions) Run() error {
 	}
 
 	if o.DiffFlags.Run || hasNoChanges {
+		if o.DiffFlags.Run && o.DiffFlags.ExitStatus {
+			return DeployDiffExitStatus{hasNoChanges}
+		}
 		return nil
 	}
 
