@@ -1,6 +1,8 @@
 package appgroup
 
 import (
+	"fmt"
+
 	"github.com/cppforlife/go-cli-ui/ui"
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
@@ -45,6 +47,10 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *DeleteOptions) Run() error {
+	if len(o.AppGroupFlags.Name) == 0 {
+		return fmt.Errorf("Expected group name to be non-empty")
+	}
+
 	supportObjs, err := cmdapp.AppFactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err

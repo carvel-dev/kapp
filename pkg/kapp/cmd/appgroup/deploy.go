@@ -54,6 +54,10 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *DeployOptions) Run() error {
+	if len(o.AppGroupFlags.Name) == 0 {
+		return fmt.Errorf("Expected group name to be non-empty")
+	}
+
 	// TODO what if app is renamed? currently it
 	// will have conflicting resources with new-named app
 	updatedApps, err := o.appsToUpdate()
