@@ -36,7 +36,7 @@ func NewKappOptions(ui *ui.ConfUI, configFactory cmdcore.ConfigFactory,
 
 func NewDefaultKappCmd(ui *ui.ConfUI) *cobra.Command {
 	configFactory := cmdcore.NewConfigFactoryImpl()
-	depsFactory := cmdcore.NewDepsFactoryImpl(configFactory)
+	depsFactory := cmdcore.NewDepsFactoryImpl(configFactory, ui)
 	options := NewKappOptions(ui, configFactory, depsFactory)
 	flagsFactory := cmdcore.NewFlagsFactory(configFactory, depsFactory)
 	return NewKappCmd(options, flagsFactory)

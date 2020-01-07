@@ -75,9 +75,8 @@ metadata:
 
 		out, _ := kapp.RunWithOpts([]string{"deploy", "--tty", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-		out = strings.TrimSpace(replaceSpaces(replaceTs(out)))
-		expectedOutput := strings.TrimSpace(replaceSpaces(`
-Changes
+		out = strings.TrimSpace(replaceSpaces(replaceTarget(replaceTs(out))))
+		expectedOutput := strings.TrimSpace(replaceSpaces(`Changes
 
 Namespace  Name                 Kind       Conds.  Age  Op      Wait to    Rs  Ri  $
 kapp-test  app                  ConfigMap  -       -    create  reconcile  -   -  $
@@ -180,9 +179,8 @@ metadata:
 
 		out, _ := kapp.RunWithOpts([]string{"deploy", "--tty", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml)})
 
-		out = strings.TrimSpace(replaceSpaces(replaceAgeStr(replaceTs(out))))
-		expectedOutput := strings.TrimSpace(replaceSpaces(`
-Changes
+		out = strings.TrimSpace(replaceSpaces(replaceAgeStr(replaceTarget(replaceTs(out)))))
+		expectedOutput := strings.TrimSpace(replaceSpaces(`Changes
 
 Namespace  Name                 Kind       Conds.  Age  Op      Wait to    Rs  Ri  $
 kapp-test  app-config2          ConfigMap  -       -    create  reconcile  -   -  $
@@ -214,6 +212,10 @@ Succeeded
 
 func replaceTs(result string) string {
 	return regexp.MustCompile("\\d{1,2}:\\d{1,2}:\\d{1,2}(AM|PM)").ReplaceAllString(result, "<replaced>")
+}
+
+func replaceTarget(result string) string {
+	return regexp.MustCompile("Target cluster .+\n").ReplaceAllString(result, "")
 }
 
 func replaceAgeStr(result string) string {

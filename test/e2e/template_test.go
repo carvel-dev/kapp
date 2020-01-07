@@ -267,8 +267,8 @@ func checkChangesOutput(t *testing.T, actualOutput, expectedOutput string) {
 	replaceAnns := regexp.MustCompile("kapp\\.k14s\\.io\\/(app|association): .+")
 	actualOutput = replaceAnns.ReplaceAllString(actualOutput, "-replaced-")
 
-	actualOutput = strings.TrimSpace(strings.Split(actualOutput, "Changes")[0])
-	expectedOutput = strings.TrimSpace(strings.Split(expectedOutput, "Changes")[0])
+	actualOutput = strings.TrimSpace(strings.Split(replaceTarget(actualOutput), "Changes")[0])
+	expectedOutput = strings.TrimSpace(expectedOutput)
 
 	// Useful for debugging:
 	// printLines("actual", actualOutput)
