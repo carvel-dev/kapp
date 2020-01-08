@@ -23,3 +23,7 @@
   name = "k8s.io/code-generator"
   unused-packages = false
   non-go = false
+
+[[constraint]]
+  name = "github.com/aryann/difflib"
+  source = "github.com/k14s/difflib"

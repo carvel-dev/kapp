@@ -26,11 +26,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:644433809cc89e892d9e9aa5cb330cf9b7dd19459da8517565a11252135a36ca"
+  digest = "1:bc39b90d277b75fcc6fcc18154b5c1335e961e820d319d3a54eb099dca174b67"
   name = "github.com/aryann/difflib"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "e206f873d14a916d3d26c40ab667bca123f365a3"
+  revision = "b101e55e05929145ad040739c83e6790f0bd5fe5"
+  source = "github.com/k14s/difflib"
 
 [[projects]]
   digest = "1:ec7f19867e1128e38d080d4c8a07155e89485ffc8ad7bac45a3018a39e825c44"
