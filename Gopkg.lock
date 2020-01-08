@@ -68,10 +68,10 @@
   revision = "38b12a2f86754ca6590d52d4fbb376d18aec7ee1"
 
 [[projects]]
-  digest = "1:560da640a1f19de121693401e7a1d25d10fef3b064dfd07b0564164c008c43c4"
+  digest = "1:bb50c52715ad389a1f8dbf6df68c4ef38f73769524f00d49fed3dc8b280f3a54"
   name = "github.com/cppforlife/go-patch"
   packages = ["patch"]
-  pruneopts = "NU"
+  pruneopts = "NUT"
   revision = "90228d47281247384683e5fded0f15afa3e5d29a"
   version = "v0.2.0"
 

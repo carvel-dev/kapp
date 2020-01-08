@@ -24,10 +24,6 @@
   unused-packages = false
   non-go = false
 
-[[prune.project]]
-  name = "github.com/cppforlife/go-patch"
-  go-tests = false
-
 [[constraint]]
   name = "github.com/aryann/difflib"
   source = "github.com/k14s/difflib"
