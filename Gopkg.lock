@@ -56,7 +56,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4d4f9ef3fdc562d6620a5565eee34c68b0d9ec40f7e0663160d750933e727e41"
+  digest = "1:61fac434c65db4afe5efc9e8601c3603a0e57b60aa7989a1a8b0ff05c762cf70"
   name = "github.com/cppforlife/go-cli-ui"
   packages = [
     "ui",
@@ -64,7 +64,7 @@
     "ui/test",
   ]
   pruneopts = "NUT"
-  revision = "5c4f53402506fa5100563e9a831feb6d65a95eaf"
+  revision = "38b12a2f86754ca6590d52d4fbb376d18aec7ee1"
 
 [[projects]]
   branch = "master"
