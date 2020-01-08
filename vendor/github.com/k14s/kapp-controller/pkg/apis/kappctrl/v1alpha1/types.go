@@ -52,6 +52,8 @@ type AppStatus struct {
 
 	ObservedGeneration int64          `json:"observedGeneration"`
 	Conditions         []AppCondition `json:"conditions"`
+
+	FriendlyDescription string `json:"friendlyDescription"`
 }
 
 type AppStatusFetch struct {

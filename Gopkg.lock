@@ -219,6 +219,14 @@
   version = "1.1.4"
 
 [[projects]]
+  digest = "1:1fc843199d0d37e220ca350fdb4dd1ca105cc5883018756a91c35c42b784b380"
+  name = "github.com/k14s/kapp-controller"
+  packages = ["pkg/apis/kappctrl/v1alpha1"]
+  pruneopts = "NUT"
+  revision = "f89ced1531a2471b9a135f1dc0b70bd1a6e42a99"
+  version = "v0.1.0"
+
+[[projects]]
   digest = "1:08c231ec84231a7e23d67e4b58f975e1423695a32467a362ee55a803f9de8061"
   name = "github.com/mattn/go-colorable"
   packages = ["."]
