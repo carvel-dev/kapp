@@ -68,20 +68,12 @@
   revision = "38b12a2f86754ca6590d52d4fbb376d18aec7ee1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:71570cb9af58f4981cd3b6ac9902b37e978e1f3c34f35a04a3a4837ea542500f"
+  digest = "1:560da640a1f19de121693401e7a1d25d10fef3b064dfd07b0564164c008c43c4"
   name = "github.com/cppforlife/go-patch"
   packages = ["patch"]
-  pruneopts = "NUT"
-  revision = "250da0e0e68ce3367b4302f34218f6c064eb9559"
-
-[[projects]]
-  digest = "1:7cb4fdca4c251b3ef8027c90ea35f70c7b661a593b9eeae34753c65499098bb1"
-  name = "github.com/cpuguy83/go-md2man"
-  packages = ["md2man"]
-  pruneopts = "NUT"
-  revision = "20f5889cbdc3c73dbd2862796665e7c465ade7d1"
-  version = "v1.0.8"
+  pruneopts = "NU"
+  revision = "90228d47281247384683e5fded0f15afa3e5d29a"
+  version = "v0.2.0"
 
 [[projects]]
   digest = "1:7a6852b35eb5bbc184561443762d225116ae630c26a7c4d90546619f1e7d2ad2"
@@ -284,20 +276,9 @@
   version = "v2.0.1"
 
 [[projects]]
-  digest = "1:bcfa8e184764796499312e55cd8a5fff63896eca0d6faff6b6e43ac6a98a498a"
-  name = "github.com/russross/blackfriday"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "55d61fa8aa702f59229e6cff85793c22e580eaf5"
-  version = "v1.5.1"
-
-[[projects]]
-  digest = "1:f3cd75f81ee2b143bd354d906370261e94fc58e66dd5d632e1d6cde828338741"
+  digest = "1:343d44e06621142ab09ae0c76c1799104cdfddd3ffb445d78b1adf8dc3ffaf3d"
   name = "github.com/spf13/cobra"
-  packages = [
-    ".",
-    "doc",
-  ]
+  packages = ["."]
   pruneopts = "NUT"
   revision = "ef82de70bb3f60c65fb8eebacbb2d122ef517385"
   version = "v0.0.3"
@@ -601,10 +582,13 @@
     "github.com/cppforlife/go-patch/patch",
     "github.com/fatih/color",
     "github.com/ghodss/yaml",
+    "github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1",
     "github.com/mitchellh/go-wordwrap",
     "github.com/spf13/cobra",
-    "github.com/spf13/cobra/doc",
     "github.com/spf13/pflag",
+    "gopkg.in/yaml.v2",
+    "k8s.io/api/apps/v1",
+    "k8s.io/api/batch/v1",
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
@@ -614,11 +598,14 @@
     "k8s.io/apimachinery/pkg/selection",
     "k8s.io/apimachinery/pkg/types",
     "k8s.io/apimachinery/pkg/util/duration",
+    "k8s.io/apimachinery/pkg/util/validation",
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/apimachinery/pkg/util/yaml",
     "k8s.io/apimachinery/pkg/watch",
+    "k8s.io/client-go/discovery",
     "k8s.io/client-go/dynamic",
     "k8s.io/client-go/kubernetes",
+    "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/kubernetes/typed/core/v1",
     "k8s.io/client-go/plugin/pkg/client/auth",
     "k8s.io/client-go/rest",
