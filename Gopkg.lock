@@ -48,11 +48,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:fd9642edec491194a7e3e519d22bb21addeddea8bf06e8108f863f8d818479b0"
+  digest = "1:e54110863dceee150b08cc36b2e4c495c83817548bb6e24dbaa3c3cd3db6f0b1"
   name = "github.com/cppforlife/cobrautil"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "a39a1714c92066095df16ce13b7daf6cf72f398e"
+  revision = "b289811fd2b9b98ab9d922a3f33c61c565a3b340"
 
 [[projects]]
   branch = "master"
