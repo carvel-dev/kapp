@@ -74,6 +74,7 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 
 	o.configFactory.ConfigurePathResolver(o.KubeconfigFlags.Path.Value)
 	o.configFactory.ConfigureContextResolver(o.KubeconfigFlags.Context.Value)
+	o.configFactory.ConfigureYAMLResolver(o.KubeconfigFlags.YAML.Value)
 
 	cmd.AddCommand(NewVersionCmd(NewVersionOptions(o.ui), flagsFactory))
 

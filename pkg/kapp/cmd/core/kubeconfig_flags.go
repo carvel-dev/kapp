@@ -11,6 +11,7 @@ import (
 type KubeconfigFlags struct {
 	Path    *KubeconfigPathFlag
 	Context *KubeconfigContextFlag
+	YAML    *KubeconfigYAMLFlag
 }
 
 func (f *KubeconfigFlags) Set(cmd *cobra.Command, flagsFactory FlagsFactory) {
@@ -19,6 +20,9 @@ func (f *KubeconfigFlags) Set(cmd *cobra.Command, flagsFactory FlagsFactory) {
 
 	f.Context = NewKubeconfigContextFlag()
 	cmd.PersistentFlags().Var(f.Context, "kubeconfig-context", "Kubeconfig context override ($KAPP_KUBECONFIG_CONTEXT)")
+
+	f.YAML = NewKubeconfigYAMLFlag()
+	cmd.PersistentFlags().Var(f.YAML, "kubeconfig-yaml", "Kubeconfig contents as YAML ($KAPP_KUBECONFIG_YAML)")
 }
 
 type KubeconfigPathFlag struct {
@@ -102,6 +106,44 @@ func (s *KubeconfigContextFlag) Resolve() error {
 	}
 
 	s.value = os.Getenv("KAPP_KUBECONFIG_CONTEXT")
+
+	return nil
+}
+
+type KubeconfigYAMLFlag struct {
+	value string
+}
+
+var _ pflag.Value = &KubeconfigYAMLFlag{}
+var _ cobrautil.ResolvableFlag = &KubeconfigPathFlag{}
+
+func NewKubeconfigYAMLFlag() *KubeconfigYAMLFlag {
+	return &KubeconfigYAMLFlag{}
+}
+
+func (s *KubeconfigYAMLFlag) Set(val string) error {
+	s.value = val
+	return nil
+}
+
+func (s *KubeconfigYAMLFlag) Type() string   { return "string" }
+func (s *KubeconfigYAMLFlag) String() string { return "" } // default for usage
+
+func (s *KubeconfigYAMLFlag) Value() (string, error) {
+	err := s.Resolve()
+	if err != nil {
+		return "", err
+	}
+
+	return s.value, nil
+}
+
+func (s *KubeconfigYAMLFlag) Resolve() error {
+	if len(s.value) > 0 {
+		return nil
+	}
+
+	s.value = os.Getenv("KAPP_KUBECONFIG_YAML")
 
 	return nil
 }

@@ -10,6 +10,7 @@ import (
 type ConfigFactory interface {
 	ConfigurePathResolver(func() (string, error))
 	ConfigureContextResolver(func() (string, error))
+	ConfigureYAMLResolver(func() (string, error))
 	RESTConfig() (*rest.Config, error)
 	DefaultNamespace() (string, error)
 }
@@ -17,6 +18,7 @@ type ConfigFactory interface {
 type ConfigFactoryImpl struct {
 	pathResolverFunc    func() (string, error)
 	contextResolverFunc func() (string, error)
+	yamlResolverFunc    func() (string, error)
 }
 
 var _ ConfigFactory = &ConfigFactoryImpl{}
@@ -31,6 +33,10 @@ func (f *ConfigFactoryImpl) ConfigurePathResolver(resolverFunc func() (string, e
 
 func (f *ConfigFactoryImpl) ConfigureContextResolver(resolverFunc func() (string, error)) {
 	f.contextResolverFunc = resolverFunc
+}
+
+func (f *ConfigFactoryImpl) ConfigureYAMLResolver(resolverFunc func() (string, error)) {
+	f.yamlResolverFunc = resolverFunc
 }
 
 func (f *ConfigFactoryImpl) RESTConfig() (*rest.Config, error) {
@@ -66,6 +72,15 @@ func (f *ConfigFactoryImpl) clientConfig() (clientcmd.ClientConfig, error) {
 	context, err := f.contextResolverFunc()
 	if err != nil {
 		return nil, fmt.Errorf("Resolving config context: %s", err)
+	}
+
+	configYAML, err := f.yamlResolverFunc()
+	if err != nil {
+		return nil, fmt.Errorf("Resolving config YAML: %s", err)
+	}
+
+	if len(configYAML) > 0 {
+		return clientcmd.NewClientConfigFromBytes([]byte(configYAML))
 	}
 
 	// Based on https://github.com/kubernetes/kubernetes/blob/30c7df5cd822067016640aa267714204ac089172/staging/src/k8s.io/cli-runtime/pkg/genericclioptions/config_flags.go#L124
