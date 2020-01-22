@@ -21,7 +21,8 @@ func NewApiExtensionsVxCRD(resource ctlres.Resource) *ApiExtensionsVxCRD {
 }
 
 func (s ApiExtensionsVxCRD) IsDoneApplying() DoneApplyState {
-	allTrue, msg := Conditions{s.resource}.IsAllTrue()
+	// CRD conditions: https://github.com/kubernetes/apiextensions-apiserver/blob/master/pkg/apis/apiextensions
+	allTrue, msg := Conditions{s.resource}.IsSelectedTrue([]string{"Established", "NamesAccepted"})
 	return DoneApplyState{Done: allTrue, Successful: allTrue, Message: msg}
 }
 
