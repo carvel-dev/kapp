@@ -37,6 +37,9 @@ func (f ConvergedResourceFactory) New(res ctlres.Resource,
 		func(res ctlres.Resource, _ []ctlres.Resource) SpecificResource {
 			return ctlresm.NewAPIRegistrationV1APIService(res, f.opts.IgnoreFailingAPIServices)
 		},
+		func(res ctlres.Resource, _ []ctlres.Resource) SpecificResource {
+			return ctlresm.NewAPIRegistrationV1Beta1APIService(res, f.opts.IgnoreFailingAPIServices)
+		},
 		func(res ctlres.Resource, _ []ctlres.Resource) SpecificResource { return ctlresm.NewCoreV1Pod(res) },
 		func(res ctlres.Resource, _ []ctlres.Resource) SpecificResource { return ctlresm.NewCoreV1Service(res) },
 		func(res ctlres.Resource, aRs []ctlres.Resource) SpecificResource {
