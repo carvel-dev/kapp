@@ -49,10 +49,19 @@ func NewInspectCmd(o *InspectOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 }
 
 func (o *InspectOptions) Run() error {
+	failingAPIServicesPolicy := o.ResourceTypesFlags.FailingAPIServicePolicy()
+
 	app, supportObjs, err := AppFactory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
 	if err != nil {
 		return err
 	}
+
+	usedGVs, err := app.UsedGVs()
+	if err != nil {
+		return err
+	}
+
+	failingAPIServicesPolicy.MarkRequiredGVs(usedGVs)
 
 	labelSelector, err := app.LabelSelector()
 	if err != nil {

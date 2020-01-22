@@ -2,13 +2,17 @@ package app
 
 import (
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type App interface {
 	Name() string
 	Namespace() string
 	Meta() (AppMeta, error)
+
 	LabelSelector() (labels.Selector, error)
+	UsedGVs() ([]schema.GroupVersion, error)
+	UpdateUsedGVs([]schema.GroupVersion) error
 
 	CreateOrUpdate(map[string]string) error
 	Exists() (bool, error)

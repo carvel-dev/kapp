@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -40,6 +41,31 @@ func (a *RecordedApp) LabelSelector() (labels.Selector, error) {
 	}
 
 	return app.LabelSelector()
+}
+
+func (a *RecordedApp) UsedGVs() ([]schema.GroupVersion, error) {
+	meta, err := a.meta()
+	if err != nil {
+		return nil, err
+	}
+
+	return meta.UsedGVs, nil
+}
+
+func (a *RecordedApp) UpdateUsedGVs(gvs []schema.GroupVersion) error {
+	gvsByGV := map[schema.GroupVersion]struct{}{}
+	var uniqGVs []schema.GroupVersion
+
+	for _, gv := range gvs {
+		if _, found := gvsByGV[gv]; !found {
+			gvsByGV[gv] = struct{}{}
+			uniqGVs = append(uniqGVs, gv)
+		}
+	}
+
+	return a.update(func(meta *AppMeta) {
+		meta.UsedGVs = uniqGVs
+	})
 }
 
 func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {

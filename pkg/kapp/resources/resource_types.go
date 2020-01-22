@@ -18,7 +18,8 @@ type ResourceTypes interface {
 }
 
 type ResourceTypesImplOpts struct {
-	IgnoreFailingAPIServices bool
+	IgnoreFailingAPIServices   bool
+	CanIgnoreFailingAPIService func(schema.GroupVersion) bool
 }
 
 type ResourceTypesImpl struct {
@@ -85,7 +86,22 @@ func (g *ResourceTypesImpl) serverResources() ([]*metav1.APIResourceList, error)
 		serverResources, lastErr = g.coreClient.Discovery().ServerResources()
 		if lastErr == nil {
 			return serverResources, nil
-		} else if discovery.IsGroupDiscoveryFailedError(lastErr) {
+		} else if typedLastErr, ok := lastErr.(*discovery.ErrGroupDiscoveryFailed); ok {
+			// If groups that are failing do not relate to our resources
+			// it's ok to ignore them. Still not ideal but not much else
+			// we can do with the way kubernetes exposes this functionality.
+			if g.opts.CanIgnoreFailingAPIService != nil {
+				groupsCanBeIgnored := true
+				for groupVer, _ := range typedLastErr.Groups {
+					if !g.opts.CanIgnoreFailingAPIService(groupVer) {
+						groupsCanBeIgnored = false
+						break
+					}
+				}
+				if len(serverResources) > 0 && groupsCanBeIgnored {
+					return serverResources, nil
+				}
+			}
 			if len(serverResources) > 0 && g.opts.IgnoreFailingAPIServices {
 				return serverResources, nil
 			}

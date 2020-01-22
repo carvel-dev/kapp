@@ -6,6 +6,7 @@ import (
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type LabeledApp struct {
@@ -28,6 +29,9 @@ func (a *LabeledApp) Namespace() string { return "" }
 func (a *LabeledApp) LabelSelector() (labels.Selector, error) {
 	return a.labelSelector, nil
 }
+
+func (a *LabeledApp) UsedGVs() ([]schema.GroupVersion, error)       { return nil, nil }
+func (a *LabeledApp) UpdateUsedGVs(gvs []schema.GroupVersion) error { return nil }
 
 func (a *LabeledApp) CreateOrUpdate(labels map[string]string) error { return nil }
 func (a *LabeledApp) Exists() (bool, error)                         { return true, nil }

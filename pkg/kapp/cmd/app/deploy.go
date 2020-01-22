@@ -77,6 +77,8 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *DeployOptions) Run() error {
+	failingAPIServicesPolicy := o.ResourceTypesFlags.FailingAPIServicePolicy()
+
 	app, supportObjs, err := AppFactory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
 	if err != nil {
 		return err
@@ -90,6 +92,18 @@ func (o *DeployOptions) Run() error {
 	err = app.CreateOrUpdate(appLabels)
 	if err != nil {
 		return err
+	}
+
+	usedGVs, err := app.UsedGVs()
+	if err != nil {
+		return err
+	}
+
+	failingAPIServicesPolicy.MarkRequiredGVs(usedGVs)
+
+	o.DeployFlags.PrepareResourcesOpts.BeforeModificationFunc = func(rs []ctlres.Resource) []ctlres.Resource {
+		failingAPIServicesPolicy.MarkRequiredResources(rs)
+		return rs
 	}
 
 	o.DeployFlags.PrepareResourcesOpts.DefaultNamespace = o.AppFlags.NamespaceFlags.Name
@@ -142,6 +156,11 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
+	err = app.UpdateUsedGVs(failingAPIServicesPolicy.GVs(newResources, existingResources))
+	if err != nil {
+		return err
+	}
+
 	if o.DeployFlags.Logs {
 		cancelLogsCh := make(chan struct{})
 		defer func() { close(cancelLogsCh) }()
@@ -163,7 +182,12 @@ func (o *DeployOptions) Run() error {
 	}
 
 	return touch.Do(func() error {
-		return clusterChangeSet.Apply(clusterChangesGraph)
+		err := clusterChangeSet.Apply(clusterChangesGraph)
+		if err != nil {
+			return err
+		}
+
+		return app.UpdateUsedGVs(failingAPIServicesPolicy.GVs(newResources, nil))
 	})
 }
 

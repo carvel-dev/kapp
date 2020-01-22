@@ -29,7 +29,8 @@ func AppFactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.Namespac
 	}
 
 	resTypes := ctlres.NewResourceTypesImpl(coreClient, ctlres.ResourceTypesImplOpts{
-		IgnoreFailingAPIServices: resTypesFlags.IgnoreFailingAPIServices,
+		IgnoreFailingAPIServices:   resTypesFlags.IgnoreFailingAPIServices,
+		CanIgnoreFailingAPIService: resTypesFlags.CanIgnoreFailingAPIService,
 	})
 
 	identifiedResources := ctlres.NewIdentifiedResources(

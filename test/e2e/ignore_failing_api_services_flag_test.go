@@ -8,32 +8,22 @@ import (
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 )
 
-func TestIgnoreFailingAPIServicesFlag(t *testing.T) {
+func TestIgnoreFailingAPIServices(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
 
 	yaml1 := `
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: redis-master
-spec:
-  ports:
-  - port: 6380
-    targetPort: 6380
-  selector:
-    app: redis
-    tier: backend
-    role: master
----
 apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
-  name: v1.dummykapptest
+  name: v1.dummykapptest.com
+  annotations:
+    kapp.k14s.io/disable-default-change-group-and-rules: ""
+    kapp.k14s.io/change-group: "apiservice"
 spec:
-  group: dummykapptest
+  group: dummykapptest.com
   groupPriorityMinimum: 100
   insecureSkipTLSVerify: true
   service:
@@ -41,66 +31,76 @@ spec:
     namespace: kapp-test
   version: v1
   versionPriority: 100
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: foo.dummykapptest.com
+  annotations:
+    kapp.k14s.io/disable-default-change-group-and-rules: ""
+    kapp.k14s.io/change-rule: "upsert after upserting apiservice"
+spec:
+  group: dummykapptest.com
+  versions:
+  - name: v1
+    served: true
+    storage: true
+  scope: Namespaced
+  names:
+    plural: foo
+    singular: foo
+    kind: Foo
 `
 
-	ignoreFlag := "--dangerous-ignore-failing-api-services"
-	name := "test-ignore-failing-api-services"
+	yaml2 := `
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-ignore-failing-api-service
+`
+
+	yaml3 := `
+---
+apiVersion: dummykapptest.com/v1
+kind: Foo
+metadata:
+  name: test-uses-failing-api-service
+`
+
+	name1 := "test-ignore-failing-api-services1"
+	name2 := "test-ignore-failing-api-services2"
+	name3 := "test-ignore-failing-api-services3"
+
 	cleanUp := func() {
-		kapp.RunWithOpts([]string{"delete", "-a", name, ignoreFlag}, RunOpts{AllowError: true})
+		kapp.RunWithOpts([]string{"delete", "-a", name1}, RunOpts{AllowError: true})
+		kapp.RunWithOpts([]string{"delete", "-a", name2}, RunOpts{AllowError: true})
+		kapp.RunWithOpts([]string{"delete", "-a", name3}, RunOpts{AllowError: true})
 	}
 
 	cleanUp()
 	defer cleanUp()
 
-	logger.Section("deploy", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, ignoreFlag}, RunOpts{
+	logger.Section("deploy broken api service", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name1, "--wait=false"}, RunOpts{
 			IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 	})
 
-	logger.Section("deploy without flag to see it fail", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{
-			AllowError: true, IntoNs: true, StdinReader: strings.NewReader(strings.Replace(yaml1, "6380", "6381", -1))})
-		if err == nil {
-			t.Fatalf("Expected error when deploying with failing api service")
-		}
-		if !strings.Contains(err.Error(), "unable to retrieve the complete list of server APIs: dummykapptest/v1: the server is currently unable to handle the request") {
-			t.Fatalf("Expected api retrieval error but was '%s'", err)
-		}
+	logger.Section("deploy app that does not use api service", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name2}, RunOpts{
+			IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 	})
 
-	logger.Section("deploy with flag to see it succeed", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, ignoreFlag}, RunOpts{
-			IntoNs: true, StdinReader: strings.NewReader(strings.Replace(yaml1, "6380", "6381", -1))})
-	})
-
-	logger.Section("inspect with flag", func() {
-		out, _ := kapp.RunWithOpts([]string{"inspect", "-a", name, "--json", ignoreFlag}, RunOpts{})
+	logger.Section("inspect app that does not use api service", func() {
+		out, _ := kapp.RunWithOpts([]string{"inspect", "-a", name2, "--json"}, RunOpts{})
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 
 		expected := []map[string]string{{
 			"age":             "<replaced>",
-			"conditions":      "0/1 t",
-			"kind":            "APIService",
-			"name":            "v1.dummykapptest",
-			"namespace":       "(cluster)",
-			"owner":           "kapp",
-			"reconcile_info":  "Condition Available is not True\n(False)",
-			"reconcile_state": "ongoing",
-		}, {
-			"age":             "<replaced>",
 			"conditions":      "",
-			"kind":            "Endpoints",
-			"name":            "redis-master",
-			"namespace":       "kapp-test",
-			"owner":           "cluster",
-			"reconcile_info":  "",
-			"reconcile_state": "ok",
-		}, {
-			"age":             "<replaced>",
-			"conditions":      "",
-			"kind":            "Service",
-			"name":            "redis-master",
+			"kind":            "ConfigMap",
+			"name":            "test-ignore-failing-api-service",
 			"namespace":       "kapp-test",
 			"owner":           "kapp",
 			"reconcile_info":  "",
@@ -112,7 +112,35 @@ spec:
 		}
 	})
 
-	logger.Section("delete with flag", func() {
-		kapp.RunWithOpts([]string{"delete", "-a", name, ignoreFlag}, RunOpts{})
+	logger.Section("deploy app that uses failing api service", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name3}, RunOpts{
+			AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml3)})
+		if err == nil {
+			t.Fatalf("Expected error when deploying with failing api service")
+		}
+		if !strings.Contains(err.Error(), "unable to retrieve the complete list of server APIs: dummykapptest.com/v1: the server is currently unable to handle the request") {
+			t.Fatalf("Expected api retrieval error but was '%s'", err)
+		}
+	})
+
+	logger.Section("deploy app that uses failing api service and try to ignore it", func() {
+		ignoreFlag := "--dangerous-ignore-failing-api-services"
+
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name3, ignoreFlag}, RunOpts{
+			AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml3)})
+		if err == nil {
+			t.Fatalf("Expected error when deploying with failing api service")
+		}
+		if !strings.Contains(err.Error(), "Expected to find kind 'dummykapptest.com/v1/Foo', but did not") {
+			t.Fatalf("Expected CRD retrieval error but was '%s'", err)
+		}
+	})
+
+	logger.Section("delete app that does not user api service", func() {
+		kapp.RunWithOpts([]string{"delete", "-a", name2}, RunOpts{})
+	})
+
+	logger.Section("delete failing api service", func() {
+		kapp.RunWithOpts([]string{"delete", "-a", name1}, RunOpts{})
 	})
 }

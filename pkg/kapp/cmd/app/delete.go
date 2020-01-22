@@ -47,6 +47,8 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *DeleteOptions) Run() error {
+	failingAPIServicesPolicy := o.ResourceTypesFlags.FailingAPIServicePolicy()
+
 	app, supportObjs, err := AppFactory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
 	if err != nil {
 		return err
@@ -62,6 +64,13 @@ func (o *DeleteOptions) Run() error {
 			app.Name(), o.AppFlags.NamespaceFlags.Name)
 		return nil
 	}
+
+	usedGVs, err := app.UsedGVs()
+	if err != nil {
+		return err
+	}
+
+	failingAPIServicesPolicy.MarkRequiredGVs(usedGVs)
 
 	existingResources, fullyDeleteApp, err := o.existingResources(app, supportObjs)
 	if err != nil {

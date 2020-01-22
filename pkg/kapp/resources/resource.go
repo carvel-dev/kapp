@@ -16,6 +16,7 @@ import (
 
 type Resource interface {
 	GroupVersionResource() schema.GroupVersionResource
+	GroupVersion() schema.GroupVersion
 	Kind() string
 	APIVersion() string
 	APIGroup() string
@@ -133,18 +134,22 @@ func (r *ResourceImpl) GroupVersionResource() schema.GroupVersionResource {
 	return r.resType.GroupVersionResource
 }
 
-func (r *ResourceImpl) Kind() string       { return r.un.GetKind() }
-func (r *ResourceImpl) APIVersion() string { return r.un.GetAPIVersion() }
-
-func (r *ResourceImpl) APIGroup() string {
+func (r *ResourceImpl) GroupVersion() schema.GroupVersion {
 	pieces := strings.Split(r.APIVersion(), "/")
 	if len(pieces) > 2 {
 		panic(fmt.Errorf("Expected version to be of format group/version: was %s", r.APIVersion())) // TODO panic
 	}
 	if len(pieces) == 1 {
-		return "" // core API group
+		return schema.GroupVersion{Group: "", Version: pieces[0]}
 	}
-	return pieces[0]
+	return schema.GroupVersion{Group: pieces[0], Version: pieces[1]}
+}
+
+func (r *ResourceImpl) Kind() string       { return r.un.GetKind() }
+func (r *ResourceImpl) APIVersion() string { return r.un.GetAPIVersion() }
+
+func (r *ResourceImpl) APIGroup() string {
+	return r.GroupVersion().Group
 }
 
 func (r *ResourceImpl) Namespace() string        { return r.un.GetNamespace() }

@@ -18,6 +18,19 @@ type Preparation struct {
 	opts          PrepareResourcesOpts
 }
 
+type PrepareResourcesOpts struct {
+	BeforeModificationFunc func([]ctlres.Resource) []ctlres.Resource
+
+	AllowCheck         bool
+	AllowedNamespaces  []string
+	AllowAllNamespaces bool
+	AllowCluster       bool
+
+	IntoNamespace    string   // this ns is allowed automatically
+	MapNamespaces    []string // this ns is allowed automatically
+	DefaultNamespace string   // this ns is allowed automatically
+}
+
 func NewPreparation(resourceTypes ctlres.ResourceTypes, opts PrepareResourcesOpts) Preparation {
 	return Preparation{resourceTypes, opts}
 }
@@ -32,6 +45,8 @@ func (a Preparation) PrepareResources(resources []ctlres.Resource) ([]ctlres.Res
 	if err != nil {
 		return nil, err
 	}
+
+	resources = a.opts.BeforeModificationFunc(resources)
 
 	resources, err = a.placeIntoNamespace(resources)
 	if err != nil {
@@ -171,17 +186,6 @@ func (a Preparation) combinedErr(errs []error) error {
 	}
 
 	return nil
-}
-
-type PrepareResourcesOpts struct {
-	AllowCheck         bool
-	AllowedNamespaces  []string
-	AllowAllNamespaces bool
-	AllowCluster       bool
-
-	IntoNamespace    string   // this ns is allowed automatically
-	MapNamespaces    []string // this ns is allowed automatically
-	DefaultNamespace string   // this ns is allowed automatically
 }
 
 func (o PrepareResourcesOpts) InAllowedNamespaces(ns string) bool {

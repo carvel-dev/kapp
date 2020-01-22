@@ -3,6 +3,8 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type AppMeta struct {
@@ -11,6 +13,8 @@ type AppMeta struct {
 
 	LastChangeName string     `json:"lastChangeName,omitempty"`
 	LastChange     ChangeMeta `json:"lastChange,omitempty"`
+
+	UsedGVs []schema.GroupVersion `json:"usedGVs,omitempty"`
 }
 
 func NewAppMetaFromData(data map[string]string) (AppMeta, error) {
