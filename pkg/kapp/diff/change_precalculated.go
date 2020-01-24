@@ -10,9 +10,9 @@ type ChangePrecalculated struct {
 	// appliedRes is an unmodified copy of what's being applied
 	appliedRes ctlres.Resource
 
-	op       ChangeOp
-	textDiff TextDiff
-	opsDiff  OpsDiff
+	op                   ChangeOp
+	configurableTextDiff *ConfigurableTextDiff
+	opsDiff              OpsDiff
 }
 
 var _ Change = &ChangePrecalculated{}
@@ -49,8 +49,10 @@ func (d *ChangePrecalculated) NewResource() ctlres.Resource      { return d.newR
 func (d *ChangePrecalculated) ExistingResource() ctlres.Resource { return d.existingRes }
 func (d *ChangePrecalculated) AppliedResource() ctlres.Resource  { return d.appliedRes }
 
-func (d *ChangePrecalculated) Op() ChangeOp       { return d.op }
-func (d *ChangePrecalculated) TextDiff() TextDiff { return d.textDiff }
-func (d *ChangePrecalculated) OpsDiff() OpsDiff   { return d.opsDiff }
+func (d *ChangePrecalculated) Op() ChangeOp { return d.op }
+func (d *ChangePrecalculated) ConfigurableTextDiff() *ConfigurableTextDiff {
+	return d.configurableTextDiff
+}
+func (d *ChangePrecalculated) OpsDiff() OpsDiff { return d.opsDiff }
 
 func (d *ChangePrecalculated) IsIgnored() bool { return false }

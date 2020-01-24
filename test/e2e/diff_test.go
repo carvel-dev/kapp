@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -282,6 +283,135 @@ metadata:
 	}
 }
 
+func TestDiffMaskRules(t *testing.T) {
+	env := BuildEnv(t)
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, Logger{}}
+
+	yaml1 := `
+apiVersion: v1
+kind: Secret
+metadata:
+  name: no-data
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: empty-data
+data: {}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: with-keys
+data:
+  key1: val1
+  key2: val2
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: with-dup-keys
+data:
+  key1: val1
+  key2: val2
+`
+
+	yaml2 := `
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: with-dup-keys
+data:
+  key1: val1
+  key2: val3
+`
+
+	name := "test-diff-mask-rules"
+	cleanUp := func() {
+		kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{AllowError: true})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "-c"},
+		RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+	expectedOutput := `
+--- create secret/no-data (v1) namespace: kapp-test
+      0 + apiVersion: v1
+      1 + kind: Secret
+      2 + metadata:
+      3 +   labels:
+      4 +     -replaced-
+      5 +     -replaced-
+      6 +   name: no-data
+      7 +   namespace: kapp-test
+      8 + 
+--- create secret/empty-data (v1) namespace: kapp-test
+      0 + apiVersion: v1
+      1 + data: {}
+      2 + kind: Secret
+      3 + metadata:
+      4 +   labels:
+      5 +     -replaced-
+      6 +     -replaced-
+      7 +   name: empty-data
+      8 +   namespace: kapp-test
+      9 + 
+--- create secret/with-keys (v1) namespace: kapp-test
+      0 + apiVersion: v1
+      1 + data:
+      2 +   key1: <-- value not shown (#1)
+      3 +   key2: <-- value not shown (#2)
+      4 + kind: Secret
+      5 + metadata:
+      6 +   labels:
+      7 +     -replaced-
+      8 +     -replaced-
+      9 +   name: with-keys
+     10 +   namespace: kapp-test
+     11 + 
+--- create secret/with-dup-keys (v1) namespace: kapp-test
+      0 + apiVersion: v1
+      1 + data:
+      2 +   key1: <-- value not shown (#1)
+      3 +   key2: <-- value not shown (#2)
+      4 + kind: Secret
+      5 + metadata:
+      6 +   labels:
+      7 +     -replaced-
+      8 +     -replaced-
+      9 +   name: with-dup-keys
+     10 +   namespace: kapp-test
+     11 + 
+`
+
+	out = replaceAnnsLabels(out)
+
+	if !strings.Contains(out, expectedOutput) {
+		t.Fatalf("Did not find expected diff output >>%s<< in >>%s<<", out, expectedOutput)
+	}
+
+	out, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "-c", "-p"},
+		RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
+
+	expectedOutput = `
+--- update secret/with-dup-keys (v1) namespace: kapp-test
+  ...
+  2,  2     key1: <-- value not shown (#1)
+  3     -   key2: <-- value not shown (#2)
+      3 +   key2: <-- value not shown (#3)
+  4,  4   kind: Secret
+  5,  5   metadata:
+`
+
+	if !strings.Contains(out, expectedOutput) {
+		t.Fatalf("Did not find expected diff output >>%s<< in >>%s<<", out, expectedOutput)
+	}
+}
+
 func replaceAge(result []map[string]string) []map[string]string {
 	for i, row := range result {
 		if len(row["age"]) > 0 {
@@ -290,4 +420,9 @@ func replaceAge(result []map[string]string) []map[string]string {
 		result[i] = row
 	}
 	return result
+}
+
+func replaceAnnsLabels(in string) string {
+	replaceAnns := regexp.MustCompile("kapp\\.k14s\\.io\\/(app|association): .+")
+	return replaceAnns.ReplaceAllString(in, "-replaced-")
 }

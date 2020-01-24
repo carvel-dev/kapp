@@ -6,26 +6,43 @@ import (
 
 	"github.com/aryann/difflib"
 	"github.com/fatih/color"
+	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 )
 
 type TextDiffViewOpts struct {
 	Context int // number of lines to show around changed lines; <0 for all
+	Mask    bool
 }
 
 type TextDiffView struct {
-	diff TextDiff
-	opts TextDiffViewOpts
+	diff      *ConfigurableTextDiff
+	maskRules []ctlconf.DiffMaskRule
+	opts      TextDiffViewOpts
 }
 
-func NewTextDiffView(diff TextDiff, opts TextDiffViewOpts) TextDiffView {
-	return TextDiffView{diff, opts}
+func NewTextDiffView(diff *ConfigurableTextDiff,
+	maskRules []ctlconf.DiffMaskRule, opts TextDiffViewOpts) TextDiffView {
+
+	return TextDiffView{diff, maskRules, opts}
 }
 
 func (v TextDiffView) String() string {
+	var diffRecords []difflib.DiffRecord
+
+	if v.opts.Mask {
+		textDiff, err := v.diff.Masked(v.maskRules)
+		if err != nil {
+			return fmt.Sprintf("Error masking diff: %s", err)
+		}
+		diffRecords = textDiff.Records()
+	} else {
+		diffRecords = v.diff.Full().Records()
+	}
+
 	lines := []string{}
 	changedLines := map[int]struct{}{}
 
-	for lineNum, diff := range v.diff {
+	for lineNum, diff := range diffRecords {
 		if diff.Delta != difflib.Common {
 			changedLines[lineNum] = struct{}{}
 		}
@@ -35,7 +52,7 @@ func (v TextDiffView) String() string {
 	emptyLineStr := "   "
 	lineStr := func(line int) string { return fmt.Sprintf("%3d", line) }
 
-	for lineNum, diff := range v.diff {
+	for lineNum, diff := range diffRecords {
 		switch diff.Delta {
 		case difflib.RightOnly:
 			lines = append(lines, color.New(color.FgGreen).Sprintf("%s %s + %s",

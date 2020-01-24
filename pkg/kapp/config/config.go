@@ -20,6 +20,7 @@ type Config struct {
 	OwnershipLabelRules []OwnershipLabelRule
 	LabelScopingRules   []LabelScopingRule
 	TemplateRules       []TemplateRule
+	DiffMaskRules       []DiffMaskRule
 
 	AdditionalLabels                          map[string]string
 	DiffAgainstLastAppliedFieldExclusionRules []DiffAgainstLastAppliedFieldExclusionRule
@@ -50,6 +51,11 @@ type LabelScopingRule struct {
 type TemplateRule struct {
 	ResourceMatchers  []ResourceMatcher
 	AffectedResources TemplateAffectedResources
+}
+
+type DiffMaskRule struct {
+	ResourceMatchers []ResourceMatcher
+	Path             ctlres.Path
 }
 
 type TemplateAffectedResources struct {

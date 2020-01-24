@@ -51,6 +51,13 @@ diffAgainstLastAppliedFieldExclusionRules:
   - apiVersionKindMatcher:
       apiVersion: apps/v1
       kind: Deployment
+
+diffMaskRules:
+- path: [data]
+  resourceMatchers:
+  - apiVersionKindMatcher:
+      apiVersion: v1
+      kind: Secret
 ```
 
 `rebaseRules` specify origin of field values. Kubernetes cluster generates (or defaults) some field values, hence these values will need to be merged in future to avoid flagging them during diffing. Common example is `v1/Service`'s `spec.clusterIP` field is automatically populated if it's not set. See [HPA and Deployment rebase](hpa-deployment-rebase.md) example.
@@ -64,6 +71,8 @@ diffAgainstLastAppliedFieldExclusionRules:
 `additionalLabels` specify additional labels to apply to all resources for custom uses by the user (added based on `ownershipLabelRules`).
 
 `diffAgainstLastAppliedFieldExclusionRules` specify which fields should be removed before diff-ing against last applied resource. These rules are useful for fields are "owned" by the cluster/controllers, and are only later updated. For example `Deployment` resource has an annotation that gets set after a little bit of time after resource is created/updated (not during resource admission). It's typically not necessary to use this configuration.
+
+`diffMaskRules` specify which field values should be masked in diff. By default `v1/Secret`'s `data` fields are masked. Currently only applied to `deploy` command.
 
 ### Resource matchers
 

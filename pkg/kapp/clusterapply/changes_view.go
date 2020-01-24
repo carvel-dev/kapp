@@ -18,7 +18,7 @@ type ChangeView interface {
 
 	ApplyOp() ClusterChangeApplyOp
 	WaitOp() ClusterChangeWaitOp
-	TextDiff() ctldiff.TextDiff
+	ConfigurableTextDiff() *ctldiff.ConfigurableTextDiff
 }
 
 type ChangesView struct {

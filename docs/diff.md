@@ -40,6 +40,7 @@ Diff changes (line-by-line diffs) are useful for looking at actual changes:
 
 - `--diff-changes=bool` (`-c`) (default `false`) shows line-by-line diffs
 - `--diff-context=int` (default `2`) controls number of lines to show around changed lines
+- `--diff-mask=bool` (default `true`) controls whether to mask sensitive fields
 
 Controlling how diffing is done:
 

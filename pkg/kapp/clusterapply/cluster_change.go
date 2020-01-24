@@ -193,7 +193,9 @@ func (c *ClusterChange) WaitDescription() string {
 func (c *ClusterChange) Resource() ctlres.Resource         { return c.change.NewOrExistingResource() }
 func (c *ClusterChange) ExistingResource() ctlres.Resource { return c.change.ExistingResource() }
 
-func (c *ClusterChange) TextDiff() ctldiff.TextDiff { return c.change.TextDiff() }
+func (c *ClusterChange) ConfigurableTextDiff() *ctldiff.ConfigurableTextDiff {
+	return c.change.ConfigurableTextDiff()
+}
 
 func (c *ClusterChange) applyErr(err error) error {
 	if err == nil {

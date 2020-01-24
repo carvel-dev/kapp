@@ -58,7 +58,8 @@ func (o *DiffOptions) Run() error {
 		changeViews = append(changeViews, DiffChangeView{change})
 	}
 
-	ctlcap.NewChangeSetView(changeViews, o.DiffFlags.ChangeSetViewOpts).Print(o.ui)
+	// TODO support adding custom config for mask rules?
+	ctlcap.NewChangeSetView(changeViews, nil, o.DiffFlags.ChangeSetViewOpts).Print(o.ui)
 
 	return nil
 }
@@ -112,4 +113,6 @@ func (v DiffChangeView) ApplyOp() ctlcap.ClusterChangeApplyOp {
 // Since we are diffing changes without a cluster, there will be no wait operations
 func (v DiffChangeView) WaitOp() ctlcap.ClusterChangeWaitOp { return ctlcap.ClusterChangeWaitOpNoop }
 
-func (v DiffChangeView) TextDiff() ctldiff.TextDiff { return v.change.TextDiff() }
+func (v DiffChangeView) ConfigurableTextDiff() *ctldiff.ConfigurableTextDiff {
+	return v.change.ConfigurableTextDiff()
+}

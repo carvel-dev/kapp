@@ -313,7 +313,7 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 
 	{ // Present cluster changes in UI
 		changeViews := ctlcap.ClusterChangesAsChangeViews(clusterChanges)
-		changeSetView := ctlcap.NewChangeSetView(changeViews, o.DiffFlags.ChangeSetViewOpts)
+		changeSetView := ctlcap.NewChangeSetView(changeViews, conf.DiffMaskRules(), o.DiffFlags.ChangeSetViewOpts)
 		changeSetView.Print(o.ui)
 		changesSummary = changeSetView.Summary()
 	}

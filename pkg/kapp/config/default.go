@@ -117,6 +117,11 @@ diffAgainstLastAppliedFieldExclusionRules:
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
   resourceMatchers: *builtinAppsDeploymentWithRevAnnKey
 
+diffMaskRules:
+- path: [data]
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: v1, kind: Secret}
+
 ownershipLabelRules:
 - path: [metadata, labels]
   resourceMatchers:

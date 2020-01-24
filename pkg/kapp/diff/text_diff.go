@@ -8,14 +8,18 @@ import (
 	"github.com/aryann/difflib"
 )
 
-type TextDiff []difflib.DiffRecord
-
-func NewTextDiff(existingLines, newLines []string) TextDiff {
-	return TextDiff(difflib.Diff(existingLines, newLines))
+type TextDiff struct {
+	recs []difflib.DiffRecord
 }
 
+func NewTextDiff(existingLines, newLines []string) TextDiff {
+	return TextDiff{difflib.Diff(existingLines, newLines)}
+}
+
+func (l TextDiff) Records() []difflib.DiffRecord { return l.recs }
+
 func (l TextDiff) HasChanges() bool {
-	for _, diff := range l {
+	for _, diff := range l.recs {
 		if diff.Delta != difflib.Common {
 			return true
 		}
@@ -33,7 +37,7 @@ func (l TextDiff) FullString() string    { return l.String(true) }
 func (l TextDiff) String(full bool) string {
 	var sb strings.Builder
 
-	for _, diff := range l {
+	for _, diff := range l.recs {
 		var mark string
 
 		switch diff.Delta {

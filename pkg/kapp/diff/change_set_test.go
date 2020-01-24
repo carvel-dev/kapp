@@ -53,7 +53,7 @@ metadata:
 		t.Fatalf("Expected non-err")
 	}
 
-	actualDiff := changes[0].TextDiff().FullString()
+	actualDiff := changes[0].ConfigurableTextDiff().Full().FullString()
 
 	expectedDiff := strings.Replace(`  0,  0   metadata:
   1,  1     annotations:
@@ -115,7 +115,7 @@ metadata:
 		t.Fatalf("Expected non-err")
 	}
 
-	actualDiff := changes[0].TextDiff().FullString()
+	actualDiff := changes[0].ConfigurableTextDiff().Full().FullString()
 
 	expectedDiff := strings.Replace(`  0,  0   metadata:
   1,  1     annotations:
@@ -187,7 +187,7 @@ metadata:
 		t.Fatalf("Expected non-err")
 	}
 
-	actualDiff := changes[0].TextDiff().FullString()
+	actualDiff := changes[0].ConfigurableTextDiff().Full().FullString()
 
 	expectedDiff := strings.Replace(`  0,  0   metadata:
   1,  1     annotations:
@@ -263,7 +263,7 @@ metadata:
 		t.Fatalf("Expected non-err")
 	}
 
-	actualDiff := changes[0].TextDiff().FullString()
+	actualDiff := changes[0].ConfigurableTextDiff().Full().FullString()
 
 	expectedDiff := strings.Replace(`  0,  0   metadata:
   1,  1     annotations:

@@ -86,6 +86,14 @@ func (c Conf) TemplateRules() []TemplateRule {
 	return result
 }
 
+func (c Conf) DiffMaskRules() []DiffMaskRule {
+	var result []DiffMaskRule
+	for _, config := range c.configs {
+		result = append(result, config.DiffMaskRules...)
+	}
+	return result
+}
+
 func (c Conf) AdditionalLabels() map[string]string {
 	result := map[string]string{}
 	for _, config := range c.configs {

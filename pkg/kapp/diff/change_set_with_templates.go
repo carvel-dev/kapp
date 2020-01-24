@@ -173,7 +173,7 @@ func (d ChangeSetWithTemplates) newAddChangeFromUpdateChange(
 	addChange := NewChangePrecalculated(nil, newRes, newRes)
 	// TODO private field access
 	addChange.op = ChangeOpAdd
-	addChange.textDiff = updateChange.TextDiff()
+	addChange.configurableTextDiff = updateChange.ConfigurableTextDiff()
 	addChange.opsDiff = updateChange.OpsDiff()
 	return addChange
 }
