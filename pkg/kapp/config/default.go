@@ -97,6 +97,22 @@ rebaseRules:
   - apiVersionKindMatcher: {apiVersion: apps/v1beta2, kind: Deployment}
   - apiVersionKindMatcher: {apiVersion: extensions/v1beta1, kind: Deployment}
 
+- path: [webhooks, {allIndexes: true}, clientConfig, caBundle]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: admissionregistration.k8s.io/v1beta1, kind: MutatingWebhookConfiguration}
+  - apiVersionKindMatcher: {apiVersion: admissionregistration.k8s.io/v1, kind: MutatingWebhookConfiguration}
+  - apiVersionKindMatcher: {apiVersion: admissionregistration.k8s.io/v1beta1, kind: ValidatingWebhookConfiguration}
+  - apiVersionKindMatcher: {apiVersion: admissionregistration.k8s.io/v1, kind: ValidatingWebhookConfiguration}
+
+- path: [spec, caBundle]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: apiregistration.k8s.io/v1beta1, kind: APIService}
+  - apiVersionKindMatcher: {apiVersion: apiregistration.k8s.io/v1, kind: APIService}
+
 diffAgainstLastAppliedFieldExclusionRules:
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
   resourceMatchers: *builtinAppsDeploymentWithRevAnnKey
