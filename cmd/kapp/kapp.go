@@ -26,7 +26,7 @@ func main() {
 
 	err := command.Execute()
 	if err != nil {
-		confUI.ErrorLinef("Error: %v", err)
+		confUI.ErrorLinef("kapp: Error: %v", err)
 		if typedErr, ok := err.(cmdapp.DeployDiffExitStatus); ok {
 			os.Exit(typedErr.ExitStatus())
 		}
