@@ -11,17 +11,6 @@ rebaseRules:
       name: knative-serving-admin
       kind: ClusterRole
 
-- path: [webhooks, {allIndexes: true}, clientConfig, caBundle]
-  type: copy
-  sources: [new, existing]
-  resourceMatchers:
-  - apiVersionKindMatcher:
-      apiVersion: admissionregistration.k8s.io/v1beta1
-      kind: MutatingWebhookConfiguration
-  - apiVersionKindMatcher:
-      apiVersion: admissionregistration.k8s.io/v1beta1
-      kind: ValidatingWebhookConfiguration
-
 - path: [webhooks, {allIndexes: true}, rules]
   type: copy
   sources: [new, existing]
