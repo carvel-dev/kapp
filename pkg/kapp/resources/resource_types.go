@@ -82,7 +82,7 @@ func (g *ResourceTypesImpl) serverResources() ([]*metav1.APIResourceList, error)
 	var serverResources []*metav1.APIResourceList
 	var lastErr error
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 10; i++ {
 		serverResources, lastErr = g.coreClient.Discovery().ServerResources()
 		if lastErr == nil {
 			return serverResources, nil
@@ -105,6 +105,7 @@ func (g *ResourceTypesImpl) serverResources() ([]*metav1.APIResourceList, error)
 			if len(serverResources) > 0 && g.opts.IgnoreFailingAPIServices {
 				return serverResources, nil
 			}
+			// Even local services may not be Available immediately, so retry
 			lastErr = fmt.Errorf("%s (possibly related issue: https://github.com/k14s/kapp/issues/12)", lastErr)
 		}
 		time.Sleep(1 * time.Second)
