@@ -105,7 +105,7 @@ func (g *ResourceTypesImpl) serverResources() ([]*metav1.APIResourceList, error)
 			if len(serverResources) > 0 && g.opts.IgnoreFailingAPIServices {
 				return serverResources, nil
 			}
-			return nil, fmt.Errorf("%s (possibly related issue: https://github.com/k14s/kapp/issues/12)", lastErr)
+			lastErr = fmt.Errorf("%s (possibly related issue: https://github.com/k14s/kapp/issues/12)", lastErr)
 		}
 		time.Sleep(1 * time.Second)
 	}
