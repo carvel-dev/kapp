@@ -88,21 +88,20 @@ func (f *DepsFactoryImpl) summarizeNodes(config *rest.Config) string {
 		return ""
 	}
 
-	if len(nodes.Items) == 0 {
+	switch len(nodes.Items) {
+	case 0:
 		return ""
-	}
 
-	oldestNode := nodes.Items[0]
-	for _, node := range nodes.Items {
-		if node.CreationTimestamp.Before(&oldestNode.CreationTimestamp) {
-			oldestNode = node
+	case 1:
+		return nodes.Items[0].Name
+
+	default:
+		oldestNode := nodes.Items[0]
+		for _, node := range nodes.Items {
+			if node.CreationTimestamp.Before(&oldestNode.CreationTimestamp) {
+				oldestNode = node
+			}
 		}
+		return fmt.Sprintf("%s, %d+", oldestNode.Name, len(nodes.Items)-1)
 	}
-
-	desc := oldestNode.Name
-	if len(nodes.Items) > 1 {
-		desc += fmt.Sprintf(", %d+", len(nodes.Items))
-	}
-
-	return desc
 }
