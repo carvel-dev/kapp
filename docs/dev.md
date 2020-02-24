@@ -25,7 +25,7 @@ For those interested in extending and improving `kapp`, below is a quick referen
 - [pkg/kapp/app](https://github.com/k14s/kapp/tree/master/pkg/kapp/app) package includes two types of app and details about them (such as app change tracking):
   - `LabeledApp` which represents app based on user provided label
   - `RecordedApp` which represents app backed by `ConfigMap`. `RecordedApp` uses LabeledApp internally.
-- [pkg/kapp/resources](https://github.com/k14s/kapp/tree/master/pkg/kapp/resources) package is responsible for parsing, fetching, and modifying k8s resources (respresented through Resource interface and ResourceImpl)
+- [pkg/kapp/resources](https://github.com/k14s/kapp/tree/master/pkg/kapp/resources) package is responsible for parsing, fetching, and modifying k8s resources (represented through Resource interface and ResourceImpl)
 - [pkg/kapp/diff](https://github.com/k14s/kapp/tree/master/pkg/kapp/diff) allows to diff two resources represented by Change object, and multiple resources via ChangeSet. **This package does not know anything about k8s.**
 - [pkg/kapp/diffgraph](https://github.com/k14s/kapp/tree/master/pkg/kapp/diffgraph) applies deploy/delete order to set of changes. **This package does not know anything about k8s.**
 - [pkg/kapp/clusterapply](https://github.com/k14s/kapp/tree/master/pkg/kapp/clusterapply) allow to apply diff to k8s cluster via ClusterChange object.
