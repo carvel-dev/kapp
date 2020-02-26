@@ -261,10 +261,15 @@ type templateResources struct {
 func newTemplateResources(rs []ctlres.Resource) templateResources {
 	var result templateResources
 	for _, res := range rs {
-		if _, found := res.Annotations()[templateAnnKey]; found {
-			result.Template = append(result.Template, res)
-		} else {
-			result.NonTemplate = append(result.NonTemplate, res)
+		// Expect that template resources should not be transient
+		// (Annotations may have been copied from templated resources
+		// onto transient resources for non-template related purposes).
+		if !res.Transient() {
+			if _, found := res.Annotations()[templateAnnKey]; found {
+				result.Template = append(result.Template, res)
+			} else {
+				result.NonTemplate = append(result.NonTemplate, res)
+			}
 		}
 	}
 	return result
