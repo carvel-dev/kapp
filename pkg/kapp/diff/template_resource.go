@@ -150,9 +150,5 @@ func (d TemplateResource) matchingRules() ([]ctlconf.TemplateRule, error) {
 		}
 	}
 
-	if len(result) == 0 {
-		return nil, fmt.Errorf("Expected to find at least one template rule")
-	}
-
 	return result, nil
 }
