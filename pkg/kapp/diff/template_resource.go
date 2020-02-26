@@ -42,7 +42,7 @@ func (d TemplateResource) Version() int {
 
 	verInt, err1 := strconv.Atoi(ver)
 	if err1 != nil {
-		panic("Invalid template version")
+		panic(fmt.Sprintf("Invalid template version in resource '%s'", d.res.Description()))
 	}
 
 	return verInt
