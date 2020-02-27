@@ -191,10 +191,10 @@ func (c *Resources) allForNamespaces(client dynamic.NamespaceableResourceInterfa
 func (c *Resources) Create(resource Resource) (Resource, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
-		defer func() { fmt.Printf("create %s\n", time.Now().UTC().Sub(t1)) }()
+		defer func() { c.logger.Debug("create %s", time.Now().UTC().Sub(t1)) }()
 
 		bs, _ := resource.AsYAMLBytes()
-		fmt.Printf("create resource %s\n%s\n", resource.Description(), bs)
+		c.logger.Debug("create resource %s\n%s\n", resource.Description(), bs)
 	}
 
 	resClient, resType, err := c.resourceClient(resource)
@@ -221,10 +221,10 @@ func (c *Resources) Create(resource Resource) (Resource, error) {
 func (c *Resources) Update(resource Resource) (Resource, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
-		defer func() { fmt.Printf("update %s\n", time.Now().UTC().Sub(t1)) }()
+		defer func() { c.logger.Debug("update %s", time.Now().UTC().Sub(t1)) }()
 
 		bs, _ := resource.AsYAMLBytes()
-		fmt.Printf("update resource %s\n%s\n", resource.Description(), bs)
+		c.logger.Debug("update resource %s\n%s\n", resource.Description(), bs)
 	}
 
 	resClient, resType, err := c.resourceClient(resource)
@@ -251,7 +251,7 @@ func (c *Resources) Update(resource Resource) (Resource, error) {
 func (c *Resources) Patch(resource Resource, patchType types.PatchType, data []byte) (Resource, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
-		defer func() { fmt.Printf("patch %s\n", time.Now().UTC().Sub(t1)) }()
+		defer func() { c.logger.Debug("patch %s", time.Now().UTC().Sub(t1)) }()
 	}
 
 	resClient, resType, err := c.resourceClient(resource)
@@ -288,11 +288,11 @@ func (c *Resources) doneRetryingErr(err error) bool {
 func (c *Resources) Delete(resource Resource) error {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
-		defer func() { fmt.Printf("delete %s\n", time.Now().UTC().Sub(t1)) }()
+		defer func() { c.logger.Debug("delete %s", time.Now().UTC().Sub(t1)) }()
 	}
 
 	if resource.IsDeleting() {
-		fmt.Printf("TODO resource '%s' is already deleting\n", resource.Description())
+		c.logger.Info("TODO resource '%s' is already deleting", resource.Description())
 		return nil
 	}
 
@@ -315,14 +315,15 @@ func (c *Resources) Delete(resource Resource) error {
 
 		err = resClient.Delete(resource.Name(), delOpts)
 		if err != nil {
-			if errors.IsNotFound(err) || strings.Contains(err.Error(), "not found") { // TODO why "not found" check is needed?
-				fmt.Printf("TODO resource is not found: %s (reason: %s)\n", resource.Description(), errors.ReasonForError(err))
+			// TODO why "not found" check is needed?
+			if errors.IsNotFound(err) || strings.Contains(err.Error(), "not found") {
+				c.logger.Info("TODO resource '%s' is not found (reason: %s)", resource.Description(), errors.ReasonForError(err))
 				return nil
 			}
 			return c.resourceErr(err, "Deleting", resource)
 		}
 	} else {
-		fmt.Printf("TODO resource is not deletable: %s\n", resource.Description()) // TODO
+		c.logger.Info("TODO resource '%s' is not deletable", resource.Description()) // TODO
 	}
 
 	return nil
@@ -331,7 +332,7 @@ func (c *Resources) Delete(resource Resource) error {
 func (c *Resources) Get(resource Resource) (Resource, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
-		defer func() { fmt.Printf("get %s\n", time.Now().UTC().Sub(t1)) }()
+		defer func() { c.logger.Debug("get %s", time.Now().UTC().Sub(t1)) }()
 	}
 
 	resClient, resType, err := c.resourceClient(resource)
@@ -350,7 +351,7 @@ func (c *Resources) Get(resource Resource) (Resource, error) {
 func (c *Resources) Exists(resource Resource) (bool, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
-		defer func() { fmt.Printf("exists %s\n", time.Now().UTC().Sub(t1)) }()
+		defer func() { c.logger.Debug("exists %s", time.Now().UTC().Sub(t1)) }()
 	}
 
 	resClient, resType, err := c.resourceClient(resource)
