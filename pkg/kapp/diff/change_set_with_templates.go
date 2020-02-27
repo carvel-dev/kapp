@@ -264,12 +264,11 @@ func newTemplateResources(rs []ctlres.Resource) templateResources {
 		// Expect that template resources should not be transient
 		// (Annotations may have been copied from templated resources
 		// onto transient resources for non-template related purposes).
-		if !res.Transient() {
-			if _, found := res.Annotations()[templateAnnKey]; found {
-				result.Template = append(result.Template, res)
-			} else {
-				result.NonTemplate = append(result.NonTemplate, res)
-			}
+		_, hasTemplateAnn := res.Annotations()[templateAnnKey]
+		if hasTemplateAnn && !res.Transient() {
+			result.Template = append(result.Template, res)
+		} else {
+			result.NonTemplate = append(result.NonTemplate, res)
 		}
 	}
 	return result
