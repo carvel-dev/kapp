@@ -53,6 +53,14 @@
 
 - `kapp tools list-labels`
   - See which labels are used in your cluster (add `--values` to see label values)
+  
+- `kapp tools list-labels --values --tty=false | grep kapp.k14s.io/app`
+  - Shows app labels that are still present in the cluster (could be combined with delete command below)
+
+### Delete
+
+- `kapp delete -a 'label:kapp.k14s.io/app=1578599579922603000'`
+  - Delete resources under particular label (in this example deleting resources associated with some app)
 
 ### Misc
 
