@@ -127,7 +127,7 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	existingResources, err := o.existingResources(newResources, labeledResources, resourceFilter)
+	existingResources, err := o.existingResources(newResources, labeledResources, resourceFilter, supportObjs.Apps)
 	if err != nil {
 		return err
 	}
@@ -245,12 +245,25 @@ func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
 }
 
 func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
-	labeledResources *ctlres.LabeledResources, resourceFilter ctlres.ResourceFilter) ([]ctlres.Resource, error) {
+	labeledResources *ctlres.LabeledResources, resourceFilter ctlres.ResourceFilter,
+	apps ctlapp.Apps) ([]ctlres.Resource, error) {
+
+	labelErrorResolutionFunc := func(key string, val string) string {
+		items, _ := apps.List(nil)
+		for _, item := range items {
+			meta, _ := item.Meta()
+			if meta.LabelKey == key && meta.LabelValue == val {
+				return fmt.Sprintf("app '%s' namespace: %s", item.Name(), item.Namespace())
+			}
+		}
+		return ""
+	}
 
 	matchingOpts := ctlres.AllAndMatchingOpts{
 		SkipResourceOwnershipCheck: o.DeployFlags.OverrideOwnershipOfExistingResources,
 		// Prevent accidently overriding kapp state records
 		BlacklistedResourcesByLabelKeys: []string{ctlapp.KappIsAppLabelKey},
+		LabelErrorResolutionFunc:        labelErrorResolutionFunc,
 	}
 
 	existingResources, err := labeledResources.AllAndMatching(newResources, matchingOpts)

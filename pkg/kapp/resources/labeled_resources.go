@@ -95,6 +95,7 @@ func (a *LabeledResources) All() ([]Resource, error) {
 type AllAndMatchingOpts struct {
 	SkipResourceOwnershipCheck      bool
 	BlacklistedResourcesByLabelKeys []string
+	LabelErrorResolutionFunc        func(string, string) string
 }
 
 // AllAndMatching returns set of all labeled resources
@@ -115,7 +116,7 @@ func (a *LabeledResources) AllAndMatching(newResources []Resource, opts AllAndMa
 	}
 
 	if !opts.SkipResourceOwnershipCheck && len(nonLabeledResources) > 0 {
-		err := a.checkResourceOwnership(nonLabeledResources)
+		err := a.checkResourceOwnership(nonLabeledResources, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +132,7 @@ func (a *LabeledResources) AllAndMatching(newResources []Resource, opts AllAndMa
 	return resources, nil
 }
 
-func (a *LabeledResources) checkResourceOwnership(resources []Resource) error {
+func (a *LabeledResources) checkResourceOwnership(resources []Resource, opts AllAndMatchingOpts) error {
 	expectedLabelKey, expectedLabelVal, err := NewSimpleLabel(a.labelSelector).KV()
 	if err != nil {
 		return err
@@ -142,8 +143,16 @@ func (a *LabeledResources) checkResourceOwnership(resources []Resource) error {
 	for _, res := range resources {
 		if val, found := res.Labels()[expectedLabelKey]; found {
 			if val != expectedLabelVal {
-				errMsg := "Resource '%s' is associated with a different label value '%s=%s'"
-				errs = append(errs, fmt.Errorf(errMsg, res.Description(), expectedLabelKey, val))
+				hintMsg := ""
+				if opts.LabelErrorResolutionFunc != nil {
+					hintMsg = opts.LabelErrorResolutionFunc(expectedLabelKey, val)
+					if len(hintMsg) > 0 {
+						hintMsg = fmt.Sprintf(" (%s)", hintMsg)
+					}
+				}
+
+				errMsg := "Resource '%s' is associated with a different label value '%s=%s'%s"
+				errs = append(errs, fmt.Errorf(errMsg, res.Description(), expectedLabelKey, val, hintMsg))
 			}
 		}
 	}
