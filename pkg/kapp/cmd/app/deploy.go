@@ -253,7 +253,7 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 		for _, item := range items {
 			meta, _ := item.Meta()
 			if meta.LabelKey == key && meta.LabelValue == val {
-				return fmt.Sprintf("app '%s' namespace: %s", item.Name(), item.Namespace())
+				return item.Description()
 			}
 		}
 		return ""

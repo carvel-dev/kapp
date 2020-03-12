@@ -34,6 +34,10 @@ var _ App = &RecordedApp{}
 func (a *RecordedApp) Name() string      { return a.name }
 func (a *RecordedApp) Namespace() string { return a.nsName }
 
+func (a *RecordedApp) Description() string {
+	return fmt.Sprintf("app '%s' namespace: %s", a.name, a.nsName)
+}
+
 func (a *RecordedApp) LabelSelector() (labels.Selector, error) {
 	app, err := a.labeledApp()
 	if err != nil {

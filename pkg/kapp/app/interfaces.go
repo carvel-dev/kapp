@@ -8,6 +8,7 @@ import (
 type App interface {
 	Name() string
 	Namespace() string
+	Description() string
 	Meta() (AppMeta, error)
 
 	LabelSelector() (labels.Selector, error)

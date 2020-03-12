@@ -26,6 +26,10 @@ func (a *LabeledApp) Name() string {
 
 func (a *LabeledApp) Namespace() string { return "" }
 
+func (a *LabeledApp) Description() string {
+	return fmt.Sprintf("labeled app '%s'", a.Name())
+}
+
 func (a *LabeledApp) LabelSelector() (labels.Selector, error) {
 	return a.labelSelector, nil
 }
