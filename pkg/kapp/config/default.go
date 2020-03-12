@@ -121,6 +121,9 @@ diffMaskRules:
 - path: [data]
   resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: v1, kind: Secret}
+- path: [stringData]
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: v1, kind: Secret}
 
 ownershipLabelRules:
 - path: [metadata, labels]
