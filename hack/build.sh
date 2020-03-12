@@ -7,6 +7,8 @@ export CGO_ENABLED=0
 repro_flags="-ldflags=-buildid= -trimpath"
 
 go fmt ./cmd/... ./pkg/... ./test/...
+go mod vendor
+go mod tidy
 
 build_values_path="../../../${BUILD_VALUES:-./hack/build-values-default.yml}"
 
