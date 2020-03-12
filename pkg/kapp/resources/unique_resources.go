@@ -2,6 +2,7 @@ package resources
 
 import (
 	"fmt"
+	"strings"
 )
 
 type UniqueResourceKey struct {
@@ -37,6 +38,7 @@ func NewUniqueResources(resources []Resource) UniqueResources {
 
 func (r UniqueResources) Resources() ([]Resource, error) {
 	var result []Resource
+	var errs []error
 
 	uniqRs := map[string]Resource{}
 
@@ -45,7 +47,7 @@ func (r UniqueResources) Resources() ([]Resource, error) {
 		if uRes, found := uniqRs[resKey]; found {
 			// Check if duplicate resources are same
 			if !uRes.Equal(res) {
-				return nil, fmt.Errorf("Expected not to find same resource '%s' with different content", res.Description())
+				errs = append(errs, fmt.Errorf("Found resource '%s' multiple times with different content", res.Description()))
 			}
 		} else {
 			uniqRs[resKey] = res
@@ -53,7 +55,7 @@ func (r UniqueResources) Resources() ([]Resource, error) {
 		}
 	}
 
-	return result, nil
+	return result, r.combinedErr(errs)
 }
 
 func (r UniqueResources) Match(newResources []Resource) ([]Resource, error) {
@@ -72,4 +74,16 @@ func (r UniqueResources) Match(newResources []Resource) ([]Resource, error) {
 	}
 
 	return result, nil
+}
+
+func (r UniqueResources) combinedErr(errs []error) error {
+	if len(errs) > 0 {
+		var msgs []string
+		for _, err := range errs {
+			msgs = append(msgs, "- "+err.Error())
+		}
+		return fmt.Errorf("Uniqueness errors:\n%s", strings.Join(msgs, "\n"))
+	}
+
+	return nil
 }
