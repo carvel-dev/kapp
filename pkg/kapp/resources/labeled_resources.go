@@ -143,16 +143,15 @@ func (a *LabeledResources) checkResourceOwnership(resources []Resource, opts All
 	for _, res := range resources {
 		if val, found := res.Labels()[expectedLabelKey]; found {
 			if val != expectedLabelVal {
-				hintMsg := ""
+				ownerMsg := fmt.Sprintf("different label '%s=%s'", expectedLabelKey, val)
 				if opts.LabelErrorResolutionFunc != nil {
-					hintMsg = opts.LabelErrorResolutionFunc(expectedLabelKey, val)
-					if len(hintMsg) > 0 {
-						hintMsg = fmt.Sprintf(" (%s)", hintMsg)
+					ownerMsgSuggested := opts.LabelErrorResolutionFunc(expectedLabelKey, val)
+					if len(ownerMsgSuggested) > 0 {
+						ownerMsg = ownerMsgSuggested
 					}
 				}
-
-				errMsg := "Resource '%s' is associated with a different label value '%s=%s'%s"
-				errs = append(errs, fmt.Errorf(errMsg, res.Description(), expectedLabelKey, val, hintMsg))
+				errMsg := "Resource '%s' is already associated with a %s"
+				errs = append(errs, fmt.Errorf(errMsg, res.Description(), ownerMsg))
 			}
 		}
 	}

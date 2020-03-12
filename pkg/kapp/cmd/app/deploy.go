@@ -253,7 +253,7 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 		for _, item := range items {
 			meta, _ := item.Meta()
 			if meta.LabelKey == key && meta.LabelValue == val {
-				return item.Description()
+				return fmt.Sprintf("different %s (label '%s=%s')", item.Description(), key, val)
 			}
 		}
 		return ""
