@@ -49,6 +49,7 @@ func (c AddOrUpdateChange) Apply() error {
 
 	case ctldiff.ChangeOpUpdate:
 		newRes := c.change.NewResource()
+
 		strategy, found := newRes.Annotations()[updateStrategyAnnKey]
 		if !found {
 			strategy = c.opts.DefaultUpdateStrategy
@@ -59,7 +60,7 @@ func (c AddOrUpdateChange) Apply() error {
 			updatedRes, err := c.identifiedResources.Update(newRes)
 			if err != nil {
 				if errors.IsConflict(err) {
-					return c.tryToResolveConflict(err)
+					return c.tryToResolveUpdateConflict(err)
 				}
 				return err
 			}
@@ -121,7 +122,7 @@ func (c AddOrUpdateChange) replace() error {
 	return c.recordAppliedResource(updatedRes)
 }
 
-func (a AddOrUpdateChange) tryToResolveConflict(origErr error) error {
+func (a AddOrUpdateChange) tryToResolveUpdateConflict(origErr error) error {
 	errMsgPrefix := "Failed to update due to resource conflict "
 
 	for i := 0; i < 10; i++ {
@@ -130,7 +131,8 @@ func (a AddOrUpdateChange) tryToResolveConflict(origErr error) error {
 			return err
 		}
 
-		changeSet := a.changeSetFactory.New([]ctlres.Resource{latestExistingRes}, []ctlres.Resource{a.change.AppliedResource()})
+		changeSet := a.changeSetFactory.New([]ctlres.Resource{latestExistingRes},
+			[]ctlres.Resource{a.change.AppliedResource()})
 
 		recalcChanges, err := changeSet.Calculate()
 		if err != nil {
