@@ -18,9 +18,9 @@ var (
 	// or not. This is a global option and affects all colors. For more control
 	// over each color block use the methods DisableColor() individually.
 	// To force color display, set the variable FORCE_COLOR = "1"
-    	NoColor = (os.Getenv("TERM") == "dumb" ||
-    		(!isatty.IsTerminal(os.Stdout.Fd()) && !isatty.IsCygwinTerminal(os.Stdout.Fd()))) && (!(os.Getenv("FORCE_COLOR") == "1"))
-
+    	NoColor = (!(os.Getenv("FORCE_COLOR") == "1")) && (os.Getenv("TERM") == "dumb" ||
+		(!isatty.IsTerminal(os.Stdout.Fd()) && !isatty.IsCygwinTerminal(os.Stdout.Fd())))
+	
 	// Output defines the standard output of the print functions. By default
 	// os.Stdout is used.
 	Output = colorable.NewColorableStdout()
