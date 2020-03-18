@@ -5,11 +5,8 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	"github.com/k14s/kapp/pkg/kapp/version"
 	"github.com/spf13/cobra"
-)
-
-const (
-	Version = "0.22.0"
 )
 
 type VersionOptions struct {
@@ -30,7 +27,7 @@ func NewVersionCmd(o *VersionOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 }
 
 func (o *VersionOptions) Run() error {
-	o.ui.PrintBlock([]byte(fmt.Sprintf("kapp version %s\n", Version)))
+	o.ui.PrintBlock([]byte(fmt.Sprintf("kapp version %s\n", version.Version)))
 
 	return nil
 }

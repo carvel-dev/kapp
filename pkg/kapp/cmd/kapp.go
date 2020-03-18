@@ -13,6 +13,7 @@ import (
 	cmdsa "github.com/k14s/kapp/pkg/kapp/cmd/serviceaccount"
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	"github.com/k14s/kapp/pkg/kapp/logger"
+	"github.com/k14s/kapp/pkg/kapp/version"
 	"github.com/spf13/cobra"
 )
 
@@ -55,6 +56,7 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 
 		// Disable docs header
 		DisableAutoGenTag: true,
+		Version:           version.Version,
 
 		// TODO bash completion
 	}
