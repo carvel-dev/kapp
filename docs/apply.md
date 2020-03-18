@@ -48,6 +48,7 @@ Related: [ownership label rules](config.md) and [label scoping rules](config.md)
 
 - `--apply-ignored=bool` explicitly applies ignored changes; this is useful in cases when controllers lose track of some resources instead of for example deleting them
 - `--apply-default-update-strategy=string` controls default strategy for all resources (see `kapp.k14s.io/update-strategy` annotation above)
+- `--apply-exit-status=bool` (default `false`) controls exit status (`0`: unused, `1`: any error, `2`: no changes applied, `3`: at least one change applied)
 - `--wait=bool` (default `true`) controls whether kapp will wait for resource to "stabilize". See [Apply waiting](apply-waiting.md)
 - `--wait-ignored=bool` controls whether kapp will wait for ignored changes (regardless whether they were initiated by kapp or by controllers)
 - `--logs=bool` (default `true`) controls whether to show logs as part of deploy output for Pods annotated with `kapp.k14s.io/deploy-logs: ""`
