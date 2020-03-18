@@ -51,7 +51,7 @@ func (s *ApplyFlags) SetWithDefaults(prefix string, defaults ApplyFlags, cmd *co
 	cmd.Flags().DurationVar(&s.WaitingChangesOpts.CheckInterval, prefix+"wait-check-interval",
 		mustParseDuration("1s"), "Amount of time to sleep between checks while waiting")
 
-	cmd.Flags().BoolVar(&s.ExitStatus, prefix+"exit-status", false, "Return specific exit status based on number of changes")
+	cmd.Flags().BoolVar(&s.ExitStatus, prefix+"apply-exit-status", false, "Return specific exit status based on number of changes")
 }
 
 func mustParseDuration(str string) time.Duration {
