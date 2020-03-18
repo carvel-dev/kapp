@@ -4,9 +4,15 @@ import (
 	"fmt"
 )
 
+type ExitStatus interface {
+	ExitStatus() int
+}
+
 type DeployDiffExitStatus struct {
 	hasNoChanges bool
 }
+
+var _ ExitStatus = DeployDiffExitStatus{}
 
 func (d DeployDiffExitStatus) Error() string {
 	numStr := "pending changes"
