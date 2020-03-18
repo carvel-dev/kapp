@@ -17,11 +17,13 @@ jobs:
       run: |
         set -e -x
         export GOPATH=$(echo `pwd`/../../../../)
+
         # install ytt for build
-        mkdir -p tmp/bin/
-        wget -O- https://k14s.io/install.sh | K14SIO_INSTALL_BIN_DIR=tmp/bin bash
-        rm -f tmp/bin/kapp
-        export PATH=`pwd`/tmp/bin:$PATH
+        mkdir -p tmp-k14s/bin/
+        wget -O- https://k14s.io/install.sh | K14SIO_INSTALL_BIN_DIR=tmp-k14s/bin bash
+        rm -f tmp-k14s/bin/kapp
+        export PATH=`pwd`/tmp-k14s/bin:$PATH
+
         ./hack/build.sh
         ./hack/test.sh
         ./hack/build-binaries.sh
