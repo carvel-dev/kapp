@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"github.com/ghodss/yaml"
+	semver "github.com/hashicorp/go-version"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/k14s/kapp/pkg/kapp/version"
 )
 
 const (
@@ -15,6 +17,8 @@ const (
 type Config struct {
 	APIVersion string `json:"apiVersion"`
 	Kind       string
+
+	MinimumRequiredVersion string `json:"minimumRequiredVersion,omitempty"`
 
 	RebaseRules         []RebaseRule
 	OwnershipLabelRules []OwnershipLabelRule
@@ -103,7 +107,44 @@ func NewConfigFromResource(res ctlres.Resource) (Config, error) {
 		return Config{}, fmt.Errorf("Unmarshaling %s: %s", res.Description(), err)
 	}
 
+	err = config.Validate()
+	if err != nil {
+		return Config{}, fmt.Errorf("Validating config: %s", err)
+	}
+
 	return config, nil
+}
+
+func (c Config) Validate() error {
+	if c.APIVersion != configAPIVersion {
+		return fmt.Errorf("Validating apiVersion: Unknown version (known: %s)", configAPIVersion)
+	}
+	if c.Kind != configKind {
+		return fmt.Errorf("Validating kind: Unknown kind (known: %s)", configKind)
+	}
+
+	if len(c.MinimumRequiredVersion) > 0 {
+		if c.MinimumRequiredVersion[0] == 'v' {
+			return fmt.Errorf("Validating minimum version: Must not have prefix 'v' (e.g. '0.8.0')")
+		}
+
+		userConstraint, err := semver.NewConstraint(">=" + c.MinimumRequiredVersion)
+		if err != nil {
+			return fmt.Errorf("Parsing minimum version constraint: %s", err)
+		}
+
+		kappVersion, err := semver.NewVersion(version.Version)
+		if err != nil {
+			return fmt.Errorf("Parsing version constraint: %s", err)
+		}
+
+		if !userConstraint.Check(kappVersion) {
+			return fmt.Errorf("kapp version '%s' does "+
+				"not meet the minimum required version '%s'", version.Version, c.MinimumRequiredVersion)
+		}
+	}
+
+	return nil
 }
 
 func (r RebaseRule) AsMods() []ctlres.ResourceModWithMultiple {
