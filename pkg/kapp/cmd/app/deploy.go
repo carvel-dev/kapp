@@ -148,6 +148,9 @@ func (o *DeployOptions) Run() error {
 		if o.DiffFlags.Run && o.DiffFlags.ExitStatus {
 			return DeployDiffExitStatus{hasNoChanges}
 		}
+		if o.ApplyFlags.ExitStatus {
+			return DeployApplyExitStatus{hasNoChanges}
+		}
 		return nil
 	}
 
@@ -181,14 +184,21 @@ func (o *DeployOptions) Run() error {
 		IgnoreSuccessErr: true,
 	}
 
-	return touch.Do(func() error {
+	err = touch.Do(func() error {
 		err := clusterChangeSet.Apply(clusterChangesGraph)
 		if err != nil {
 			return err
 		}
-
 		return app.UpdateUsedGVs(failingAPIServicesPolicy.GVs(newResources, nil))
 	})
+	if err != nil {
+		return err
+	}
+
+	if o.ApplyFlags.ExitStatus {
+		return DeployApplyExitStatus{false}
+	}
+	return nil
 }
 
 func (o *DeployOptions) newResources(

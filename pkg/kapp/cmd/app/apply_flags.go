@@ -28,6 +28,8 @@ var (
 type ApplyFlags struct {
 	ctlcap.ClusterChangeSetOpts
 	ctlcap.ClusterChangeOpts
+
+	ExitStatus bool
 }
 
 func (s *ApplyFlags) SetWithDefaults(prefix string, defaults ApplyFlags, cmd *cobra.Command) {
@@ -48,6 +50,8 @@ func (s *ApplyFlags) SetWithDefaults(prefix string, defaults ApplyFlags, cmd *co
 		mustParseDuration("15m"), "Maximum amount of time to wait")
 	cmd.Flags().DurationVar(&s.WaitingChangesOpts.CheckInterval, prefix+"wait-check-interval",
 		mustParseDuration("1s"), "Amount of time to sleep between checks while waiting")
+
+	cmd.Flags().BoolVar(&s.ExitStatus, prefix+"exit-status", false, "Return specific exit status based on number of changes")
 }
 
 func mustParseDuration(str string) time.Duration {
