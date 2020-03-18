@@ -196,7 +196,7 @@ func (o *DeployOptions) Run() error {
 	}
 
 	if o.ApplyFlags.ExitStatus {
-		return DeployApplyExitStatus{false}
+		return DeployApplyExitStatus{hasNoChanges}
 	}
 	return nil
 }

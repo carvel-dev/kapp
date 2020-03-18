@@ -77,12 +77,16 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	clusterChangeSet, clusterChangesGraph, err := o.calculateAndPresentChanges(existingResources, supportObjs)
+	clusterChangeSet, clusterChangesGraph, hasNoChanges, err :=
+		o.calculateAndPresentChanges(existingResources, supportObjs)
 	if err != nil {
 		return err
 	}
 
 	if o.DiffFlags.Run {
+		if o.DiffFlags.ExitStatus {
+			return DeployDiffExitStatus{hasNoChanges}
+		}
 		return nil
 	}
 
@@ -93,18 +97,24 @@ func (o *DeleteOptions) Run() error {
 
 	touch := ctlapp.Touch{App: app, Description: "delete", IgnoreSuccessErr: true}
 
-	return touch.Do(func() error {
+	err = touch.Do(func() error {
 		err := clusterChangeSet.Apply(clusterChangesGraph)
 		if err != nil {
 			return err
 		}
-
 		if fullyDeleteApp {
 			return app.Delete()
 		}
-
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	if o.ApplyFlags.ExitStatus {
+		return DeployApplyExitStatus{hasNoChanges}
+	}
+	return nil
 }
 
 func (o *DeleteOptions) existingResources(app ctlapp.App,
@@ -143,7 +153,7 @@ func (o *DeleteOptions) existingResources(app ctlapp.App,
 }
 
 func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Resource,
-	supportObjs AppFactorySupportObjs) (ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, error) {
+	supportObjs AppFactorySupportObjs) (ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, bool, error) {
 
 	var clusterChangeSet ctlcap.ClusterChangeSet
 
@@ -153,7 +163,7 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 
 		changes, err := changeSetFactory.New(existingResources, nil).Calculate()
 		if err != nil {
-			return ctlcap.ClusterChangeSet{}, nil, err
+			return ctlcap.ClusterChangeSet{}, nil, false, err
 		}
 
 		{ // Build cluster changes based on diff changes
@@ -174,7 +184,7 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 
 	clusterChanges, clusterChangesGraph, err := clusterChangeSet.Calculate()
 	if err != nil {
-		return ctlcap.ClusterChangeSet{}, nil, err
+		return ctlcap.ClusterChangeSet{}, nil, false, err
 	}
 
 	{ // Present cluster changes in UI
@@ -183,7 +193,7 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 		changeSetView.Print(o.ui)
 	}
 
-	return clusterChangeSet, clusterChangesGraph, nil
+	return clusterChangeSet, clusterChangesGraph, (len(clusterChanges) == 0), nil
 }
 
 const (
