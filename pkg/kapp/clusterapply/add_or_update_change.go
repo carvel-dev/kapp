@@ -13,6 +13,10 @@ import (
 )
 
 const (
+	createStrategyAnnKey                   = "kapp.k14s.io/create-strategy"
+	createStrategyCreateAnnValue           = ""
+	createStrategyFallbackOnUpdateAnnValue = "fallback-on-update"
+
 	updateStrategyAnnKey                    = "kapp.k14s.io/update-strategy"
 	updateStrategyUpdateAnnValue            = ""
 	updateStrategyFallbackOnReplaceAnnValue = "fallback-on-replace"
@@ -37,14 +41,41 @@ func (c AddOrUpdateChange) Apply() error {
 
 	switch op {
 	case ctldiff.ChangeOpAdd:
-		createdRes, err := c.identifiedResources.Create(c.change.NewResource())
-		if err != nil {
-			return err
+		newRes := c.change.NewResource()
+
+		strategy, found := newRes.Annotations()[createStrategyAnnKey]
+		if !found {
+			strategy = createStrategyCreateAnnValue
 		}
 
-		err = c.recordAppliedResource(createdRes)
-		if err != nil {
-			return err
+		switch strategy {
+		case createStrategyCreateAnnValue:
+			createdRes, err := c.identifiedResources.Create(newRes)
+			if err != nil {
+				return err
+			}
+
+			err = c.recordAppliedResource(createdRes)
+			if err != nil {
+				return err
+			}
+
+		case createStrategyFallbackOnUpdateAnnValue:
+			createdRes, err := c.identifiedResources.Create(newRes)
+			if err != nil {
+				if errors.IsAlreadyExists(err) {
+					return c.tryToUpdateAfterCreateConflict()
+				}
+				return err
+			}
+
+			err = c.recordAppliedResource(createdRes)
+			if err != nil {
+				return err
+			}
+
+		default:
+			return fmt.Errorf("Unknown create strategy: %s", strategy)
 		}
 
 	case ctldiff.ChangeOpUpdate:
@@ -161,6 +192,46 @@ func (a AddOrUpdateChange) tryToResolveUpdateConflict(origErr error) error {
 	}
 
 	return fmt.Errorf(errMsgPrefix+"(tried multiple times): %s", origErr)
+}
+
+func (a AddOrUpdateChange) tryToUpdateAfterCreateConflict() error {
+	var lastUpdateErr error
+
+	for i := 0; i < 10; i++ {
+		latestExistingRes, err := a.identifiedResources.Get(a.change.NewResource())
+		if err != nil {
+			return err
+		}
+
+		changeSet := a.changeSetFactory.New([]ctlres.Resource{latestExistingRes},
+			[]ctlres.Resource{a.change.AppliedResource()})
+
+		recalcChanges, err := changeSet.Calculate()
+		if err != nil {
+			return err
+		}
+
+		if len(recalcChanges) != 1 {
+			return fmt.Errorf("Expected exactly one change when recalculating conflicting change")
+		}
+		if recalcChanges[0].Op() != ctldiff.ChangeOpUpdate {
+			return fmt.Errorf("Expected recalculated change to be an update")
+		}
+
+		updatedRes, err := a.identifiedResources.Update(recalcChanges[0].NewResource())
+		if err != nil {
+			if errors.IsConflict(err) {
+				lastUpdateErr = err
+				continue
+			}
+			return err
+		}
+
+		return a.recordAppliedResource(updatedRes)
+	}
+
+	return fmt.Errorf("Failed to update (after trying to create) "+
+		"due to resource conflict (tried multiple times): %s", lastUpdateErr)
 }
 
 type SpecificResource interface {

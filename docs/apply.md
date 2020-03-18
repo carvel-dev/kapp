@@ -16,6 +16,10 @@ Related: [ownership label rules](config.md) and [label scoping rules](config.md)
 
 ### Controlling apply via resource annotations
 
+- `kapp.k14s.io/create-strategy` annotation controls create behaviour (rarely necessary)
+
+  Possible values `` (default), `fallback-on-update`. In some cases creation of a resource may conflict with that resource being created in the cluster by other means (often automated). An example of that is creation of default ServiceAccount by kapp racing with Kubernetes service accounts controller doing the same thing. By specifying `fallback-on-update` value, kapp will catch resource creation conflicts and apply resource as an update.
+
 - `kapp.k14s.io/update-strategy` annotation controls update behaviour
 
 	Possible values: `` (default), `fallback-on-replace`, `always-replace`. In some cases entire resources or subset resource fields are immutable which forces kapp users to specify how to apply wanted update.
