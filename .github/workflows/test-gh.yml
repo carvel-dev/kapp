@@ -13,6 +13,10 @@ jobs:
       uses: actions/checkout@v1
       with:
         path: src/github.com/k14s/kapp
+    - name: Create k8s Kind Cluster
+      uses: helm/kind-action@v1.0.0-alpha.3
+      with:
+        cluster_name: kapp
     - name: Run Tests
       run: |
         set -e -x
@@ -24,7 +28,8 @@ jobs:
         rm -f tmp-k14s/bin/kapp
         export PATH=`pwd`/tmp-k14s/bin:$PATH
 
-        ./hack/build.sh
-        ./hack/test.sh
         ./hack/build-binaries.sh
-        # TODO no e2e since there is no k8s env
+
+        export KAPP_E2E_NAMESPACE=kapp-test
+        kubectl create ns $KAPP_E2E_NAMESPACE
+        ./hack/test-all.sh
