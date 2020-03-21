@@ -25,7 +25,7 @@ github.com/cppforlife/go-cli-ui/ui/test
 github.com/cppforlife/go-patch/patch
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 github.com/dgrijalva/jwt-go
-# github.com/fatih/color v1.7.0
+# github.com/fatih/color v1.7.0 => github.com/k14s/color v1.9.1-0.20200321223841-ba5534bd301c
 github.com/fatih/color
 # github.com/ghodss/yaml v1.0.0
 github.com/ghodss/yaml
@@ -69,9 +69,9 @@ github.com/inconshreveable/mousetrap
 github.com/json-iterator/go
 # github.com/k14s/kapp-controller v0.1.0
 github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1
-# github.com/mattn/go-colorable v0.0.9
+# github.com/mattn/go-colorable v0.1.4
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.3
+# github.com/mattn/go-isatty v0.0.11
 github.com/mattn/go-isatty
 # github.com/mitchellh/go-wordwrap v1.0.0
 github.com/mitchellh/go-wordwrap
@@ -103,7 +103,7 @@ golang.org/x/oauth2/google
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e
+# golang.org/x/sys v0.0.0-20191026070338-33540a1f6037
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.0

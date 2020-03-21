@@ -27,8 +27,6 @@ require (
 	github.com/json-iterator/go v0.0.0-20180701071628-ab8a2e0c74be // indirect
 	github.com/k14s/kapp-controller v0.1.0
 	github.com/kr/pty v1.1.8 // indirect
-	github.com/mattn/go-colorable v0.0.9 // indirect
-	github.com/mattn/go-isatty v0.0.3 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.0
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 // indirect
@@ -52,3 +50,5 @@ require (
 )
 
 replace github.com/aryann/difflib => github.com/k14s/difflib v0.0.0-20200108171459-b101e55e0592
+
+replace github.com/fatih/color => github.com/k14s/color v1.9.1-0.20200321223841-ba5534bd301c
