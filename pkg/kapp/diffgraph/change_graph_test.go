@@ -182,7 +182,7 @@ metadata:
 	if err == nil {
 		t.Fatalf("Expected graph to fail building")
 	}
-	if err.Error() != "Detected cycle in grouped changes: job/job1 () cluster -> job/job2 () cluster -> job/job1 () cluster" {
+	if err.Error() != "Detected cycle while ordering changes: [job/job1 () cluster] -> [job/job2 () cluster] -> [job/job1 () cluster] (found repeated: job/job1 () cluster)" {
 		t.Fatalf("Expected to detect cycle: %s", err)
 	}
 }
@@ -215,7 +215,7 @@ metadata:
 	if err == nil {
 		t.Fatalf("Expected graph to fail building")
 	}
-	if err.Error() != "Detected cycle in grouped changes: job/job1 () cluster -> job/job3 () cluster -> job/job2 () cluster -> job/job1 () cluster" {
+	if err.Error() != "Detected cycle while ordering changes: [job/job1 () cluster] -> [job/job3 () cluster] -> [job/job2 () cluster] -> [job/job1 () cluster] (found repeated: job/job1 () cluster)" {
 		t.Fatalf("Expected to detect cycle: %s", err)
 	}
 }
@@ -241,7 +241,7 @@ metadata:
 	if err == nil {
 		t.Fatalf("Expected graph to fail building")
 	}
-	if err.Error() != "Detected cycle in grouped changes: job/job1 () cluster -> job/job2 () cluster -> job/job1 () cluster" {
+	if err.Error() != "Detected cycle while ordering changes: [job/job1 () cluster] -> [job/job2 () cluster] -> [job/job1 () cluster] (found repeated: job/job1 () cluster)" {
 		t.Fatalf("Expected to detect cycle: %s", err)
 	}
 }
@@ -273,7 +273,7 @@ metadata:
 	if err == nil {
 		t.Fatalf("Expected graph to fail building")
 	}
-	if err.Error() != "Detected cycle in grouped changes: job/job3 () cluster -> job/job1 () cluster -> job/job2 () cluster -> job/job1 () cluster" {
+	if err.Error() != "Detected cycle while ordering changes: [job/job3 () cluster] -> [job/job1 () cluster] -> [job/job2 () cluster] -> [job/job1 () cluster] (found repeated: job/job1 () cluster)" {
 		t.Fatalf("Expected to detect cycle: %s", err)
 	}
 }
@@ -292,7 +292,7 @@ metadata:
 	if err == nil {
 		t.Fatalf("Expected graph to fail building")
 	}
-	if err.Error() != "Detected cycle in grouped changes: job/job1 () cluster -> job/job1 () cluster" {
+	if err.Error() != "Detected cycle while ordering changes: [job/job1 () cluster] -> [job/job1 () cluster] (found repeated: job/job1 () cluster)" {
 		t.Fatalf("Expected to detect cycle: %s", err)
 	}
 }

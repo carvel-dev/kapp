@@ -94,23 +94,25 @@ func (g *ChangeGraph) printChanges(changes []*Change, indent string) string {
 
 func (g *ChangeGraph) checkCycles() error {
 	for _, change := range g.changes {
-		changeDesc := change.Change.Resource().Description()
+		changeDesc := fmt.Sprintf("[%s]", change.Change.Resource().Description())
 
 		err := g.checkCyclesInChanges(change.WaitingFor, []*Change{change}, changeDesc)
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
 func (g *ChangeGraph) checkCyclesInChanges(changes []*Change, visitedChanges []*Change, descPath string) error {
 	for _, change := range changes {
-		changeDesc := fmt.Sprintf("%s -> %s", descPath, change.Change.Resource().Description())
+		changeDesc := fmt.Sprintf("%s -> [%s]", descPath, change.Change.Resource().Description())
 
 		for _, visitedChange := range visitedChanges {
 			if change == visitedChange {
-				return fmt.Errorf("Detected cycle in grouped changes: %s", changeDesc)
+				return fmt.Errorf("Detected cycle while ordering changes: %s (found repeated: %s)",
+					changeDesc, change.Change.Resource().Description())
 			}
 		}
 
