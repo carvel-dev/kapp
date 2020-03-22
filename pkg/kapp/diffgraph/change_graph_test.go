@@ -187,6 +187,97 @@ metadata:
 	}
 }
 
+func TestChangeGraphCircularTransitive(t *testing.T) {
+	circularDep1YAML := `
+kind: Job
+metadata:
+  name: job1
+  annotations:
+    kapp.k14s.io/change-group: "apps.big.co/job1"
+    kapp.k14s.io/change-rule: "upsert after upserting apps.big.co/job3"
+---
+kind: Job
+metadata:
+  name: job2
+  annotations:
+    kapp.k14s.io/change-group: "apps.big.co/job2"
+    kapp.k14s.io/change-rule: "upsert after upserting apps.big.co/job1"
+---
+kind: Job
+metadata:
+  name: job3
+  annotations:
+    kapp.k14s.io/change-group: "apps.big.co/job3"
+    kapp.k14s.io/change-rule: "upsert after upserting apps.big.co/job2"
+`
+
+	_, err := buildChangeGraph(circularDep1YAML, ctldgraph.ActualChangeOpUpsert, t)
+	if err == nil {
+		t.Fatalf("Expected graph to fail building")
+	}
+	if err.Error() != "Detected cycle in grouped changes: job/job1 () cluster -> job/job3 () cluster -> job/job2 () cluster -> job/job1 () cluster" {
+		t.Fatalf("Expected to detect cycle: %s", err)
+	}
+}
+
+func TestChangeGraphCircularDirect(t *testing.T) {
+	circularDep1YAML := `
+kind: Job
+metadata:
+  name: job1
+  annotations:
+    kapp.k14s.io/change-group: "apps.big.co/job1"
+    kapp.k14s.io/change-rule: "upsert after upserting apps.big.co/job2"
+---
+kind: Job
+metadata:
+  name: job2
+  annotations:
+    kapp.k14s.io/change-group: "apps.big.co/job2"
+    kapp.k14s.io/change-rule: "upsert after upserting apps.big.co/job1"
+`
+
+	_, err := buildChangeGraph(circularDep1YAML, ctldgraph.ActualChangeOpUpsert, t)
+	if err == nil {
+		t.Fatalf("Expected graph to fail building")
+	}
+	if err.Error() != "Detected cycle in grouped changes: job/job1 () cluster -> job/job2 () cluster -> job/job1 () cluster" {
+		t.Fatalf("Expected to detect cycle: %s", err)
+	}
+}
+
+func TestChangeGraphCircularWithinADep(t *testing.T) {
+	circularDep1YAML := `
+kind: Job
+metadata:
+  name: job3
+  annotations:
+    kapp.k14s.io/change-rule: "upsert after upserting apps.big.co/job1"
+---
+kind: Job
+metadata:
+  name: job1
+  annotations:
+    kapp.k14s.io/change-group: "apps.big.co/job1"
+    kapp.k14s.io/change-rule: "upsert after upserting apps.big.co/job2"
+---
+kind: Job
+metadata:
+  name: job2
+  annotations:
+    kapp.k14s.io/change-group: "apps.big.co/job2"
+    kapp.k14s.io/change-rule: "upsert after upserting apps.big.co/job1"
+`
+
+	_, err := buildChangeGraph(circularDep1YAML, ctldgraph.ActualChangeOpUpsert, t)
+	if err == nil {
+		t.Fatalf("Expected graph to fail building")
+	}
+	if err.Error() != "Detected cycle in grouped changes: job/job3 () cluster -> job/job1 () cluster -> job/job2 () cluster -> job/job1 () cluster" {
+		t.Fatalf("Expected to detect cycle: %s", err)
+	}
+}
+
 func TestChangeGraphCircularSelf(t *testing.T) {
 	circularDep2YAML := `
 kind: Job

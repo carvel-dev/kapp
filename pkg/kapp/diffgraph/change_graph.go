@@ -96,7 +96,7 @@ func (g *ChangeGraph) checkCycles() error {
 	for _, change := range g.changes {
 		changeDesc := change.Change.Resource().Description()
 
-		err := g.checkCyclesInChanges(change.WaitingFor, change, changeDesc)
+		err := g.checkCyclesInChanges(change.WaitingFor, []*Change{change}, changeDesc)
 		if err != nil {
 			return err
 		}
@@ -104,17 +104,21 @@ func (g *ChangeGraph) checkCycles() error {
 	return nil
 }
 
-func (g *ChangeGraph) checkCyclesInChanges(changes []*Change, selfChange *Change, descPath string) error {
+func (g *ChangeGraph) checkCyclesInChanges(changes []*Change, visitedChanges []*Change, descPath string) error {
 	for _, change := range changes {
 		changeDesc := fmt.Sprintf("%s -> %s", descPath, change.Change.Resource().Description())
-		if change == selfChange {
-			return fmt.Errorf("Detected cycle in grouped changes: %s", changeDesc)
+
+		for _, visitedChange := range visitedChanges {
+			if change == visitedChange {
+				return fmt.Errorf("Detected cycle in grouped changes: %s", changeDesc)
+			}
 		}
 
-		err := g.checkCyclesInChanges(change.WaitingFor, selfChange, changeDesc)
+		err := g.checkCyclesInChanges(change.WaitingFor, append([]*Change{change}, visitedChanges...), changeDesc)
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
