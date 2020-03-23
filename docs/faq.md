@@ -61,3 +61,8 @@ Consider using [ytt](https://get-ytt.io) and [its overlay feature](https://githu
 ### Changes detected after resource is modified server-side
 
 There might be cases where other system actors (various controllers) may modify resource outside of kapp. Common example is Deployment's `spec.replicas` field is modified by Horizontal Pod Autoscaler controller. To let kapp know of such external behaviour use custom `rebaseRules` configuration (see [HPA and Deployment rebase](https://github.com/k14s/kapp/blob/master/docs/hpa-deployment-rebase.md) for details).
+
+---
+### Colors are not showing up in my CI build, in my terminal, etc.
+
+Try setting `FORCE_COLOR=1` environment variable to force enabling color output. Available in v0.23.0+.
