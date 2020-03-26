@@ -203,6 +203,9 @@ templateRules:
     - path: [spec, volumes, {allIndexes: true}, configMap]
       resourceMatchers:
       - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
+    - path: [spec, template, "spec", "volumes", {allIndexes: true}, configMap]
+      resourceMatchers:
+      - apiVersionKindMatcher: {apiVersion: batch/v1, kind: Job}
 
 - resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: v1, kind: Secret}
