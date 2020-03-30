@@ -152,6 +152,8 @@ ownershipLabelRules:
   - apiVersionKindMatcher: {apiVersion: apps/v1beta2, kind: DaemonSet}
   - apiVersionKindMatcher: {apiVersion: apps/v1beta1, kind: DaemonSet}
   - apiVersionKindMatcher: {apiVersion: extensions/v1beta1, kind: DaemonSet}
+  # Job
+  - apiVersionKindMatcher: {apiVersion: batch/v1, kind: Job}
 
 # TODO It seems that these labels are being ignored
 # https://github.com/kubernetes/kubernetes/issues/74916
@@ -203,9 +205,6 @@ templateRules:
     - path: [spec, volumes, {allIndexes: true}, configMap]
       resourceMatchers:
       - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
-    - path: [spec, template, "spec", "volumes", {allIndexes: true}, configMap]
-      resourceMatchers:
-      - apiVersionKindMatcher: {apiVersion: batch/v1, kind: Job}
 
 - resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: v1, kind: Secret}
