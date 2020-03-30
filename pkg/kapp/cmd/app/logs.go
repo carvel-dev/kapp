@@ -33,6 +33,12 @@ func NewLogsCmd(o *LogsOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		Annotations: map[string]string{
 			cmdcore.AppHelpGroup.Key: cmdcore.AppHelpGroup.Value,
 		},
+		Example: `
+  # Follow all pod logs in app 'app1'
+  kapp logs -a app1 -f
+
+  # Show logs from pods that start with 'web'
+  kapp logs -a app1 -f -m web%`,
 	}
 	o.AppFlags.Set(cmd, flagsFactory)
 	o.LogsFlags.Set(cmd)

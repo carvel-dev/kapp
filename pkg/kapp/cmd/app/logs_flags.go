@@ -18,7 +18,7 @@ func (s *LogsFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&s.Follow, "follow", "f", false, "As new pods are added, new pod logs will be printed")
 	cmd.Flags().Int64Var(&s.Lines, "lines", 10, "Limit to number of lines (use -1 to remove limit)")
 	cmd.Flags().BoolVar(&s.ContainerTag, "container-tag", true, "Include container tag")
-	cmd.Flags().StringVarP(&s.PodName, "pod-name", "m", "", "Set partial pod name to filter logs")
+	cmd.Flags().StringVarP(&s.PodName, "pod-name", "m", "", "Set pod name to filter logs (% acts as wildcard, e.g. 'app%')")
 }
 
 func (s *LogsFlags) PodLogOpts() (ctllogs.PodLogOpts, error) {
