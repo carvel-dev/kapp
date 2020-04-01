@@ -91,7 +91,7 @@ rebaseRules:
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
   type: copy
   sources: [new, existing]
-  resourceMatchers: &builtinAppsDeploymentWithRevAnnKey
+  resourceMatchers: &appsV1DeploymentWithRevAnnKey
   - apiVersionKindMatcher: {apiVersion: apps/v1, kind: Deployment}
   - apiVersionKindMatcher: {apiVersion: apps/v1beta1, kind: Deployment}
   - apiVersionKindMatcher: {apiVersion: apps/v1beta2, kind: Deployment}
@@ -115,7 +115,7 @@ rebaseRules:
 
 diffAgainstLastAppliedFieldExclusionRules:
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
-  resourceMatchers: *builtinAppsDeploymentWithRevAnnKey
+  resourceMatchers: *appsV1DeploymentWithRevAnnKey
 
 diffMaskRules:
 - path: [data]
@@ -131,7 +131,7 @@ ownershipLabelRules:
   - allResourceMatcher: {}
 
 - path: [spec, template, metadata, labels]
-  resourceMatchers: &builtinAppsControllers
+  resourceMatchers: &withPodTemplate
   # Deployment
   - apiVersionKindMatcher: {apiVersion: apps/v1, kind: Deployment}
   - apiVersionKindMatcher: {apiVersion: apps/v1beta2, kind: Deployment}
@@ -181,7 +181,7 @@ labelScopingRules:
   - apiVersionKindMatcher: {apiVersion: v1, kind: Service}
 
 - path: [spec, selector, matchLabels]
-  resourceMatchers: *builtinAppsControllers
+  resourceMatchers: *withPodTemplate
 
 - path: [spec, selector, matchLabels]
   resourceMatchers:
@@ -193,15 +193,15 @@ templateRules:
   affectedResources:
     objectReferences:
     - path: [spec, template, spec, containers, {allIndexes: true}, env, {allIndexes: true}, valueFrom, configMapKeyRef]
-      resourceMatchers: *builtinAppsControllers
+      resourceMatchers: *withPodTemplate
     - path: [spec, template, spec, containers, {allIndexes: true}, envFrom, {allIndexes: true}, configMapRef]
-      resourceMatchers: *builtinAppsControllers
+      resourceMatchers: *withPodTemplate
     - path: [spec, template, spec, initContainers, {allIndexes: true}, env, {allIndexes: true}, valueFrom, configMapKeyRef]
-      resourceMatchers: *builtinAppsControllers
+      resourceMatchers: *withPodTemplate
     - path: [spec, template, spec, initContainers, {allIndexes: true}, envFrom, {allIndexes: true}, configMapRef]
-      resourceMatchers: *builtinAppsControllers
+      resourceMatchers: *withPodTemplate
     - path: [spec, template, spec, volumes, {allIndexes: true}, configMap]
-      resourceMatchers: *builtinAppsControllers
+      resourceMatchers: *withPodTemplate
     - path: [spec, volumes, {allIndexes: true}, configMap]
       resourceMatchers:
       - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
@@ -211,15 +211,15 @@ templateRules:
   affectedResources:
     objectReferences:
     - path: [spec, template, spec, containers, {allIndexes: true}, env, {allIndexes: true}, valueFrom, secretKeyRef]
-      resourceMatchers: *builtinAppsControllers
+      resourceMatchers: *withPodTemplate
     - path: [spec, template, spec, containers, {allIndexes: true}, envFrom, {allIndexes: true}, secretRef]
-      resourceMatchers: *builtinAppsControllers
+      resourceMatchers: *withPodTemplate
     - path: [spec, template, spec, initContainers, {allIndexes: true}, env, {allIndexes: true}, valueFrom, secretKeyRef]
-      resourceMatchers: *builtinAppsControllers
+      resourceMatchers: *withPodTemplate
     - path: [spec, template, spec, initContainers, {allIndexes: true}, envFrom, {allIndexes: true}, secretRef]
-      resourceMatchers: *builtinAppsControllers
+      resourceMatchers: *withPodTemplate
     - path: [spec, template, spec, volumes, {allIndexes: true}, secret]
-      resourceMatchers: *builtinAppsControllers
+      resourceMatchers: *withPodTemplate
       nameKey: secretName
     - path: [spec, volumes, {allIndexes: true}, secret]
       resourceMatchers:
