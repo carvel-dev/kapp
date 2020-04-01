@@ -84,6 +84,94 @@ metadata:
 	}
 }
 
+func TestChangeGraphWithMultipleRules(t *testing.T) {
+	configYAML := `
+kind: Job
+metadata:
+  name: import-etcd-into-db
+  annotations:
+    kapp.k14s.io/change-group: "apps.big.co/import-etcd-into-db"
+---
+kind: Job
+metadata:
+  name: after-migrations
+  annotations:
+    kapp.k14s.io/change-group: "apps.big.co/after-migrations"
+---
+kind: Job
+metadata:
+  name: migrations
+  annotations:
+    kapp.k14s.io/change-rule.rule1: "upsert after upserting apps.big.co/import-etcd-into-db"
+    kapp.k14s.io/change-rule.rule2: "upsert before upserting apps.big.co/after-migrations"
+`
+
+	graph, err := buildChangeGraph(configYAML, ctldgraph.ActualChangeOpUpsert, t)
+	if err != nil {
+		t.Fatalf("Expected graph to build")
+	}
+
+	output := strings.TrimSpace(graph.PrintStr())
+	expectedOutput := strings.TrimSpace(`
+(upsert) job/import-etcd-into-db () cluster
+(upsert) job/after-migrations () cluster
+  (upsert) job/migrations () cluster
+    (upsert) job/import-etcd-into-db () cluster
+(upsert) job/migrations () cluster
+  (upsert) job/import-etcd-into-db () cluster
+`)
+
+	if output != expectedOutput {
+		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", output, expectedOutput)
+	}
+}
+
+func TestChangeGraphWithMultipleGroups(t *testing.T) {
+	configYAML := `
+kind: Job
+metadata:
+  name: import-etcd-into-db
+  annotations:
+    kapp.k14s.io/change-group: "apps.big.co/import-etcd-into-db"
+---
+kind: Job
+metadata:
+  name: after-migrations
+  annotations:
+    kapp.k14s.io/change-group.group1: "apps.big.co/after-migrations-1"
+    kapp.k14s.io/change-group.group2: "apps.big.co/after-migrations-2"
+---
+kind: Job
+metadata:
+  name: migrations
+  annotations:
+    kapp.k14s.io/change-rule.rule1: "upsert after upserting apps.big.co/import-etcd-into-db"
+    kapp.k14s.io/change-rule.rule2: "upsert before upserting apps.big.co/after-migrations-1"
+    kapp.k14s.io/change-rule.rule3: "upsert before upserting apps.big.co/after-migrations-2"
+`
+
+	graph, err := buildChangeGraph(configYAML, ctldgraph.ActualChangeOpUpsert, t)
+	if err != nil {
+		t.Fatalf("Expected graph to build")
+	}
+
+	output := strings.TrimSpace(graph.PrintStr())
+	expectedOutput := strings.TrimSpace(`
+(upsert) job/import-etcd-into-db () cluster
+(upsert) job/after-migrations () cluster
+  (upsert) job/migrations () cluster
+    (upsert) job/import-etcd-into-db () cluster
+  (upsert) job/migrations () cluster
+    (upsert) job/import-etcd-into-db () cluster
+(upsert) job/migrations () cluster
+  (upsert) job/import-etcd-into-db () cluster
+`)
+
+	if output != expectedOutput {
+		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", output, expectedOutput)
+	}
+}
+
 func TestChangeGraphWithDeletes(t *testing.T) {
 	configYAML := `
 kind: ConfigMap

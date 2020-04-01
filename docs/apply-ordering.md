@@ -7,10 +7,10 @@ kapp includes builtin rules to make sure certain changes are applied in particul
 
 Additionally kapp allows to customize order of changes via following resource annotations:
 
-- `kapp.k14s.io/change-group` annotation to group one or more resource changes into arbitrarily named group. Example: `apps.big.co/db-migrations`.
-- `kapp.k14s.io/change-rule` annotation to control when resource change should be applied (created, updated, or deleted) relative to other changes. You can specify multiple change rules by suffixing each annotation with a `.x` where `x` is some number (e.g. `kapp.k14s.io/change-rule.1`).
+- `kapp.k14s.io/change-group` annotation to group one or more resource changes into arbitrarily named group. Example: `apps.big.co/db-migrations`. You can specify multiple change groups by suffixing each annotation with a `.x` where `x` is unique identifier (e.g. `kapp.k14s.io/change-group.istio-sidecar-order`).
+- `kapp.k14s.io/change-rule` annotation to control when resource change should be applied (created, updated, or deleted) relative to other changes. You can specify multiple change rules by suffixing each annotation with a `.x` where `x` is unique identifier (e.g. `kapp.k14s.io/change-rule.istio-sidecar-order`).
 
-`kapp.k14s.io/change-rule` format is as follows: `(upsert|delete) (after|before) (upserting|deleting) <name>`. For example:
+`kapp.k14s.io/change-rule` annotation value format is as follows: `(upsert|delete) (after|before) (upserting|deleting) <name>`. For example:
 
 - `kapp.k14s.io/change-rule: "upsert after upserting apps.big.co/db-migrations"`
 - `kapp.k14s.io/change-rule: "delete before upserting apps.big.co/service"`
