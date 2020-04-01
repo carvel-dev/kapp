@@ -10,6 +10,8 @@ kapp comes with __built-in configuration__ (see it via `kapp deploy-config`) tha
 apiVersion: kapp.k14s.io/v1alpha1
 kind: Config
 
+minimumRequiredVersion: 0.23.0
+
 rebaseRules:
 - path: [spec, clusterIP]
   type: copy
@@ -59,6 +61,8 @@ diffMaskRules:
       apiVersion: v1
       kind: Secret
 ```
+
+`minimumRequiredVersion` forces kapp to exit with a validation error if kapp's version is below minimum required version. Available in v0.23.0+.
 
 `rebaseRules` specify origin of field values. Kubernetes cluster generates (or defaults) some field values, hence these values will need to be merged in future to avoid flagging them during diffing. Common example is `v1/Service`'s `spec.clusterIP` field is automatically populated if it's not set. See [HPA and Deployment rebase](hpa-deployment-rebase.md) or [PersistentVolumeClaim rebase](rebase-pvc.md) examples.
 
