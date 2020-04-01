@@ -62,22 +62,39 @@ diffMaskRules:
       kind: Secret
 ```
 
+#### minimumRequiredVersion
+
 `minimumRequiredVersion` forces kapp to exit with a validation error if kapp's version is below minimum required version. Available in v0.23.0+.
+
+#### rebaseRules
 
 `rebaseRules` specify origin of field values. Kubernetes cluster generates (or defaults) some field values, hence these values will need to be merged in future to avoid flagging them during diffing. Common example is `v1/Service`'s `spec.clusterIP` field is automatically populated if it's not set. See [HPA and Deployment rebase](hpa-deployment-rebase.md) or [PersistentVolumeClaim rebase](rebase-pvc.md) examples.
 
+#### ownershipLabelRules
+
 `ownershipLabelRules` specify locations for inserting kapp generated labels. These labels allow kapp to track which resources belong to which application. For resources that describe creation of other resources (e.g. `Deployment` or `StatefulSet`), configuration may need to specify where to insert labels for child resources that will be created.
+
+#### labelScopingRules
 
 `labelScopingRules` specify locations for inserting kapp generated labels that scope resources to resources within current application. `kapp.k14s.io/disable-label-scoping: ""` (value must be empty) annotation can be used to exclude an individual resource from label scoping.
 
+#### templateRules
+
 `templateRules` how template resources affect other resources. In above example, template config maps are said to affect deployments.
+
+#### additionalLabels
 
 `additionalLabels` specify additional labels to apply to all resources for custom uses by the user (added based on `ownershipLabelRules`).
 
+#### diffAgainstLastAppliedFieldExclusionRules
+
 `diffAgainstLastAppliedFieldExclusionRules` specify which fields should be removed before diff-ing against last applied resource. These rules are useful for fields are "owned" by the cluster/controllers, and are only later updated. For example `Deployment` resource has an annotation that gets set after a little bit of time after resource is created/updated (not during resource admission). It's typically not necessary to use this configuration.
+
+#### diffMaskRules
 
 `diffMaskRules` specify which field values should be masked in diff. By default `v1/Secret`'s `data` fields are masked. Currently only applied to `deploy` command.
 
+---
 ### Resource matchers
 
 Resource matchers (as used by `rebaseRules` and `ownershipLabelRules`):
