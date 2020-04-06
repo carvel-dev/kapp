@@ -10,7 +10,7 @@ import (
 )
 
 func (r IdentifiedResources) PodResources(labelSelector labels.Selector) UniquePodWatcher {
-	return UniquePodWatcher{labelSelector, r.coreClient}
+	return UniquePodWatcher{labelSelector, r.resources.fallbackAllowedNamespaces, r.coreClient}
 }
 
 type PodWatcherI interface {
@@ -18,8 +18,9 @@ type PodWatcherI interface {
 }
 
 type UniquePodWatcher struct {
-	labelSelector labels.Selector
-	coreClient    kubernetes.Interface
+	labelSelector             labels.Selector
+	fallbackAllowedNamespaces []string
+	coreClient                kubernetes.Interface
 }
 
 var _ PodWatcherI = UniquePodWatcher{}
@@ -28,8 +29,15 @@ func (w UniquePodWatcher) Watch(podsToWatchCh chan corev1.Pod, cancelCh chan str
 	nonUniquePodsToWatchCh := make(chan corev1.Pod)
 
 	go func() {
+		namespace := ""
+		if len(w.fallbackAllowedNamespaces) > 0 {
+			// The '-n' flag can specify only 1 namespace, so there
+			// should be at most 1 item in fallbackAllowedNamespaces
+			namespace = w.fallbackAllowedNamespaces[0]
+		}
+
 		podWatcher := NewPodWatcher(
-			w.coreClient.CoreV1().Pods(""),
+			w.coreClient.CoreV1().Pods(namespace),
 			metav1.ListOptions{LabelSelector: w.labelSelector.String()},
 		)
 
