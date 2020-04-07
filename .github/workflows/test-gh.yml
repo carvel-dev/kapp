@@ -1,5 +1,5 @@
 name: test-gh
-on: [push]
+on: [push, pull_request]
 jobs:
   test-all:
     name: Test GH
