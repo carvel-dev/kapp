@@ -10,10 +10,11 @@ import (
 )
 
 type IdentifiedResources struct {
-	coreClient    kubernetes.Interface
-	resourceTypes ResourceTypes
-	resources     *Resources
-	logger        logger.Logger
+	coreClient                kubernetes.Interface
+	fallbackAllowedNamespaces []string
+	resourceTypes             ResourceTypes
+	resources                 *Resources
+	logger                    logger.Logger
 }
 
 func NewIdentifiedResources(coreClient kubernetes.Interface,
@@ -22,7 +23,7 @@ func NewIdentifiedResources(coreClient kubernetes.Interface,
 
 	resources := NewResources(resourceTypes, coreClient, dynamicClient, fallbackAllowedNamespaces, logger)
 
-	return IdentifiedResources{coreClient, resourceTypes, resources, logger.NewPrefixed("IdentifiedResources")}
+	return IdentifiedResources{coreClient, fallbackAllowedNamespaces, resourceTypes, resources, logger.NewPrefixed("IdentifiedResources")}
 }
 
 func (r IdentifiedResources) Create(resource Resource) (Resource, error) {
