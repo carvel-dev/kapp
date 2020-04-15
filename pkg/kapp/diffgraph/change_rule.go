@@ -22,10 +22,11 @@ const (
 
 // Example: upsert before deleting apps.big.co/etcd
 type ChangeRule struct {
-	Action       ChangeRuleAction
-	Order        ChangeRuleOrder
-	TargetAction ChangeRuleTargetAction
-	TargetGroup  ChangeGroup
+	Action           ChangeRuleAction
+	Order            ChangeRuleOrder
+	TargetAction     ChangeRuleTargetAction
+	TargetGroup      ChangeGroup
+	IgnoreIfCyclical bool
 }
 
 func NewChangeRuleFromAnnString(ann string) (ChangeRule, error) {

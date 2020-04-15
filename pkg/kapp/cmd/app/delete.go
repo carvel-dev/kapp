@@ -178,7 +178,8 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 				changeFactory, changeSetFactory, convergedResFactory, msgsUI)
 
 			clusterChangeSet = ctlcap.NewClusterChangeSet(
-				changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI)
+				changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory,
+				nil, nil, msgsUI, o.logger)
 		}
 	}
 

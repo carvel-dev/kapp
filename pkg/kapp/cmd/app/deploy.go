@@ -325,7 +325,8 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 			changeFactory, changeSetFactory, convergedResFactory, msgsUI)
 
 		clusterChangeSet = ctlcap.NewClusterChangeSet(
-			changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory, msgsUI)
+			changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory,
+			conf.AdditionalChangeGroups(), conf.AdditionalChangeRules(), msgsUI, o.logger)
 	}
 
 	clusterChanges, clusterChangesGraph, err := clusterChangeSet.Calculate()

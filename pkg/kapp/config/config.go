@@ -28,6 +28,11 @@ type Config struct {
 
 	AdditionalLabels                          map[string]string
 	DiffAgainstLastAppliedFieldExclusionRules []DiffAgainstLastAppliedFieldExclusionRule
+
+	// TODO additional?
+	// TODO validations
+	AdditionalChangeGroups []AdditionalChangeGroup
+	AdditionalChangeRules  []AdditionalChangeRule
 }
 
 type RebaseRule struct {
@@ -71,6 +76,17 @@ type TemplateAffectedObjRef struct {
 	ResourceMatchers []ResourceMatcher
 	Path             ctlres.Path
 	NameKey          string `json:"nameKey"`
+}
+
+type AdditionalChangeGroup struct {
+	Name             string
+	ResourceMatchers []ResourceMatcher
+}
+
+type AdditionalChangeRule struct {
+	Rules            []string
+	IgnoreIfCyclical bool
+	ResourceMatchers []ResourceMatcher
 }
 
 type ResourceMatchers []ResourceMatcher

@@ -103,3 +103,19 @@ func (c Conf) AdditionalLabels() map[string]string {
 	}
 	return result
 }
+
+func (c Conf) AdditionalChangeGroups() []AdditionalChangeGroup {
+	var result []AdditionalChangeGroup
+	for _, config := range c.configs {
+		result = append(result, config.AdditionalChangeGroups...)
+	}
+	return result
+}
+
+func (c Conf) AdditionalChangeRules() []AdditionalChangeRule {
+	var result []AdditionalChangeRule
+	for _, config := range c.configs {
+		result = append(result, config.AdditionalChangeRules...)
+	}
+	return result
+}

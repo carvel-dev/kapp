@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
@@ -159,8 +160,6 @@ metadata:
 	expectedOutput := strings.TrimSpace(`
 (upsert) job/import-etcd-into-db () cluster
 (upsert) job/after-migrations () cluster
-  (upsert) job/migrations () cluster
-    (upsert) job/import-etcd-into-db () cluster
   (upsert) job/migrations () cluster
     (upsert) job/import-etcd-into-db () cluster
 (upsert) job/migrations () cluster
@@ -396,7 +395,7 @@ func buildChangeGraph(resourcesBs string, op ctldgraph.ActualChangeOp, t *testin
 		actualChanges = append(actualChanges, actualChangeFromRes{res, op})
 	}
 
-	return ctldgraph.NewChangeGraph(actualChanges)
+	return ctldgraph.NewChangeGraph(actualChanges, nil, nil, logger.NewTODOLogger())
 }
 
 type actualChangeFromRes struct {

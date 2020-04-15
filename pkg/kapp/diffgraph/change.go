@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
@@ -32,11 +33,59 @@ type Change struct {
 	Change     ActualChange
 	WaitingFor []*Change
 
+	additionalChangeGroups []ctlconf.AdditionalChangeGroup
+	additionalChangeRules  []ctlconf.AdditionalChangeRule
+
 	groups *[]ChangeGroup
 	rules  *[]ChangeRule
 }
 
 type Changes []*Change
+
+func (c *Change) IsDirectlyWaitingFor(changeToFind *Change) bool {
+	for _, change := range c.WaitingFor {
+		if change == changeToFind {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *Change) IsTransitivelyWaitingFor(changeToFind *Change) bool {
+	alreadyChecked := map[*Change]struct{}{}
+	alreadyVisited := map[*Change]struct{}{}
+	return g.isTransitivelyWaitingFor(changeToFind, alreadyChecked, alreadyVisited)
+}
+
+func (g *Change) isTransitivelyWaitingFor(changeToFind *Change,
+	alreadyChecked map[*Change]struct{}, alreadyVisited map[*Change]struct{}) bool {
+
+	if g.IsDirectlyWaitingFor(changeToFind) {
+		return true
+	}
+
+	for _, change := range g.WaitingFor {
+		if _, checked := alreadyChecked[change]; checked {
+			continue
+		}
+		alreadyChecked[change] = struct{}{}
+
+		// Should not happen, but let's double check to avoid infinite loops
+		if _, visited := alreadyVisited[change]; visited {
+			panic(fmt.Sprintf("Change: Internal error: cycle detected: %s",
+				change.Change.Resource().Description()))
+		}
+		alreadyVisited[change] = struct{}{}
+
+		if change.isTransitivelyWaitingFor(changeToFind, alreadyChecked, alreadyVisited) {
+			return true
+		}
+
+		delete(alreadyVisited, change)
+	}
+
+	return false
+}
 
 func (c *Change) Groups() ([]ChangeGroup, error) {
 	if c.groups != nil {
@@ -44,10 +93,23 @@ func (c *Change) Groups() ([]ChangeGroup, error) {
 	}
 
 	var groups []ChangeGroup
+	res := c.Change.Resource()
 
-	for k, v := range c.Change.Resource().Annotations() {
+	for k, v := range res.Annotations() {
 		if k == changeGroupAnnKey || strings.HasPrefix(k, changeGroupAnnPrefixKey) {
 			groupKey, err := NewChangeGroupFromAnnString(v)
+			if err != nil {
+				return nil, err
+			}
+			groups = append(groups, groupKey)
+		}
+	}
+
+	for _, groupConfig := range c.additionalChangeGroups {
+		rms := ctlconf.ResourceMatchers(groupConfig.ResourceMatchers).AsResourceMatchers()
+
+		if (ctlres.AnyMatcher{rms}).Matches(res) {
+			groupKey, err := NewChangeGroupFromAnnString(groupConfig.Name)
 			if err != nil {
 				return nil, err
 			}
@@ -72,14 +134,30 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 	}
 
 	var rules []ChangeRule
+	res := c.Change.Resource()
 
-	for k, v := range c.Change.Resource().Annotations() {
+	for k, v := range res.Annotations() {
 		if k == changeRuleAnnKey || strings.HasPrefix(k, changeRuleAnnPrefixKey) {
 			rule, err := NewChangeRuleFromAnnString(v)
 			if err != nil {
 				return nil, err
 			}
 			rules = append(rules, rule)
+		}
+	}
+
+	for _, ruleConfig := range c.additionalChangeRules {
+		rms := ctlconf.ResourceMatchers(ruleConfig.ResourceMatchers).AsResourceMatchers()
+
+		if (ctlres.AnyMatcher{rms}).Matches(res) {
+			for _, ruleStr := range ruleConfig.Rules {
+				rule, err := NewChangeRuleFromAnnString(ruleStr)
+				if err != nil {
+					return nil, err
+				}
+				rule.IgnoreIfCyclical = ruleConfig.IgnoreIfCyclical
+				rules = append(rules, rule)
+			}
 		}
 	}
 

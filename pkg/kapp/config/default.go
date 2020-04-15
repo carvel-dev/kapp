@@ -243,6 +243,49 @@ templateRules:
       resourceMatchers:
       - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
       nameKey: secretName
+
+additionalChangeGroups:
+- name: change-groups.kapp.k14s.io/storage-class
+  resourceMatchers:
+  - apiVersionKindMatcher: {kind: StorageClass, apiVersion: storage/v1}
+  - apiVersionKindMatcher: {kind: StorageClass, apiVersion: storage/v1beta1}
+
+- name: change-groups.kapp.k14s.io/storage
+  resourceMatchers:
+  - apiVersionKindMatcher: {kind: PersistentVolume, apiVersion: v1}
+  - apiVersionKindMatcher: {kind: PersistentVolumeClaim, apiVersion: v1}
+
+- name: change-groups.kapp.k14s.io/pod-related
+  resourceMatchers:
+  - apiVersionKindMatcher: {kind: NetworkPolicy, apiVersion: extensions/v1beta1}
+  - apiVersionKindMatcher: {kind: NetworkPolicy, apiVersion: networking/v1}
+  - apiVersionKindMatcher: {kind: ResourceQuota, apiVersion: v1}
+  - apiVersionKindMatcher: {kind: LimitRange, apiVersion: v1}
+  - apiVersionKindMatcher: {kind: PodSecurityPolicy, apiVersion: extensions/v1beta1}
+  - apiVersionKindMatcher: {kind: PodSecurityPolicy, apiVersion: policy/v1beta1}
+  - apiVersionKindMatcher: {kind: PodDisruptionBudget, apiVersion: policy/v1beta1}
+  - apiVersionKindMatcher: {kind: ServiceAccount, apiVersion: v1}
+  - apiVersionKindMatcher: {kind: Secret, apiVersion: v1}
+  - apiVersionKindMatcher: {kind: ConfigMap, apiVersion: v1}
+  - apiVersionKindMatcher: {kind: Service, apiVersion: v1}
+
+additionalChangeRules:
+- rules:
+  - "upsert after upserting change-groups.kapp.k14s.io/storage-class"
+  ignoreIfCyclical: true
+  resourceMatchers:
+  - apiVersionKindMatcher: {kind: PersistentVolume, apiVersion: v1}
+  - apiVersionKindMatcher: {kind: PersistentVolumeClaim, apiVersion: v1}
+
+- rules:
+  - "upsert after upserting change-groups.kapp.k14s.io/pod-related"
+  - "upsert after upserting change-groups.kapp.k14s.io/storage-class"
+  - "upsert after upserting change-groups.kapp.k14s.io/storage"
+  ignoreIfCyclical: true
+  resourceMatchers:
+  # [Note]: Apply all resources after pod-related change group as it's
+  # common for other resources to rely on ConfigMaps, Secrets, etc.
+  - allMatcher: {}
 `
 
 var defaultConfigRes = ctlres.MustNewResourceFromBytes([]byte(defaultConfigYAML))
