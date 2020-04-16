@@ -13,6 +13,7 @@ import (
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
+	ctldiffui "github.com/k14s/kapp/pkg/kapp/diffui"
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctllogs "github.com/k14s/kapp/pkg/kapp/logs"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
@@ -136,6 +137,9 @@ func (o *DeployOptions) Run() error {
 	clusterChangeSet, clusterChangesGraph, hasNoChanges, changeSummary, err :=
 		o.calculateAndPresentChanges(existingResources, newResources, conf, supportObjs)
 	if err != nil {
+		if o.DiffFlags.UI && clusterChangesGraph != nil {
+			return o.presentDiffUI(clusterChangesGraph)
+		}
 		return err
 	}
 
@@ -143,6 +147,10 @@ func (o *DeployOptions) Run() error {
 	err = prep.ValidateResources(newResources)
 	if err != nil {
 		return err
+	}
+
+	if o.DiffFlags.UI {
+		return o.presentDiffUI(clusterChangesGraph)
 	}
 
 	if o.DiffFlags.Run || hasNoChanges {
@@ -331,7 +339,8 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 
 	clusterChanges, clusterChangesGraph, err := clusterChangeSet.Calculate()
 	if err != nil {
-		return clusterChangeSet, nil, false, "", err
+		// Return graph for inspection
+		return clusterChangeSet, clusterChangesGraph, false, "", err
 	}
 
 	var changesSummary string
@@ -391,4 +400,12 @@ func (o *DeployOptions) nsNames(resources []ctlres.Resource) []string {
 	}
 	sort.Strings(names)
 	return names
+}
+
+func (o *DeployOptions) presentDiffUI(graph *ctldgraph.ChangeGraph) error {
+	opts := ctldiffui.ServerOpts{
+		ListenAddr:   "localhost:8080",
+		DiffDataFunc: func() *ctldgraph.ChangeGraph { return graph },
+	}
+	return ctldiffui.NewServer(opts, o.ui).Run()
 }

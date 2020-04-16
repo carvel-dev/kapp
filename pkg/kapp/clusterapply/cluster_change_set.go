@@ -43,7 +43,8 @@ func (c ClusterChangeSet) Calculate() ([]*ClusterChange, *ctldgraph.ChangeGraph,
 	changesGraph, err := ctldgraph.NewChangeGraph(wrappedClusterChanges,
 		c.additionalChangeGroups, c.additionalChangeRules, c.logger)
 	if err != nil {
-		return nil, nil, err
+		// Return graph for inspection
+		return nil, changesGraph, err
 	}
 
 	changesGraph.AllMatching(func(change *ctldgraph.Change) bool {

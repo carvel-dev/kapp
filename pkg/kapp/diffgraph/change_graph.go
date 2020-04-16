@@ -7,8 +7,6 @@ import (
 	"github.com/k14s/kapp/pkg/kapp/logger"
 )
 
-var InspectGraph func(*ChangeGraph)
-
 type ChangeGraph struct {
 	changes []*Change
 	logger  logger.Logger
@@ -39,12 +37,13 @@ func NewChangeGraph(changes []ActualChange,
 		func(_, _ *Change) bool { return true },
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Change graph: Calculating required deps: %s", err)
+		return graph, fmt.Errorf("Change graph: Calculating required deps: %s", err)
 	}
 
 	err = graph.checkCycles()
 	if err != nil {
-		return nil, err
+		// Return graph for inspection
+		return graph, err
 	}
 
 	// At this point it's guranteed that there are no cycles
@@ -65,7 +64,7 @@ func NewChangeGraph(changes []ActualChange,
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Change graph: Calculating optional deps: %s", err)
+		return graph, fmt.Errorf("Change graph: Calculating optional deps: %s", err)
 	}
 
 	graph.dedup()
