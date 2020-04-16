@@ -75,7 +75,7 @@ rebaseRules:
 # PVC
 - path: [metadata, annotations, pv.kubernetes.io/bind-completed]
   type: copy
-  sources: [existing]
+  sources: [new, existing]
   resourceMatchers: &pvcs
   - apiVersionKindMatcher:
       apiVersion: v1
@@ -83,12 +83,12 @@ rebaseRules:
 
 - path: [metadata, annotations, pv.kubernetes.io/bound-by-controller]
   type: copy
-  sources: [existing]
+  sources: [new, existing]
   resourceMatchers: *pvcs
 
 - path: [metadata, annotations, volume.beta.kubernetes.io/storage-provisioner]
   type: copy
-  sources: [existing]
+  sources: [new, existing]
   resourceMatchers: *pvcs
 
 - path: [spec, storageClassName]
