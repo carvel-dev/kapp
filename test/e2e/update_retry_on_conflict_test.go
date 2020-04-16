@@ -228,7 +228,7 @@ rebaseRules:
   type: copy
   sources: [existing]
   resourceMatchers:
-  - allResourceMatcher: {}
+  - allMatcher: {}
 `
 
 	yamlBehindScenesChange := `

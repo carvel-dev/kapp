@@ -76,12 +76,17 @@ type TemplateAffectedObjRef struct {
 type ResourceMatchers []ResourceMatcher
 
 type ResourceMatcher struct {
-	AllResourceMatcher       *AllResourceMatcher    // default
+	AllMatcher               *AllMatcher // default
+	AnyMatcher               *AnyMatcher
 	APIVersionKindMatcher    *APIVersionKindMatcher `json:"apiVersionKindMatcher"`
 	KindNamespaceNameMatcher *KindNamespaceNameMatcher
 }
 
-type AllResourceMatcher struct{}
+type AllMatcher struct{}
+
+type AnyMatcher struct {
+	Matchers []ResourceMatcher
+}
 
 type APIVersionKindMatcher struct {
 	APIVersion string `json:"apiVersion"`
@@ -202,6 +207,14 @@ func (ms ResourceMatchers) AsResourceMatchers() []ctlres.ResourceMatcher {
 
 func (m ResourceMatcher) AsResourceMatcher() ctlres.ResourceMatcher {
 	switch {
+	case m.AllMatcher != nil:
+		return ctlres.AllResourceMatcher{}
+
+	case m.AnyMatcher != nil:
+		return ctlres.AnyResourceMatcher{
+			Matchers: ResourceMatchers(m.AnyMatcher.Matchers).AsResourceMatchers(),
+		}
+
 	case m.KindNamespaceNameMatcher != nil:
 		return ctlres.KindNamespaceNameMatcher{
 			Kind:      m.KindNamespaceNameMatcher.Kind,
@@ -216,6 +229,6 @@ func (m ResourceMatcher) AsResourceMatcher() ctlres.ResourceMatcher {
 		}
 
 	default:
-		return ctlres.AllResourceMatcher{}
+		panic("Unknown resource matcher specified")
 	}
 }

@@ -14,36 +14,36 @@ rebaseRules:
   type: copy
   sources: [existing]
   resourceMatchers:
-  - allResourceMatcher: {}
+  - allMatcher: {}
 
 # Be specific about labels to be applied
 - path: [metadata, labels]
   type: remove
   resourceMatchers:
-  - allResourceMatcher: {}
+  - allMatcher: {}
 - path: [metadata, labels]
   type: copy
   sources: [new]
   resourceMatchers:
-  - allResourceMatcher: {}
+  - allMatcher: {}
 
 # Be specific about annotations to be applied
 - path: [metadata, annotations]
   type: remove
   resourceMatchers:
-  - allResourceMatcher: {}
+  - allMatcher: {}
 - path: [metadata, annotations]
   type: copy
   sources: [new]
   resourceMatchers:
-  - allResourceMatcher: {}
+  - allMatcher: {}
 
 # Copy over all status, since cluster owns that
 - path: [status]
   type: copy
   sources: [new, existing]
   resourceMatchers:
-  - allResourceMatcher: {}
+  - allMatcher: {}
 
 # Prefer user provided, but allow cluster set
 - path: [spec, clusterIP]
@@ -146,7 +146,7 @@ diffMaskRules:
 ownershipLabelRules:
 - path: [metadata, labels]
   resourceMatchers:
-  - allResourceMatcher: {}
+  - allMatcher: {}
 
 - path: [spec, template, metadata, labels]
   resourceMatchers: &withPodTemplate

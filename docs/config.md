@@ -24,7 +24,7 @@ rebaseRules:
 ownershipLabelRules:
 - path: [metadata, labels]
   resourceMatchers:
-  - allResourceMatcher: {}
+  - allMatcher: {}
 
 labelScopingRules:
 - path: [spec, selector]
@@ -100,12 +100,23 @@ diffMaskRules:
 Resource matchers (as used by `rebaseRules` and `ownershipLabelRules`):
 
 ```yaml
-allResourceMatcher: {}
+allMatcher: {}
+```
+
+```yaml
+anyMatcher:
+  matchers:
+  - apiVersionKindMatcher:
+    apiVersion: apps/v1
+    kind: Deployment
+  - apiVersionKindMatcher:
+    apiVersion: extensions/v1alpha1
+    kind: Deployment
 ```
 
 ```yaml
 apiVersionKindMatcher:
-  APIVersion: apps/v1
+  apiVersion: apps/v1
   kind: Deployment
 ```
 
