@@ -40,7 +40,7 @@ func (l *UILogger) Debug(msg string, args ...interface{}) {
 }
 
 func (l *UILogger) DebugFunc(name string) FuncLogger {
-	funcLogger := &UIFuncLogger{name, l.NewPrefixed(name)}
+	funcLogger := &UIFuncLogger{name, time.Now(), l.NewPrefixed(name)}
 	funcLogger.Start()
 	return funcLogger
 }
@@ -59,11 +59,12 @@ func (l *UILogger) msg(level, msg string) string {
 }
 
 type UIFuncLogger struct {
-	name   string
-	logger Logger
+	name      string
+	startTime time.Time
+	logger    Logger
 }
 
 var _ FuncLogger = &UIFuncLogger{}
 
 func (l *UIFuncLogger) Start()  { l.logger.Debug("start") }
-func (l *UIFuncLogger) Finish() { l.logger.Debug("end") }
+func (l *UIFuncLogger) Finish() { l.logger.Debug("end (%s)", time.Now().Sub(l.startTime)) }
