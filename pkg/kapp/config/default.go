@@ -267,7 +267,9 @@ additionalChangeGroups:
   - apiVersionKindMatcher: {kind: ServiceAccount, apiVersion: v1}
   - apiVersionKindMatcher: {kind: Secret, apiVersion: v1}
   - apiVersionKindMatcher: {kind: ConfigMap, apiVersion: v1}
-  - apiVersionKindMatcher: {kind: Service, apiVersion: v1}
+  # [Note]: Do not add Service into this group as it may
+  # delay other resources with load balancer provisioning
+  # - apiVersionKindMatcher: {kind: Service, apiVersion: v1}
 
 additionalChangeRules:
 - rules:
