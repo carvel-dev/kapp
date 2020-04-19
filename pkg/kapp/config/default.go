@@ -72,21 +72,39 @@ rebaseRules:
       apiVersion: v1
       kind: ServiceAccount
 
-- path: [spec, storageClassName]
+# PVC
+- path: [metadata, annotations, pv.kubernetes.io/bind-completed]
   type: copy
   sources: [new, existing]
-  resourceMatchers:
+  resourceMatchers: &pvcs
   - apiVersionKindMatcher:
       apiVersion: v1
       kind: PersistentVolumeClaim
 
+- path: [metadata, annotations, pv.kubernetes.io/bound-by-controller]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers: *pvcs
+
+- path: [metadata, annotations, volume.beta.kubernetes.io/storage-provisioner]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers: *pvcs
+
+- path: [spec, storageClassName]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers: *pvcs
+
+- path: [spec, volumeMode]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers: *pvcs
+
 - path: [spec, volumeName]
   type: copy
   sources: [new, existing]
-  resourceMatchers:
-  - apiVersionKindMatcher:
-      apiVersion: v1
-      kind: PersistentVolumeClaim
+  resourceMatchers: *pvcs
 
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
   type: copy
