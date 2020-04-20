@@ -8,10 +8,11 @@ import (
 )
 
 type LogsFlags struct {
-	Follow       bool
-	Lines        int64
-	ContainerTag bool
-	PodName      string
+	Follow         bool
+	Lines          int64
+	ContainerNames []string
+	ContainerTag   bool
+	PodName        string
 }
 
 func (s *LogsFlags) Set(cmd *cobra.Command) {
@@ -19,6 +20,7 @@ func (s *LogsFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().Int64Var(&s.Lines, "lines", 10, "Limit to number of lines (use -1 to remove limit)")
 	cmd.Flags().BoolVar(&s.ContainerTag, "container-tag", true, "Include container tag")
 	cmd.Flags().StringVarP(&s.PodName, "pod-name", "m", "", "Set pod name to filter logs (% acts as wildcard, e.g. 'app%')")
+	cmd.Flags().StringSliceVarP(&s.ContainerNames, "container-names", "c", []string{}, "Set container names to filter logs in the pod, separated by comma")
 }
 
 func (s *LogsFlags) PodLogOpts() (ctllogs.PodLogOpts, error) {
@@ -31,6 +33,10 @@ func (s *LogsFlags) PodLogOpts() (ctllogs.PodLogOpts, error) {
 
 	if s.Lines >= 0 {
 		opts.Lines = &s.Lines
+	}
+
+	if len(s.ContainerNames) > 0 {
+		opts.ContainerNames = s.ContainerNames
 	}
 
 	return opts, nil

@@ -9,10 +9,11 @@ import (
 )
 
 type PodLogOpts struct {
-	Follow       bool
-	Lines        *int64
-	ContainerTag bool
-	LinePrefix   string
+	Follow         bool
+	Lines          *int64
+	ContainerNames []string
+	ContainerTag   bool
+	LinePrefix     string
 }
 
 type PodLog struct {
@@ -41,12 +42,24 @@ func (l PodLog) TailAll(ui ui.UI, cancelCh chan struct{}) error {
 
 	for _, cont := range l.pod.Spec.InitContainers {
 		if !(podInTerminalState && l.isWaitingContainer(cont, l.pod.Status.InitContainerStatuses)) {
+			if len(l.opts.ContainerNames) > 0 {
+				if l.isContainerInSlice(cont, l.opts.ContainerNames) {
+					conts = append(conts, cont)
+				}
+				continue
+			}
 			conts = append(conts, cont)
 		}
 	}
 
 	for _, cont := range l.pod.Spec.Containers {
 		if !(podInTerminalState && l.isWaitingContainer(cont, l.pod.Status.ContainerStatuses)) {
+			if len(l.opts.ContainerNames) > 0 {
+				if l.isContainerInSlice(cont, l.opts.ContainerNames) {
+					conts = append(conts, cont)
+				}
+				continue
+			}
 			conts = append(conts, cont)
 		}
 	}
@@ -72,6 +85,15 @@ func (l PodLog) isWaitingContainer(cont corev1.Container, statuses []corev1.Cont
 	for _, contStatus := range statuses {
 		if cont.Name == contStatus.Name {
 			return contStatus.State.Waiting != nil
+		}
+	}
+	return false
+}
+
+func (l PodLog) isContainerInSlice(cont corev1.Container, containers []string) bool {
+	for _, n := range containers {
+		if cont.Name == n {
+			return true
 		}
 	}
 	return false
