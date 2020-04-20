@@ -255,10 +255,25 @@ additionalChangeGroups:
   - apiVersionKindMatcher: {kind: PersistentVolume, apiVersion: v1}
   - apiVersionKindMatcher: {kind: PersistentVolumeClaim, apiVersion: v1}
 
+- name: change-groups.kapp.k14s.io/rbac
+  resourceMatchers: &rbacMatchers
+  - apiVersionKindMatcher: {kind: ClusterRole, apiVersion: rbac.authorization.k8s.io/v1}
+  - apiVersionKindMatcher: {kind: ClusterRole, apiVersion: rbac.authorization.k8s.io/v1alpha1}
+  - apiVersionKindMatcher: {kind: ClusterRole, apiVersion: rbac.authorization.k8s.io/v1beta1}
+  - apiVersionKindMatcher: {kind: ClusterRoleBinding, apiVersion: rbac.authorization.k8s.io/v1}
+  - apiVersionKindMatcher: {kind: ClusterRoleBinding, apiVersion: rbac.authorization.k8s.io/v1alpha1}
+  - apiVersionKindMatcher: {kind: ClusterRoleBinding, apiVersion: rbac.authorization.k8s.io/v1beta1}
+  - apiVersionKindMatcher: {kind: Role, apiVersion: rbac.authorization.k8s.io/v1}
+  - apiVersionKindMatcher: {kind: Role, apiVersion: rbac.authorization.k8s.io/v1alpha1}
+  - apiVersionKindMatcher: {kind: Role, apiVersion: rbac.authorization.k8s.io/v1beta1}
+  - apiVersionKindMatcher: {kind: RoleBinding, apiVersion: rbac.authorization.k8s.io/v1}
+  - apiVersionKindMatcher: {kind: RoleBinding, apiVersion: rbac.authorization.k8s.io/v1alpha1}
+  - apiVersionKindMatcher: {kind: RoleBinding, apiVersion: rbac.authorization.k8s.io/v1beta1}
+
 - name: change-groups.kapp.k14s.io/pod-related
   resourceMatchers: &podRelatedMatchers
   - apiVersionKindMatcher: {kind: NetworkPolicy, apiVersion: extensions/v1beta1}
-  - apiVersionKindMatcher: {kind: NetworkPolicy, apiVersion: networking/v1}
+  - apiVersionKindMatcher: {kind: NetworkPolicy, apiVersion: networking.k8s.io/v1}
   - apiVersionKindMatcher: {kind: ResourceQuota, apiVersion: v1}
   - apiVersionKindMatcher: {kind: LimitRange, apiVersion: v1}
   - apiVersionKindMatcher: {kind: PodSecurityPolicy, apiVersion: extensions/v1beta1}
@@ -280,7 +295,12 @@ additionalChangeRules:
   - apiVersionKindMatcher: {kind: PersistentVolumeClaim, apiVersion: v1}
 
 - rules:
+  # [Note]: prefer to apply pod related changes first to
+  # work better with applications that do not reload changes
   - "upsert after upserting change-groups.kapp.k14s.io/pod-related"
+  # [Note]: prefer to apply rbac changes first to potentially
+  # avoid restarts of Pods that rely on correct permissions
+  - "upsert after upserting change-groups.kapp.k14s.io/rbac"
   - "upsert after upserting change-groups.kapp.k14s.io/storage-class"
   - "upsert after upserting change-groups.kapp.k14s.io/storage"
   ignoreIfCyclical: true
@@ -291,12 +311,10 @@ additionalChangeRules:
       matcher:
         anyMatcher:
           matchers:
-          - anyMatcher:
-              matchers: *storageClassMatchers
-          - anyMatcher:
-              matchers: *storageMatchers
-          - anyMatcher:
-              matchers: *podRelatedMatchers
+          - anyMatcher: {matchers: *storageClassMatchers}
+          - anyMatcher: {matchers: *storageMatchers}
+          - anyMatcher: {matchers: *rbacMatchers}
+          - anyMatcher: {matchers: *podRelatedMatchers}
 `
 
 var defaultConfigRes = ctlres.MustNewResourceFromBytes([]byte(defaultConfigYAML))
