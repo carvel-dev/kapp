@@ -245,6 +245,14 @@ templateRules:
       nameKey: secretName
 
 additionalChangeGroups:
+- name: change-groups.kapp.k14s.io/crds
+  resourceMatchers: &crdMatchers
+  - apiGroupKindMatcher: {kind: CustomResourceDefinition, apiGroup: apiextensions.k8s.io}
+
+- name: change-groups.kapp.k14s.io/namespaces
+  resourceMatchers: &namespaceMatchers
+  - apiGroupKindMatcher: {kind: Namespace, apiGroup: ""}
+
 - name: change-groups.kapp.k14s.io/storage-class
   resourceMatchers: &storageClassMatchers
   - apiVersionKindMatcher: {kind: StorageClass, apiVersion: storage/v1}
@@ -287,6 +295,34 @@ additionalChangeGroups:
   # - apiVersionKindMatcher: {kind: Service, apiVersion: v1}
 
 additionalChangeRules:
+- rules:
+  # [Note]: insert CRDs before all other resources
+  - "upsert after upserting change-groups.kapp.k14s.io/crds"
+  - "delete before deleting change-groups.kapp.k14s.io/crds"
+  resourceMatchers:
+  - andMatcher:
+      matchers:
+      - notMatcher:
+          matcher:
+            anyMatcher:
+              matchers: *crdMatchers
+      - notMatcher:
+          matcher:
+            hasAnnotationMatcher:
+              keys: [kapp.k14s.io/disable-default-change-group-and-rules]
+
+- rules:
+  # [Note]: insert namespaces before all other namespaced resources
+  - "upsert after upserting change-groups.kapp.k14s.io/namespaces"
+  resourceMatchers:
+  - andMatcher:
+      matchers:
+      - hasNamespaceMatcher: {}
+      - notMatcher:
+          matcher:
+            hasAnnotationMatcher:
+              keys: [kapp.k14s.io/disable-default-change-group-and-rules]
+
 - rules:
   - "upsert after upserting change-groups.kapp.k14s.io/storage-class"
   ignoreIfCyclical: true

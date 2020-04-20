@@ -117,12 +117,6 @@ func (c *Change) Groups() ([]ChangeGroup, error) {
 		}
 	}
 
-	defaultGroups, err := ChangeDefaults{c.Change}.Groups()
-	if err != nil {
-		return nil, err
-	}
-
-	groups = append(groups, defaultGroups...)
 	c.groups = &groups
 
 	return groups, nil
@@ -161,12 +155,6 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 		}
 	}
 
-	defaultRules, err := ChangeDefaults{c.Change}.AllRules()
-	if err != nil {
-		return nil, err
-	}
-
-	rules = append(rules, defaultRules...)
 	c.rules = &rules
 
 	return rules, nil

@@ -6,6 +6,7 @@ import (
 	ctlcap "github.com/k14s/kapp/pkg/kapp/clusterapply"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
+	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
 	"github.com/k14s/kapp/pkg/kapp/logger"
@@ -77,8 +78,13 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
+	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
+	if err != nil {
+		return err
+	}
+
 	clusterChangeSet, clusterChangesGraph, hasNoChanges, err :=
-		o.calculateAndPresentChanges(existingResources, supportObjs)
+		o.calculateAndPresentChanges(existingResources, conf, supportObjs)
 	if err != nil {
 		return err
 	}
@@ -152,7 +158,7 @@ func (o *DeleteOptions) existingResources(app ctlapp.App,
 	return existingResources, fullyDeleteApp, nil
 }
 
-func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Resource,
+func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Resource, conf ctlconf.Conf,
 	supportObjs AppFactorySupportObjs) (ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, bool, error) {
 
 	var clusterChangeSet ctlcap.ClusterChangeSet
@@ -179,7 +185,7 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 
 			clusterChangeSet = ctlcap.NewClusterChangeSet(
 				changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory,
-				nil, nil, msgsUI, o.logger)
+				conf.AdditionalChangeGroups(), conf.AdditionalChangeRules(), msgsUI, o.logger)
 		}
 	}
 

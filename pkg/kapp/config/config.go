@@ -95,8 +95,12 @@ type ResourceMatcher struct {
 	AllMatcher               *AllMatcher // default
 	AnyMatcher               *AnyMatcher
 	NotMatcher               *NotMatcher
+	AndMatcher               *AndMatcher
+	APIGroupKindMatcher      *APIGroupKindMatcher
 	APIVersionKindMatcher    *APIVersionKindMatcher `json:"apiVersionKindMatcher"`
 	KindNamespaceNameMatcher *KindNamespaceNameMatcher
+	HasAnnotationMatcher     *HasAnnotationMatcher
+	HasNamespaceMatcher      *HasNamespaceMatcher
 }
 
 type AllMatcher struct{}
@@ -109,6 +113,15 @@ type NotMatcher struct {
 	Matcher ResourceMatcher
 }
 
+type AndMatcher struct {
+	Matchers []ResourceMatcher
+}
+
+type APIGroupKindMatcher struct {
+	APIGroup string `json:"apiGroup"`
+	Kind     string
+}
+
 type APIVersionKindMatcher struct {
 	APIVersion string `json:"apiVersion"`
 	Kind       string
@@ -118,6 +131,14 @@ type KindNamespaceNameMatcher struct {
 	Kind      string
 	Namespace string
 	Name      string
+}
+
+type HasAnnotationMatcher struct {
+	Keys []string
+}
+
+type HasNamespaceMatcher struct {
+	Names []string
 }
 
 func NewConfigFromResource(res ctlres.Resource) (Config, error) {
@@ -236,6 +257,11 @@ func (m ResourceMatcher) AsResourceMatcher() ctlres.ResourceMatcher {
 			Matchers: ResourceMatchers(m.AnyMatcher.Matchers).AsResourceMatchers(),
 		}
 
+	case m.AndMatcher != nil:
+		return ctlres.AndResourceMatcher{
+			Matchers: ResourceMatchers(m.AndMatcher.Matchers).AsResourceMatchers(),
+		}
+
 	case m.NotMatcher != nil:
 		return ctlres.NotResourceMatcher{
 			Matcher: m.NotMatcher.Matcher.AsResourceMatcher(),
@@ -248,10 +274,26 @@ func (m ResourceMatcher) AsResourceMatcher() ctlres.ResourceMatcher {
 			Name:      m.KindNamespaceNameMatcher.Name,
 		}
 
+	case m.APIGroupKindMatcher != nil:
+		return ctlres.APIGroupKindMatcher{
+			APIGroup: m.APIGroupKindMatcher.APIGroup,
+			Kind:     m.APIGroupKindMatcher.Kind,
+		}
+
 	case m.APIVersionKindMatcher != nil:
 		return ctlres.APIVersionKindMatcher{
 			APIVersion: m.APIVersionKindMatcher.APIVersion,
 			Kind:       m.APIVersionKindMatcher.Kind,
+		}
+
+	case m.HasAnnotationMatcher != nil:
+		return ctlres.HasAnnotationMatcher{
+			Keys: m.HasAnnotationMatcher.Keys,
+		}
+
+	case m.HasNamespaceMatcher != nil:
+		return ctlres.HasNamespaceMatcher{
+			Names: m.HasNamespaceMatcher.Names,
 		}
 
 	default:

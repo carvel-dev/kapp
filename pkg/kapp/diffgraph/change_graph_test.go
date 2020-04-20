@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
@@ -83,6 +84,98 @@ metadata:
 	if output != expectedOutput {
 		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", output, expectedOutput)
 	}
+}
+
+func TestChangeGraphWithConfDefaults(t *testing.T) {
+  configYAML := `
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+  name: app-config
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: app1
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: app-config
+  namespace: app1
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: app
+  namespace: app1
+  annotations:
+    kapp.k14s.io/change-group: "apps.big.co/deployment"
+---
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: app-health-check
+  namespace: app1
+  annotations:
+    kapp.k14s.io/change-rule: "upsert after upserting apps.big.co/deployment"
+`
+
+  _, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
+  if err != nil {
+    t.Fatalf("Error parsing conf defaults")
+  }
+
+  opts := buildGraphOpts{
+    resourcesBs: configYAML,
+    op: ctldgraph.ActualChangeOpUpsert,
+    additionalChangeGroups: conf.AdditionalChangeGroups(),
+    additionalChangeRules: conf.AdditionalChangeRules(),
+  }
+
+  graph, err := buildChangeGraphWithOpts(opts, t)
+  if err != nil {
+    t.Fatalf("Expected graph to build")
+  }
+
+  output := strings.TrimSpace(graph.PrintStr())
+  expectedOutput := strings.TrimSpace(`
+(upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
+(upsert) namespace/app1 (v1) cluster
+  (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
+(upsert) configmap/app-config (v1) namespace: app1
+  (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
+  (upsert) namespace/app1 (v1) cluster
+    (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
+(upsert) deployment/app (apps/v1) namespace: app1
+  (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
+  (upsert) namespace/app1 (v1) cluster
+    (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
+  (upsert) configmap/app-config (v1) namespace: app1
+    (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
+    (upsert) namespace/app1 (v1) cluster
+      (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
+(upsert) job/app-health-check (batch/v1) namespace: app1
+  (upsert) deployment/app (apps/v1) namespace: app1
+    (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
+    (upsert) namespace/app1 (v1) cluster
+      (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
+    (upsert) configmap/app-config (v1) namespace: app1
+      (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
+      (upsert) namespace/app1 (v1) cluster
+        (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
+  (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
+  (upsert) namespace/app1 (v1) cluster
+    (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
+  (upsert) configmap/app-config (v1) namespace: app1
+    (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
+    (upsert) namespace/app1 (v1) cluster
+      (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
+`)
+
+  if output != expectedOutput {
+    t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", output, expectedOutput)
+  }
 }
 
 func TestChangeGraphWithMultipleRules(t *testing.T) {
@@ -385,17 +478,29 @@ metadata:
 }
 
 func buildChangeGraph(resourcesBs string, op ctldgraph.ActualChangeOp, t *testing.T) (*ctldgraph.ChangeGraph, error) {
-	newResources, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(resourcesBs))).Resources()
+	return buildChangeGraphWithOpts(buildGraphOpts{resourcesBs: resourcesBs, op: op}, t)
+}
+
+type buildGraphOpts struct {
+	resourcesBs            string
+	op                     ctldgraph.ActualChangeOp
+	additionalChangeGroups []ctlconf.AdditionalChangeGroup
+	additionalChangeRules  []ctlconf.AdditionalChangeRule
+}
+
+func buildChangeGraphWithOpts(opts buildGraphOpts, t *testing.T) (*ctldgraph.ChangeGraph, error) {
+	newResources, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(opts.resourcesBs))).Resources()
 	if err != nil {
 		t.Fatalf("Expected resources to parse")
 	}
 
 	actualChanges := []ctldgraph.ActualChange{}
 	for _, res := range newResources {
-		actualChanges = append(actualChanges, actualChangeFromRes{res, op})
+		actualChanges = append(actualChanges, actualChangeFromRes{res, opts.op})
 	}
 
-	return ctldgraph.NewChangeGraph(actualChanges, nil, nil, logger.NewTODOLogger())
+	return ctldgraph.NewChangeGraph(actualChanges,
+		opts.additionalChangeGroups, opts.additionalChangeRules, logger.NewTODOLogger())
 }
 
 type actualChangeFromRes struct {

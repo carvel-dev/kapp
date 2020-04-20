@@ -81,3 +81,56 @@ var _ ResourceMatcher = NotResourceMatcher{}
 func (m NotResourceMatcher) Matches(res Resource) bool {
 	return !m.Matcher.Matches(res)
 }
+
+type AndResourceMatcher struct {
+	Matchers []ResourceMatcher
+}
+
+var _ ResourceMatcher = AndResourceMatcher{}
+
+func (m AndResourceMatcher) Matches(res Resource) bool {
+	for _, m := range m.Matchers {
+		if !m.Matches(res) {
+			return false
+		}
+	}
+	return true
+}
+
+type HasAnnotationMatcher struct {
+	Keys []string
+}
+
+var _ ResourceMatcher = HasAnnotationMatcher{}
+
+func (m HasAnnotationMatcher) Matches(res Resource) bool {
+	anns := res.Annotations()
+	for _, key := range m.Keys {
+		if _, found := anns[key]; !found {
+			return false
+		}
+	}
+	return true
+}
+
+type HasNamespaceMatcher struct {
+	Names []string
+}
+
+var _ ResourceMatcher = HasNamespaceMatcher{}
+
+func (m HasNamespaceMatcher) Matches(res Resource) bool {
+	resNs := res.Namespace()
+	if len(resNs) == 0 {
+		return false // cluster resource
+	}
+	if len(m.Names) == 0 {
+		return true // matches any name, but not cluster
+	}
+	for _, name := range m.Names {
+		if name == resNs {
+			return true
+		}
+	}
+	return false
+}
