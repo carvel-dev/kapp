@@ -71,3 +71,13 @@ func (m AnyResourceMatcher) Matches(res Resource) bool {
 	}
 	return false
 }
+
+type NotResourceMatcher struct {
+	Matcher ResourceMatcher
+}
+
+var _ ResourceMatcher = NotResourceMatcher{}
+
+func (m NotResourceMatcher) Matches(res Resource) bool {
+	return !m.Matcher.Matches(res)
+}

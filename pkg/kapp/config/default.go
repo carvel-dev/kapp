@@ -246,17 +246,17 @@ templateRules:
 
 additionalChangeGroups:
 - name: change-groups.kapp.k14s.io/storage-class
-  resourceMatchers:
+  resourceMatchers: &storageClassMatchers
   - apiVersionKindMatcher: {kind: StorageClass, apiVersion: storage/v1}
   - apiVersionKindMatcher: {kind: StorageClass, apiVersion: storage/v1beta1}
 
 - name: change-groups.kapp.k14s.io/storage
-  resourceMatchers:
+  resourceMatchers: &storageMatchers
   - apiVersionKindMatcher: {kind: PersistentVolume, apiVersion: v1}
   - apiVersionKindMatcher: {kind: PersistentVolumeClaim, apiVersion: v1}
 
 - name: change-groups.kapp.k14s.io/pod-related
-  resourceMatchers:
+  resourceMatchers: &podRelatedMatchers
   - apiVersionKindMatcher: {kind: NetworkPolicy, apiVersion: extensions/v1beta1}
   - apiVersionKindMatcher: {kind: NetworkPolicy, apiVersion: networking/v1}
   - apiVersionKindMatcher: {kind: ResourceQuota, apiVersion: v1}
@@ -287,7 +287,16 @@ additionalChangeRules:
   resourceMatchers:
   # [Note]: Apply all resources after pod-related change group as it's
   # common for other resources to rely on ConfigMaps, Secrets, etc.
-  - allMatcher: {}
+  - notMatcher:
+      matcher:
+        anyMatcher:
+          matchers:
+          - anyMatcher:
+              matchers: *storageClassMatchers
+          - anyMatcher:
+              matchers: *storageMatchers
+          - anyMatcher:
+              matchers: *podRelatedMatchers
 `
 
 var defaultConfigRes = ctlres.MustNewResourceFromBytes([]byte(defaultConfigYAML))

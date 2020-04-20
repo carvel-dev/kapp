@@ -94,6 +94,7 @@ type ResourceMatchers []ResourceMatcher
 type ResourceMatcher struct {
 	AllMatcher               *AllMatcher // default
 	AnyMatcher               *AnyMatcher
+	NotMatcher               *NotMatcher
 	APIVersionKindMatcher    *APIVersionKindMatcher `json:"apiVersionKindMatcher"`
 	KindNamespaceNameMatcher *KindNamespaceNameMatcher
 }
@@ -102,6 +103,10 @@ type AllMatcher struct{}
 
 type AnyMatcher struct {
 	Matchers []ResourceMatcher
+}
+
+type NotMatcher struct {
+	Matcher ResourceMatcher
 }
 
 type APIVersionKindMatcher struct {
@@ -231,6 +236,11 @@ func (m ResourceMatcher) AsResourceMatcher() ctlres.ResourceMatcher {
 			Matchers: ResourceMatchers(m.AnyMatcher.Matchers).AsResourceMatchers(),
 		}
 
+	case m.NotMatcher != nil:
+		return ctlres.NotResourceMatcher{
+			Matcher: m.NotMatcher.Matcher.AsResourceMatcher(),
+		}
+
 	case m.KindNamespaceNameMatcher != nil:
 		return ctlres.KindNamespaceNameMatcher{
 			Kind:      m.KindNamespaceNameMatcher.Kind,
@@ -245,6 +255,6 @@ func (m ResourceMatcher) AsResourceMatcher() ctlres.ResourceMatcher {
 		}
 
 	default:
-		panic("Unknown resource matcher specified")
+		panic(fmt.Sprintf("Unknown resource matcher specified: %#v", m))
 	}
 }
