@@ -9,11 +9,11 @@ import (
 )
 
 type PodLogOpts struct {
-	Follow        bool
-	Lines         *int64
-	ContainerName []string
-	ContainerTag  bool
-	LinePrefix    string
+	Follow         bool
+	Lines          *int64
+	ContainerNames []string
+	ContainerTag   bool
+	LinePrefix     string
 }
 
 type PodLog struct {
@@ -42,7 +42,7 @@ func (l PodLog) TailAll(ui ui.UI, cancelCh chan struct{}) error {
 
 	for _, cont := range l.pod.Spec.InitContainers {
 		if !(podInTerminalState && l.isWaitingContainer(cont, l.pod.Status.InitContainerStatuses)) {
-			if l.isWatchingContainer(cont, l.opts.ContainerName) {
+			if l.isWatchingContainer(cont, l.opts.ContainerNames) {
 				conts = append(conts, cont)
 			}
 		}
@@ -50,7 +50,7 @@ func (l PodLog) TailAll(ui ui.UI, cancelCh chan struct{}) error {
 
 	for _, cont := range l.pod.Spec.Containers {
 		if !(podInTerminalState && l.isWaitingContainer(cont, l.pod.Status.ContainerStatuses)) {
-			if l.isWatchingContainer(cont, l.opts.ContainerName) {
+			if l.isWatchingContainer(cont, l.opts.ContainerNames) {
 				conts = append(conts, cont)
 			}
 		}
