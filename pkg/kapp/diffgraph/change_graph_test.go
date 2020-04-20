@@ -87,7 +87,7 @@ metadata:
 }
 
 func TestChangeGraphWithConfDefaults(t *testing.T) {
-  configYAML := `
+	configYAML := `
 kind: CustomResourceDefinition
 apiVersion: apiextensions.k8s.io/v1
 metadata:
@@ -121,25 +121,25 @@ metadata:
     kapp.k14s.io/change-rule: "upsert after upserting apps.big.co/deployment"
 `
 
-  _, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
-  if err != nil {
-    t.Fatalf("Error parsing conf defaults")
-  }
+	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
+	if err != nil {
+		t.Fatalf("Error parsing conf defaults")
+	}
 
-  opts := buildGraphOpts{
-    resourcesBs: configYAML,
-    op: ctldgraph.ActualChangeOpUpsert,
-    additionalChangeGroups: conf.AdditionalChangeGroups(),
-    additionalChangeRules: conf.AdditionalChangeRules(),
-  }
+	opts := buildGraphOpts{
+		resourcesBs:            configYAML,
+		op:                     ctldgraph.ActualChangeOpUpsert,
+		additionalChangeGroups: conf.AdditionalChangeGroups(),
+		additionalChangeRules:  conf.AdditionalChangeRules(),
+	}
 
-  graph, err := buildChangeGraphWithOpts(opts, t)
-  if err != nil {
-    t.Fatalf("Expected graph to build")
-  }
+	graph, err := buildChangeGraphWithOpts(opts, t)
+	if err != nil {
+		t.Fatalf("Expected graph to build")
+	}
 
-  output := strings.TrimSpace(graph.PrintStr())
-  expectedOutput := strings.TrimSpace(`
+	output := strings.TrimSpace(graph.PrintStr())
+	expectedOutput := strings.TrimSpace(`
 (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
 (upsert) namespace/app1 (v1) cluster
   (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
@@ -173,9 +173,9 @@ metadata:
       (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
 `)
 
-  if output != expectedOutput {
-    t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", output, expectedOutput)
-  }
+	if output != expectedOutput {
+		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", output, expectedOutput)
+	}
 }
 
 func TestChangeGraphWithMultipleRules(t *testing.T) {
@@ -482,6 +482,7 @@ func buildChangeGraph(resourcesBs string, op ctldgraph.ActualChangeOp, t *testin
 }
 
 type buildGraphOpts struct {
+	resources              []ctlres.Resource
 	resourcesBs            string
 	op                     ctldgraph.ActualChangeOp
 	additionalChangeGroups []ctlconf.AdditionalChangeGroup
@@ -489,13 +490,20 @@ type buildGraphOpts struct {
 }
 
 func buildChangeGraphWithOpts(opts buildGraphOpts, t *testing.T) (*ctldgraph.ChangeGraph, error) {
-	newResources, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(opts.resourcesBs))).Resources()
-	if err != nil {
-		t.Fatalf("Expected resources to parse")
+	var rs []ctlres.Resource
+
+	if len(opts.resources) > 0 {
+		rs = opts.resources
+	} else {
+		var err error
+		rs, err = ctlres.NewFileResource(ctlres.NewBytesSource([]byte(opts.resourcesBs))).Resources()
+		if err != nil {
+			t.Fatalf("Expected resources to parse")
+		}
 	}
 
 	actualChanges := []ctldgraph.ActualChange{}
-	for _, res := range newResources {
+	for _, res := range rs {
 		actualChanges = append(actualChanges, actualChangeFromRes{res, opts.op})
 	}
 

@@ -2,6 +2,7 @@ package diffgraph
 
 import (
 	"fmt"
+	"strings"
 
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	"github.com/k14s/kapp/pkg/kapp/logger"
@@ -159,8 +160,7 @@ func (g *ChangeGraph) printChanges(changes []*Change,
 	var result string
 
 	for _, change := range changes {
-		result += fmt.Sprintf("%s(%s) %s\n", indent,
-			change.Change.Op(), change.Change.Resource().Description())
+		result += fmt.Sprintf("%s%s\n", indent, change.Description())
 
 		if _, found := visitedChanges[change]; !found {
 			visitedChanges[change] = true
@@ -172,6 +172,42 @@ func (g *ChangeGraph) printChanges(changes []*Change,
 	}
 
 	return result
+}
+
+func (g *ChangeGraph) PrintLinearizedStr() string {
+	result := []string{}
+	recordedChanges := map[*Change]struct{}{}
+	blockedChanges := NewBlockedChanges(g)
+	lastBlockedChanges := 0
+
+	for {
+		unblocked := blockedChanges.Unblocked()
+		blocked := blockedChanges.Blocked()
+
+		if len(blocked) == lastBlockedChanges {
+			var section []string
+			for _, blockedChange := range blocked {
+				section = append(section, blockedChange.Description())
+			}
+			result = append(result, "...more blocked...\n"+strings.Join(section, "\n"))
+			return strings.Join(result, "\n---\n")
+		}
+		lastBlockedChanges = len(blocked)
+
+		var section []string
+		for _, unblockedChange := range unblocked {
+			if _, found := recordedChanges[unblockedChange]; !found {
+				recordedChanges[unblockedChange] = struct{}{}
+				blockedChanges.Unblock(unblockedChange)
+				section = append(section, unblockedChange.Description())
+			}
+		}
+		result = append(result, strings.Join(section, "\n"))
+
+		if len(blocked) == 0 {
+			return strings.Join(result, "\n---\n")
+		}
+	}
 }
 
 func (g *ChangeGraph) dedup() {

@@ -42,6 +42,10 @@ type Change struct {
 
 type Changes []*Change
 
+func (c *Change) Description() string {
+	return fmt.Sprintf("(%s) %s", c.Change.Op(), c.Change.Resource().Description())
+}
+
 func (c *Change) IsDirectlyWaitingFor(changeToFind *Change) bool {
 	for _, change := range c.WaitingFor {
 		if change == changeToFind {
