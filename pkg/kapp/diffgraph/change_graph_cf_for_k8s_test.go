@@ -94,51 +94,94 @@ const (
 ---
 (upsert) clusterrole/kpack-watcher (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/kpack-watcher-binding (rbac.authorization.k8s.io/v1) cluster
+(upsert) namespace/cf-workloads-staging (v1) cluster
 (upsert) clusterrolebinding/cc-api-service-account-superuser (rbac.authorization.k8s.io/v1) cluster
 (upsert) podsecuritypolicy/cf-workloads-app-psp (policy/v1beta1) cluster
 (upsert) podsecuritypolicy/cf-workloads-privileged-app-psp (policy/v1beta1) cluster
 (upsert) podsecuritypolicy/eirini (policy/v1beta1) cluster
+(upsert) namespace/kpack (v1) cluster
 (upsert) clusterrole/kpack-controller-admin (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/kpack-controller-admin-binding (rbac.authorization.k8s.io/v1) cluster
+(upsert) mutatingwebhookconfiguration/resource.webhook.kpack.pivotal.io (admissionregistration.k8s.io/v1beta1) cluster
 (upsert) clusterrole/kpack-webhook-mutatingwebhookconfiguration-admin (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/kpack-webhook-certs-mutatingwebhookconfiguration-admin-binding (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/fluentd-service-account-pod-namespace-read (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/metric-proxy (rbac.authorization.k8s.io/v1) cluster
+(upsert) namespace/cf-blobstore (v1) cluster
+(upsert) compositecontroller/cfroutesync (metacontroller.k8s.io/v1alpha1) cluster
 (upsert) clusterrole/istio-reader-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/istio-reader-istio-system (rbac.authorization.k8s.io/v1) cluster
+(upsert) namespace/istio-system (v1) cluster
 (upsert) clusterrole/istio-citadel-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/istio-citadel-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrole/istio-galley-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/istio-galley-admin-role-binding-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrole/istio-sidecar-injector-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/istio-sidecar-injector-admin-role-binding-istio-system (rbac.authorization.k8s.io/v1) cluster
+(upsert) mutatingwebhookconfiguration/istio-sidecar-injector (admissionregistration.k8s.io/v1beta1) cluster
 (upsert) clusterrole/istio-pilot-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/istio-pilot-istio-system (rbac.authorization.k8s.io/v1) cluster
+(upsert) meshpolicy/default (authentication.istio.io/v1alpha1) cluster
 (upsert) clusterrole/istio-policy (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/istio-policy-admin-role-binding-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrole/istio-mixer-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/istio-mixer-admin-role-binding-istio-system (rbac.authorization.k8s.io/v1) cluster
+(upsert) namespace/metacontroller (v1) cluster
 (upsert) clusterrole/metacontroller (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/metacontroller (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrole/aggregate-metacontroller-view (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrole/aggregate-metacontroller-edit (rbac.authorization.k8s.io/v1) cluster
----
-(upsert) namespace/cf-workloads-staging (v1) cluster
-(upsert) namespace/kpack (v1) cluster
-(upsert) namespace/cf-blobstore (v1) cluster
-(upsert) namespace/istio-system (v1) cluster
-(upsert) namespace/metacontroller (v1) cluster
 (upsert) namespace/cf-db (v1) cluster
 (upsert) namespace/cf-system (v1) cluster
 (upsert) namespace/cf-workloads (v1) cluster
 ---
+(upsert) role/kpack-watcher-pod-logs-reader (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(upsert) rolebinding/kpack-watcher-pod-logs-binding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(upsert) configmap/cloud-controller-ng-yaml (v1) namespace: cf-system
+(upsert) configmap/nginx (v1) namespace: cf-system
+(upsert) secret/opi-secrets (v1) namespace: cf-system
+(upsert) serviceaccount/cc-api-service-account (v1) namespace: cf-system
 (upsert) secret/cc-kpack-registry-auth-secret (v1) namespace: cf-workloads-staging
 (upsert) serviceaccount/cc-kpack-registry-service-account (v1) namespace: cf-workloads-staging
+(upsert) networkpolicy/deny-app-ingress (networking.k8s.io/v1) namespace: cf-workloads
+(upsert) serviceaccount/eirini (v1) namespace: cf-workloads
+(upsert) serviceaccount/eirini-privileged (v1) namespace: cf-workloads
+(upsert) serviceaccount/opi (v1) namespace: cf-system
+(upsert) configmap/eirini (v1) namespace: cf-system
+(upsert) role/cf-workloads-app-role (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(upsert) role/cf-workloads-privileged-app-role (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(upsert) role/eirini-role (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(upsert) role/eirini-role (rbac.authorization.k8s.io/v1) namespace: cf-system
+(upsert) rolebinding/cf-workloads-app-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(upsert) rolebinding/cf-workloads-privileged-app-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(upsert) rolebinding/eirini-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(upsert) rolebinding/eirini-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-system
+(upsert) secret/eirini-internal-tls-certs (v1) namespace: cf-system
+(upsert) networkpolicy/allow-app-ingress-from-ingressgateway (networking.k8s.io/v1) namespace: cf-workloads
+(upsert) secret/app-registry-credentials (v1) namespace: cf-workloads
 (upsert) secret/istio-ingressgateway-certs (v1) namespace: istio-system
 (upsert) serviceaccount/controller (v1) namespace: kpack
 (upsert) serviceaccount/webhook (v1) namespace: kpack
 (upsert) role/kpack-webhook-certs-admin (rbac.authorization.k8s.io/v1) namespace: kpack
 (upsert) rolebinding/kpack-webhook-certs-admin-binding (rbac.authorization.k8s.io/v1) namespace: kpack
+(upsert) serviceaccount/fluentd-service-account (v1) namespace: cf-system
+(upsert) clusterrole/pod-namespace-read (rbac.authorization.k8s.io/v1) namespace: cf-system
+(upsert) configmap/fluentd-config (v1) namespace: cf-system
+(upsert) secret/log-cache-ca (v1) namespace: cf-system
+(upsert) secret/log-cache (v1) namespace: cf-system
+(upsert) secret/log-cache-metrics (v1) namespace: cf-system
+(upsert) secret/log-cache-gateway (v1) namespace: cf-system
+(upsert) secret/log-cache-syslog (v1) namespace: cf-system
+(upsert) serviceaccount/metric-proxy (v1) namespace: cf-system
+(upsert) clusterrole/metric-proxy (rbac.authorization.k8s.io/v1) namespace: cf-system
+(upsert) secret/metric-proxy-cert (v1) namespace: cf-system
+(upsert) secret/metric-proxy-ca (v1) namespace: cf-system
+(upsert) secret/cf-blobstore-minio (v1) namespace: cf-blobstore
+(upsert) configmap/cf-blobstore-minio (v1) namespace: cf-blobstore
+(upsert) persistentvolumeclaim/cf-blobstore-minio (v1) namespace: cf-blobstore
+(upsert) serviceaccount/cf-blobstore-minio (v1) namespace: cf-blobstore
+(upsert) configmap/cfroutesync-config (v1) namespace: cf-system
+(upsert) secret/cfroutesync (v1) namespace: cf-system
 (upsert) serviceaccount/istio-reader-service-account (v1) namespace: istio-system
 (upsert) poddisruptionbudget/istio-citadel (policy/v1beta1) namespace: istio-system
 (upsert) serviceaccount/istio-citadel-service-account (v1) namespace: istio-system
@@ -170,49 +213,6 @@ const (
 (upsert) networkpolicy/mixer-network-policy (networking.k8s.io/v1) namespace: istio-system
 (upsert) networkpolicy/sidecar-injector-network-policy (networking.k8s.io/v1) namespace: istio-system
 (upsert) networkpolicy/ingressgateway-network-policy-pilot (networking.k8s.io/v1) namespace: istio-system
----
-(upsert) mutatingwebhookconfiguration/istio-sidecar-injector (admissionregistration.k8s.io/v1beta1) cluster
----
-(upsert) role/kpack-watcher-pod-logs-reader (rbac.authorization.k8s.io/v1) namespace: cf-workloads
-(upsert) rolebinding/kpack-watcher-pod-logs-binding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
-(upsert) configmap/cloud-controller-ng-yaml (v1) namespace: cf-system
-(upsert) configmap/nginx (v1) namespace: cf-system
-(upsert) secret/opi-secrets (v1) namespace: cf-system
-(upsert) serviceaccount/cc-api-service-account (v1) namespace: cf-system
-(upsert) networkpolicy/deny-app-ingress (networking.k8s.io/v1) namespace: cf-workloads
-(upsert) serviceaccount/eirini (v1) namespace: cf-workloads
-(upsert) serviceaccount/eirini-privileged (v1) namespace: cf-workloads
-(upsert) serviceaccount/opi (v1) namespace: cf-system
-(upsert) configmap/eirini (v1) namespace: cf-system
-(upsert) role/cf-workloads-app-role (rbac.authorization.k8s.io/v1) namespace: cf-workloads
-(upsert) role/cf-workloads-privileged-app-role (rbac.authorization.k8s.io/v1) namespace: cf-workloads
-(upsert) role/eirini-role (rbac.authorization.k8s.io/v1) namespace: cf-workloads
-(upsert) role/eirini-role (rbac.authorization.k8s.io/v1) namespace: cf-system
-(upsert) rolebinding/cf-workloads-app-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
-(upsert) rolebinding/cf-workloads-privileged-app-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
-(upsert) rolebinding/eirini-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
-(upsert) rolebinding/eirini-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-system
-(upsert) secret/eirini-internal-tls-certs (v1) namespace: cf-system
-(upsert) networkpolicy/allow-app-ingress-from-ingressgateway (networking.k8s.io/v1) namespace: cf-workloads
-(upsert) secret/app-registry-credentials (v1) namespace: cf-workloads
-(upsert) serviceaccount/fluentd-service-account (v1) namespace: cf-system
-(upsert) clusterrole/pod-namespace-read (rbac.authorization.k8s.io/v1) namespace: cf-system
-(upsert) configmap/fluentd-config (v1) namespace: cf-system
-(upsert) secret/log-cache-ca (v1) namespace: cf-system
-(upsert) secret/log-cache (v1) namespace: cf-system
-(upsert) secret/log-cache-metrics (v1) namespace: cf-system
-(upsert) secret/log-cache-gateway (v1) namespace: cf-system
-(upsert) secret/log-cache-syslog (v1) namespace: cf-system
-(upsert) serviceaccount/metric-proxy (v1) namespace: cf-system
-(upsert) clusterrole/metric-proxy (rbac.authorization.k8s.io/v1) namespace: cf-system
-(upsert) secret/metric-proxy-cert (v1) namespace: cf-system
-(upsert) secret/metric-proxy-ca (v1) namespace: cf-system
-(upsert) secret/cf-blobstore-minio (v1) namespace: cf-blobstore
-(upsert) configmap/cf-blobstore-minio (v1) namespace: cf-blobstore
-(upsert) persistentvolumeclaim/cf-blobstore-minio (v1) namespace: cf-blobstore
-(upsert) serviceaccount/cf-blobstore-minio (v1) namespace: cf-blobstore
-(upsert) configmap/cfroutesync-config (v1) namespace: cf-system
-(upsert) secret/cfroutesync (v1) namespace: cf-system
 (upsert) serviceaccount/metacontroller (v1) namespace: metacontroller
 (upsert) secret/cf-db-admin-secret (v1) namespace: cf-db
 (upsert) secret/cf-db-credentials (v1) namespace: cf-db
@@ -234,7 +234,6 @@ const (
 (upsert) gateway/istio-ingressgateway (networking.istio.io/v1alpha3) namespace: cf-system
 (upsert) deployment/kpack-controller (apps/v1) namespace: kpack
 (upsert) service/kpack-webhook (v1) namespace: kpack
-(upsert) mutatingwebhookconfiguration/resource.webhook.kpack.pivotal.io (admissionregistration.k8s.io/v1beta1) cluster
 (upsert) deployment/kpack-webhook (apps/v1) namespace: kpack
 (upsert) policy/cf-blobstore-allow-plaintext (authentication.istio.io/v1alpha1) namespace: cf-blobstore
 (upsert) service/log-cache (v1) namespace: cf-system
@@ -246,7 +245,6 @@ const (
 (upsert) deployment/metric-proxy (apps/v1) namespace: cf-system
 (upsert) service/cf-blobstore-minio (v1) namespace: cf-blobstore
 (upsert) deployment/cf-blobstore-minio (apps/v1) namespace: cf-blobstore
-(upsert) compositecontroller/cfroutesync (metacontroller.k8s.io/v1alpha1) cluster
 (upsert) deployment/cfroutesync (apps/v1) namespace: cf-system
 (upsert) service/cfroutesync (v1) namespace: cf-system
 (upsert) routebulksync/route-bulk-sync (apps.cloudfoundry.org/v1alpha1) namespace: cf-workloads
@@ -268,7 +266,6 @@ const (
 (upsert) service/istio-sidecar-injector (v1) namespace: istio-system
 (upsert) horizontalpodautoscaler/istio-pilot (autoscaling/v2beta1) namespace: istio-system
 (upsert) deployment/istio-pilot (apps/v1) namespace: istio-system
-(upsert) meshpolicy/default (authentication.istio.io/v1alpha1) cluster
 (upsert) service/istio-pilot (v1) namespace: istio-system
 (upsert) horizontalpodautoscaler/istio-policy (autoscaling/v2beta1) namespace: istio-system
 (upsert) destinationrule/istio-policy (networking.istio.io/v1alpha3) namespace: istio-system

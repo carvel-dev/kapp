@@ -343,14 +343,17 @@ additionalChangeRules:
   resourceMatchers:
   # [Note]: Apply all resources after pod-related change group as it's
   # common for other resources to rely on ConfigMaps, Secrets, etc.
-  - notMatcher:
-      matcher:
-        anyMatcher:
-          matchers:
-          - anyMatcher: {matchers: *storageClassMatchers}
-          - anyMatcher: {matchers: *storageMatchers}
-          - anyMatcher: {matchers: *rbacMatchers}
-          - anyMatcher: {matchers: *podRelatedMatchers}
+  - andMatcher:
+      matchers:
+      - notMatcher:
+          matcher:
+            anyMatcher:
+              matchers:
+              - anyMatcher: {matchers: *storageClassMatchers}
+              - anyMatcher: {matchers: *storageMatchers}
+              - anyMatcher: {matchers: *rbacMatchers}
+              - anyMatcher: {matchers: *podRelatedMatchers}
+      - hasNamespaceMatcher: {}
 `
 
 var defaultConfigRes = ctlres.MustNewResourceFromBytes([]byte(defaultConfigYAML))
