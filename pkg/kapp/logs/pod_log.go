@@ -44,9 +44,7 @@ func (l PodLog) TailAll(ui ui.UI, cancelCh chan struct{}) error {
 		if !(podInTerminalState && l.isWaitingContainer(cont, l.pod.Status.InitContainerStatuses)) {
 			if l.isWatchingContainer(cont, l.opts.ContainerName) {
 				conts = append(conts, cont)
-				continue
 			}
-			conts = append(conts, cont)
 		}
 	}
 
@@ -54,9 +52,7 @@ func (l PodLog) TailAll(ui ui.UI, cancelCh chan struct{}) error {
 		if !(podInTerminalState && l.isWaitingContainer(cont, l.pod.Status.ContainerStatuses)) {
 			if l.isWatchingContainer(cont, l.opts.ContainerName) {
 				conts = append(conts, cont)
-				continue
 			}
-			conts = append(conts, cont)
 		}
 	}
 
