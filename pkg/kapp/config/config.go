@@ -101,6 +101,7 @@ type ResourceMatcher struct {
 	KindNamespaceNameMatcher *KindNamespaceNameMatcher
 	HasAnnotationMatcher     *HasAnnotationMatcher
 	HasNamespaceMatcher      *HasNamespaceMatcher
+	CustomResourceMatcher    *CustomResourceMatcher
 }
 
 type AllMatcher struct{}
@@ -140,6 +141,8 @@ type HasAnnotationMatcher struct {
 type HasNamespaceMatcher struct {
 	Names []string
 }
+
+type CustomResourceMatcher struct{}
 
 func NewConfigFromResource(res ctlres.Resource) (Config, error) {
 	bs, err := res.AsYAMLBytes()
@@ -295,6 +298,9 @@ func (m ResourceMatcher) AsResourceMatcher() ctlres.ResourceMatcher {
 		return ctlres.HasNamespaceMatcher{
 			Names: m.HasNamespaceMatcher.Names,
 		}
+
+	case m.CustomResourceMatcher != nil:
+		return ctlres.CustomResourceMatcher{}
 
 	default:
 		panic(fmt.Sprintf("Unknown resource matcher specified: %#v", m))

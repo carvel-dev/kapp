@@ -55,16 +55,34 @@ func TestChangeGraphCFForK8s(t *testing.T) {
 
 const (
 	cfForK8sExpectedOutput = `
+(upsert) clusterrole/kpack-watcher (rbac.authorization.k8s.io/v1) cluster
+(upsert) clusterrolebinding/kpack-watcher-binding (rbac.authorization.k8s.io/v1) cluster
+(upsert) namespace/cf-workloads-staging (v1) cluster
+(upsert) clusterrolebinding/cc-api-service-account-superuser (rbac.authorization.k8s.io/v1) cluster
+(upsert) podsecuritypolicy/cf-workloads-app-psp (policy/v1beta1) cluster
+(upsert) podsecuritypolicy/cf-workloads-privileged-app-psp (policy/v1beta1) cluster
+(upsert) podsecuritypolicy/eirini (policy/v1beta1) cluster
+(upsert) namespace/kpack (v1) cluster
 (upsert) customresourcedefinition/builds.build.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) customresourcedefinition/builders.build.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) customresourcedefinition/clusterbuilders.build.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
+(upsert) clusterrole/kpack-controller-admin (rbac.authorization.k8s.io/v1) cluster
+(upsert) clusterrolebinding/kpack-controller-admin-binding (rbac.authorization.k8s.io/v1) cluster
 (upsert) customresourcedefinition/custombuilders.experimental.kpack.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) customresourcedefinition/customclusterbuilders.experimental.kpack.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) customresourcedefinition/images.build.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) customresourcedefinition/sourceresolvers.build.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) customresourcedefinition/stacks.experimental.kpack.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) customresourcedefinition/stores.experimental.kpack.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
+(upsert) mutatingwebhookconfiguration/resource.webhook.kpack.pivotal.io (admissionregistration.k8s.io/v1beta1) cluster
+(upsert) clusterrole/kpack-webhook-mutatingwebhookconfiguration-admin (rbac.authorization.k8s.io/v1) cluster
+(upsert) clusterrolebinding/kpack-webhook-certs-mutatingwebhookconfiguration-admin-binding (rbac.authorization.k8s.io/v1) cluster
+(upsert) clusterrolebinding/fluentd-service-account-pod-namespace-read (rbac.authorization.k8s.io/v1) cluster
+(upsert) clusterrolebinding/metric-proxy (rbac.authorization.k8s.io/v1) cluster
+(upsert) namespace/cf-blobstore (v1) cluster
 (upsert) customresourcedefinition/routebulksyncs.apps.cloudfoundry.org (apiextensions.k8s.io/v1beta1) cluster
+(upsert) clusterrole/istio-reader-istio-system (rbac.authorization.k8s.io/v1) cluster
+(upsert) clusterrolebinding/istio-reader-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) customresourcedefinition/attributemanifests.config.istio.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) customresourcedefinition/clusterrbacconfigs.rbac.istio.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) customresourcedefinition/destinationrules.networking.istio.io (apiextensions.k8s.io/v1beta1) cluster
@@ -88,29 +106,6 @@ const (
 (upsert) customresourcedefinition/handlers.config.istio.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) customresourcedefinition/sidecars.networking.istio.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) customresourcedefinition/authorizationpolicies.security.istio.io (apiextensions.k8s.io/v1beta1) cluster
-(upsert) customresourcedefinition/compositecontrollers.metacontroller.k8s.io (apiextensions.k8s.io/v1beta1) cluster
-(upsert) customresourcedefinition/decoratorcontrollers.metacontroller.k8s.io (apiextensions.k8s.io/v1beta1) cluster
-(upsert) customresourcedefinition/controllerrevisions.metacontroller.k8s.io (apiextensions.k8s.io/v1beta1) cluster
----
-(upsert) clusterrole/kpack-watcher (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/kpack-watcher-binding (rbac.authorization.k8s.io/v1) cluster
-(upsert) namespace/cf-workloads-staging (v1) cluster
-(upsert) clusterrolebinding/cc-api-service-account-superuser (rbac.authorization.k8s.io/v1) cluster
-(upsert) podsecuritypolicy/cf-workloads-app-psp (policy/v1beta1) cluster
-(upsert) podsecuritypolicy/cf-workloads-privileged-app-psp (policy/v1beta1) cluster
-(upsert) podsecuritypolicy/eirini (policy/v1beta1) cluster
-(upsert) namespace/kpack (v1) cluster
-(upsert) clusterrole/kpack-controller-admin (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/kpack-controller-admin-binding (rbac.authorization.k8s.io/v1) cluster
-(upsert) mutatingwebhookconfiguration/resource.webhook.kpack.pivotal.io (admissionregistration.k8s.io/v1beta1) cluster
-(upsert) clusterrole/kpack-webhook-mutatingwebhookconfiguration-admin (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/kpack-webhook-certs-mutatingwebhookconfiguration-admin-binding (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/fluentd-service-account-pod-namespace-read (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/metric-proxy (rbac.authorization.k8s.io/v1) cluster
-(upsert) namespace/cf-blobstore (v1) cluster
-(upsert) compositecontroller/cfroutesync (metacontroller.k8s.io/v1alpha1) cluster
-(upsert) clusterrole/istio-reader-istio-system (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/istio-reader-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) namespace/istio-system (v1) cluster
 (upsert) clusterrole/istio-citadel-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/istio-citadel-istio-system (rbac.authorization.k8s.io/v1) cluster
@@ -121,7 +116,6 @@ const (
 (upsert) mutatingwebhookconfiguration/istio-sidecar-injector (admissionregistration.k8s.io/v1beta1) cluster
 (upsert) clusterrole/istio-pilot-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/istio-pilot-istio-system (rbac.authorization.k8s.io/v1) cluster
-(upsert) meshpolicy/default (authentication.istio.io/v1alpha1) cluster
 (upsert) clusterrole/istio-policy (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/istio-policy-admin-role-binding-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrole/istio-mixer-istio-system (rbac.authorization.k8s.io/v1) cluster
@@ -131,6 +125,9 @@ const (
 (upsert) clusterrolebinding/metacontroller (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrole/aggregate-metacontroller-view (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrole/aggregate-metacontroller-edit (rbac.authorization.k8s.io/v1) cluster
+(upsert) customresourcedefinition/compositecontrollers.metacontroller.k8s.io (apiextensions.k8s.io/v1beta1) cluster
+(upsert) customresourcedefinition/decoratorcontrollers.metacontroller.k8s.io (apiextensions.k8s.io/v1beta1) cluster
+(upsert) customresourcedefinition/controllerrevisions.metacontroller.k8s.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) namespace/cf-db (v1) cluster
 (upsert) namespace/cf-system (v1) cluster
 (upsert) namespace/cf-workloads (v1) cluster
@@ -182,6 +179,7 @@ const (
 (upsert) serviceaccount/cf-blobstore-minio (v1) namespace: cf-blobstore
 (upsert) configmap/cfroutesync-config (v1) namespace: cf-system
 (upsert) secret/cfroutesync (v1) namespace: cf-system
+(upsert) compositecontroller/cfroutesync (metacontroller.k8s.io/v1alpha1) cluster
 (upsert) serviceaccount/istio-reader-service-account (v1) namespace: istio-system
 (upsert) poddisruptionbudget/istio-citadel (policy/v1beta1) namespace: istio-system
 (upsert) serviceaccount/istio-citadel-service-account (v1) namespace: istio-system
@@ -200,6 +198,7 @@ const (
 (upsert) configmap/istio-sidecar-injector (v1) namespace: istio-system
 (upsert) configmap/pilot-envoy-config (v1) namespace: istio-system
 (upsert) configmap/istio (v1) namespace: istio-system
+(upsert) meshpolicy/default (authentication.istio.io/v1alpha1) cluster
 (upsert) poddisruptionbudget/istio-pilot (policy/v1beta1) namespace: istio-system
 (upsert) serviceaccount/istio-pilot-service-account (v1) namespace: istio-system
 (upsert) configmap/policy-envoy-config (v1) namespace: istio-system

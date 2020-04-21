@@ -134,3 +134,36 @@ func (m HasNamespaceMatcher) Matches(res Resource) bool {
 	}
 	return false
 }
+
+var (
+	builtinAPIGroups = map[string]struct{}{
+		"":                             struct{}{},
+		"admissionregistration.k8s.io": struct{}{},
+		"apiextensions.k8s.io":         struct{}{},
+		"apps":                         struct{}{},
+		"authentication.k8s.io":        struct{}{},
+		"authorization.k8s.io":         struct{}{},
+		"autoscaling":                  struct{}{},
+		"batch":                        struct{}{},
+		"certificates.k8s.io":          struct{}{},
+		"coordination.k8s.io":          struct{}{},
+		"extensions":                   struct{}{},
+		"metrics.k8s.io":               struct{}{},
+		"migration.k8s.io":             struct{}{},
+		"networking.k8s.io":            struct{}{},
+		"node.k8s.io":                  struct{}{},
+		"policy":                       struct{}{},
+		"rbac.authorization.k8s.io":    struct{}{},
+		"scheduling.k8s.io":            struct{}{},
+		"storage.k8s.io":               struct{}{},
+	}
+)
+
+type CustomResourceMatcher struct{}
+
+var _ ResourceMatcher = CustomResourceMatcher{}
+
+func (m CustomResourceMatcher) Matches(res Resource) bool {
+	_, found := builtinAPIGroups[res.APIGroup()]
+	return !found
+}

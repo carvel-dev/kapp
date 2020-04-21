@@ -142,35 +142,20 @@ metadata:
 	expectedOutput := strings.TrimSpace(`
 (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
 (upsert) namespace/app1 (v1) cluster
-  (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
 (upsert) configmap/app-config (v1) namespace: app1
-  (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
   (upsert) namespace/app1 (v1) cluster
-    (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
 (upsert) deployment/app (apps/v1) namespace: app1
-  (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
   (upsert) namespace/app1 (v1) cluster
-    (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
   (upsert) configmap/app-config (v1) namespace: app1
-    (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
     (upsert) namespace/app1 (v1) cluster
-      (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
 (upsert) job/app-health-check (batch/v1) namespace: app1
   (upsert) deployment/app (apps/v1) namespace: app1
-    (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
     (upsert) namespace/app1 (v1) cluster
-      (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
     (upsert) configmap/app-config (v1) namespace: app1
-      (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
       (upsert) namespace/app1 (v1) cluster
-        (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
-  (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
   (upsert) namespace/app1 (v1) cluster
-    (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
   (upsert) configmap/app-config (v1) namespace: app1
-    (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
     (upsert) namespace/app1 (v1) cluster
-      (upsert) customresourcedefinition/app-config (apiextensions.k8s.io/v1) cluster
 `)
 
 	if output != expectedOutput {

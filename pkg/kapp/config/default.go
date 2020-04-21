@@ -296,8 +296,18 @@ additionalChangeGroups:
 
 additionalChangeRules:
 - rules:
-  # [Note]: insert CRDs before all other resources
+  # [Note]: insert CRDs before all other custom resources
   - "upsert after upserting change-groups.kapp.k14s.io/crds"
+  resourceMatchers:
+  - andMatcher:
+      matchers:
+      - customResourceMatcher: {}
+      - notMatcher:
+          matcher:
+            hasAnnotationMatcher:
+              keys: [kapp.k14s.io/disable-default-change-group-and-rules]
+
+- rules:
   - "delete before deleting change-groups.kapp.k14s.io/crds"
   resourceMatchers:
   - andMatcher:
