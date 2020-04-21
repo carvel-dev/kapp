@@ -72,10 +72,7 @@ func (o *LogsOptions) Run() error {
 	}
 
 	contFilter := func(pod corev1.Pod) []string {
-		if len(o.LogsFlags.ContainerNames) > 0 {
-			return o.LogsFlags.ContainerNames
-		}
-		return nil
+		return o.LogsFlags.ContainerNames
 	}
 
 	logsView := ctllogs.NewView(logOpts, podWatcher, contFilter, supportObjs.CoreClient, o.ui)

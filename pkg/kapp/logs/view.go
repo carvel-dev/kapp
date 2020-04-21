@@ -68,9 +68,10 @@ func (v View) Show(cancelCh chan struct{}) error {
 				return fmt.Sprintf("%s > %s", pod.Name, cont.Name)
 			}
 
-			v.tailOpts.ContainerNames = v.contFilterFunc(pod)
+			tailOpts := v.tailOpts
+			tailOpts.ContainerNames = v.contFilterFunc(pod)
 
-			err := NewPodLog(pod, podsClient, tagFunc, v.tailOpts).TailAll(v.ui, cancelPodTailCh)
+			err := NewPodLog(pod, podsClient, tagFunc, tailOpts).TailAll(v.ui, cancelPodTailCh)
 			if err != nil {
 				v.ui.BeginLinef("Pod logs tailing error: %s\n", err)
 			}
