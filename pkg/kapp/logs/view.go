@@ -14,19 +14,21 @@ type PodWatcher interface {
 }
 
 type View struct {
-	tailOpts   PodLogOpts
-	podWatcher PodWatcher
-	coreClient kubernetes.Interface
-	ui         ui.UI
+	tailOpts       PodLogOpts
+	podWatcher     PodWatcher
+	contFilterFunc func(pod corev1.Pod) []string
+	coreClient     kubernetes.Interface
+	ui             ui.UI
 }
 
 func NewView(
 	tailOpts PodLogOpts,
 	podWatcher PodWatcher,
+	contFilterFunc func(pod corev1.Pod) []string,
 	coreClient kubernetes.Interface,
 	ui ui.UI,
 ) View {
-	return View{tailOpts, podWatcher, coreClient, ui}
+	return View{tailOpts, podWatcher, contFilterFunc, coreClient, ui}
 }
 
 func (v View) Show(cancelCh chan struct{}) error {
@@ -65,6 +67,8 @@ func (v View) Show(cancelCh chan struct{}) error {
 			tagFunc := func(cont corev1.Container) string {
 				return fmt.Sprintf("%s > %s", pod.Name, cont.Name)
 			}
+
+			v.tailOpts.ContainerNames = v.contFilterFunc(pod)
 
 			err := NewPodLog(pod, podsClient, tagFunc, v.tailOpts).TailAll(v.ui, cancelPodTailCh)
 			if err != nil {

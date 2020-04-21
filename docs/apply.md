@@ -44,6 +44,10 @@ Related: [ownership label rules](config.md) and [label scoping rules](config.md)
 
     Possible values: `` (default). Especially useful when added to Jobs. For example, see [examples/resource-ordering/sync-check.yml](../examples/resource-ordering/sync-check.yml)
 
+- `kapp.k14s.io/deploy-logs-container-names` annotation indicates which Containers' log output to show during deploy
+
+    Possible values: `` (default), 'containerName1', 'containerName1,containerName2'
+	
 ### Controlling apply via deploy flags
 
 - `--apply-ignored=bool` explicitly applies ignored changes; this is useful in cases when controllers lose track of some resources instead of for example deleting them
