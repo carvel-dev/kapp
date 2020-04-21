@@ -247,12 +247,7 @@ func (c AddOrUpdateChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 		return ctlresm.DoneApplyState{}, nil, err
 	}
 
-	associatedRs, err := labeledResources.GetAssociated(parentRes)
-	if err != nil {
-		return ctlresm.DoneApplyState{}, nil, err
-	}
-
-	return c.convergedResFactory.New(parentRes, associatedRs).IsDoneApplying()
+	return c.convergedResFactory.New(parentRes, labeledResources.GetAssociated).IsDoneApplying()
 }
 
 func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error {

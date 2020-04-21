@@ -16,26 +16,27 @@ const (
 
 type ConvergedResource struct {
 	res                  ctlres.Resource
-	associatedRs         []ctlres.Resource
+	associatedRsFunc     func(ctlres.Resource) ([]ctlres.Resource, error)
 	specificResFactories []SpecificResFactory
 }
 
-type SpecificResFactory func(ctlres.Resource, []ctlres.Resource) SpecificResource
+type SpecificResFactory func(ctlres.Resource, []ctlres.Resource) (SpecificResource, bool)
 
-func NewConvergedResource(res ctlres.Resource, associatedRs []ctlres.Resource,
+func NewConvergedResource(res ctlres.Resource,
+	associatedRsFunc func(ctlres.Resource) ([]ctlres.Resource, error),
 	specificResFactories []SpecificResFactory) ConvergedResource {
-	return ConvergedResource{res, associatedRs, specificResFactories}
+	return ConvergedResource{res, associatedRsFunc, specificResFactories}
 }
 
 func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
 	var descMsgs []string
 
-	convergedRes, associatedRs, err := c.findParentAndAssociatedRes()
+	associatedRs, err := c.associatedRs()
 	if err != nil {
-		return ctlresm.DoneApplyState{Done: true}, descMsgs, err
+		return ctlresm.DoneApplyState{}, nil, err
 	}
 
-	convergedResState, err := c.isResourceDoneApplying(convergedRes)
+	convergedResState, err := c.isResourceDoneApplying(c.res, associatedRs)
 	if err != nil {
 		return ctlresm.DoneApplyState{Done: true}, descMsgs, err
 	}
@@ -45,9 +46,8 @@ func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 		if convergedResState.Done {
 			return *convergedResState, descMsgs, nil
 		}
-
 		if !convergedResState.Successful && len(associatedRs) > 0 {
-			descMsgs = append(descMsgs, c.buildParentDescMsg(convergedRes, *convergedResState)...)
+			descMsgs = append(descMsgs, c.buildParentDescMsg(c.res, *convergedResState)...)
 		}
 	}
 
@@ -55,12 +55,12 @@ func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 	// exit quickly with parent resource state or success.
 	// For example, CronJobs should be annotated with this to avoid
 	// picking up failed Pods from previous runs.
-	disableARWVal, disableARWFound := convergedRes.Annotations()[disableAssociatedResourcesWaitingAnnKey]
+	disableARWVal, disableARWFound := c.res.Annotations()[disableAssociatedResourcesWaitingAnnKey]
 	if disableARWFound {
 		if disableARWVal != "" {
 			return ctlresm.DoneApplyState{Done: true}, descMsgs,
 				fmt.Errorf("Expected annotation '%s' on resource '%s' to have value ''",
-					disableAssociatedResourcesWaitingAnnKey, convergedRes.Description())
+					disableAssociatedResourcesWaitingAnnKey, c.res.Description())
 		} else {
 			if convergedResState != nil {
 				return *convergedResState, descMsgs, nil
@@ -74,7 +74,7 @@ func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 	// Show associated resources even though we are waiting for the parent.
 	// This additional info may be helpful in identifying what parent is waiting for.
 	for _, res := range associatedRs {
-		state, err := c.isResourceDoneApplying(res)
+		state, err := c.isResourceDoneApplying(res, associatedRs)
 		if state == nil {
 			state = &ctlresm.DoneApplyState{Done: true, Successful: true}
 		}
@@ -106,35 +106,58 @@ func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 	return ctlresm.DoneApplyState{Done: true, Successful: true}, descMsgs, nil
 }
 
-func (c ConvergedResource) findParentAndAssociatedRes() (ctlres.Resource, []ctlres.Resource, error) {
-	convergedRes := c.res
-	convergedResKey := ctlres.NewUniqueResourceKey(convergedRes).String()
+func (c ConvergedResource) associatedRs() ([]ctlres.Resource, error) {
+	if c.associatedRsFunc == nil {
+		return nil, nil
+	}
+	for _, f := range c.specificResFactories {
+		matchedRes, associatedRsWanted := f(c.res, nil)
+		// checking if interface is nil
+		if !reflect.ValueOf(matchedRes).IsNil() {
+			// Grab associated resources only if it's benefitial
+			if associatedRsWanted {
+				associatedRs, err := c.associatedRsFunc(c.res)
+				if err != nil {
+					return nil, err
+				}
+				return c.sortAssociatedRs(associatedRs), nil
+			}
+			break
+		}
+	}
+	return nil, nil
+}
+
+func (c ConvergedResource) sortAssociatedRs(associatedRs []ctlres.Resource) []ctlres.Resource {
+	convergedResKey := ctlres.NewUniqueResourceKey(c.res).String()
 
 	// Sort so that resources show up more or less consistently
-	sort.Slice(c.associatedRs, func(i, j int) bool {
-		return c.associatedRs[i].Description() > c.associatedRs[j].Description()
+	sort.Slice(associatedRs, func(i, j int) bool {
+		return associatedRs[i].Description() > associatedRs[j].Description()
 	})
 
 	// Remove possibly found parent resource
-	for i, res := range c.associatedRs {
+	for i, res := range associatedRs {
 		if convergedResKey == ctlres.NewUniqueResourceKey(res).String() {
-			c.associatedRs = append(c.associatedRs[:i], c.associatedRs[i+1:]...)
+			associatedRs = append(associatedRs[:i], associatedRs[i+1:]...)
 			break
 		}
 	}
 
-	return convergedRes, c.associatedRs, nil
+	return associatedRs
 }
 
-func (c ConvergedResource) isResourceDoneApplying(res ctlres.Resource) (*ctlresm.DoneApplyState, error) {
+func (c ConvergedResource) isResourceDoneApplying(res ctlres.Resource,
+	associatedRs []ctlres.Resource) (*ctlresm.DoneApplyState, error) {
+
 	for _, f := range c.specificResFactories {
+		matchedRes, _ := f(res, associatedRs)
 		// checking if interface is nil
-		if !reflect.ValueOf(f(res, c.associatedRs)).IsNil() {
-			state := f(res, c.associatedRs).IsDoneApplying()
+		if !reflect.ValueOf(matchedRes).IsNil() {
+			state := matchedRes.IsDoneApplying()
 			return &state, nil
 		}
 	}
-
 	return nil, nil
 }
 
