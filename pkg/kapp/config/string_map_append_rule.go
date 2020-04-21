@@ -22,7 +22,7 @@ func (r stringMapAppendRule) AsMods(kvs map[string]string) []ctlres.StringMapApp
 
 func (r stringMapAppendRule) singleMod(matcher ResourceMatcher, kvs map[string]string) ctlres.StringMapAppendMod {
 	mod := ctlres.StringMapAppendMod{
-		ResourceMatcher: ctlres.AllResourceMatcher{},
+		ResourceMatcher: ctlres.AllMatcher{},
 		Path:            r.Path,
 		SkipIfNotFound:  r.SkipIfNotFound,
 		KVs:             kvs,
@@ -43,7 +43,7 @@ func (r stringMapAppendRule) singleMod(matcher ResourceMatcher, kvs map[string]s
 		}
 
 	default:
-		mod.ResourceMatcher = ctlres.AllResourceMatcher{}
+		mod.ResourceMatcher = ctlres.AllMatcher{}
 	}
 
 	return mod

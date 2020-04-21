@@ -224,7 +224,7 @@ func (e modFieldCopyExample) Check(t *testing.T) {
 	}
 
 	err := ctlres.FieldCopyMod{
-		ResourceMatcher: ctlres.AllResourceMatcher{},
+		ResourceMatcher: ctlres.AllMatcher{},
 		Path:            e.Path,
 		Sources:         e.Sources,
 	}.ApplyFromMultiple(res, ress)

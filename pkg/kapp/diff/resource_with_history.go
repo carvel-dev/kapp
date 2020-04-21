@@ -72,7 +72,7 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ct
 	}
 
 	t := ctlres.StringMapAppendMod{
-		ResourceMatcher: ctlres.AllResourceMatcher{},
+		ResourceMatcher: ctlres.AllMatcher{},
 		Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
 		KVs: map[string]string{
 			appliedResAnnKey:         string(appliedResBytes),
@@ -170,19 +170,19 @@ func (r resourceWithoutHistory) Resource() (ctlres.Resource, error) {
 func (resourceWithoutHistory) removeAppliedResAnnKeysMods() []ctlres.ResourceMod {
 	return []ctlres.ResourceMod{
 		ctlres.FieldRemoveMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", appliedResAnnKey}),
 		},
 		ctlres.FieldRemoveMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", appliedResDiffAnnKey}),
 		},
 		ctlres.FieldRemoveMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", appliedResDiffMD5AnnKey}),
 		},
 		ctlres.FieldRemoveMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", appliedResDiffFullAnnKey}),
 		},
 	}

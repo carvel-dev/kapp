@@ -109,7 +109,7 @@ func (a Preparation) placeIntoNamespace(resources []ctlres.Resource) ([]ctlres.R
 
 func (a Preparation) addNonce(resources []ctlres.Resource) ([]ctlres.Resource, error) {
 	addNonceMod := ctlres.StringMapAppendMod{
-		ResourceMatcher: ctlres.AllResourceMatcher{},
+		ResourceMatcher: ctlres.AllMatcher{},
 		Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
 		KVs: map[string]string{
 			nonceAnnKey: fmt.Sprintf("%d", time.Now().UTC().UnixNano()),

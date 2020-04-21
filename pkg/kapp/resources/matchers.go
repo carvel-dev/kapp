@@ -4,21 +4,6 @@ type ResourceMatcher interface {
 	Matches(Resource) bool
 }
 
-type AnyMatcher struct {
-	Matchers []ResourceMatcher
-}
-
-var _ ResourceMatcher = AnyMatcher{}
-
-func (m AnyMatcher) Matches(res Resource) bool {
-	for _, matcher := range m.Matchers {
-		if matcher.Matches(res) {
-			return true
-		}
-	}
-	return false
-}
-
 type APIGroupKindMatcher struct {
 	APIGroup string
 	Kind     string
@@ -51,19 +36,19 @@ func (m KindNamespaceNameMatcher) Matches(res Resource) bool {
 	return res.Kind() == m.Kind && res.Namespace() == m.Namespace && res.Name() == m.Name
 }
 
-type AllResourceMatcher struct{}
+type AllMatcher struct{}
 
-var _ ResourceMatcher = AllResourceMatcher{}
+var _ ResourceMatcher = AllMatcher{}
 
-func (AllResourceMatcher) Matches(Resource) bool { return true }
+func (AllMatcher) Matches(Resource) bool { return true }
 
-type AnyResourceMatcher struct {
+type AnyMatcher struct {
 	Matchers []ResourceMatcher
 }
 
-var _ ResourceMatcher = AnyResourceMatcher{}
+var _ ResourceMatcher = AnyMatcher{}
 
-func (m AnyResourceMatcher) Matches(res Resource) bool {
+func (m AnyMatcher) Matches(res Resource) bool {
 	for _, m := range m.Matchers {
 		if m.Matches(res) {
 			return true
@@ -72,23 +57,23 @@ func (m AnyResourceMatcher) Matches(res Resource) bool {
 	return false
 }
 
-type NotResourceMatcher struct {
+type NotMatcher struct {
 	Matcher ResourceMatcher
 }
 
-var _ ResourceMatcher = NotResourceMatcher{}
+var _ ResourceMatcher = NotMatcher{}
 
-func (m NotResourceMatcher) Matches(res Resource) bool {
+func (m NotMatcher) Matches(res Resource) bool {
 	return !m.Matcher.Matches(res)
 }
 
-type AndResourceMatcher struct {
+type AndMatcher struct {
 	Matchers []ResourceMatcher
 }
 
-var _ ResourceMatcher = AndResourceMatcher{}
+var _ ResourceMatcher = AndMatcher{}
 
-func (m AndResourceMatcher) Matches(res Resource) bool {
+func (m AndMatcher) Matches(res Resource) bool {
 	for _, m := range m.Matchers {
 		if !m.Matches(res) {
 			return false

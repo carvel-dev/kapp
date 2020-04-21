@@ -58,7 +58,7 @@ func (a IdentityAnnotation) v1Value() string {
 
 func (a IdentityAnnotation) AddMod() StringMapAppendMod {
 	return StringMapAppendMod{
-		ResourceMatcher: AllResourceMatcher{},
+		ResourceMatcher: AllMatcher{},
 		Path:            NewPathFromStrings([]string{"metadata", "annotations"}),
 		KVs:             map[string]string{kappIdentityAnnKey: a.v1Value()},
 	}
@@ -66,7 +66,7 @@ func (a IdentityAnnotation) AddMod() StringMapAppendMod {
 
 func (a IdentityAnnotation) RemoveMod() FieldRemoveMod {
 	return FieldRemoveMod{
-		ResourceMatcher: AllResourceMatcher{},
+		ResourceMatcher: AllMatcher{},
 		Path:            NewPathFromStrings([]string{"metadata", "annotations", kappIdentityAnnKey}),
 	}
 }

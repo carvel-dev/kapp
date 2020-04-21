@@ -125,7 +125,7 @@ func (e modFieldRemoveExample) Check(t *testing.T) {
 	}
 
 	err = ctlres.FieldRemoveMod{
-		ResourceMatcher: ctlres.AllResourceMatcher{},
+		ResourceMatcher: ctlres.AllMatcher{},
 		Path:            e.Path,
 	}.Apply(res)
 	if err != nil {

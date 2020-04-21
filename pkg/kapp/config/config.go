@@ -253,20 +253,20 @@ func (ms ResourceMatchers) AsResourceMatchers() []ctlres.ResourceMatcher {
 func (m ResourceMatcher) AsResourceMatcher() ctlres.ResourceMatcher {
 	switch {
 	case m.AllMatcher != nil:
-		return ctlres.AllResourceMatcher{}
+		return ctlres.AllMatcher{}
 
 	case m.AnyMatcher != nil:
-		return ctlres.AnyResourceMatcher{
+		return ctlres.AnyMatcher{
 			Matchers: ResourceMatchers(m.AnyMatcher.Matchers).AsResourceMatchers(),
 		}
 
 	case m.AndMatcher != nil:
-		return ctlres.AndResourceMatcher{
+		return ctlres.AndMatcher{
 			Matchers: ResourceMatchers(m.AndMatcher.Matchers).AsResourceMatchers(),
 		}
 
 	case m.NotMatcher != nil:
-		return ctlres.NotResourceMatcher{
+		return ctlres.NotMatcher{
 			Matcher: m.NotMatcher.Matcher.AsResourceMatcher(),
 		}
 

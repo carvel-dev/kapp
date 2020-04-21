@@ -170,7 +170,7 @@ func (e modStringMapAppendExample) Check(t *testing.T) {
 	}
 
 	err = ctlres.StringMapAppendMod{
-		ResourceMatcher: ctlres.AllResourceMatcher{},
+		ResourceMatcher: ctlres.AllMatcher{},
 		Path:            e.Path,
 		KVs:             e.KVs,
 	}.Apply(res)

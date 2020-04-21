@@ -24,21 +24,21 @@ metadata:
 
 	mods := []ctlres.ResourceModWithMultiple{
 		ctlres.FieldCopyMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata"}),
 			Sources:         []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceExisting},
 		},
 		ctlres.FieldRemoveMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
 		},
 		ctlres.FieldCopyMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
 			Sources:         []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceNew},
 		},
 		ctlres.FieldCopyMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", "rebased"}),
 			Sources:         []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceNew, ctlres.FieldCopyModSourceExisting},
 		},
@@ -86,21 +86,21 @@ metadata:
 
 	mods := []ctlres.ResourceModWithMultiple{
 		ctlres.FieldCopyMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata"}),
 			Sources:         []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceExisting},
 		},
 		ctlres.FieldRemoveMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
 		},
 		ctlres.FieldCopyMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
 			Sources:         []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceNew},
 		},
 		ctlres.FieldCopyMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", "rebased"}),
 			Sources:         []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceNew, ctlres.FieldCopyModSourceExisting},
 		},
@@ -151,21 +151,21 @@ metadata:
 
 	rebaseMods := []ctlres.ResourceModWithMultiple{
 		ctlres.FieldCopyMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata"}),
 			Sources:         []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceExisting},
 		},
 		ctlres.FieldRemoveMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
 		},
 		ctlres.FieldCopyMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
 			Sources:         []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceNew},
 		},
 		ctlres.FieldCopyMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", "rebased"}),
 			Sources:         []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceNew, ctlres.FieldCopyModSourceExisting},
 		},
@@ -173,7 +173,7 @@ metadata:
 
 	ignoreFieldsMods := []ctlres.FieldRemoveMod{
 		ctlres.FieldRemoveMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", "unexpected-ignored"}),
 		},
 	}
@@ -222,26 +222,26 @@ metadata:
 
 	rebaseMods := []ctlres.ResourceModWithMultiple{
 		ctlres.FieldCopyMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata"}),
 			Sources:         []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceExisting},
 		},
 		ctlres.FieldRemoveMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
 		},
 		ctlres.FieldCopyMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
 			Sources:         []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceNew},
 		},
 		ctlres.FieldCopyMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", "rebased"}),
 			Sources:         []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceNew, ctlres.FieldCopyModSourceExisting},
 		},
 		ctlres.FieldCopyMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", "rebased-ignored"}),
 			Sources:         []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceNew, ctlres.FieldCopyModSourceExisting},
 		},
@@ -249,7 +249,7 @@ metadata:
 
 	ignoreFieldsMods := []ctlres.FieldRemoveMod{
 		ctlres.FieldRemoveMod{
-			ResourceMatcher: ctlres.AllResourceMatcher{},
+			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", "rebased-ignored"}),
 		},
 	}
