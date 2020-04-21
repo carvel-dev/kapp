@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
@@ -345,7 +346,8 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 }
 
 const (
-	deployLogsAnnKey = "kapp.k14s.io/deploy-logs" // valid value is ''
+	deployLogsAnnKey          = "kapp.k14s.io/deploy-logs" // valid value is ''
+	deployLogsContNamesAnnKey = "kapp.k14s.io/deploy-logs-container-names"
 )
 
 func (o *DeployOptions) showLogs(
@@ -362,7 +364,15 @@ func (o *DeployOptions) showLogs(
 		identifiedResources.PodResources(labelSelector),
 	}
 
-	ctllogs.NewView(logOpts, podWatcher, coreClient, o.ui).Show(cancelCh)
+	contFilterFunc := func(pod corev1.Pod) []string {
+		ann, found := pod.Annotations[deployLogsContNamesAnnKey]
+		if found && ann != "" {
+			return strings.Split(ann, ",")
+		}
+		return nil
+	}
+
+	ctllogs.NewView(logOpts, podWatcher, contFilterFunc, coreClient, o.ui).Show(cancelCh)
 }
 
 func (o *DeployOptions) nsNames(resources []ctlres.Resource) []string {

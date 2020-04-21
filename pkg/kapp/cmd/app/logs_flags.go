@@ -20,7 +20,7 @@ func (s *LogsFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().Int64Var(&s.Lines, "lines", 10, "Limit to number of lines (use -1 to remove limit)")
 	cmd.Flags().BoolVar(&s.ContainerTag, "container-tag", true, "Include container tag")
 	cmd.Flags().StringVarP(&s.PodName, "pod-name", "m", "", "Set pod name to filter logs (% acts as wildcard, e.g. 'app%')")
-	cmd.Flags().StringSliceVarP(&s.ContainerNames, "container-name", "c", nil, "Set container names to filter logs in the pod, separated by comma")
+	cmd.Flags().StringSliceVarP(&s.ContainerNames, "container-name", "c", nil, "Set container names to filter logs in the pod, separated by comma (% acts as wildcard, e.g. 'app%')")
 }
 
 func (s *LogsFlags) PodLogOpts() (ctllogs.PodLogOpts, error) {

@@ -71,7 +71,11 @@ func (o *LogsOptions) Run() error {
 		supportObjs.IdentifiedResources.PodResources(labelSelector),
 	}
 
-	logsView := ctllogs.NewView(logOpts, podWatcher, supportObjs.CoreClient, o.ui)
+	contFilter := func(pod corev1.Pod) []string {
+		return o.LogsFlags.ContainerNames
+	}
+
+	logsView := ctllogs.NewView(logOpts, podWatcher, contFilter, supportObjs.CoreClient, o.ui)
 
 	return logsView.Show(make(chan struct{}))
 }
