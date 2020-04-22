@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"regexp"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -75,7 +76,7 @@ metadata:
 
 		out, _ := kapp.RunWithOpts([]string{"deploy", "--tty", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-		out = strings.TrimSpace(replaceSpaces(replaceTarget(replaceTs(out))))
+		out = sortActionsInResult(strings.TrimSpace(replaceSpaces(replaceTarget(replaceTs(out)))))
 		expectedOutput := strings.TrimSpace(replaceSpaces(`Changes
 
 Namespace  Name                 Kind       Conds.  Age  Op      Wait to    Rs  Ri  $
@@ -92,14 +93,14 @@ Wait to: 7 reconcile, 0 delete, 0 noop
 
 <replaced>: ---- applying 4 changes [0/7 done] ----
 <replaced>: create configmap/app-config (v1) namespace: kapp-test
-<replaced>: create configmap/import-etcd-into-db (v1) namespace: kapp-test
 <replaced>: create configmap/app-ing (v1) namespace: kapp-test
 <replaced>: create configmap/app-svc (v1) namespace: kapp-test
+<replaced>: create configmap/import-etcd-into-db (v1) namespace: kapp-test
 <replaced>: ---- waiting on 4 changes [0/7 done] ----
 <replaced>: ok: reconcile configmap/app-config (v1) namespace: kapp-test
-<replaced>: ok: reconcile configmap/import-etcd-into-db (v1) namespace: kapp-test
 <replaced>: ok: reconcile configmap/app-ing (v1) namespace: kapp-test
 <replaced>: ok: reconcile configmap/app-svc (v1) namespace: kapp-test
+<replaced>: ok: reconcile configmap/import-etcd-into-db (v1) namespace: kapp-test
 <replaced>: ---- applying 1 changes [4/7 done] ----
 <replaced>: create configmap/migrations (v1) namespace: kapp-test
 <replaced>: ---- waiting on 1 changes [4/7 done] ----
@@ -179,7 +180,7 @@ metadata:
 
 		out, _ := kapp.RunWithOpts([]string{"deploy", "--tty", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml)})
 
-		out = strings.TrimSpace(replaceSpaces(replaceAgeStr(replaceTarget(replaceTs(out)))))
+		out = sortActionsInResult(strings.TrimSpace(replaceSpaces(replaceAgeStr(replaceTarget(replaceTs(out))))))
 		expectedOutput := strings.TrimSpace(replaceSpaces(`Changes
 
 Namespace  Name                 Kind       Conds.  Age  Op      Wait to    Rs  Ri  $
@@ -226,4 +227,54 @@ func replaceSpaces(result string) string {
 	// result = strings.Replace(result, " ", "_", -1) // useful for debugging
 	result = strings.Replace(result, " \n", " $\n", -1) // explicit endline
 	return result
+}
+
+// Sort action lines with replaced timestamp prefix
+func sortActionsInResult(result string) string {
+	var lines []string
+	var firstIdx, lastIdx int
+	for i, line := range strings.Split(result, "\n") {
+		lines = append(lines, line)
+		if strings.HasPrefix(line, "<replaced>:") {
+			if firstIdx == 0 {
+				firstIdx = i
+			}
+			lastIdx = i
+		}
+	}
+	resultLines := append([]string{}, lines[:firstIdx]...)
+	resultLines = append(resultLines, sortActionLines(lines[firstIdx:lastIdx])...)
+	resultLines = append(resultLines, lines[lastIdx:]...)
+	return strings.Join(resultLines, "\n")
+}
+
+// Sort actions within each section alphabetically
+func sortActionLines(lines []string) []string {
+	type actionBucket struct {
+		TitleLine  string
+		OtherLines []string
+	}
+
+	var buckets []*actionBucket
+	var lastBucket *actionBucket
+
+	for _, line := range lines {
+		if strings.HasPrefix(line, "<replaced>: ----") {
+			newBucket := &actionBucket{TitleLine: line}
+			buckets = append(buckets, newBucket)
+			lastBucket = newBucket
+		} else {
+			lastBucket.OtherLines = append(lastBucket.OtherLines, line)
+		}
+	}
+
+	var resultLines []string
+	for _, bucket := range buckets {
+		resultLines = append(resultLines, bucket.TitleLine)
+		sort.Strings(bucket.OtherLines)
+		for _, line := range bucket.OtherLines {
+			resultLines = append(resultLines, line)
+		}
+	}
+	return resultLines
 }

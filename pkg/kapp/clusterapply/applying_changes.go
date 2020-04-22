@@ -2,7 +2,6 @@ package clusterapply
 
 import (
 	"fmt"
-	"sync"
 
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
 	"github.com/k14s/kapp/pkg/kapp/util"
@@ -40,9 +39,8 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 
 	c.ui.NotifySection("applying %d changes %s", len(nonAppliedChanges), c.stats())
 
-	var wg sync.WaitGroup
 	var result []WaitingChange
-	applyErrCh := make(chan error, len(nonAppliedChanges))
+	applyErrsCh := make(chan error, len(nonAppliedChanges))
 
 	// Throttle number of changes are applied concurrently
 	// as it seems that client-go or api-server arent happy
@@ -54,28 +52,22 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 
 	for _, change := range nonAppliedChanges {
 		c.markApplied(change)
-		clusterChange := change.Change.(wrappedClusterChange).ClusterChange
 
-		c.ui.Notify([]string{clusterChange.ApplyDescription()})
-		wg.Add(1)
+		clusterChange := change.Change.(wrappedClusterChange).ClusterChange
+		result = append(result, WaitingChange{change, clusterChange})
 
 		go func() {
-			defer func() { wg.Done() }()
-
 			applyThrottle.Take()
 			defer applyThrottle.Done()
 
-			err := clusterChange.Apply()
-			applyErrCh <- err
+			// Print apply description as close to apply as possible to "show" apply progress
+			c.ui.Notify([]string{clusterChange.ApplyDescription()})
+			applyErrsCh <- clusterChange.Apply()
 		}()
-
-		result = append(result, WaitingChange{change, clusterChange})
 	}
 
-	wg.Wait()
-	close(applyErrCh)
-
-	for err := range applyErrCh {
+	for i := 0; i < len(nonAppliedChanges); i++ {
+		err := <-applyErrsCh
 		if err != nil {
 			return nil, err
 		}

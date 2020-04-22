@@ -5,11 +5,14 @@ import (
 	"time"
 
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
+	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
+	"github.com/k14s/kapp/pkg/kapp/util"
 )
 
 type WaitingChangesOpts struct {
 	Timeout       time.Duration
 	CheckInterval time.Duration
+	Concurrency   int
 }
 
 type WaitingChanges struct {
@@ -37,19 +40,42 @@ func (c *WaitingChanges) IsEmpty() bool {
 	return len(c.trackedChanges) == 0
 }
 
+type waitResult struct {
+	Change   WaitingChange
+	State    ctlresm.DoneApplyState
+	DescMsgs []string
+	Err      error
+}
+
 func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 	startTime := time.Now()
 
 	for {
 		c.ui.NotifySection("waiting on %d changes %s", len(c.trackedChanges), c.stats())
 
+		waitCh := make(chan waitResult, len(c.trackedChanges))
+		waitThrottle := util.NewThrottle(c.opts.Concurrency)
+
+		for _, change := range c.trackedChanges {
+			change := change // copy
+
+			go func() {
+				waitThrottle.Take()
+				defer waitThrottle.Done()
+
+				state, descMsgs, err := change.Cluster.IsDoneApplying()
+				waitCh <- waitResult{Change: change, State: state, DescMsgs: descMsgs, Err: err}
+			}()
+		}
+
 		var newInProgressChanges []WaitingChange
 		var doneChanges []WaitingChange
 
-		for _, change := range c.trackedChanges {
-			desc := fmt.Sprintf("waiting on %s", change.Cluster.WaitDescription())
+		for i := 0; i < len(c.trackedChanges); i++ {
+			result := <-waitCh
+			change, state, descMsgs, err := result.Change, result.State, result.DescMsgs, result.Err
 
-			state, descMsgs, err := change.Cluster.IsDoneApplying()
+			desc := fmt.Sprintf("waiting on %s", change.Cluster.WaitDescription())
 			c.ui.Notify(descMsgs)
 
 			if err != nil {
