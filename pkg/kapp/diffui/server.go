@@ -64,7 +64,7 @@ func (s *Server) mainHandler(w http.ResponseWriter, r *http.Request) {
 	var links []link
 
 	for i, change := range changes {
-		nodes = append(nodes, node{ID: change.Change.Resource().Description(), Name: ""})
+		nodes = append(nodes, node{ID: change.Description(), Name: ""})
 		changeIdx[change] = i
 	}
 
