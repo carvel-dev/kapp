@@ -91,7 +91,7 @@ func (c AddOrUpdateChange) Apply() error {
 			updatedRes, err := c.identifiedResources.Update(newRes)
 			if err != nil {
 				if errors.IsConflict(err) {
-					return c.tryToResolveUpdateConflict(err)
+					return c.tryToResolveUpdateConflict(err, func(err error) error { return err })
 				}
 				return err
 			}
@@ -102,12 +102,19 @@ func (c AddOrUpdateChange) Apply() error {
 			}
 
 		case updateStrategyFallbackOnReplaceAnnValue:
-			updatedRes, err := c.identifiedResources.Update(newRes)
-			if err != nil {
+			replaceIfIsInvalidErrFunc := func(err error) error {
 				if errors.IsInvalid(err) {
 					return c.replace()
 				}
 				return err
+			}
+
+			updatedRes, err := c.identifiedResources.Update(newRes)
+			if err != nil {
+				if errors.IsConflict(err) {
+					return c.tryToResolveUpdateConflict(err, replaceIfIsInvalidErrFunc)
+				}
+				return replaceIfIsInvalidErrFunc(err)
 			}
 
 			err = c.recordAppliedResource(updatedRes)
@@ -153,7 +160,9 @@ func (c AddOrUpdateChange) replace() error {
 	return c.recordAppliedResource(updatedRes)
 }
 
-func (a AddOrUpdateChange) tryToResolveUpdateConflict(origErr error) error {
+func (a AddOrUpdateChange) tryToResolveUpdateConflict(
+	origErr error, updateFallbackFunc func(error) error) error {
+
 	errMsgPrefix := "Failed to update due to resource conflict "
 
 	for i := 0; i < 10; i++ {
@@ -185,7 +194,7 @@ func (a AddOrUpdateChange) tryToResolveUpdateConflict(origErr error) error {
 			if errors.IsConflict(err) {
 				continue
 			}
-			return err
+			return updateFallbackFunc(err)
 		}
 
 		return a.recordAppliedResource(updatedRes)
