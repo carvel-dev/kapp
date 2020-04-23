@@ -131,6 +131,12 @@ rebaseRules:
   - apiVersionKindMatcher: {apiVersion: apiregistration.k8s.io/v1beta1, kind: APIService}
   - apiVersionKindMatcher: {apiVersion: apiregistration.k8s.io/v1, kind: APIService}
 
+- path: [spec, nodeName]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
+
 diffAgainstLastAppliedFieldExclusionRules:
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
   resourceMatchers: *appsV1DeploymentWithRevAnnKey
