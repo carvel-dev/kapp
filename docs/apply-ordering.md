@@ -2,8 +2,14 @@
 
 kapp includes builtin rules to make sure certain changes are applied in particular order:
 
-- CRDs and namespaces (predefined `change-groups.kapp.k14s.io/crds` and `change-groups.kapp.k14s.io/namespaces` groups) are created before most resources
+- CRDs are created/updated before custom resources
+- Namespaces are created/updated before namespaced resources
 - CRDs are deleted last (after CRs)
+
+As of v0.25.0+, additional rules are applied where possible (via default [changeGroupBindings and changeRuleBindings](config.md#changegroupbindings)):
+
+- Pod related (ServiceAccount, ConfigMap, Secret, etc.) resources are created/updated before other resources
+- RBAC related (Role, RoleBinding, etc.) resources are created/updated before other resources
 
 Additionally kapp allows to customize order of changes via following resource annotations:
 

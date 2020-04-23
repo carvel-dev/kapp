@@ -94,6 +94,18 @@ diffMaskRules:
 
 `diffMaskRules` specify which field values should be masked in diff. By default `v1/Secret`'s `data` fields are masked. Currently only applied to `deploy` command.
 
+#### changeGroupBindings
+
+Available in v0.25.0+.
+
+`changeGroupBindings` bind specified change group to resources matched by resource matchers. This is an alternative to using `kapp.k14s.io/change-group` annotation to add change group to resources. See `kapp deploy-config` for default bindings.
+
+#### changeRuleBindings
+
+Available in v0.25.0+.
+
+`changeRuleBindings` bind specified change rules to resources matched by resource matchers. This is an alternative to using `kapp.k14s.io/change-rule` annotation to add change rules to resources. See `kapp deploy-config` for default bindings.
+
 ---
 ### Resource matchers
 
