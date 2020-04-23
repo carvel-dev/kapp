@@ -60,6 +60,9 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
+	labelHeader := uitable.NewHeader("Label")
+	labelHeader.Hidden = true
+
 	lcsHeader := uitable.NewHeader("Last Change Successful")
 	lcsHeader.Title = "Lcs"
 
@@ -73,7 +76,7 @@ func (o *ListOptions) Run() error {
 		Header: []uitable.Header{
 			nsHeader,
 			uitable.NewHeader("Name"),
-			uitable.NewHeader("Label"),
+			labelHeader,
 			uitable.NewHeader("Namespaces"),
 			lcsHeader,
 			lcaHeader,
