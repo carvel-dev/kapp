@@ -144,7 +144,7 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 		}
 	}
 
-	for _, ruleConfig := range c.changeRuleBindings {
+	for i, ruleConfig := range c.changeRuleBindings {
 		rms := ctlconf.ResourceMatchers(ruleConfig.ResourceMatchers).AsResourceMatchers()
 
 		if (ctlres.AnyMatcher{rms}).Matches(res) {
@@ -154,6 +154,7 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 					return nil, err
 				}
 				rule.IgnoreIfCyclical = ruleConfig.IgnoreIfCyclical
+				rule.weight = 100 + i // start at 100
 				rules = append(rules, rule)
 			}
 		}

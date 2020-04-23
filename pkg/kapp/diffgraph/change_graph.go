@@ -2,6 +2,7 @@ package diffgraph
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
@@ -74,10 +75,17 @@ func NewChangeGraph(changes []ActualChange,
 	return graph, graph.checkCycles()
 }
 
+type sortedRule struct {
+	*Change
+	ChangeRule
+}
+
 func (g *ChangeGraph) buildEdges(allowRule func(ChangeRule) bool,
 	allowChange func(*Change, *Change) bool) error {
 
 	defer g.logger.DebugFunc("buildEdges").Finish()
+
+	var sortedRules []sortedRule
 
 	for _, graphChange := range g.changes {
 		rules, err := graphChange.ApplicableRules()
@@ -86,35 +94,45 @@ func (g *ChangeGraph) buildEdges(allowRule func(ChangeRule) bool,
 		}
 
 		for _, rule := range rules {
-			if !allowRule(rule) {
-				continue
-			}
-
-			matchedChanges, err := Changes(g.changes).MatchesRule(rule, graphChange)
-			if err != nil {
-				return err
-			}
-
-			switch {
-			case rule.Order == ChangeRuleOrderAfter:
-				for _, matchedChange := range matchedChanges {
-					if allowChange(graphChange, matchedChange) {
-						graphChange.WaitingFor = append(graphChange.WaitingFor, matchedChange)
-					}
-				}
-
-			case rule.Order == ChangeRuleOrderBefore:
-				for _, matchedChange := range matchedChanges {
-					if allowChange(matchedChange, graphChange) {
-						matchedChange.WaitingFor = append(matchedChange.WaitingFor, graphChange)
-					}
-				}
-
-			default:
-				panic("Unknown change rule order")
+			if allowRule(rule) {
+				sortedRules = append(sortedRules, sortedRule{graphChange, rule})
 			}
 		}
 	}
+
+	// Since some rules may conflict with other rules (cause cycles)
+	// we need to order rules so that they are added deterministically
+	sort.SliceStable(sortedRules, func(i, j int) bool {
+		// Higher weighted rules come first
+		return sortedRules[i].ChangeRule.weight > sortedRules[j].ChangeRule.weight
+	})
+
+	for _, sr := range sortedRules {
+		matchedChanges, err := Changes(g.changes).MatchesRule(sr.ChangeRule, sr.Change)
+		if err != nil {
+			return err
+		}
+
+		switch {
+		case sr.ChangeRule.Order == ChangeRuleOrderAfter:
+			for _, matchedChange := range matchedChanges {
+				if allowChange(sr.Change, matchedChange) {
+					sr.Change.WaitingFor = append(sr.Change.WaitingFor, matchedChange)
+				}
+			}
+
+		case sr.ChangeRule.Order == ChangeRuleOrderBefore:
+			for _, matchedChange := range matchedChanges {
+				if allowChange(matchedChange, sr.Change) {
+					matchedChange.WaitingFor = append(matchedChange.WaitingFor, sr.Change)
+				}
+			}
+
+		default:
+			panic("Unknown change rule order")
+		}
+	}
+
 	return nil
 }
 

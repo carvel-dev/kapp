@@ -27,6 +27,8 @@ type ChangeRule struct {
 	TargetAction     ChangeRuleTargetAction
 	TargetGroup      ChangeGroup
 	IgnoreIfCyclical bool
+
+	weight int
 }
 
 func NewChangeRuleFromAnnString(ann string) (ChangeRule, error) {
