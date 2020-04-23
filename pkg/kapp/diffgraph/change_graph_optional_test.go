@@ -27,12 +27,12 @@ metadata:
 kind: Config
 apiVersion: kapp.k14s.io/v1alpha1
 
-additionalChangeGroups:
+changeGroupBindings:
 - name: test.kapp.k14s.io/namespace
   resourceMatchers:
   - apiVersionKindMatcher: {kind: Namespace, apiVersion: v1}
 
-additionalChangeRules:
+changeRuleBindings:
 - rules:
   - "upsert after upserting test.kapp.k14s.io/namespace"
   resourceMatchers:
@@ -45,10 +45,10 @@ additionalChangeRules:
 	}
 
 	opts := buildGraphOpts{
-		resourcesBs:            configYAML,
-		op:                     ctldgraph.ActualChangeOpUpsert,
-		additionalChangeGroups: conf.AdditionalChangeGroups(),
-		additionalChangeRules:  conf.AdditionalChangeRules(),
+		resourcesBs:         configYAML,
+		op:                  ctldgraph.ActualChangeOpUpsert,
+		changeGroupBindings: conf.ChangeGroupBindings(),
+		changeRuleBindings:  conf.ChangeRuleBindings(),
 	}
 
 	graph, err := buildChangeGraphWithOpts(opts, t)
@@ -92,7 +92,7 @@ metadata:
 kind: Config
 apiVersion: kapp.k14s.io/v1alpha1
 
-additionalChangeGroups:
+changeGroupBindings:
 - name: test.kapp.k14s.io/namespace
   resourceMatchers:
   - apiVersionKindMatcher: {kind: Namespace, apiVersion: v1}
@@ -103,7 +103,7 @@ additionalChangeGroups:
   resourceMatchers:
   - apiVersionKindMatcher: {kind: Secret, apiVersion: v1}
 
-additionalChangeRules:
+changeRuleBindings:
 - rules:
   - "upsert after upserting test.kapp.k14s.io/configmap"
   ignoreIfCyclical: true
@@ -128,10 +128,10 @@ additionalChangeRules:
 	}
 
 	opts := buildGraphOpts{
-		resourcesBs:            configYAML,
-		op:                     ctldgraph.ActualChangeOpUpsert,
-		additionalChangeGroups: conf.AdditionalChangeGroups(),
-		additionalChangeRules:  conf.AdditionalChangeRules(),
+		resourcesBs:         configYAML,
+		op:                  ctldgraph.ActualChangeOpUpsert,
+		changeGroupBindings: conf.ChangeGroupBindings(),
+		changeRuleBindings:  conf.ChangeRuleBindings(),
 	}
 
 	graph, err := buildChangeGraphWithOpts(opts, t)

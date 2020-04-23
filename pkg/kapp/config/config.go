@@ -31,8 +31,8 @@ type Config struct {
 
 	// TODO additional?
 	// TODO validations
-	AdditionalChangeGroups []AdditionalChangeGroup
-	AdditionalChangeRules  []AdditionalChangeRule
+	ChangeGroupBindings []ChangeGroupBinding
+	ChangeRuleBindings  []ChangeRuleBinding
 }
 
 type RebaseRule struct {
@@ -78,12 +78,12 @@ type TemplateAffectedObjRef struct {
 	NameKey          string `json:"nameKey"`
 }
 
-type AdditionalChangeGroup struct {
+type ChangeGroupBinding struct {
 	Name             string
 	ResourceMatchers []ResourceMatcher
 }
 
-type AdditionalChangeRule struct {
+type ChangeRuleBinding struct {
 	Rules            []string
 	IgnoreIfCyclical bool
 	ResourceMatchers []ResourceMatcher

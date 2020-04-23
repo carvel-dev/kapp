@@ -127,10 +127,10 @@ metadata:
 	}
 
 	opts := buildGraphOpts{
-		resourcesBs:            configYAML,
-		op:                     ctldgraph.ActualChangeOpUpsert,
-		additionalChangeGroups: conf.AdditionalChangeGroups(),
-		additionalChangeRules:  conf.AdditionalChangeRules(),
+		resourcesBs:         configYAML,
+		op:                  ctldgraph.ActualChangeOpUpsert,
+		changeGroupBindings: conf.ChangeGroupBindings(),
+		changeRuleBindings:  conf.ChangeRuleBindings(),
 	}
 
 	graph, err := buildChangeGraphWithOpts(opts, t)
@@ -467,11 +467,11 @@ func buildChangeGraph(resourcesBs string, op ctldgraph.ActualChangeOp, t *testin
 }
 
 type buildGraphOpts struct {
-	resources              []ctlres.Resource
-	resourcesBs            string
-	op                     ctldgraph.ActualChangeOp
-	additionalChangeGroups []ctlconf.AdditionalChangeGroup
-	additionalChangeRules  []ctlconf.AdditionalChangeRule
+	resources           []ctlres.Resource
+	resourcesBs         string
+	op                  ctldgraph.ActualChangeOp
+	changeGroupBindings []ctlconf.ChangeGroupBinding
+	changeRuleBindings  []ctlconf.ChangeRuleBinding
 }
 
 func buildChangeGraphWithOpts(opts buildGraphOpts, t *testing.T) (*ctldgraph.ChangeGraph, error) {
@@ -493,7 +493,7 @@ func buildChangeGraphWithOpts(opts buildGraphOpts, t *testing.T) (*ctldgraph.Cha
 	}
 
 	return ctldgraph.NewChangeGraph(actualChanges,
-		opts.additionalChangeGroups, opts.additionalChangeRules, logger.NewTODOLogger())
+		opts.changeGroupBindings, opts.changeRuleBindings, logger.NewTODOLogger())
 }
 
 type actualChangeFromRes struct {

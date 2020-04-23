@@ -244,7 +244,7 @@ templateRules:
       - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
       nameKey: secretName
 
-additionalChangeGroups:
+changeGroupBindings:
 - name: change-groups.kapp.k14s.io/crds
   resourceMatchers: &crdMatchers
   - apiGroupKindMatcher: {kind: CustomResourceDefinition, apiGroup: apiextensions.k8s.io}
@@ -294,7 +294,7 @@ additionalChangeGroups:
   # delay other resources with load balancer provisioning
   # - apiVersionKindMatcher: {kind: Service, apiVersion: v1}
 
-additionalChangeRules:
+changeRuleBindings:
 - rules:
   # [Note]: insert CRDs before all other custom resources
   - "upsert after upserting change-groups.kapp.k14s.io/crds"

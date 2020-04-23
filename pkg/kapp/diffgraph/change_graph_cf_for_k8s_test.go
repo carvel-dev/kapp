@@ -28,10 +28,10 @@ func TestChangeGraphCFForK8s(t *testing.T) {
 	}
 
 	opts := buildGraphOpts{
-		resources:              rs,
-		op:                     ctldgraph.ActualChangeOpUpsert,
-		additionalChangeGroups: conf.AdditionalChangeGroups(),
-		additionalChangeRules:  conf.AdditionalChangeRules(),
+		resources:           rs,
+		op:                  ctldgraph.ActualChangeOpUpsert,
+		changeGroupBindings: conf.ChangeGroupBindings(),
+		changeRuleBindings:  conf.ChangeRuleBindings(),
 	}
 
 	t1 := time.Now()

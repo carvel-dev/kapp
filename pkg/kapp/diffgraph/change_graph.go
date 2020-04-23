@@ -14,8 +14,8 @@ type ChangeGraph struct {
 }
 
 func NewChangeGraph(changes []ActualChange,
-	additionalChangeGroups []ctlconf.AdditionalChangeGroup,
-	additionalChangeRules []ctlconf.AdditionalChangeRule,
+	changeGroupBindings []ctlconf.ChangeGroupBinding,
+	changeRuleBindings []ctlconf.ChangeRuleBinding,
 	logger logger.Logger) (*ChangeGraph, error) {
 
 	logger = logger.NewPrefixed("ChangeGraph")
@@ -25,9 +25,9 @@ func NewChangeGraph(changes []ActualChange,
 
 	for _, change := range changes {
 		graphChanges = append(graphChanges, &Change{
-			Change:                 change,
-			additionalChangeGroups: additionalChangeGroups,
-			additionalChangeRules:  additionalChangeRules,
+			Change:              change,
+			changeGroupBindings: changeGroupBindings,
+			changeRuleBindings:  changeRuleBindings,
 		})
 	}
 

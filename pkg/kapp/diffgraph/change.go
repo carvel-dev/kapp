@@ -33,8 +33,8 @@ type Change struct {
 	Change     ActualChange
 	WaitingFor []*Change
 
-	additionalChangeGroups []ctlconf.AdditionalChangeGroup
-	additionalChangeRules  []ctlconf.AdditionalChangeRule
+	changeGroupBindings []ctlconf.ChangeGroupBinding
+	changeRuleBindings  []ctlconf.ChangeRuleBinding
 
 	groups *[]ChangeGroup
 	rules  *[]ChangeRule
@@ -109,7 +109,7 @@ func (c *Change) Groups() ([]ChangeGroup, error) {
 		}
 	}
 
-	for _, groupConfig := range c.additionalChangeGroups {
+	for _, groupConfig := range c.changeGroupBindings {
 		rms := ctlconf.ResourceMatchers(groupConfig.ResourceMatchers).AsResourceMatchers()
 
 		if (ctlres.AnyMatcher{rms}).Matches(res) {
@@ -144,7 +144,7 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 		}
 	}
 
-	for _, ruleConfig := range c.additionalChangeRules {
+	for _, ruleConfig := range c.changeRuleBindings {
 		rms := ctlconf.ResourceMatchers(ruleConfig.ResourceMatchers).AsResourceMatchers()
 
 		if (ctlres.AnyMatcher{rms}).Matches(res) {

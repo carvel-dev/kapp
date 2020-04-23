@@ -15,21 +15,21 @@ type ClusterChangeSetOpts struct {
 }
 
 type ClusterChangeSet struct {
-	changes                []ctldiff.Change
-	opts                   ClusterChangeSetOpts
-	clusterChangeFactory   ClusterChangeFactory
-	additionalChangeGroups []ctlconf.AdditionalChangeGroup
-	additionalChangeRules  []ctlconf.AdditionalChangeRule
-	ui                     UI
-	logger                 logger.Logger
+	changes              []ctldiff.Change
+	opts                 ClusterChangeSetOpts
+	clusterChangeFactory ClusterChangeFactory
+	changeGroupBindings  []ctlconf.ChangeGroupBinding
+	changeRuleBindings   []ctlconf.ChangeRuleBinding
+	ui                   UI
+	logger               logger.Logger
 }
 
 func NewClusterChangeSet(changes []ctldiff.Change, opts ClusterChangeSetOpts,
-	clusterChangeFactory ClusterChangeFactory, additionalChangeGroups []ctlconf.AdditionalChangeGroup,
-	additionalChangeRules []ctlconf.AdditionalChangeRule, ui UI, logger logger.Logger) ClusterChangeSet {
+	clusterChangeFactory ClusterChangeFactory, changeGroupBindings []ctlconf.ChangeGroupBinding,
+	changeRuleBindings []ctlconf.ChangeRuleBinding, ui UI, logger logger.Logger) ClusterChangeSet {
 
 	return ClusterChangeSet{changes, opts, clusterChangeFactory,
-		additionalChangeGroups, additionalChangeRules, ui, logger.NewPrefixed("ClusterChangeSet")}
+		changeGroupBindings, changeRuleBindings, ui, logger.NewPrefixed("ClusterChangeSet")}
 }
 
 func (c ClusterChangeSet) Calculate() ([]*ClusterChange, *ctldgraph.ChangeGraph, error) {
@@ -41,7 +41,7 @@ func (c ClusterChangeSet) Calculate() ([]*ClusterChange, *ctldgraph.ChangeGraph,
 	}
 
 	changesGraph, err := ctldgraph.NewChangeGraph(wrappedClusterChanges,
-		c.additionalChangeGroups, c.additionalChangeRules, c.logger)
+		c.changeGroupBindings, c.changeRuleBindings, c.logger)
 	if err != nil {
 		// Return graph for inspection
 		return nil, changesGraph, err

@@ -104,18 +104,18 @@ func (c Conf) AdditionalLabels() map[string]string {
 	return result
 }
 
-func (c Conf) AdditionalChangeGroups() []AdditionalChangeGroup {
-	var result []AdditionalChangeGroup
+func (c Conf) ChangeGroupBindings() []ChangeGroupBinding {
+	var result []ChangeGroupBinding
 	for _, config := range c.configs {
-		result = append(result, config.AdditionalChangeGroups...)
+		result = append(result, config.ChangeGroupBindings...)
 	}
 	return result
 }
 
-func (c Conf) AdditionalChangeRules() []AdditionalChangeRule {
-	var result []AdditionalChangeRule
+func (c Conf) ChangeRuleBindings() []ChangeRuleBinding {
+	var result []ChangeRuleBinding
 	for _, config := range c.configs {
-		result = append(result, config.AdditionalChangeRules...)
+		result = append(result, config.ChangeRuleBindings...)
 	}
 	return result
 }
