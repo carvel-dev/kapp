@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -110,7 +109,7 @@ func (o *ListOptions) Run() error {
 
 		if lastChange != nil {
 			row = append(row,
-				uitable.NewValueString(strings.Join(lastChange.Meta().Namespaces, ",")),
+				newNamespacesValue(lastChange.Meta().Namespaces),
 				uitable.ValueFmt{
 					V:     cmdcore.NewValueUnknownBool(lastChange.Meta().Successful),
 					Error: lastChange.Meta().Successful == nil || *lastChange.Meta().Successful != true,
@@ -119,7 +118,7 @@ func (o *ListOptions) Run() error {
 			)
 		} else {
 			row = append(row,
-				uitable.NewValueString(""),
+				newNamespacesValue(nil),
 				cmdcore.NewValueUnknownBool(nil),
 				cmdcore.NewValueAge(time.Time{}),
 			)
@@ -131,4 +130,26 @@ func (o *ListOptions) Run() error {
 	o.ui.PrintTable(table)
 
 	return nil
+}
+
+func newNamespacesValue(nss []string) uitable.Value {
+	var result string
+	var lineLen int
+
+	for i, ns := range nss {
+		var sep string
+		lineLen += len(ns)
+		if lineLen > 20 {
+			sep = ",\n"
+			lineLen = 0
+		} else {
+			sep = ","
+		}
+		if i == 0 {
+			sep = ""
+		}
+		result += sep + ns
+	}
+
+	return uitable.NewValueString(result)
 }
