@@ -142,7 +142,7 @@ func newNamespacesValue(nss []string) uitable.Value {
 	for i, ns := range nss {
 		var sep string
 		lineLen += len(ns)
-		if lineLen > 20 {
+		if lineLen > 40 {
 			sep = ",\n"
 			lineLen = 0
 		} else {
