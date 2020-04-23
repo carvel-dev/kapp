@@ -196,7 +196,8 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 
 	{ // Present cluster changes in UI
 		changeViews := ctlcap.ClusterChangesAsChangeViews(clusterChanges)
-		changeSetView := ctlcap.NewChangeSetView(changeViews, nil, o.DiffFlags.ChangeSetViewOpts)
+		changeSetView := ctlcap.NewChangeSetView(
+			changeViews, conf.DiffMaskRules(), o.DiffFlags.ChangeSetViewOpts)
 		changeSetView.Print(o.ui)
 	}
 
