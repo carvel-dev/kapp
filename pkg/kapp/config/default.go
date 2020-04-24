@@ -293,6 +293,11 @@ changeGroupBindings:
   - apiVersionKindMatcher: {kind: PodSecurityPolicy, apiVersion: extensions/v1beta1}
   - apiVersionKindMatcher: {kind: PodSecurityPolicy, apiVersion: policy/v1beta1}
   - apiVersionKindMatcher: {kind: PodDisruptionBudget, apiVersion: policy/v1beta1}
+  - apiVersionKindMatcher: {kind: PriorityClass, apiVersion: scheduling.k8s.io/v1alpha1}
+  - apiVersionKindMatcher: {kind: PriorityClass, apiVersion: scheduling.k8s.io/v1beta1}
+  - apiVersionKindMatcher: {kind: PriorityClass, apiVersion: scheduling.k8s.io/v1}
+  - apiVersionKindMatcher: {kind: RuntimeClass, apiVersion: node.k8s.io/v1alpha1}
+  - apiVersionKindMatcher: {kind: RuntimeClass, apiVersion: node.k8s.io/v1beta1}
   - apiVersionKindMatcher: {kind: ServiceAccount, apiVersion: v1}
   - apiVersionKindMatcher: {kind: Secret, apiVersion: v1}
   - apiVersionKindMatcher: {kind: ConfigMap, apiVersion: v1}
