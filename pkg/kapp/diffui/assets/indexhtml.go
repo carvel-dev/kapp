@@ -12,10 +12,8 @@ const (
   </head>
   <body>
   	<h1>Changes</h1>
-
-  	<h2>Dependencies</h2>
-  	<p>Each change lists other changes that it will wait for before being applied.</p>
-    <ul id="deps"></ul>
+  	<p>Changes are sorted in order that they will be applied. They will be applied in parallel within their group. Each change lists other changes that it will wait for before being applied.</p>
+    <ol id="deps"></ol>
   </body>
 </html>
 `

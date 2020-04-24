@@ -2,6 +2,7 @@ package diffui
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -42,39 +43,48 @@ func (s *Server) Run() error {
 }
 
 type diffData struct {
-	Nodes []node `json:"nodes"`
-	Links []link `json:"links"`
+	AllChanges               []diffDataChange `json:"allChanges"`
+	LinearizedChangeSections [][]string       `json:"linearizedChangeSections"`
+	BlockedChanges           []string         `json:"blockedChanges"`
 }
 
-type node struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-}
-
-type link struct {
-	Source int `json:"source"`
-	Target int `json:"target"`
+type diffDataChange struct {
+	ID            string   `json:"id"`
+	Name          string   `json:"name"`
+	WaitingForIDs []string `json:"waitingForIDs"`
 }
 
 func (s *Server) mainHandler(w http.ResponseWriter, r *http.Request) {
-	changes := s.opts.DiffDataFunc().All()
-	changeIdx := map[*ctldgraph.Change]int{}
+	changesGraph := s.opts.DiffDataFunc()
 
-	var nodes []node
-	var links []link
+	allChanges := changesGraph.All()
+	linearizedChangeSections, blockedChanges := changesGraph.Linearized()
+	changeID := func(ch *ctldgraph.Change) string { return fmt.Sprintf("ch-%p", ch) }
 
-	for i, change := range changes {
-		nodes = append(nodes, node{ID: change.Description(), Name: ""})
-		changeIdx[change] = i
-	}
+	diffData := diffData{}
 
-	for i, change := range changes {
+	for _, change := range allChanges {
+		ddChange := diffDataChange{ID: changeID(change), Name: change.Description()}
+
 		for _, depChange := range change.WaitingFor {
-			links = append(links, link{Source: i, Target: changeIdx[depChange]})
+			ddChange.WaitingForIDs = append(ddChange.WaitingForIDs, changeID(depChange))
 		}
+
+		diffData.AllChanges = append(diffData.AllChanges, ddChange)
 	}
 
-	dataBs, _ := json.Marshal(diffData{Nodes: nodes, Links: links})
+	for _, section := range linearizedChangeSections {
+		var changeIDs []string
+		for _, change := range section {
+			changeIDs = append(changeIDs, changeID(change))
+		}
+		diffData.LinearizedChangeSections = append(diffData.LinearizedChangeSections, changeIDs)
+	}
+	for _, change := range blockedChanges {
+		diffData.BlockedChanges = append(diffData.BlockedChanges, changeID(change))
+	}
+
+	dataBs, _ := json.Marshal(diffData)
 
 	indexHTML := assets.Files[assets.IndexHTMLPath].Content
 	content := strings.ReplaceAll(indexHTML, assets.IndexHTMLDiffDataJSONMarker, string(dataBs))

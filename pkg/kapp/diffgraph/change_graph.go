@@ -140,6 +140,42 @@ func (g *ChangeGraph) All() []*Change {
 	return g.AllMatching(func(_ *Change) bool { return true })
 }
 
+func (g *ChangeGraph) Linearized() ([][]*Change, []*Change) {
+	var resultLinearized [][]*Change
+	var resultBlocked []*Change
+
+	recordedChanges := map[*Change]struct{}{}
+	blockedChanges := NewBlockedChanges(g)
+	lastBlockedChanges := 0
+
+	for {
+		unblocked := blockedChanges.Unblocked()
+		blocked := blockedChanges.Blocked()
+
+		if len(blocked) == lastBlockedChanges {
+			for _, blockedChange := range blocked {
+				resultBlocked = append(resultBlocked, blockedChange)
+			}
+			return resultLinearized, resultBlocked
+		}
+		lastBlockedChanges = len(blocked)
+
+		var sectionLinearized []*Change
+		for _, unblockedChange := range unblocked {
+			if _, found := recordedChanges[unblockedChange]; !found {
+				recordedChanges[unblockedChange] = struct{}{}
+				blockedChanges.Unblock(unblockedChange)
+				sectionLinearized = append(sectionLinearized, unblockedChange)
+			}
+		}
+		resultLinearized = append(resultLinearized, sectionLinearized)
+
+		if len(blocked) == 0 {
+			return resultLinearized, resultBlocked
+		}
+	}
+}
+
 func (g *ChangeGraph) AllMatching(matchFunc func(*Change) bool) []*Change {
 	var result []*Change
 	// Need to do this _only_ at the first level since
@@ -172,6 +208,30 @@ func (g *ChangeGraph) PrintStr() string {
 	return g.printChanges(g.changes, map[*Change]bool{}, "")
 }
 
+func (g *ChangeGraph) PrintLinearizedStr() string {
+	linearizedChangeSections, blockedChanges := g.Linearized()
+
+	var result []string
+
+	for _, changes := range linearizedChangeSections {
+		var section []string
+		for _, change := range changes {
+			section = append(section, change.Description())
+		}
+		result = append(result, strings.Join(section, "\n"))
+	}
+
+	if len(blockedChanges) > 0 {
+		var section []string
+		for _, change := range blockedChanges {
+			section = append(section, change.Description())
+		}
+		result = append(result, "...more blocked...\n"+strings.Join(section, "\n"))
+	}
+
+	return strings.Join(result, "\n---\n")
+}
+
 func (g *ChangeGraph) printChanges(changes []*Change,
 	visitedChanges map[*Change]bool, indent string) string {
 
@@ -190,42 +250,6 @@ func (g *ChangeGraph) printChanges(changes []*Change,
 	}
 
 	return result
-}
-
-func (g *ChangeGraph) PrintLinearizedStr() string {
-	result := []string{}
-	recordedChanges := map[*Change]struct{}{}
-	blockedChanges := NewBlockedChanges(g)
-	lastBlockedChanges := 0
-
-	for {
-		unblocked := blockedChanges.Unblocked()
-		blocked := blockedChanges.Blocked()
-
-		if len(blocked) == lastBlockedChanges {
-			var section []string
-			for _, blockedChange := range blocked {
-				section = append(section, blockedChange.Description())
-			}
-			result = append(result, "...more blocked...\n"+strings.Join(section, "\n"))
-			return strings.Join(result, "\n---\n")
-		}
-		lastBlockedChanges = len(blocked)
-
-		var section []string
-		for _, unblockedChange := range unblocked {
-			if _, found := recordedChanges[unblockedChange]; !found {
-				recordedChanges[unblockedChange] = struct{}{}
-				blockedChanges.Unblock(unblockedChange)
-				section = append(section, unblockedChange.Description())
-			}
-		}
-		result = append(result, strings.Join(section, "\n"))
-
-		if len(blocked) == 0 {
-			return strings.Join(result, "\n---\n")
-		}
-	}
 }
 
 func (g *ChangeGraph) dedup() {

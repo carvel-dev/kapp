@@ -11,5 +11,8 @@ body {
 a {
 	cursor: pointer;
 }
+
+.highlighted .highlighted { background: #b3e0f7; }
+.highlighted .highlighted-for { background: #f7b3b3; }
 `
 )
