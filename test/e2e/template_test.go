@@ -98,115 +98,115 @@ data:
 
 	expectedYAML1Diff := `
 --- create configmap/config-ver-1 (v1) namespace: kapp-test
-      0 + apiVersion: v1
-      1 + data:
-      2 +   key1: val1
-      3 + kind: ConfigMap
-      4 + metadata:
-      5 +   annotations:
-      6 +     kapp.k14s.io/versioned: ""
-      7 +   labels:
-      8 +     -replaced-
-      9 +     -replaced-
-     10 +   name: config-ver-1
-     11 +   namespace: kapp-test
-     12 + 
+-linesss- apiVersion: v1
+-linesss- data:
+-linesss-   key1: val1
+-linesss- kind: ConfigMap
+-linesss- metadata:
+-linesss-   annotations:
+-linesss-     kapp.k14s.io/versioned: ""
+-linesss-   labels:
+-linesss-     -replaced-
+-linesss-     -replaced-
+-linesss-   name: config-ver-1
+-linesss-   namespace: kapp-test
+-linesss- 
 --- create secret/secret-ver-1 (v1) namespace: kapp-test
-      0 + apiVersion: v1
-      1 + data:
-      2 +   key1: val1
-      3 + kind: Secret
-      4 + metadata:
-      5 +   annotations:
-      6 +     kapp.k14s.io/versioned: ""
-      7 +   labels:
-      8 +     -replaced-
-      9 +     -replaced-
-     10 +   name: secret-ver-1
-     11 +   namespace: kapp-test
-     12 + 
+-linesss- apiVersion: v1
+-linesss- data:
+-linesss-   key1: val1
+-linesss- kind: Secret
+-linesss- metadata:
+-linesss-   annotations:
+-linesss-     kapp.k14s.io/versioned: ""
+-linesss-   labels:
+-linesss-     -replaced-
+-linesss-     -replaced-
+-linesss-   name: secret-ver-1
+-linesss-   namespace: kapp-test
+-linesss- 
 --- create deployment/dep (apps/v1) namespace: kapp-test
-      0 + apiVersion: apps/v1
-      1 + kind: Deployment
-      2 + metadata:
-      3 +   labels:
-      4 +     -replaced-
-      5 +     -replaced-
-      6 +   name: dep
-      7 +   namespace: kapp-test
-      8 + spec:
-      9 +   replicas: 1
-     10 +   selector:
-     11 +     matchLabels:
-     12 +       app: dep
-     13 +       -replaced-
-     14 +   template:
-     15 +     metadata:
-     16 +       labels:
-     17 +         app: dep
-     18 +         -replaced-
-     19 +         -replaced-
-     20 +     spec:
-     21 +       containers:
-     22 +       - args:
-     23 +         - -listen=:80
-     24 +         - -text=hello
-     25 +         envFrom:
-     26 +         - configMapRef:
-     27 +             name: config-ver-1
-     28 +         image: hashicorp/http-echo
-     29 +         name: echo
-     30 +         ports:
-     31 +         - containerPort: 80
-     32 +       initContainers:
-     33 +       - args:
-     34 +         - -version
-     35 +         envFrom:
-     36 +         - configMapRef:
-     37 +             name: config-ver-1
-     38 +         image: hashicorp/http-echo
-     39 +         name: echo-init
-     40 +       volumes:
-     41 +       - name: vol1
-     42 +         secret:
-     43 +           secretName: secret-ver-1
-     44 + 
+-linesss- apiVersion: apps/v1
+-linesss- kind: Deployment
+-linesss- metadata:
+-linesss-   labels:
+-linesss-     -replaced-
+-linesss-     -replaced-
+-linesss-   name: dep
+-linesss-   namespace: kapp-test
+-linesss- spec:
+-linesss-   replicas: 1
+-linesss-   selector:
+-linesss-     matchLabels:
+-linesss-       app: dep
+-linesss-       -replaced-
+-linesss-   template:
+-linesss-     metadata:
+-linesss-       labels:
+-linesss-         app: dep
+-linesss-         -replaced-
+-linesss-         -replaced-
+-linesss-     spec:
+-linesss-       containers:
+-linesss-       - args:
+-linesss-         - -listen=:80
+-linesss-         - -text=hello
+-linesss-         envFrom:
+-linesss-         - configMapRef:
+-linesss-             name: config-ver-1
+-linesss-         image: hashicorp/http-echo
+-linesss-         name: echo
+-linesss-         ports:
+-linesss-         - containerPort: 80
+-linesss-       initContainers:
+-linesss-       - args:
+-linesss-         - -version
+-linesss-         envFrom:
+-linesss-         - configMapRef:
+-linesss-             name: config-ver-1
+-linesss-         image: hashicorp/http-echo
+-linesss-         name: echo-init
+-linesss-       volumes:
+-linesss-       - name: vol1
+-linesss-         secret:
+-linesss-           secretName: secret-ver-1
+-linesss- 
 `
 
 	expectedYAML2Diff := `
 --- create configmap/config-ver-2 (v1) namespace: kapp-test
   ...
-  1,  1   data:
-  2     -   key1: val1
-      2 +   key1: val2
-  3,  3   kind: ConfigMap
-  4,  4   metadata:
+-linesss- data:
+-linesss-   key1: val1
+-linesss-   key1: val2
+-linesss- kind: ConfigMap
+-linesss- metadata:
 --- create secret/secret-ver-2 (v1) namespace: kapp-test
   ...
-  1,  1   data:
-  2     -   key1: val1
-      2 +   key1: val2
-  3,  3   kind: Secret
-  4,  4   metadata:
+-linesss- data:
+-linesss-   key1: val1
+-linesss-   key1: val2
+-linesss- kind: Secret
+-linesss- metadata:
 --- update deployment/dep (apps/v1) namespace: kapp-test
   ...
- 33, 33           - configMapRef:
- 34     -             name: config-ver-1
-     34 +             name: config-ver-2
- 35, 35           image: hashicorp/http-echo
- 36, 36           name: echo
+-linesss-         - configMapRef:
+-linesss-             name: config-ver-1
+-linesss-             name: config-ver-2
+-linesss-         image: hashicorp/http-echo
+-linesss-         name: echo
   ...
- 43, 43           - configMapRef:
- 44     -             name: config-ver-1
-     44 +             name: config-ver-2
- 45, 45           image: hashicorp/http-echo
- 46, 46           name: echo-init
+-linesss-         - configMapRef:
+-linesss-             name: config-ver-1
+-linesss-             name: config-ver-2
+-linesss-         image: hashicorp/http-echo
+-linesss-         name: echo-init
   ...
- 49, 49           secret:
- 50     -           secretName: secret-ver-1
-     50 +           secretName: secret-ver-2
- 51, 51   status:
- 52, 52     availableReplicas: 1
+-linesss-         secret:
+-linesss-           secretName: secret-ver-1
+-linesss-           secretName: secret-ver-2
+-linesss- status:
+-linesss-   availableReplicas: 1
 `
 
 	name := "test-template"
@@ -272,6 +272,11 @@ func checkChangesOutput(t *testing.T, actualOutput, expectedOutput string) {
 
 	actualOutput = strings.TrimSpace(strings.Split(replaceTarget(actualOutput), "Changes")[0])
 	expectedOutput = strings.TrimSpace(expectedOutput)
+
+	// Line numbers may change depending on what's being added to metadata section for example
+	// (metadata.managedFields was added and threw off all lines numbers)
+	diffLinesRegexp := regexp.MustCompile(`(?m:^\s*(\d{1,3}\s*|\d{1,3},\s*\d{1,3}|\d{1,3}) [\-+ ])`)
+	actualOutput = diffLinesRegexp.ReplaceAllString(actualOutput, "-linesss-")
 
 	// Useful for debugging:
 	// printLines("actual", actualOutput)
