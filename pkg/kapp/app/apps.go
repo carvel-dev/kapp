@@ -49,10 +49,15 @@ func (a Apps) Find(name string) (App, error) {
 	}
 
 	return &RecordedApp{name, a.nsName, a.coreClient,
-		a.identifiedResources, nil, a.logger.NewPrefixed("RecordedApp")}, nil
+		a.identifiedResources, a.appInDiffNsHintMsg, nil,
+		a.logger.NewPrefixed("RecordedApp")}, nil
 }
 
 func (a Apps) List(additionalLabels map[string]string) ([]App, error) {
+	return a.list(additionalLabels, a.nsName)
+}
+
+func (a Apps) list(additionalLabels map[string]string, nsName string) ([]App, error) {
 	var result []App
 
 	filterLabels := map[string]string{
@@ -67,14 +72,15 @@ func (a Apps) List(additionalLabels map[string]string) ([]App, error) {
 		LabelSelector: labels.Set(filterLabels).String(),
 	}
 
-	apps, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).List(listOpts)
+	apps, err := a.coreClient.CoreV1().ConfigMaps(nsName).List(listOpts)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, app := range apps.Items {
 		recordedApp := &RecordedApp{app.Name, app.Namespace, a.coreClient,
-			a.identifiedResources, nil, a.logger.NewPrefixed("RecordedApp")}
+			a.identifiedResources, a.appInDiffNsHintMsg, nil,
+			a.logger.NewPrefixed("RecordedApp")}
 
 		recordedApp.setMeta(app)
 
@@ -82,4 +88,28 @@ func (a Apps) List(additionalLabels map[string]string) ([]App, error) {
 	}
 
 	return result, nil
+}
+
+func (a Apps) appInDiffNsHintMsg(name string) string {
+	items, err := a.list(nil, "")
+	if err != nil {
+		return ""
+	}
+
+	var foundNss []string
+
+	for _, item := range items {
+		if item.Name() == name {
+			foundNss = append(foundNss, item.Namespace())
+		}
+	}
+
+	if len(foundNss) > 0 {
+		if len(foundNss) > 3 {
+			foundNss = append(foundNss[:3], "...")
+		}
+		return fmt.Sprintf(" (hint: found app '%s' in other namespaces: %s)",
+			name, strings.Join(foundNss, ", "))
+	}
+	return ""
 }

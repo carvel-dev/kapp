@@ -16,7 +16,7 @@ type App interface {
 	UpdateUsedGVs([]schema.GroupVersion) error
 
 	CreateOrUpdate(map[string]string) error
-	Exists() (bool, error)
+	Exists() (bool, string, error)
 	Delete() error
 	Rename(string) error
 

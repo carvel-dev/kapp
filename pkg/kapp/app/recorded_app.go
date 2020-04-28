@@ -22,8 +22,9 @@ type RecordedApp struct {
 	name   string
 	nsName string
 
-	coreClient          kubernetes.Interface
-	identifiedResources ctlres.IdentifiedResources
+	coreClient             kubernetes.Interface
+	identifiedResources    ctlres.IdentifiedResources
+	appInDiffNsHintMsgFunc func(string) string
 
 	memoizedMeta *AppMeta
 	logger       logger.Logger
@@ -134,16 +135,18 @@ func (a *RecordedApp) mergeAppUpdates(cm *corev1.ConfigMap, labels map[string]st
 	return nil
 }
 
-func (a *RecordedApp) Exists() (bool, error) {
+func (a *RecordedApp) Exists() (bool, string, error) {
 	_, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(a.name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return false, nil
+			desc := fmt.Sprintf("App '%s' (namespace: %s) does not exist%s",
+				a.name, a.nsName, a.appInDiffNsHintMsgFunc(a.name))
+			return false, desc, nil
 		}
-		return false, fmt.Errorf("Getting app: %s", err)
+		return false, "", fmt.Errorf("Getting app: %s", err)
 	}
 
-	return true, nil
+	return true, "", nil
 }
 
 func (a *RecordedApp) Delete() error {
@@ -174,7 +177,8 @@ func (a *RecordedApp) Rename(newName string) error {
 	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(a.name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return fmt.Errorf("App '%s' (namespace: %s) does not exist: %s", a.name, a.nsName, err)
+			return fmt.Errorf("App '%s' (namespace: %s) does not exist: %s%s",
+				a.name, a.nsName, err, a.appInDiffNsHintMsgFunc(a.name))
 		}
 		return fmt.Errorf("Getting app: %s", err)
 	}
@@ -238,7 +242,8 @@ func (a *RecordedApp) meta() (AppMeta, error) {
 	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(a.name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return AppMeta{}, fmt.Errorf("App '%s' (namespace: %s) does not exist: %s", a.name, a.nsName, err)
+			return AppMeta{}, fmt.Errorf("App '%s' (namespace: %s) does not exist: %s%s",
+				a.name, a.nsName, err, a.appInDiffNsHintMsgFunc(a.name))
 		}
 		return AppMeta{}, fmt.Errorf("Getting app: %s", err)
 	}

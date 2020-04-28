@@ -55,14 +55,13 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	exists, err := app.Exists()
+	exists, notExistsMsg, err := app.Exists()
 	if err != nil {
 		return err
 	}
 
 	if !exists {
-		o.ui.PrintLinef("App '%s' (namespace: %s) does not exist",
-			app.Name(), o.AppFlags.NamespaceFlags.Name)
+		o.ui.PrintLinef("%s", notExistsMsg)
 		return nil
 	}
 

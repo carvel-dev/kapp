@@ -42,13 +42,13 @@ func (o *RenameOptions) Run() error {
 		return err
 	}
 
-	exists, err := app.Exists()
+	exists, notExistsMsg, err := app.Exists()
 	if err != nil {
 		return err
 	}
 
 	if !exists {
-		return fmt.Errorf("App '%s' (namespace: %s) does not exist", app.Name(), o.AppFlags.NamespaceFlags.Name)
+		return fmt.Errorf("%s", notExistsMsg)
 	}
 
 	o.ui.PrintLinef("Renaming '%s' (namespace: %s) to '%s' (app changes will not be renamed)",

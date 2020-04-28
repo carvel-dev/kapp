@@ -38,7 +38,7 @@ func (a *LabeledApp) UsedGVs() ([]schema.GroupVersion, error)       { return nil
 func (a *LabeledApp) UpdateUsedGVs(gvs []schema.GroupVersion) error { return nil }
 
 func (a *LabeledApp) CreateOrUpdate(labels map[string]string) error { return nil }
-func (a *LabeledApp) Exists() (bool, error)                         { return true, nil }
+func (a *LabeledApp) Exists() (bool, string, error)                 { return true, "", nil }
 
 func (a *LabeledApp) Delete() error {
 	labelSelector, err := a.LabelSelector()
