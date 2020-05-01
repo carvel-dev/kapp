@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	uierrs "github.com/cppforlife/go-cli-ui/errors"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/k14s/kapp/pkg/kapp/cmd"
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
@@ -26,7 +27,7 @@ func main() {
 
 	err := command.Execute()
 	if err != nil {
-		confUI.ErrorLinef("kapp: Error: %v", err)
+		confUI.ErrorLinef("kapp: Error: %v", uierrs.NewMultiLineError(err))
 		if typedErr, ok := err.(cmdapp.ExitStatus); ok {
 			os.Exit(typedErr.ExitStatus())
 		}

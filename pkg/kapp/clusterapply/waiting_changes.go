@@ -79,7 +79,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 			c.ui.Notify(descMsgs)
 
 			if err != nil {
-				return nil, fmt.Errorf("%s: errored: %s", desc, err)
+				return nil, fmt.Errorf("%s: Errored: %s", desc, err)
 			}
 			if state.Done {
 				c.numWaited += 1
@@ -94,7 +94,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 				if len(state.Message) > 0 {
 					msg += " (" + state.Message + ")"
 				}
-				return nil, fmt.Errorf("%s: finished unsuccessfully%s", desc, msg)
+				return nil, fmt.Errorf("%s: Finished unsuccessfully%s", desc, msg)
 
 			case state.Done && state.Successful:
 				doneChanges = append(doneChanges, change)
@@ -108,7 +108,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 		}
 
 		if time.Now().Sub(startTime) > c.opts.Timeout {
-			return nil, fmt.Errorf("timed out waiting after %s", c.opts.Timeout)
+			return nil, fmt.Errorf("Timed out waiting after %s", c.opts.Timeout)
 		}
 
 		time.Sleep(c.opts.CheckInterval)

@@ -9,7 +9,8 @@ metadata:
     tier: backend
     role: master
 spec:
-  ports:
+  heachCheckNodePort: 123
+  portss:
   - port: 6380
     targetPort: 6380
   selector:

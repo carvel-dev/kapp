@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	uierrs "github.com/cppforlife/go-cli-ui/errors"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
@@ -216,5 +217,6 @@ func (c *ClusterChange) applyErr(err error) error {
 		}
 	}
 
-	return fmt.Errorf("Applying %s: %s%s", c.ApplyDescription(), err, hintMsg)
+	return fmt.Errorf("Applying %s: %s%s", c.ApplyDescription(),
+		uierrs.NewSemiStructuredError(err), hintMsg)
 }
