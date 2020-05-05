@@ -224,6 +224,8 @@ templateRules:
       resourceMatchers: *withPodTemplate
     - path: [spec, template, spec, initContainers, {allIndexes: true}, envFrom, {allIndexes: true}, configMapRef]
       resourceMatchers: *withPodTemplate
+    - path: [spec, template, spec, volumes, {allIndexes: true}, projected, sources, {allIndexes: true}, configMap]
+      resourceMatchers: *withPodTemplate
     - path: [spec, template, spec, volumes, {allIndexes: true}, configMap]
       resourceMatchers: *withPodTemplate
     - path: [spec, volumes, {allIndexes: true}, configMap]
@@ -242,13 +244,26 @@ templateRules:
       resourceMatchers: *withPodTemplate
     - path: [spec, template, spec, initContainers, {allIndexes: true}, envFrom, {allIndexes: true}, secretRef]
       resourceMatchers: *withPodTemplate
+    - path: [spec, template, spec, imagePullSecrets, {allIndexes: true}]
+      resourceMatchers: *withPodTemplate
     - path: [spec, template, spec, volumes, {allIndexes: true}, secret]
       resourceMatchers: *withPodTemplate
       nameKey: secretName
+    - path: [spec, template, spec, volumes, {allIndexes: true}, projected, sources, {allIndexes: true}, secret]
+      resourceMatchers: *withPodTemplate
     - path: [spec, volumes, {allIndexes: true}, secret]
       resourceMatchers:
       - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
       nameKey: secretName
+    - path: [spec, imagePullSecrets, {allIndexes: true}]
+      resourceMatchers:
+      - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
+    - path: [imagePullSecrets, {allIndexes: true}]
+      resourceMatchers:
+      - apiVersionKindMatcher: {apiVersion: v1, kind: ServiceAccount}
+    - path: [secrets, {allIndexes: true}]
+      resourceMatchers:
+      - apiVersionKindMatcher: {apiVersion: v1, kind: ServiceAccount}
 
 changeGroupBindings:
 - name: change-groups.kapp.k14s.io/crds
