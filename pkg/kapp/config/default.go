@@ -49,10 +49,13 @@ rebaseRules:
 - path: [spec, clusterIP]
   type: copy
   sources: [new, existing]
-  resourceMatchers:
-  - apiVersionKindMatcher:
-      apiVersion: v1
-      kind: Service
+  resourceMatchers: &serviceMatchers
+  - apiVersionKindMatcher: {apiVersion: v1, kind: Service}
+
+- path: [spec, healthCheckNodePort]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers: *serviceMatchers
 
 # Prefer user provided, but allow cluster set
 - path: [spec, finalizers]
