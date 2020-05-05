@@ -253,6 +253,9 @@ templateRules:
       resourceMatchers:
       - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
       nameKey: secretName
+    - path: [secrets, {allIndexes: true}]
+      resourceMatchers:
+      - apiVersionKindMatcher: {apiVersion: v1, kind: ServiceAccount}
 
 changeGroupBindings:
 - name: change-groups.kapp.k14s.io/crds
