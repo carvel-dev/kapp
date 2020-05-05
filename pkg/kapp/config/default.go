@@ -244,6 +244,8 @@ templateRules:
       resourceMatchers: *withPodTemplate
     - path: [spec, template, spec, initContainers, {allIndexes: true}, envFrom, {allIndexes: true}, secretRef]
       resourceMatchers: *withPodTemplate
+    - path: [spec, template, spec, imagePullSecrets, {allIndexes: true}]
+      resourceMatchers: *withPodTemplate
     - path: [spec, template, spec, volumes, {allIndexes: true}, secret]
       resourceMatchers: *withPodTemplate
       nameKey: secretName
@@ -253,6 +255,12 @@ templateRules:
       resourceMatchers:
       - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
       nameKey: secretName
+    - path: [spec, imagePullSecrets, {allIndexes: true}]
+      resourceMatchers:
+      - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
+    - path: [imagePullSecrets, {allIndexes: true}]
+      resourceMatchers:
+      - apiVersionKindMatcher: {apiVersion: v1, kind: ServiceAccount}
     - path: [secrets, {allIndexes: true}]
       resourceMatchers:
       - apiVersionKindMatcher: {apiVersion: v1, kind: ServiceAccount}
