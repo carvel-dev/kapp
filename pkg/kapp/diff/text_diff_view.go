@@ -10,9 +10,9 @@ import (
 )
 
 type TextDiffViewOpts struct {
-	Context int // number of lines to show around changed lines; <0 for all
-	Lines   bool
-	Mask    bool
+	Context     int // number of lines to show around changed lines; <0 for all
+	LineNumbers bool
+	Mask        bool
 }
 
 type TextDiffView struct {
@@ -54,7 +54,7 @@ func (v TextDiffView) String() string {
 	emptyLineStr := "   "
 	lineNumStr := func(line int) string { return fmt.Sprintf("%3d", line) }
 	lineNums := func(l, sep, r string) string {
-		if v.opts.Lines {
+		if v.opts.LineNumbers {
 			return l + sep + r + " "
 		}
 		return ""

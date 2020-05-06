@@ -28,7 +28,7 @@ func (s *DiffFlags) SetWithPrefix(prefix string, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&s.Changes, prefix+"changes", "c", false, "Show changes")
 
 	cmd.Flags().IntVar(&s.Context, prefix+"context", 2, "Show number of lines around changed lines")
-	cmd.Flags().BoolVar(&s.Lines, prefix+"lines", true, "Show line numbers")
+	cmd.Flags().BoolVar(&s.LineNumbers, prefix+"line-numbers", true, "Show line numbers")
 	cmd.Flags().BoolVar(&s.Mask, prefix+"mask", true, "Apply masking rules")
 
 	cmd.Flags().BoolVar(&s.AgainstLastApplied, prefix+"against-last-applied", true, "Show changes against last applied copy when possible")
