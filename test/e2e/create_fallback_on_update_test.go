@@ -20,6 +20,25 @@ kind: Namespace
 metadata:
   name: __ns__
 ---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: successful-job
+  namespace: __ns__
+  annotations:
+    kapp.k14s.io/update-strategy: always-replace
+    kapp.k14s.io/change-group: job
+spec:
+  template:
+    metadata:
+      name: successful-job
+    spec:
+      containers:
+      - name: successful-job
+        image: busybox
+        command: ["/bin/sh", "-c", "sleep 10"]
+      restartPolicy: Never
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -27,6 +46,7 @@ metadata:
   namespace: __ns__
   annotations:
     kapp.k14s.io/create-strategy: fallback-on-update
+    kapp.k14s.io/change-rule: "upsert after upserting job"
 imagePullSecrets:
 - name: pull-secret
 `, "__ns__", objNs, -1)
