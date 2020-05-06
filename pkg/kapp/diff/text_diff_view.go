@@ -11,6 +11,7 @@ import (
 
 type TextDiffViewOpts struct {
 	Context int // number of lines to show around changed lines; <0 for all
+	Lines   bool
 	Mask    bool
 }
 
@@ -49,22 +50,25 @@ func (v TextDiffView) String() string {
 	}
 
 	prevInContext := false
+
 	emptyLineStr := "   "
-	lineStr := func(line int) string { return fmt.Sprintf("%3d", line) }
+	lineNumStr := func(line int) string { return fmt.Sprintf("%3d", line) }
+	lineNums := func(l, sep, r string) string {
+		if v.opts.Lines {
+			return l + sep + r + " "
+		}
+		return ""
+	}
 
 	for lineNum, diff := range diffRecords {
 		switch diff.Delta {
 		case difflib.RightOnly:
-			lines = append(lines, color.New(color.FgGreen).Sprintf("%s %s + %s",
-				emptyLineStr,
-				lineStr(diff.LineRight),
-				diff.Payload))
+			lines = append(lines, color.New(color.FgGreen).Sprintf("%s+ %s",
+				lineNums(emptyLineStr, " ", lineNumStr(diff.LineRight)), diff.Payload))
 
 		case difflib.LeftOnly:
-			lines = append(lines, color.New(color.FgRed).Sprintf("%s %s - %s",
-				lineStr(diff.LineLeft),
-				emptyLineStr,
-				diff.Payload))
+			lines = append(lines, color.New(color.FgRed).Sprintf("%s- %s",
+				lineNums(lineNumStr(diff.LineLeft), " ", emptyLineStr), diff.Payload))
 
 		case difflib.Common:
 			newInContext := v.inContext(lineNum, changedLines)
@@ -72,10 +76,10 @@ func (v TextDiffView) String() string {
 				lines = append(lines, "  ...")
 			}
 			if newInContext {
-				lines = append(lines, fmt.Sprintf("%s,%s   %s",
-					lineStr(diff.LineLeft),
-					lineStr(diff.LineRight),
-					diff.Payload)) // LineLeft == LineRight
+				// LineLeft == LineRight
+				lines = append(lines, fmt.Sprintf("%s  %s",
+					lineNums(lineNumStr(diff.LineLeft), ",", lineNumStr(diff.LineRight)),
+					diff.Payload))
 			}
 			prevInContext = newInContext
 		}

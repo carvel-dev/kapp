@@ -339,7 +339,7 @@ data:
 		RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
 	expectedOutput := `
---- create secret/no-data (v1) namespace: kapp-test
+@@ create secret/no-data (v1) namespace: kapp-test @@
       0 + apiVersion: v1
       1 + kind: Secret
       2 + metadata:
@@ -349,7 +349,7 @@ data:
       6 +   name: no-data
       7 +   namespace: kapp-test
       8 + 
---- create secret/empty-data (v1) namespace: kapp-test
+@@ create secret/empty-data (v1) namespace: kapp-test @@
       0 + apiVersion: v1
       1 + data: {}
       2 + kind: Secret
@@ -360,7 +360,7 @@ data:
       7 +   name: empty-data
       8 +   namespace: kapp-test
       9 + 
---- create secret/with-keys (v1) namespace: kapp-test
+@@ create secret/with-keys (v1) namespace: kapp-test @@
       0 + apiVersion: v1
       1 + data:
       2 +   key1: <-- value not shown (#1)
@@ -373,7 +373,7 @@ data:
       9 +   name: with-keys
      10 +   namespace: kapp-test
      11 + 
---- create secret/with-dup-keys (v1) namespace: kapp-test
+@@ create secret/with-dup-keys (v1) namespace: kapp-test @@
       0 + apiVersion: v1
       1 + data:
       2 +   key1: <-- value not shown (#1)
@@ -398,7 +398,7 @@ data:
 		RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 	expectedOutput = `
---- update secret/with-dup-keys (v1) namespace: kapp-test
+@@ update secret/with-dup-keys (v1) namespace: kapp-test @@
   ...
   2,  2     key1: <-- value not shown (#1)
   3     -   key2: <-- value not shown (#2)
