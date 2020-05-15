@@ -38,6 +38,7 @@ type Config struct {
 type RebaseRule struct {
 	ResourceMatchers []ResourceMatcher
 	Path             ctlres.Path
+	Paths            []ctlres.Path
 	Type             string
 	Sources          []ctlres.FieldCopyModSource
 }
@@ -194,29 +195,55 @@ func (c Config) Validate() error {
 		}
 	}
 
+	for i, rule := range c.RebaseRules {
+		err := rule.Validate()
+		if err != nil {
+			return fmt.Errorf("Validating rebase rule %d: %s", i, err)
+		}
+	}
+
+	return nil
+}
+
+func (r RebaseRule) Validate() error {
+	if len(r.Path) > 0 && len(r.Paths) > 0 {
+		return fmt.Errorf("Expected only one of path or paths specified")
+	}
+	if len(r.Path) == 0 && len(r.Paths) == 0 {
+		return fmt.Errorf("Expected either path or paths to be specified")
+	}
 	return nil
 }
 
 func (r RebaseRule) AsMods() []ctlres.ResourceModWithMultiple {
 	var mods []ctlres.ResourceModWithMultiple
+	var paths []ctlres.Path
 
-	for _, matcher := range r.ResourceMatchers {
-		switch r.Type {
-		case "copy":
-			mods = append(mods, ctlres.FieldCopyMod{
-				ResourceMatcher: matcher.AsResourceMatcher(),
-				Path:            r.Path,
-				Sources:         r.Sources,
-			})
+	if len(r.Paths) == 0 {
+		paths = append(paths, r.Path)
+	} else {
+		paths = r.Paths
+	}
 
-		case "remove":
-			mods = append(mods, ctlres.FieldRemoveMod{
-				ResourceMatcher: matcher.AsResourceMatcher(),
-				Path:            r.Path,
-			})
+	for _, path := range paths {
+		for _, matcher := range r.ResourceMatchers {
+			switch r.Type {
+			case "copy":
+				mods = append(mods, ctlres.FieldCopyMod{
+					ResourceMatcher: matcher.AsResourceMatcher(),
+					Path:            path,
+					Sources:         r.Sources,
+				})
 
-		default:
-			panic(fmt.Sprintf("Unknown rebase rule type: %s (supported: copy, remove)", r.Type)) // TODO
+			case "remove":
+				mods = append(mods, ctlres.FieldRemoveMod{
+					ResourceMatcher: matcher.AsResourceMatcher(),
+					Path:            path,
+				})
+
+			default:
+				panic(fmt.Sprintf("Unknown rebase rule type: %s (supported: copy, remove)", r.Type)) // TODO
+			}
 		}
 	}
 
