@@ -46,68 +46,40 @@ rebaseRules:
   - allMatcher: {}
 
 # Prefer user provided, but allow cluster set
-- path: [spec, clusterIP]
+- paths:
+  - [spec, clusterIP]
+  - [spec, healthCheckNodePort]
   type: copy
   sources: [new, existing]
-  resourceMatchers: &serviceMatchers
+  resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: v1, kind: Service}
-
-- path: [spec, healthCheckNodePort]
-  type: copy
-  sources: [new, existing]
-  resourceMatchers: *serviceMatchers
 
 # Prefer user provided, but allow cluster set
 - path: [spec, finalizers]
   type: copy
   sources: [new, existing]
   resourceMatchers:
-  - apiVersionKindMatcher:
-      apiVersion: v1
-      kind: Namespace
+  - apiVersionKindMatcher: {apiVersion: v1, kind: Namespace}
 
 # Prefer user provided, but allow cluster set
 - path: [secrets]
   type: copy
   sources: [new, existing]
   resourceMatchers:
-  - apiVersionKindMatcher:
-      apiVersion: v1
-      kind: ServiceAccount
+  - apiVersionKindMatcher: {apiVersion: v1, kind: ServiceAccount}
 
 # PVC
-- path: [metadata, annotations, pv.kubernetes.io/bind-completed]
+- paths:
+  - [metadata, annotations, pv.kubernetes.io/bind-completed]
+  - [metadata, annotations, pv.kubernetes.io/bound-by-controller]
+  - [metadata, annotations, volume.beta.kubernetes.io/storage-provisioner]
+  - [spec, storageClassName]
+  - [spec, volumeMode]
+  - [spec, volumeName]
   type: copy
   sources: [new, existing]
-  resourceMatchers: &pvcs
-  - apiVersionKindMatcher:
-      apiVersion: v1
-      kind: PersistentVolumeClaim
-
-- path: [metadata, annotations, pv.kubernetes.io/bound-by-controller]
-  type: copy
-  sources: [new, existing]
-  resourceMatchers: *pvcs
-
-- path: [metadata, annotations, volume.beta.kubernetes.io/storage-provisioner]
-  type: copy
-  sources: [new, existing]
-  resourceMatchers: *pvcs
-
-- path: [spec, storageClassName]
-  type: copy
-  sources: [new, existing]
-  resourceMatchers: *pvcs
-
-- path: [spec, volumeMode]
-  type: copy
-  sources: [new, existing]
-  resourceMatchers: *pvcs
-
-- path: [spec, volumeName]
-  type: copy
-  sources: [new, existing]
-  resourceMatchers: *pvcs
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: v1, kind: PersistentVolumeClaim}
 
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
   type: copy
