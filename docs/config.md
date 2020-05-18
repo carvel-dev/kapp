@@ -17,9 +17,7 @@ rebaseRules:
   type: copy
   sources: [new, existing]
   resourceMatchers:
-  - apiVersionKindMatcher:
-      apiVersion: v1
-      kind: Service
+  - apiVersionKindMatcher: {apiVersion: v1, kind: Service}
 
 ownershipLabelRules:
 - path: [metadata, labels]
@@ -50,16 +48,12 @@ additionalLabels:
 diffAgainstLastAppliedFieldExclusionRules:
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
   resourceMatchers:
-  - apiVersionKindMatcher:
-      apiVersion: apps/v1
-      kind: Deployment
+  - apiVersionKindMatcher: {apiVersion: apps/v1, kind: Deployment}
 
 diffMaskRules:
 - path: [data]
   resourceMatchers:
-  - apiVersionKindMatcher:
-      apiVersion: v1
-      kind: Secret
+  - apiVersionKindMatcher: {apiVersion: v1, kind: Secret}
 ```
 
 #### minimumRequiredVersion
@@ -69,6 +63,32 @@ diffMaskRules:
 #### rebaseRules
 
 `rebaseRules` specify origin of field values. Kubernetes cluster generates (or defaults) some field values, hence these values will need to be merged in future to avoid flagging them during diffing. Common example is `v1/Service`'s `spec.clusterIP` field is automatically populated if it's not set. See [HPA and Deployment rebase](hpa-deployment-rebase.md) or [PersistentVolumeClaim rebase](rebase-pvc.md) examples.
+
+- `rebaseRules` (array) list of rebase rules
+  - `path` (array) specifies location within a resource to rebase. Mutually exclusive with `paths`. Example: `[spec, clusterIP]`
+  - `paths` (array of paths) specifies multiple locations within a resource to rebase. This is a convenience for specifying multiple rebase rules with only different paths. Mutually exclusive with `path`. Available in v0.27.0+.
+  - `sources` (array of strings) specifies source preference from where to copy value from. Allowed values: `new` or `existing`. Example: `[new, existing]`
+  - `resourceMatchers` (array) specifies rules to find matching resources. See various resource matchers below.
+
+```yaml
+rebaseRules:
+- path: [spec, clusterIP]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: v1, kind: Service}
+```
+
+```yaml
+rebaseRules:
+- paths:
+  - [spec, clusterIP]
+  - [spec, healthCheckNodePort]
+  type: copy
+  sources: [existing]
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: v1, kind: Service}
+```
 
 #### ownershipLabelRules
 
@@ -111,34 +131,98 @@ Available in v0.25.0+.
 
 Resource matchers (as used by `rebaseRules` and `ownershipLabelRules`):
 
+#### all
+
+Matches all resources
+
 ```yaml
 allMatcher: {}
 ```
 
+#### any
+
+Matches resources that match one of matchers
+
 ```yaml
 anyMatcher:
   matchers:
-  - apiVersionKindMatcher:
-    apiVersion: apps/v1
-    kind: Deployment
-  - apiVersionKindMatcher:
-    apiVersion: extensions/v1alpha1
-    kind: Deployment
+  - apiVersionKindMatcher: {apiVersion: apps/v1, kind: Deployment}
+  - apiVersionKindMatcher: {apiVersion: extensions/v1alpha1, kind: Deployment}
 ```
+
+#### not
+
+Matches any resource that does not match given matcher
 
 ```yaml
-apiVersionKindMatcher:
-  apiVersion: apps/v1
-  kind: Deployment
+notMatcher:
+  matcher:
+    apiVersionKindMatcher: {apiVersion: apps/v1, kind: Deployment}
 ```
+
+#### and
+
+Matches any resource that matches all given matchers
 
 ```yaml
-kindNamespaceNameMatcher:
-  kind: Deployment
-  namespace: mysql
-  name: mysql
+andMatcher:
+  matchers:
+  - apiVersionKindMatcher: {apiVersion: apps/v1, kind: Deployment}
+  - hasNamespaceMatcher: {}
 ```
 
+#### apiGroupKindMatcher
+
+```yaml
+apiVersionKindMatcher: {apiGroup: apps, kind: Deployment}
+```
+
+#### apiVersionKindMatcher
+
+```yaml
+apiVersionKindMatcher: {apiVersion: apps/v1, kind: Deployment}
+```
+
+#### kindNamespaceNameMatcher
+
+```yaml
+kindNamespaceNameMatcher: {kind: Deployment, namespace: mysql, name: mysql}
+```
+
+#### hasAnnotationMatcher
+
+Matches resources that have particular annotation
+
+```yaml
+hasAnnotationMatcher:
+  keys:
+  - kapp.k14s.io/change-group
+```
+
+#### hasNamespaceMatcher
+
+Matches any resource that has a non-empty namespace
+
+```yaml
+hasNamespaceMatcher: {}
+```
+
+Matches any resource with namespace that equals to one of the specified names
+
+```yaml
+hasNamespaceMatcher:
+  names: [app1, app2]
+```
+
+#### customResourceMatcher
+
+Matches any resource that is not part of builtin k8s API groups (e.g. apps, batch, etc.). It's likely that over time some builtin k8s resources would not be matched.
+
+```yaml
+customResourceMatcher: {}
+```
+
+---
 ### Paths
 
 Path specifies location within a resource (as used `rebaseRules` and `ownershipLabelRules`):
