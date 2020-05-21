@@ -2,6 +2,7 @@ package diff
 
 import (
 	"fmt"
+	"strings"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
@@ -96,6 +97,11 @@ func (d ChangeSet) collapseChangesWithSameUID(changes []Change) ([]Change, error
 			continue
 		}
 
+		var changeDescs []string
+		for _, idx := range idxs {
+			changeDescs = append(changeDescs, changes[idx].NewOrExistingResource().Description())
+		}
+
 		// When there are multiple UID matches it means
 		// that resource api group is being changed
 		// (example: extentions.Deployment -> apps.Deployment)
@@ -112,12 +118,12 @@ func (d ChangeSet) collapseChangesWithSameUID(changes []Change) ([]Change, error
 		}
 
 		if len(deleteChanges) != 1 {
-			return nil, fmt.Errorf("Expected exactly one delete change for %s",
-				deleteChanges[0].NewOrExistingResource().Description())
+			return nil, fmt.Errorf("Expected exactly one delete change in changes: %s",
+				strings.Join(changeDescs, ", "))
 		}
 		if len(nonDeleteChanges) != 1 {
-			return nil, fmt.Errorf("Expected exactly one non-delete change for %s",
-				nonDeleteChanges[0].NewOrExistingResource().Description())
+			return nil, fmt.Errorf("Expected exactly one non-delete change in changes: %s",
+				strings.Join(changeDescs, ", "))
 		}
 	}
 
