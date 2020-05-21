@@ -1,6 +1,8 @@
 package diff
 
 import (
+	"fmt"
+
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
@@ -74,5 +76,56 @@ func (d ChangeSet) Calculate() ([]Change, error) {
 		}
 	}
 
-	return changes, nil
+	return d.collapseChangesWithSameUID(changes)
+}
+
+func (d ChangeSet) collapseChangesWithSameUID(changes []Change) ([]Change, error) {
+	changeIdxsByUID := map[string][]int{}
+
+	for i, change := range changes {
+		// New resources do not have a UID assigned yet
+		if change.ExistingResource() != nil {
+			uid := change.ExistingResource().UID()
+			changeIdxsByUID[uid] = append(changeIdxsByUID[uid], i)
+		}
+	}
+
+	for _, idxs := range changeIdxsByUID {
+		// One change per UID is typical case
+		if len(idxs) == 1 {
+			continue
+		}
+
+		// When there are multiple UID matches it means
+		// that resource api group is being changed
+		// (example: extentions.Deployment -> apps.Deployment)
+		var deleteChanges, nonDeleteChanges []Change
+		for _, idx := range idxs {
+			// Clear out delete change since we assume that
+			// there will be 2 changes: one update, and one delete
+			if changes[idx].Op() == ChangeOpDelete {
+				changes[idx] = nil
+				deleteChanges = append(deleteChanges, changes[idx])
+			} else {
+				nonDeleteChanges = append(nonDeleteChanges, changes[idx])
+			}
+		}
+
+		if len(deleteChanges) != 1 {
+			return nil, fmt.Errorf("Expected exactly one delete change for %s",
+				deleteChanges[0].NewOrExistingResource().Description())
+		}
+		if len(nonDeleteChanges) != 1 {
+			return nil, fmt.Errorf("Expected exactly one non-delete change for %s",
+				nonDeleteChanges[0].NewOrExistingResource().Description())
+		}
+	}
+
+	var result []Change
+	for _, change := range changes {
+		if change != nil {
+			result = append(result, change)
+		}
+	}
+	return result, nil
 }
