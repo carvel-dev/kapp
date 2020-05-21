@@ -87,7 +87,9 @@ func (d ChangeSet) collapseChangesWithSameUID(changes []Change) ([]Change, error
 		// New resources do not have a UID assigned yet
 		if change.ExistingResource() != nil {
 			uid := change.ExistingResource().UID()
-			changeIdxsByUID[uid] = append(changeIdxsByUID[uid], i)
+			if len(uid) > 0 {
+				changeIdxsByUID[uid] = append(changeIdxsByUID[uid], i)	
+			}
 		}
 	}
 
