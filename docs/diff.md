@@ -10,11 +10,11 @@ There are three different types of waiting: `reconcile` (waits until resource ha
 
 There are two diff strategies used by kapp:
 
-1. kapp compares against last applied resource content (previously applied by kapp) **if** there were no outside changes done to the resource (i.e. done outside of kapp, for example, by another team member or controller); kapp tries to use this strategy as much as possible to produce more user-friendly diffs.
+1. kapp compares against last applied resource content (previously applied by kapp; stored in annotation `kapp.k14s.io/original`) **if** there were no outside changes done to the resource (i.e. done outside of kapp, for example, by another team member or controller); kapp tries to use this strategy as much as possible to produce more user-friendly diffs.
 
 2. kapp compares against live resource content **if** it detects there were outside changes to the resource (hence, sometimes you may see a diff that shows several deleted fields even though these fields are not specified in the original file)
 
-Strategy is selected for each resource individually. You can select second strategy for all resources at once via `--diff-against-last-applied` flag.
+Strategy is selected for each resource individually. You can control which strategy is used for all resources via `--diff-against-last-applied=bool` flag.
 
 Related: [rebase rules](config.md).
 
@@ -29,6 +29,12 @@ To make resource versioned, add `kapp.k14s.io/versioned` annotation with an empt
 You can control number of kept resource versions via `kapp.k14s.io/num-versions=int` annotation.
 
 Try deploying [redis-with-configmap example](../examples/gitops/redis-with-configmap) and changing `ConfigMap` in a next deploy.
+
+### Controlling diff via resource annotations
+
+- `kapp.k14s.io/disable-original` annotation controls whether to record provided resource copy (rarely wanted)
+
+  Possible values ``. In some cases it's not possible or wanted to record applied resource copy into its annotation `kapp.k14s.io/original`. One such case might be when resource is extremely lengthy (e.g. long ConfigMap or CustomResourceDefinition) and will exceed annotation value max length of 262144 bytes.
 
 ### Controlling diff via deploy flags
 

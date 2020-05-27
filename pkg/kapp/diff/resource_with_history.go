@@ -12,6 +12,8 @@ const (
 	appliedResDiffAnnKey     = "kapp.k14s.io/original-diff" // useful for debugging
 	appliedResDiffMD5AnnKey  = "kapp.k14s.io/original-diff-md5"
 	appliedResDiffFullAnnKey = "kapp.k14s.io/original-diff-full" // useful for debugging
+
+	disableOriginalAnnKey = "kapp.k14s.io/disable-original"
 )
 
 var (
@@ -55,6 +57,11 @@ func (r ResourceWithHistory) LastAppliedResource() ctlres.Resource {
 	return nil
 }
 
+func (r ResourceWithHistory) AllowsRecordingLastApplied() bool {
+	_, found := r.resource.Annotations()[disableOriginalAnnKey]
+	return !found
+}
+
 func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ctlres.Resource, error) {
 	// Use compact representation to take as little space as possible
 	// because annotation value max length is 262144 characters
@@ -71,7 +78,7 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ct
 			r.resource.Description(), diff.MinimalMD5(), diff.MinimalString())
 	}
 
-	t := ctlres.StringMapAppendMod{
+	annsMod := ctlres.StringMapAppendMod{
 		ResourceMatcher: ctlres.AllMatcher{},
 		Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
 		KVs: map[string]string{
@@ -82,9 +89,19 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ct
 		},
 	}
 
+	const annValMaxLen = 262144
+
+	for annKey, annVal := range annsMod.KVs {
+		if len(annVal) > annValMaxLen {
+			return nil, fmt.Errorf("Expected annotation '%s' value length %d to be <= max length %d "+
+				"(hint: consider using annotation '%s')",
+				annKey, len(annVal), annValMaxLen, disableOriginalAnnKey)
+		}
+	}
+
 	resultRes := r.resource.DeepCopy()
 
-	err = t.Apply(resultRes)
+	err = annsMod.Apply(resultRes)
 	if err != nil {
 		return nil, err
 	}

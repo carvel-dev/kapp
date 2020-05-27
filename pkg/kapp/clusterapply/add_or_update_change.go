@@ -262,6 +262,13 @@ func (c AddOrUpdateChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error {
 	savedResWithHistory := c.changeFactory.NewResourceWithHistory(savedRes)
 
+	// It may not be benefitial to record last applied conf
+	// onto resource. This could be useful for resources that
+	// are very large, hence go over annotation value max length.
+	if !savedResWithHistory.AllowsRecordingLastApplied() {
+		return nil
+	}
+
 	// Calculate change _once_ against what was returned from the server
 	// (ie changes applied by the webhooks on the server, etc _but
 	// not by other controllers)
