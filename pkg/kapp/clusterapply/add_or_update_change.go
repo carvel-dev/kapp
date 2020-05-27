@@ -5,9 +5,7 @@ import (
 	"time"
 
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
-	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 	"github.com/k14s/kapp/pkg/kapp/util"
 	"k8s.io/apimachinery/pkg/api/errors"
 )
@@ -32,7 +30,6 @@ type AddOrUpdateChange struct {
 	identifiedResources ctlres.IdentifiedResources
 	changeFactory       ctldiff.ChangeFactory
 	changeSetFactory    ctldiff.ChangeSetFactory
-	convergedResFactory ConvergedResourceFactory
 	opts                AddOrUpdateChangeOpts
 }
 
@@ -241,22 +238,6 @@ func (a AddOrUpdateChange) tryToUpdateAfterCreateConflict() error {
 
 	return fmt.Errorf("Failed to update (after trying to create) "+
 		"due to resource conflict (tried multiple times): %s", lastUpdateErr)
-}
-
-type SpecificResource interface {
-	IsDoneApplying() ctlresm.DoneApplyState
-}
-
-func (c AddOrUpdateChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
-	labeledResources := ctlres.NewLabeledResources(nil, c.identifiedResources, logger.NewTODOLogger())
-
-	// Refresh resource with latest changes from the server
-	parentRes, err := c.identifiedResources.Get(c.change.NewResource())
-	if err != nil {
-		return ctlresm.DoneApplyState{}, nil, err
-	}
-
-	return c.convergedResFactory.New(parentRes, labeledResources.GetAssociated).IsDoneApplying()
 }
 
 func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error {

@@ -142,8 +142,7 @@ func (c *ClusterChange) Apply() error {
 	case ClusterChangeApplyOpAdd, ClusterChangeApplyOpUpdate:
 		return c.applyErr(AddOrUpdateChange{
 			c.change, c.identifiedResources, c.changeFactory,
-			c.changeSetFactory, c.convergedResFactory,
-			c.opts.AddOrUpdateChangeOpts}.Apply())
+			c.changeSetFactory, c.opts.AddOrUpdateChangeOpts}.Apply())
 
 	case ClusterChangeApplyOpDelete:
 		return c.applyErr(DeleteChange{c.change, c.identifiedResources}.Apply())
@@ -167,10 +166,7 @@ func (c *ClusterChange) isDoneApplying() (ctlresm.DoneApplyState, []string, erro
 
 	switch op {
 	case ClusterChangeWaitOpOK:
-		return AddOrUpdateChange{
-			c.change, c.identifiedResources, c.changeFactory,
-			c.changeSetFactory, c.convergedResFactory,
-			c.opts.AddOrUpdateChangeOpts}.IsDoneApplying()
+		return ReconcilingChange{c.change, c.identifiedResources, c.convergedResFactory}.IsDoneApplying()
 
 	case ClusterChangeWaitOpDelete:
 		return DeleteChange{c.change, c.identifiedResources}.IsDoneApplying()
