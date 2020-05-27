@@ -8,10 +8,12 @@ import (
 )
 
 const (
-	appliedResAnnKey         = "kapp.k14s.io/original"
-	appliedResDiffAnnKey     = "kapp.k14s.io/original-diff" // useful for debugging
-	appliedResDiffMD5AnnKey  = "kapp.k14s.io/original-diff-md5"
-	appliedResDiffFullAnnKey = "kapp.k14s.io/original-diff-full" // useful for debugging
+	appliedResAnnKey        = "kapp.k14s.io/original"
+	appliedResDiffMD5AnnKey = "kapp.k14s.io/original-diff-md5"
+
+	// Following fields useful for debugging:
+	debugAppliedResDiffAnnKey     = "kapp.k14s.io/original-diff"
+	debugAppliedResDiffFullAnnKey = "kapp.k14s.io/original-diff-full"
 
 	disableOriginalAnnKey = "kapp.k14s.io/disable-original"
 )
@@ -82,10 +84,12 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ct
 		ResourceMatcher: ctlres.AllMatcher{},
 		Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
 		KVs: map[string]string{
-			appliedResAnnKey:         string(appliedResBytes),
-			appliedResDiffAnnKey:     diff.MinimalString(),
-			appliedResDiffMD5AnnKey:  diff.MinimalMD5(),
-			appliedResDiffFullAnnKey: diff.FullString(),
+			appliedResAnnKey:        string(appliedResBytes),
+			appliedResDiffMD5AnnKey: diff.MinimalMD5(),
+
+			// Following fields useful for debugging:
+			//   debugAppliedResDiffAnnKey:     diff.MinimalString(),
+			//   debugAppliedResDiffFullAnnKey: diff.FullString(),
 		},
 	}
 
@@ -124,7 +128,6 @@ func (r ResourceWithHistory) CalculateChange(appliedRes ctlres.Resource) (Change
 
 func (r ResourceWithHistory) recalculateLastAppliedChange() ([]Change, string, string) {
 	lastAppliedResBytes := r.resource.Annotations()[appliedResAnnKey]
-	lastAppliedDiff := r.resource.Annotations()[appliedResDiffAnnKey]
 	lastAppliedDiffMD5 := r.resource.Annotations()[appliedResDiffMD5AnnKey]
 
 	if len(lastAppliedResBytes) == 0 || len(lastAppliedDiffMD5) == 0 {
@@ -148,6 +151,8 @@ func (r ResourceWithHistory) recalculateLastAppliedChange() ([]Change, string, s
 	if err != nil {
 		return nil, "", "" // TODO deal with error?
 	}
+
+	lastAppliedDiff := r.resource.Annotations()[debugAppliedResDiffAnnKey]
 
 	return []Change{recalculatedChange1, recalculatedChange2}, lastAppliedDiffMD5, lastAppliedDiff
 }
@@ -192,7 +197,7 @@ func (resourceWithoutHistory) removeAppliedResAnnKeysMods() []ctlres.ResourceMod
 		},
 		ctlres.FieldRemoveMod{
 			ResourceMatcher: ctlres.AllMatcher{},
-			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", appliedResDiffAnnKey}),
+			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", debugAppliedResDiffAnnKey}),
 		},
 		ctlres.FieldRemoveMod{
 			ResourceMatcher: ctlres.AllMatcher{},
@@ -200,7 +205,7 @@ func (resourceWithoutHistory) removeAppliedResAnnKeysMods() []ctlres.ResourceMod
 		},
 		ctlres.FieldRemoveMod{
 			ResourceMatcher: ctlres.AllMatcher{},
-			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", appliedResDiffFullAnnKey}),
+			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", debugAppliedResDiffFullAnnKey}),
 		},
 	}
 }
