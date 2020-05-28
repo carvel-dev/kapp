@@ -13,23 +13,28 @@ jobs:
       uses: actions/checkout@v1
       with:
         path: src/github.com/k14s/kapp
-    - name: Create k8s Kind Cluster
-      uses: helm/kind-action@v1.0.0-alpha.3
-      with:
-        cluster_name: kapp
     - name: Run Tests
       run: |
         set -e -x
         export GOPATH=$(echo `pwd`/../../../../)
 
-        # install ytt for build
-        mkdir -p tmp-k14s/bin/
-        wget -O- https://k14s.io/install.sh | K14SIO_INSTALL_BIN_DIR=tmp-k14s/bin bash
-        rm -f tmp-k14s/bin/kapp
-        export PATH=`pwd`/tmp-k14s/bin:$PATH
+        # Install ytt for build
+        mkdir -p /tmp/bin
+        export PATH=/tmp/bin:$PATH
+
+        wget -O- https://k14s.io/install.sh | K14SIO_INSTALL_BIN_DIR=/tmp/bin bash
+
+        wget -O- https://github.com/kubernetes/minikube/releases/download/v1.10.0/minikube-linux-amd64 > /tmp/bin/minikube
+        chmod +x /tmp/bin/minikube
+        minikube start --driver=docker
+        eval $(minikube docker-env --shell=bash)
+
+        # Ensure that there is no existing kapp installed
+        rm -f /tmp/bin/kapp
 
         ./hack/build-binaries.sh
 
         export KAPP_E2E_NAMESPACE=kapp-test
         kubectl create ns $KAPP_E2E_NAMESPACE
+
         ./hack/test-all.sh
