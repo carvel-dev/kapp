@@ -46,7 +46,7 @@ func (o *ListOptions) Run() error {
 
 	rbacResources := &RBACResources{}
 
-	resources, err := supportObjs.IdentifiedResources.List(labelSelector)
+	resources, err := supportObjs.IdentifiedResources.List(labelSelector, nil)
 	if err != nil {
 		return err
 	}

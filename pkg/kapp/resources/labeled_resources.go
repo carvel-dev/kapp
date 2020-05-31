@@ -76,15 +76,15 @@ func (a *LabeledResources) Prepare(resources []Resource, olmFunc OwnershipLabelM
 	return nil
 }
 
-func (a *LabeledResources) GetAssociated(resource Resource) ([]Resource, error) {
+func (a *LabeledResources) GetAssociated(resource Resource, resRefs []ResourceRef) ([]Resource, error) {
 	defer a.logger.DebugFunc("GetAssociated").Finish()
-	return a.identifiedResources.List(NewAssociationLabel(resource).AsSelector())
+	return a.identifiedResources.List(NewAssociationLabel(resource).AsSelector(), resRefs)
 }
 
 func (a *LabeledResources) All() ([]Resource, error) {
 	defer a.logger.DebugFunc("All").Finish()
 
-	resources, err := a.identifiedResources.List(a.labelSelector)
+	resources, err := a.identifiedResources.List(a.labelSelector, nil)
 	if err != nil {
 		return nil, err
 	}

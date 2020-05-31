@@ -68,7 +68,7 @@ func (o *InspectOptions) Run() error {
 		return err
 	}
 
-	resources, err := supportObjs.IdentifiedResources.List(labelSelector)
+	resources, err := supportObjs.IdentifiedResources.List(labelSelector, nil)
 	if err != nil {
 		return err
 	}

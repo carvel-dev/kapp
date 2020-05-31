@@ -16,14 +16,14 @@ const (
 
 type ConvergedResource struct {
 	res                  ctlres.Resource
-	associatedRsFunc     func(ctlres.Resource) ([]ctlres.Resource, error)
+	associatedRsFunc     func(ctlres.Resource, []ctlres.ResourceRef) ([]ctlres.Resource, error)
 	specificResFactories []SpecificResFactory
 }
 
-type SpecificResFactory func(ctlres.Resource, []ctlres.Resource) (SpecificResource, bool)
+type SpecificResFactory func(ctlres.Resource, []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef)
 
 func NewConvergedResource(res ctlres.Resource,
-	associatedRsFunc func(ctlres.Resource) ([]ctlres.Resource, error),
+	associatedRsFunc func(ctlres.Resource, []ctlres.ResourceRef) ([]ctlres.Resource, error),
 	specificResFactories []SpecificResFactory) ConvergedResource {
 	return ConvergedResource{res, associatedRsFunc, specificResFactories}
 }
@@ -111,12 +111,12 @@ func (c ConvergedResource) associatedRs() ([]ctlres.Resource, error) {
 		return nil, nil
 	}
 	for _, f := range c.specificResFactories {
-		matchedRes, associatedRsWanted := f(c.res, nil)
+		matchedRes, associatedResRefs := f(c.res, nil)
 		// checking if interface is nil
 		if !reflect.ValueOf(matchedRes).IsNil() {
 			// Grab associated resources only if it's benefitial
-			if associatedRsWanted {
-				associatedRs, err := c.associatedRsFunc(c.res)
+			if len(associatedResRefs) > 0 {
+				associatedRs, err := c.associatedRsFunc(c.res, associatedResRefs)
 				if err != nil {
 					return nil, err
 				}

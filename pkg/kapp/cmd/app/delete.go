@@ -130,7 +130,7 @@ func (o *DeleteOptions) existingResources(app ctlapp.App,
 		return nil, false, err
 	}
 
-	existingResources, err := supportObjs.IdentifiedResources.List(labelSelector)
+	existingResources, err := supportObjs.IdentifiedResources.List(labelSelector, nil)
 	if err != nil {
 		return nil, false, err
 	}

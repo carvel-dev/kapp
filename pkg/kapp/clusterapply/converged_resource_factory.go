@@ -3,6 +3,7 @@ package clusterapply
 import (
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type ConvergedResourceFactoryOpts struct {
@@ -19,45 +20,54 @@ func NewConvergedResourceFactory(
 }
 
 func (f ConvergedResourceFactory) New(res ctlres.Resource,
-	associatedRsFunc func(ctlres.Resource) ([]ctlres.Resource, error)) ConvergedResource {
+	associatedRsFunc func(ctlres.Resource, []ctlres.ResourceRef) ([]ctlres.Resource, error)) ConvergedResource {
 
 	specificResFactories := []SpecificResFactory{
 		// kapp-controller app resource waiter deals with reconciliation _and_ deletion
-		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, bool) {
-			return ctlresm.NewKappctrlK14sIoV1alpha1App(res), false
+		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
+			return ctlresm.NewKappctrlK14sIoV1alpha1App(res), nil
 		},
 		// Deal with deletion generically since below resource waiters do not not know about that
 		// TODO shoud we make all of them deal with deletion internally?
-		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, bool) {
-			return ctlresm.NewDeleting(res), false
+		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
+			return ctlresm.NewDeleting(res), nil
 		},
-		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, bool) {
-			return ctlresm.NewApiExtensionsVxCRD(res), false
+		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
+			return ctlresm.NewApiExtensionsVxCRD(res), nil
 		},
-		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, bool) {
-			return ctlresm.NewAPIRegistrationV1APIService(res, f.opts.IgnoreFailingAPIServices), false
+		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
+			return ctlresm.NewAPIRegistrationV1APIService(res, f.opts.IgnoreFailingAPIServices), nil
 		},
-		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, bool) {
-			return ctlresm.NewAPIRegistrationV1Beta1APIService(res, f.opts.IgnoreFailingAPIServices), false
+		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
+			return ctlresm.NewAPIRegistrationV1Beta1APIService(res, f.opts.IgnoreFailingAPIServices), nil
 		},
-		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, bool) {
-			return ctlresm.NewCoreV1Pod(res), false
+		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
+			return ctlresm.NewCoreV1Pod(res), nil
 		},
-		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, bool) {
-			return ctlresm.NewCoreV1Service(res), false
+		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
+			return ctlresm.NewCoreV1Service(res), nil
 		},
-		func(res ctlres.Resource, aRs []ctlres.Resource) (SpecificResource, bool) {
+		func(res ctlres.Resource, aRs []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			// Use newly provided associated resources as they may be modified by ConvergedResource
-			return ctlresm.NewAppsV1Deployment(res, aRs), true
+			return ctlresm.NewAppsV1Deployment(res, aRs), []ctlres.ResourceRef{
+				{schema.GroupVersionResource{Group: "apps"}}, // for ReplicaSets
+				{schema.GroupVersionResource{Group: ""}},     // for Pods
+			}
 		},
-		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, bool) {
-			return ctlresm.NewAppsV1DaemonSet(res), true
+		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
+			return ctlresm.NewAppsV1DaemonSet(res), []ctlres.ResourceRef{
+				{schema.GroupVersionResource{Group: "apps"}},
+				{schema.GroupVersionResource{Group: ""}}, // for Pods
+			}
 		},
-		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, bool) {
-			return ctlresm.NewBatchV1Job(res), true
+		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
+			return ctlresm.NewBatchV1Job(res), []ctlres.ResourceRef{
+				{schema.GroupVersionResource{Group: "batch"}},
+				{schema.GroupVersionResource{Group: ""}}, // for Pods
+			}
 		},
-		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, bool) {
-			return ctlresm.NewBatchVxCronJob(res), false
+		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
+			return ctlresm.NewBatchVxCronJob(res), nil
 		},
 	}
 

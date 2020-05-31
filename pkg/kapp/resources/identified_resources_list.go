@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func (r IdentifiedResources) List(labelSelector labels.Selector) ([]Resource, error) {
+func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []ResourceRef) ([]Resource, error) {
 	defer r.logger.DebugFunc("List").Finish()
 
 	resTypes, err := r.resourceTypes.All()
@@ -28,6 +28,10 @@ func (r IdentifiedResources) List(labelSelector labels.Selector) ([]Resource, er
 	resTypes = NonMatching(resTypes, ResourceRef{
 		schema.GroupVersionResource{Version: "v1", Resource: "componentstatuses"},
 	})
+
+	if len(resRefs) > 0 {
+		resTypes = MatchingAny(resTypes, resRefs)
+	}
 
 	allOpts := ResourcesAllOpts{
 		ListOpts: &metav1.ListOptions{

@@ -227,6 +227,19 @@ func Matching(in []ResourceType, ref ResourceRef) []ResourceType {
 	return out
 }
 
+func MatchingAny(in []ResourceType, refs []ResourceRef) []ResourceType {
+	var out []ResourceType
+	for _, item := range in {
+		for _, ref := range refs {
+			if (PartialResourceRef{ref.GroupVersionResource}).Matches(item.GroupVersionResource) {
+				out = append(out, item)
+				break
+			}
+		}
+	}
+	return out
+}
+
 func NonMatching(in []ResourceType, ref ResourceRef) []ResourceType {
 	partResourceRef := PartialResourceRef{ref.GroupVersionResource}
 	var out []ResourceType
