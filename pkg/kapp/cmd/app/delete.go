@@ -9,6 +9,7 @@ import (
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
+	ctldiffui "github.com/k14s/kapp/pkg/kapp/diffui"
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
@@ -85,7 +86,14 @@ func (o *DeleteOptions) Run() error {
 	clusterChangeSet, clusterChangesGraph, hasNoChanges, err :=
 		o.calculateAndPresentChanges(existingResources, conf, supportObjs)
 	if err != nil {
+		if o.DiffFlags.UI && clusterChangesGraph != nil {
+			return o.presentDiffUI(clusterChangesGraph)
+		}
 		return err
+	}
+
+	if o.DiffFlags.UI {
+		return o.presentDiffUI(clusterChangesGraph)
 	}
 
 	if o.DiffFlags.Run {
@@ -216,4 +224,12 @@ func (o *DeleteOptions) changeIgnored(resources []ctlres.Resource) {
 			res.MarkTransient(false)
 		}
 	}
+}
+
+func (o *DeleteOptions) presentDiffUI(graph *ctldgraph.ChangeGraph) error {
+	opts := ctldiffui.ServerOpts{
+		ListenAddr:   "localhost:8080",
+		DiffDataFunc: func() *ctldgraph.ChangeGraph { return graph },
+	}
+	return ctldiffui.NewServer(opts, o.ui).Run()
 }
