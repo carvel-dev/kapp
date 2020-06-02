@@ -31,7 +31,11 @@ func NewConfFromResources(resources []ctlres.Resource) ([]ctlres.Resource, Conf,
 		}
 	}
 
-	return rsWithoutConfigs, Conf{configs}, nil
+	cfg := Conf{configs}
+
+	ctlres.SetGlobalWaitingRules(cfg.WaitRuleMods())
+
+	return rsWithoutConfigs, cfg, nil
 }
 
 func (c Conf) RebaseMods() []ctlres.ResourceModWithMultiple {
@@ -64,6 +68,21 @@ func (c Conf) OwnershipLabelMods() func(kvs map[string]string) []ctlres.StringMa
 		}
 		return mods
 	}
+}
+
+func (c Conf) WaitRuleMods() []ctlres.WaitingRuleMod {
+	var mods []ctlres.WaitingRuleMod // not config.WaitingRule
+	for _, cfg := range c.configs {
+		for _, rule := range cfg.WaitingRules {
+			mods = append(mods, ctlres.WaitingRuleMod{
+				SupportsObservedGeneration: rule.SupportsObservedGeneration,
+				SuccessfulConditions:       rule.SuccessfulConditions,
+				FailureConditions:          rule.FailureConditions,
+				ResourceMatchers:           rule.ResourceMatchers.AsResourceMatchers(),
+			})
+		}
+	}
+	return mods
 }
 
 func (c Conf) LabelScopingMods() func(kvs map[string]string) []ctlres.StringMapAppendMod {

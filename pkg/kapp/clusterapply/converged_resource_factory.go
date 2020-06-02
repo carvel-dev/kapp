@@ -71,5 +71,7 @@ func (f ConvergedResourceFactory) New(res ctlres.Resource,
 		},
 	}
 
-	return NewConvergedResource(res, associatedRsFunc, specificResFactories)
+	waitingRuleMod := ctlres.GetWaitingRule(res)
+
+	return NewConvergedResource(res, associatedRsFunc, specificResFactories, waitingRuleMod)
 }

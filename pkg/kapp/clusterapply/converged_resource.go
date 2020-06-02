@@ -8,6 +8,8 @@ import (
 	"github.com/fatih/color"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -18,14 +20,41 @@ type ConvergedResource struct {
 	res                  ctlres.Resource
 	associatedRsFunc     func(ctlres.Resource, []ctlres.ResourceRef) ([]ctlres.Resource, error)
 	specificResFactories []SpecificResFactory
+	waitingRule          ctlres.WaitingRuleMod
 }
 
 type SpecificResFactory func(ctlres.Resource, []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef)
 
 func NewConvergedResource(res ctlres.Resource,
 	associatedRsFunc func(ctlres.Resource, []ctlres.ResourceRef) ([]ctlres.Resource, error),
-	specificResFactories []SpecificResFactory) ConvergedResource {
-	return ConvergedResource{res, associatedRsFunc, specificResFactories}
+	specificResFactories []SpecificResFactory, waitingRule ctlres.WaitingRuleMod) ConvergedResource {
+	return ConvergedResource{res, associatedRsFunc, specificResFactories, waitingRule}
+}
+
+type genericResource struct {
+	Metadata   metav1.ObjectMeta
+	Generation int64
+	Status     struct {
+		ObservedGeneration int64
+		Conditions         []genericCondition
+	}
+}
+
+// genericCondition describes a generic condition field
+type genericCondition struct {
+	// Type of DaemonSet condition.
+	Type string `json:"type"`
+	// Status of the condition, one of True, False, Unknown.
+	Status v1.ConditionStatus `json:"status"`
+	// Last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
+	// The reason for the condition's last transition.
+	// +optional
+	Reason string `json:"reason,omitempty"`
+	// A human readable message indicating details about the transition.
+	// +optional
+	Message string `json:"message,omitempty"`
 }
 
 func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
@@ -39,6 +68,35 @@ func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 	convergedResState, err := c.isResourceDoneApplying(c.res, associatedRs)
 	if err != nil {
 		return ctlresm.DoneApplyState{Done: true}, descMsgs, err
+	}
+
+	// Custom wait rule
+	wr := c.waitingRule
+	if wr.SupportsObservedGeneration || len(wr.FailureConditions) > 0 || len(wr.SuccessfulConditions) > 0 {
+		obj := genericResource{}
+		err := c.res.AsUncheckedTypedObj(&obj)
+		if err != nil {
+			return ctlresm.DoneApplyState{Done: true, Successful: false}, descMsgs, err
+		}
+		if wr.SupportsObservedGeneration && obj.Metadata.Generation != obj.Status.ObservedGeneration {
+			return ctlresm.DoneApplyState{Done: false}, descMsgs, err
+		}
+		for _, fc := range wr.FailureConditions {
+			for _, cond := range obj.Status.Conditions {
+				if cond.Type == fc && cond.Status == v1.ConditionTrue {
+					descMsgs = append(descMsgs, cond.Message)
+					return ctlresm.DoneApplyState{Done: false, Successful: false}, descMsgs, err
+				}
+			}
+		}
+		for _, sc := range wr.SuccessfulConditions {
+			for _, cond := range obj.Status.Conditions {
+				if cond.Type == sc && cond.Status == v1.ConditionTrue {
+					descMsgs = append(descMsgs, cond.Message)
+					return ctlresm.DoneApplyState{Done: true, Successful: true}, descMsgs, err
+				}
+			}
+		}
 	}
 
 	if convergedResState != nil {
