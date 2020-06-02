@@ -14,4 +14,7 @@ time kapp delete -y -a cert-manager
 time kapp deploy -y -a knative -f examples/knative-v0.15.0/
 time kapp delete -y -a knative
 
+time kapp deploy -y -a cf -f examples/cf-for-k8s-v0.2.0-custom/
+time kapp delete -y -a cf
+
 echo EXTERNAL SUCCESS
