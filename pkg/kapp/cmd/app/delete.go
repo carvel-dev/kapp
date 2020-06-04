@@ -228,7 +228,6 @@ func (o *DeleteOptions) changeIgnored(resources []ctlres.Resource) {
 
 func (o *DeleteOptions) presentDiffUI(graph *ctldgraph.ChangeGraph) error {
 	opts := ctldiffui.ServerOpts{
-		ListenAddr:   "localhost:8080",
 		DiffDataFunc: func() *ctldgraph.ChangeGraph { return graph },
 	}
 	return ctldiffui.NewServer(opts, o.ui).Run()

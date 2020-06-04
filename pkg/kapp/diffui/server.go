@@ -3,6 +3,7 @@ package diffui
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -13,7 +14,6 @@ import (
 )
 
 type ServerOpts struct {
-	ListenAddr   string
 	DiffDataFunc func() *ctldgraph.ChangeGraph
 }
 
@@ -34,12 +34,14 @@ func (s *Server) Mux() *http.ServeMux {
 }
 
 func (s *Server) Run() error {
-	server := &http.Server{
-		Addr:    s.opts.ListenAddr,
-		Handler: s.Mux(),
+	listener, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		return err
 	}
-	s.ui.BeginLinef("Diff UI server listening on http://%s\n", server.Addr)
-	return server.ListenAndServe()
+
+	s.ui.BeginLinef("Diff UI server: http://%s\n", listener.Addr())
+
+	return (&http.Server{Handler: s.Mux()}).Serve(listener)
 }
 
 type diffData struct {
