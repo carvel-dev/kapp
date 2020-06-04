@@ -2,6 +2,7 @@ package resources
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -275,13 +276,26 @@ func (c *Resources) Patch(resource Resource, patchType types.PatchType, data []b
 	return NewResourceUnstructured(*patchedUn, resType), nil
 }
 
-const (
-	admissionWebhookErrMsg = "Internal error occurred: failed calling admission webhook"
-)
-
 func (c *Resources) doneRetryingErr(err error) bool {
-	// TODO is there a better way to detect this error
-	retry := strings.Contains(err.Error(), admissionWebhookErrMsg)
+	// TODO is there a better way to detect these errors?
+	const (
+		admissionWebhookErrMsg = "Internal error occurred: failed calling admission webhook"
+		genericWebhookErrMsg   = "Internal error occurred: failed calling webhook"
+	)
+
+	var (
+		// Error example: conversion webhook for cert-manager.io/v1alpha3, Kind=Issuer failed:
+		//   Post https://cert-manager-webhook.cert-manager.svc:443/convert?timeout=30s:
+		//   x509: certificate signed by unknown authority (reason: )
+		conversionWebhookErrCheck = regexp.MustCompile("conversion webhook for (.+) failed:")
+	)
+
+	errMsg := err.Error()
+
+	retry := strings.Contains(errMsg, admissionWebhookErrMsg)
+	retry = retry || strings.Contains(errMsg, genericWebhookErrMsg)
+	retry = retry || conversionWebhookErrCheck.MatchString(errMsg)
+
 	return !retry
 }
 

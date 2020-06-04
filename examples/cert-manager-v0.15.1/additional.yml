@@ -1,0 +1,15 @@
+#! Uses v1alpha3 since it's not primary storage version for Issuer CRD,
+#! to force conversion webhook to be called
+
+#! Following error pops up if CR is added too early:
+#! | kapp: Error: Applying create issuer/selfsigning-issuer (cert-manager.io/v1alpha3) namespace: default:
+#! |   Creating resource issuer/selfsigning-issuer (cert-manager.io/v1alpha3) namespace: default:
+#! |     Internal error occurred: failed calling webhook "webhook.cert-manager.io":
+#! |       Post https://cert-manager-webhook.cert-manager.svc:443/mutate?timeout=30s: service "cert-manager-webhook" not found (reason: InternalError)
+
+apiVersion: cert-manager.io/v1alpha3
+kind: Issuer
+metadata:
+  name: selfsigning-issuer
+spec:
+  selfSigned: {}
