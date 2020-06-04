@@ -67,11 +67,9 @@ func (s *Server) mainHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, change := range allChanges {
 		ddChange := diffDataChange{ID: changeID(change), Name: change.Description()}
-
 		for _, depChange := range change.WaitingFor {
 			ddChange.WaitingForIDs = append(ddChange.WaitingForIDs, changeID(depChange))
 		}
-
 		diffData.AllChanges = append(diffData.AllChanges, ddChange)
 	}
 
@@ -82,6 +80,7 @@ func (s *Server) mainHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		diffData.LinearizedChangeSections = append(diffData.LinearizedChangeSections, changeIDs)
 	}
+
 	for _, change := range blockedChanges {
 		diffData.BlockedChanges = append(diffData.BlockedChanges, changeID(change))
 	}
