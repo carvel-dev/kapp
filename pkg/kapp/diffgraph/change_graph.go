@@ -152,14 +152,6 @@ func (g *ChangeGraph) Linearized() ([][]*Change, []*Change) {
 		unblocked := blockedChanges.Unblocked()
 		blocked := blockedChanges.Blocked()
 
-		if len(blocked) == lastBlockedChanges {
-			for _, blockedChange := range blocked {
-				resultBlocked = append(resultBlocked, blockedChange)
-			}
-			return resultLinearized, resultBlocked
-		}
-		lastBlockedChanges = len(blocked)
-
 		var sectionLinearized []*Change
 		for _, unblockedChange := range unblocked {
 			if _, found := recordedChanges[unblockedChange]; !found {
@@ -170,9 +162,14 @@ func (g *ChangeGraph) Linearized() ([][]*Change, []*Change) {
 		}
 		resultLinearized = append(resultLinearized, sectionLinearized)
 
-		if len(blocked) == 0 {
+		if len(blocked) == 0 || len(blocked) == lastBlockedChanges {
+			for _, blockedChange := range blocked {
+				resultBlocked = append(resultBlocked, blockedChange)
+			}
 			return resultLinearized, resultBlocked
 		}
+
+		lastBlockedChanges = len(blocked)
 	}
 }
 
