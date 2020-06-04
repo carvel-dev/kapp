@@ -37,7 +37,7 @@ func (d TemplateResource) NonTemplatedName() (string, string) {
 func (d TemplateResource) Version() int {
 	_, ver := d.NonTemplatedName()
 	if len(ver) == 0 {
-		panic("Missing template version")
+		panic(fmt.Sprintf("Missing template version in resource '%s'", d.res.Description()))
 	}
 
 	verInt, err1 := strconv.Atoi(ver)
