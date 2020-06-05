@@ -2,13 +2,16 @@ package clusterapply
 
 import (
 	"fmt"
+	"time"
 
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
 	"github.com/k14s/kapp/pkg/kapp/util"
 )
 
 type ApplyingChangesOpts struct {
-	Concurrency int
+	Timeout       time.Duration
+	CheckInterval time.Duration
+	Concurrency   int
 }
 
 type ApplyingChanges struct {
@@ -23,57 +26,73 @@ func NewApplyingChanges(numTotal int, opts ApplyingChangesOpts, clusterChangeFac
 	return &ApplyingChanges{numTotal, opts, map[*ctldgraph.Change]struct{}{}, clusterChangeFactory, ui}
 }
 
+type applyResult struct {
+	Change        *ctldgraph.Change
+	ClusterChange *ClusterChange
+	Retryable     bool
+	Err           error
+}
+
 func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange, error) {
-	var nonAppliedChanges []*ctldgraph.Change
+	startTime := time.Now()
 
-	for _, change := range allChanges {
-		if !c.isApplied(change) {
-			nonAppliedChanges = append(nonAppliedChanges, change)
+	for {
+		nonAppliedChanges := c.nonAppliedChanges(allChanges)
+		if len(nonAppliedChanges) == 0 {
+			// Do not print applying message if no changes
+			return nil, nil
 		}
-	}
 
-	// Do not print applying message if no changes
-	if len(nonAppliedChanges) == 0 {
-		return nil, nil
-	}
+		c.ui.NotifySection("applying %d changes %s", len(nonAppliedChanges), c.stats())
 
-	c.ui.NotifySection("applying %d changes %s", len(nonAppliedChanges), c.stats())
+		// Throttle number of changes are applied concurrently
+		// as it seems that client-go or api-server arent happy
+		// with large number of updates going at once.
+		// Example errors w/o throttling:
+		// - "...: grpc: the client connection is closing (reason: )"
+		// - "...: context canceled (reason: )"
+		applyThrottle := util.NewThrottle(c.opts.Concurrency)
+		applyCh := make(chan applyResult, len(nonAppliedChanges))
 
-	var result []WaitingChange
-	applyErrsCh := make(chan error, len(nonAppliedChanges))
+		for _, change := range nonAppliedChanges {
+			change := change // copy
 
-	// Throttle number of changes are applied concurrently
-	// as it seems that client-go or api-server arent happy
-	// with large number of updates going at once.
-	// Example errors w/o throttling:
-	// - "...: grpc: the client connection is closing (reason: )"
-	// - "...: context canceled (reason: )"
-	applyThrottle := util.NewThrottle(c.opts.Concurrency)
+			go func() {
+				applyThrottle.Take()
+				defer applyThrottle.Done()
 
-	for _, change := range nonAppliedChanges {
-		c.markApplied(change)
+				clusterChange := change.Change.(wrappedClusterChange).ClusterChange
 
-		clusterChange := change.Change.(wrappedClusterChange).ClusterChange
-		result = append(result, WaitingChange{change, clusterChange})
+				// Print apply description as close to apply as possible to "show" apply progress
+				c.ui.Notify([]string{clusterChange.ApplyDescription()})
 
-		go func() {
-			applyThrottle.Take()
-			defer applyThrottle.Done()
-
-			// Print apply description as close to apply as possible to "show" apply progress
-			c.ui.Notify([]string{clusterChange.ApplyDescription()})
-			applyErrsCh <- clusterChange.Apply()
-		}()
-	}
-
-	for i := 0; i < len(nonAppliedChanges); i++ {
-		err := <-applyErrsCh
-		if err != nil {
-			return nil, err
+				err := clusterChange.Apply()
+				applyCh <- applyResult{Change: change, ClusterChange: clusterChange, Retryable: false, Err: err}
+			}()
 		}
-	}
 
-	return result, nil
+		var appliedChanges []WaitingChange
+
+		for i := 0; i < len(nonAppliedChanges); i++ {
+			result := <-applyCh
+			if result.Err != nil && !result.Retryable {
+				return nil, result.Err
+			}
+
+			c.markApplied(result.Change)
+			appliedChanges = append(appliedChanges, WaitingChange{result.Change, result.ClusterChange})
+		}
+
+		if len(appliedChanges) > 0 {
+			return appliedChanges, nil
+		}
+
+		if time.Now().Sub(startTime) > c.opts.Timeout {
+			return nil, fmt.Errorf("Timed out waiting after %s", c.opts.Timeout)
+		}
+
+		time.Sleep(c.opts.CheckInterval)
+	}
 }
 
 func (c *ApplyingChanges) Complete() error {
@@ -85,6 +104,16 @@ func (c *ApplyingChanges) Complete() error {
 
 	c.ui.NotifySection("applying complete %s", c.stats())
 	return nil
+}
+
+func (c *ApplyingChanges) nonAppliedChanges(allChanges []*ctldgraph.Change) []*ctldgraph.Change {
+	var result []*ctldgraph.Change
+	for _, change := range allChanges {
+		if !c.isApplied(change) {
+			result = append(result, change)
+		}
+	}
+	return result
 }
 
 func (c *ApplyingChanges) isApplied(change *ctldgraph.Change) bool {
