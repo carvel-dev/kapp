@@ -171,11 +171,10 @@ func (c *Change) ApplicableRules() ([]ChangeRule, error) {
 	op := c.Change.Op()
 
 	switch op {
-	case ActualChangeOpUpsert:
+	case ActualChangeOpUpsert, ActualChangeOpNoop:
 		upsert = true
 	case ActualChangeOpDelete:
 		delete = true
-	case ActualChangeOpNoop:
 	default:
 		return nil, fmt.Errorf("Unknown change operation: %s", op)
 	}
@@ -212,7 +211,7 @@ func (cs Changes) MatchesRule(rule ChangeRule, exceptChange *Change) ([]*Change,
 			op := change.Change.Op()
 
 			switch op {
-			case ActualChangeOpUpsert:
+			case ActualChangeOpUpsert, ActualChangeOpNoop:
 				if rule.TargetAction == ChangeRuleTargetActionUpserting {
 					result = append(result, change)
 				}
@@ -220,7 +219,6 @@ func (cs Changes) MatchesRule(rule ChangeRule, exceptChange *Change) ([]*Change,
 				if rule.TargetAction == ChangeRuleTargetActionDeleting {
 					result = append(result, change)
 				}
-			case ActualChangeOpNoop:
 			default:
 				panic(fmt.Sprintf("Unknown change operation: %s", op))
 			}

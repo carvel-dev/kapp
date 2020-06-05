@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestOrder(t *testing.T) {
+func TestOrderBasic(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -198,6 +198,287 @@ Wait to: 1 reconcile, 1 delete, 0 noop
 <replaced>: delete configmap/import-etcd-into-db (v1) namespace: kapp-test
 <replaced>: ---- waiting on 1 changes [1/2 done] ----
 <replaced>: ok: delete configmap/import-etcd-into-db (v1) namespace: kapp-test
+<replaced>: ---- applying complete [2/2 done] ----
+<replaced>: ---- waiting complete [2/2 done] ----
+
+Succeeded
+`))
+
+		if out != expectedOutput {
+			t.Fatalf("Expected output to equal (%d) >>>%s<<< but was (%d) >>>%s<<<",
+				len(expectedOutput), expectedOutput, len(out), out)
+		}
+	})
+}
+
+func TestOrderWithNoops(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+
+	name := "test-order-noops"
+	cleanUp := func() {
+		kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{AllowError: true})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("deploy ordered", func() {
+		yaml1 := `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: first
+  annotations:
+    kapp.k14s.io/change-group: "first"
+data:
+  key: val
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: second
+  annotations:
+    kapp.k14s.io/change-group: "second"
+    kapp.k14s.io/change-rule: "upsert after upserting first"
+data:
+  key: val
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: third
+  annotations:
+    kapp.k14s.io/change-rule: "upsert after upserting second"
+data:
+  key: val
+`
+
+		out, _ := kapp.RunWithOpts([]string{"deploy", "--tty", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		out = sortActionsInResult(strings.TrimSpace(replaceSpaces(replaceTarget(replaceTs(out)))))
+		expectedOutput := strings.TrimSpace(replaceSpaces(`Changes
+
+Namespace  Name    Kind       Conds.  Age  Op      Wait to    Rs  Ri  $
+kapp-test  first   ConfigMap  -       -    create  reconcile  -   -  $
+^          second  ConfigMap  -       -    create  reconcile  -   -  $
+^          third   ConfigMap  -       -    create  reconcile  -   -  $
+
+Op:      3 create, 0 delete, 0 update, 0 noop
+Wait to: 3 reconcile, 0 delete, 0 noop
+
+<replaced>: ---- applying 1 changes [0/3 done] ----
+<replaced>: create configmap/first (v1) namespace: kapp-test
+<replaced>: ---- waiting on 1 changes [0/3 done] ----
+<replaced>: ok: reconcile configmap/first (v1) namespace: kapp-test
+<replaced>: ---- applying 1 changes [1/3 done] ----
+<replaced>: create configmap/second (v1) namespace: kapp-test
+<replaced>: ---- waiting on 1 changes [1/3 done] ----
+<replaced>: ok: reconcile configmap/second (v1) namespace: kapp-test
+<replaced>: ---- applying 1 changes [2/3 done] ----
+<replaced>: create configmap/third (v1) namespace: kapp-test
+<replaced>: ---- waiting on 1 changes [2/3 done] ----
+<replaced>: ok: reconcile configmap/third (v1) namespace: kapp-test
+<replaced>: ---- applying complete [3/3 done] ----
+<replaced>: ---- waiting complete [3/3 done] ----
+
+Succeeded
+`))
+
+		if out != expectedOutput {
+			t.Fatalf("Expected output to equal (%d) >>>%s<<< but was (%d) >>>%s<<<",
+				len(expectedOutput), expectedOutput, len(out), out)
+		}
+	})
+
+	logger.Section("deploy update that waits on noop, that waits on update", func() {
+		yaml := `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: first
+  annotations:
+    kapp.k14s.io/change-group: "first"
+data:
+  key: val1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: second
+  annotations:
+    kapp.k14s.io/change-group: "second"
+    kapp.k14s.io/change-rule: "upsert after upserting first"
+data:
+  key: val
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: third
+  annotations:
+    kapp.k14s.io/change-rule: "upsert after upserting second"
+data:
+  key: val1
+`
+
+		out, _ := kapp.RunWithOpts([]string{"deploy", "--tty", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml)})
+
+		out = sortActionsInResult(strings.TrimSpace(replaceSpaces(replaceAgeStr(replaceTarget(replaceTs(out))))))
+		expectedOutput := strings.TrimSpace(replaceSpaces(`Changes
+
+Namespace  Name    Kind       Conds.  Age  Op      Wait to    Rs  Ri  $
+kapp-test  first   ConfigMap  -       <replaced>  update  reconcile  ok  -  $
+^          second  ConfigMap  -       <replaced>  -       reconcile  ok  -  $
+^          third   ConfigMap  -       <replaced>  update  reconcile  ok  -  $
+
+Op:      0 create, 0 delete, 2 update, 1 noop
+Wait to: 3 reconcile, 0 delete, 0 noop
+
+<replaced>: ---- applying 1 changes [0/3 done] ----
+<replaced>: update configmap/first (v1) namespace: kapp-test
+<replaced>: ---- waiting on 1 changes [0/3 done] ----
+<replaced>: ok: reconcile configmap/first (v1) namespace: kapp-test
+<replaced>: ---- applying 1 changes [1/3 done] ----
+<replaced>: noop configmap/second (v1) namespace: kapp-test
+<replaced>: ---- waiting on 1 changes [1/3 done] ----
+<replaced>: ok: reconcile configmap/second (v1) namespace: kapp-test
+<replaced>: ---- applying 1 changes [2/3 done] ----
+<replaced>: update configmap/third (v1) namespace: kapp-test
+<replaced>: ---- waiting on 1 changes [2/3 done] ----
+<replaced>: ok: reconcile configmap/third (v1) namespace: kapp-test
+<replaced>: ---- applying complete [3/3 done] ----
+<replaced>: ---- waiting complete [3/3 done] ----
+
+Succeeded
+`))
+
+		if out != expectedOutput {
+			t.Fatalf("Expected output to equal (%d) >>>%s<<< but was (%d) >>>%s<<<",
+				len(expectedOutput), expectedOutput, len(out), out)
+		}
+	})
+
+	logger.Section("deploy update that blocks other noops", func() {
+		yaml := `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: first
+  annotations:
+    kapp.k14s.io/change-group: "first"
+data:
+  key: val2
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: second
+  annotations:
+    kapp.k14s.io/change-group: "second"
+    kapp.k14s.io/change-rule: "upsert after upserting first"
+data:
+  key: val
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: third
+  annotations:
+    kapp.k14s.io/change-rule: "upsert after upserting second"
+data:
+  key: val1
+`
+
+		out, _ := kapp.RunWithOpts([]string{"deploy", "--tty", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml)})
+
+		out = sortActionsInResult(strings.TrimSpace(replaceSpaces(replaceAgeStr(replaceTarget(replaceTs(out))))))
+		expectedOutput := strings.TrimSpace(replaceSpaces(`Changes
+
+Namespace  Name    Kind       Conds.  Age  Op      Wait to    Rs  Ri  $
+kapp-test  first   ConfigMap  -       <replaced>  update  reconcile  ok  -  $
+^          second  ConfigMap  -       <replaced>  -       reconcile  ok  -  $
+^          third   ConfigMap  -       <replaced>  -       reconcile  ok  -  $
+
+Op:      0 create, 0 delete, 1 update, 2 noop
+Wait to: 3 reconcile, 0 delete, 0 noop
+
+<replaced>: ---- applying 1 changes [0/3 done] ----
+<replaced>: update configmap/first (v1) namespace: kapp-test
+<replaced>: ---- waiting on 1 changes [0/3 done] ----
+<replaced>: ok: reconcile configmap/first (v1) namespace: kapp-test
+<replaced>: ---- applying 1 changes [1/3 done] ----
+<replaced>: noop configmap/second (v1) namespace: kapp-test
+<replaced>: ---- waiting on 1 changes [1/3 done] ----
+<replaced>: ok: reconcile configmap/second (v1) namespace: kapp-test
+<replaced>: ---- applying 1 changes [2/3 done] ----
+<replaced>: noop configmap/third (v1) namespace: kapp-test
+<replaced>: ---- waiting on 1 changes [2/3 done] ----
+<replaced>: ok: reconcile configmap/third (v1) namespace: kapp-test
+<replaced>: ---- applying complete [3/3 done] ----
+<replaced>: ---- waiting complete [3/3 done] ----
+
+Succeeded
+`))
+
+		if out != expectedOutput {
+			t.Fatalf("Expected output to equal (%d) >>>%s<<< but was (%d) >>>%s<<<",
+				len(expectedOutput), expectedOutput, len(out), out)
+		}
+	})
+
+	logger.Section("deploy update waits on noop, hence it's not present", func() {
+		yaml := `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: first
+  annotations:
+    kapp.k14s.io/change-group: "first"
+data:
+  key: val2
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: second
+  annotations:
+    kapp.k14s.io/change-group: "second"
+    kapp.k14s.io/change-rule: "upsert after upserting first"
+data:
+  key: val3
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: third
+  annotations:
+    kapp.k14s.io/change-rule: "upsert after upserting second"
+data:
+  key: val1
+`
+
+		out, _ := kapp.RunWithOpts([]string{"deploy", "--tty", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml)})
+
+		out = sortActionsInResult(strings.TrimSpace(replaceSpaces(replaceAgeStr(replaceTarget(replaceTs(out))))))
+		expectedOutput := strings.TrimSpace(replaceSpaces(`Changes
+
+Namespace  Name    Kind       Conds.  Age  Op      Wait to    Rs  Ri  $
+kapp-test  second  ConfigMap  -       <replaced>  update  reconcile  ok  -  $
+^          third   ConfigMap  -       <replaced>  -       reconcile  ok  -  $
+
+Op:      0 create, 0 delete, 1 update, 1 noop
+Wait to: 2 reconcile, 0 delete, 0 noop
+
+<replaced>: ---- applying 1 changes [0/2 done] ----
+<replaced>: update configmap/second (v1) namespace: kapp-test
+<replaced>: ---- waiting on 1 changes [0/2 done] ----
+<replaced>: ok: reconcile configmap/second (v1) namespace: kapp-test
+<replaced>: ---- applying 1 changes [1/2 done] ----
+<replaced>: noop configmap/third (v1) namespace: kapp-test
+<replaced>: ---- waiting on 1 changes [1/2 done] ----
+<replaced>: ok: reconcile configmap/third (v1) namespace: kapp-test
 <replaced>: ---- applying complete [2/2 done] ----
 <replaced>: ---- waiting complete [2/2 done] ----
 

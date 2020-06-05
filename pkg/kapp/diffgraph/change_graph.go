@@ -186,15 +186,31 @@ func (g *ChangeGraph) AllMatching(matchFunc func(*Change) bool) []*Change {
 }
 
 func (g *ChangeGraph) RemoveMatching(matchFunc func(*Change) bool) {
-	var result []*Change
+	deletedChanges := map[*Change]struct{}{}
+
 	// Need to do this _only_ at the first level since
 	// all changes are included at the top level
+	var result []*Change
 	for _, change := range g.changes {
-		if !matchFunc(change) {
+		if matchFunc(change) {
+			deletedChanges[change] = struct{}{}
+		} else {
 			result = append(result, change)
 		}
 	}
 	g.changes = result
+
+	// Since some top level changes were deleted,
+	// ensure that no change waits for them
+	for _, rootChange := range g.changes {
+		var result []*Change
+		for _, change := range rootChange.WaitingFor {
+			if _, found := deletedChanges[change]; !found {
+				result = append(result, change)
+			}
+		}
+		rootChange.WaitingFor = result
+	}
 }
 
 func (g *ChangeGraph) Print() {
