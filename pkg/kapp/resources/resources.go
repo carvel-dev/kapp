@@ -205,7 +205,7 @@ func (c *Resources) Create(resource Resource) (Resource, error) {
 
 	var createdUn *unstructured.Unstructured
 
-	err = util.Retry(time.Second, time.Minute, func() (bool, error) {
+	err = util.Retry(time.Second, 5*time.Second, func() (bool, error) {
 		createdUn, err = resClient.Create(resource.unstructuredPtr())
 		if err != nil {
 			return c.doneRetryingErr(err), c.resourceErr(err, "Creating", resource)
@@ -235,7 +235,7 @@ func (c *Resources) Update(resource Resource) (Resource, error) {
 
 	var updatedUn *unstructured.Unstructured
 
-	err = util.Retry(time.Second, time.Minute, func() (bool, error) {
+	err = util.Retry(time.Second, 5*time.Second, func() (bool, error) {
 		updatedUn, err = resClient.Update(resource.unstructuredPtr())
 		if err != nil {
 			return c.doneRetryingErr(err), c.resourceErr(err, "Updating", resource)
@@ -262,7 +262,7 @@ func (c *Resources) Patch(resource Resource, patchType types.PatchType, data []b
 
 	var patchedUn *unstructured.Unstructured
 
-	err = util.Retry(time.Second, time.Minute, func() (bool, error) {
+	err = util.Retry(time.Second, 5*time.Second, func() (bool, error) {
 		patchedUn, err = resClient.Patch(resource.Name(), patchType, data)
 		if err != nil {
 			return c.doneRetryingErr(err), c.resourceErr(err, "Patching", resource)
@@ -274,29 +274,6 @@ func (c *Resources) Patch(resource Resource, patchType types.PatchType, data []b
 	}
 
 	return NewResourceUnstructured(*patchedUn, resType), nil
-}
-
-func (c *Resources) doneRetryingErr(err error) bool {
-	// TODO is there a better way to detect these errors?
-	const (
-		admissionWebhookErrMsg = "Internal error occurred: failed calling admission webhook"
-		genericWebhookErrMsg   = "Internal error occurred: failed calling webhook"
-	)
-
-	var (
-		// Error example: conversion webhook for cert-manager.io/v1alpha3, Kind=Issuer failed:
-		//   Post https://cert-manager-webhook.cert-manager.svc:443/convert?timeout=30s:
-		//   x509: certificate signed by unknown authority (reason: )
-		conversionWebhookErrCheck = regexp.MustCompile("conversion webhook for (.+) failed:")
-	)
-
-	errMsg := err.Error()
-
-	retry := strings.Contains(errMsg, admissionWebhookErrMsg)
-	retry = retry || strings.Contains(errMsg, genericWebhookErrMsg)
-	retry = retry || conversionWebhookErrCheck.MatchString(errMsg)
-
-	return !retry
 }
 
 func (c *Resources) Delete(resource Resource) error {
@@ -410,6 +387,10 @@ func (c *Resources) Exists(resource Resource) (bool, error) {
 	return found, err
 }
 
+func (c *Resources) doneRetryingErr(err error) bool {
+	return !IsRetryableErr(err)
+}
+
 func (c *Resources) resourceErr(err error, action string, resource Resource) error {
 	if typedErr, ok := err.(errors.APIStatus); ok {
 		return resourceStatusErr{resourcePlainErr{err, action, resource}, typedErr.Status()}
@@ -472,6 +453,28 @@ func (c *Resources) assumedAllowedNamespaces() ([]string, error) {
 	c.assumedAllowedNamespacesMemo = &nsNames
 
 	return nsNames, nil
+}
+
+var (
+	// Error example: conversion webhook for cert-manager.io/v1alpha3, Kind=Issuer failed:
+	//   Post https://cert-manager-webhook.cert-manager.svc:443/convert?timeout=30s:
+	//   x509: certificate signed by unknown authority (reason: )
+	conversionWebhookErrCheck = regexp.MustCompile("conversion webhook for (.+) failed:")
+)
+
+func IsRetryableErr(err error) bool {
+	// TODO is there a better way to detect these errors?
+	errMsg := err.Error()
+	switch {
+	case strings.Contains(errMsg, "Internal error occurred: failed calling admission webhook"):
+		return true
+	case strings.Contains(errMsg, "Internal error occurred: failed calling webhook"):
+		return true
+	case conversionWebhookErrCheck.MatchString(errMsg):
+		return true
+	default:
+		return false
+	}
 }
 
 type ResourcesAllOpts struct {

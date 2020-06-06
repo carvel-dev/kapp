@@ -5,6 +5,7 @@ import (
 	"time"
 
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/k14s/kapp/pkg/kapp/util"
 )
 
@@ -67,7 +68,12 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 				c.ui.Notify([]string{clusterChange.ApplyDescription()})
 
 				err := clusterChange.Apply()
-				applyCh <- applyResult{Change: change, ClusterChange: clusterChange, Retryable: false, Err: err}
+				applyCh <- applyResult{
+					Change:        change,
+					ClusterChange: clusterChange,
+					Retryable:     err != nil && ctlres.IsRetryableErr(err),
+					Err:           err,
+				}
 			}()
 		}
 
@@ -75,7 +81,10 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 
 		for i := 0; i < len(nonAppliedChanges); i++ {
 			result := <-applyCh
-			if result.Err != nil && !result.Retryable {
+			if result.Err != nil {
+				if result.Retryable {
+					continue
+				}
 				return nil, result.Err
 			}
 
