@@ -15,6 +15,7 @@ import (
 type ResourceTypes interface {
 	All() ([]ResourceType, error)
 	Find(Resource) (ResourceType, error)
+	CanIgnoreFailingGroupVersion(schema.GroupVersion) bool
 }
 
 type ResourceTypesImplOpts struct {
@@ -78,6 +79,28 @@ func (g *ResourceTypesImpl) All() ([]ResourceType, error) {
 	return pairs, nil
 }
 
+func (g *ResourceTypesImpl) CanIgnoreFailingGroupVersion(groupVer schema.GroupVersion) bool {
+	return g.canIgnoreFailingGroupVersions(map[schema.GroupVersion]error{groupVer: nil})
+}
+
+func (g *ResourceTypesImpl) canIgnoreFailingGroupVersions(groupVers map[schema.GroupVersion]error) bool {
+	// If groups that are failing do not relate to our resources
+	// it's ok to ignore them. Still not ideal but not much else
+	// we can do with the way kubernetes exposes this functionality.
+	if g.opts.IgnoreFailingAPIServices {
+		return true
+	}
+	if g.opts.CanIgnoreFailingAPIService != nil {
+		for groupVer, _ := range groupVers {
+			if !g.opts.CanIgnoreFailingAPIService(groupVer) {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+}
+
 func (g *ResourceTypesImpl) serverResources() ([]*metav1.APIResourceList, error) {
 	var serverResources []*metav1.APIResourceList
 	var lastErr error
@@ -87,22 +110,7 @@ func (g *ResourceTypesImpl) serverResources() ([]*metav1.APIResourceList, error)
 		if lastErr == nil {
 			return serverResources, nil
 		} else if typedLastErr, ok := lastErr.(*discovery.ErrGroupDiscoveryFailed); ok {
-			// If groups that are failing do not relate to our resources
-			// it's ok to ignore them. Still not ideal but not much else
-			// we can do with the way kubernetes exposes this functionality.
-			if g.opts.CanIgnoreFailingAPIService != nil {
-				groupsCanBeIgnored := true
-				for groupVer, _ := range typedLastErr.Groups {
-					if !g.opts.CanIgnoreFailingAPIService(groupVer) {
-						groupsCanBeIgnored = false
-						break
-					}
-				}
-				if len(serverResources) > 0 && groupsCanBeIgnored {
-					return serverResources, nil
-				}
-			}
-			if len(serverResources) > 0 && g.opts.IgnoreFailingAPIServices {
+			if len(serverResources) > 0 && g.canIgnoreFailingGroupVersions(typedLastErr.Groups) {
 				return serverResources, nil
 			}
 			// Even local services may not be Available immediately, so retry
