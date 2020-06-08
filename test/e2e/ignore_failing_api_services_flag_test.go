@@ -136,11 +136,146 @@ metadata:
 		}
 	})
 
-	logger.Section("delete app that does not user api service", func() {
+	logger.Section("delete app that does not use api service", func() {
 		kapp.RunWithOpts([]string{"delete", "-a", name2}, RunOpts{})
 	})
 
 	logger.Section("delete failing api service", func() {
 		kapp.RunWithOpts([]string{"delete", "-a", name1}, RunOpts{})
+	})
+}
+
+func TestIgnoreFailingGroupVersion(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+
+	yaml1 := `
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: foo.dummykapptest.com
+spec:
+  group: dummykapptest.com
+  versions:
+  # v1 is available and used for internal storage
+  - name: v1
+    served: true
+    storage: true
+  # v2 is available but gets converted from v1 on the fly
+  - name: v2
+    served: true
+    storage: false
+  scope: Namespaced
+  names:
+    plural: foo
+    singular: foo
+    kind: Foo
+  preserveUnknownFields: false
+  conversion:
+    strategy: Webhook
+    webhookClientConfig:
+      service:
+        namespace: kapp-test
+        name: failing-group-version-webhook
+        path: /convert
+  validation:
+    openAPIV3Schema:
+      type: object
+      properties:
+        apiVersion:
+          type: string
+        kind:
+          type: string
+        metadata:
+          type: object
+        spec:
+          type: object
+
+`
+
+	yaml2 := `
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-ignore-failing-group-version
+`
+
+	yaml3 := `
+---
+apiVersion: dummykapptest.com/v2
+kind: Foo
+metadata:
+  name: test-uses-failing-group-version
+spec: {}
+`
+
+	name1 := "test-ignore-failing-group-version1"
+	name2 := "test-ignore-failing-group-version2"
+	name3 := "test-ignore-failing-group-version3"
+
+	cleanUp := func() {
+		kapp.RunWithOpts([]string{"delete", "-a", name1}, RunOpts{AllowError: true})
+		kapp.RunWithOpts([]string{"delete", "-a", name2}, RunOpts{AllowError: true})
+		kapp.RunWithOpts([]string{"delete", "-a", name3}, RunOpts{AllowError: true})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("deploy broken CRD", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name1, "--wait=false"}, RunOpts{
+			IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+	})
+
+	logger.Section("deploy app that does not use failing group version", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name2}, RunOpts{
+			IntoNs: true, StdinReader: strings.NewReader(yaml2)})
+	})
+
+	logger.Section("inspect app that does not use failing group version", func() {
+		out, _ := kapp.RunWithOpts([]string{"inspect", "-a", name2, "--json"}, RunOpts{})
+
+		resp := uitest.JSONUIFromBytes(t, []byte(out))
+
+		expected := []map[string]string{{
+			"age":             "<replaced>",
+			"conditions":      "",
+			"kind":            "ConfigMap",
+			"name":            "test-ignore-failing-group-version",
+			"namespace":       "kapp-test",
+			"owner":           "kapp",
+			"reconcile_info":  "",
+			"reconcile_state": "ok",
+		}}
+
+		if !reflect.DeepEqual(replaceAge(resp.Tables[0].Rows), expected) {
+			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
+		}
+	})
+
+	logger.Section("deploy app that uses failing group version", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name3, "--apply-timeout=5s"}, RunOpts{
+			AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml3)})
+		if err == nil {
+			t.Fatalf("Expected error when deploying with failing group version")
+		}
+		if !strings.Contains(err.Error(), `service "failing-group-version-webhook" not found`) {
+			t.Fatalf("Expected api retrieval error but was '%s'", err)
+		}
+	})
+
+	logger.Section("delete app that uses failing group version", func() {
+		kapp.RunWithOpts([]string{"delete", "-a", name3}, RunOpts{})
+	})
+
+	logger.Section("delete app that does not use failing group version", func() {
+		kapp.RunWithOpts([]string{"delete", "-a", name2}, RunOpts{})
+	})
+
+	logger.Section("delete app that does not use failing group version", func() {
+		kapp.RunWithOpts([]string{"delete", "-a", name2}, RunOpts{})
 	})
 }

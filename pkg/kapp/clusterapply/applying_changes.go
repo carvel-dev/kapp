@@ -78,10 +78,12 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 		}
 
 		var appliedChanges []WaitingChange
+		var lastErr error
 
 		for i := 0; i < len(nonAppliedChanges); i++ {
 			result := <-applyCh
 			if result.Err != nil {
+				lastErr = result.Err
 				if result.Retryable {
 					continue
 				}
@@ -97,7 +99,7 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 		}
 
 		if time.Now().Sub(startTime) > c.opts.Timeout {
-			return nil, fmt.Errorf("Timed out waiting after %s", c.opts.Timeout)
+			return nil, fmt.Errorf("Timed out waiting after %s: Last error: %s", c.opts.Timeout, lastErr)
 		}
 
 		time.Sleep(c.opts.CheckInterval)

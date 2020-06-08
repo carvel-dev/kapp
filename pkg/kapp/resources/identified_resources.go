@@ -5,25 +5,22 @@ import (
 
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
 
 type IdentifiedResources struct {
 	coreClient                kubernetes.Interface
-	fallbackAllowedNamespaces []string
 	resourceTypes             ResourceTypes
 	resources                 *Resources
+	fallbackAllowedNamespaces []string
 	logger                    logger.Logger
 }
 
-func NewIdentifiedResources(coreClient kubernetes.Interface,
-	dynamicClient dynamic.Interface, resourceTypes ResourceTypes,
-	fallbackAllowedNamespaces []string, logger logger.Logger) IdentifiedResources {
+func NewIdentifiedResources(coreClient kubernetes.Interface, resourceTypes ResourceTypes,
+	resources *Resources, fallbackAllowedNamespaces []string, logger logger.Logger) IdentifiedResources {
 
-	resources := NewResources(resourceTypes, coreClient, dynamicClient, fallbackAllowedNamespaces, logger)
-
-	return IdentifiedResources{coreClient, fallbackAllowedNamespaces, resourceTypes, resources, logger.NewPrefixed("IdentifiedResources")}
+	return IdentifiedResources{coreClient, resourceTypes, resources,
+		fallbackAllowedNamespaces, logger.NewPrefixed("IdentifiedResources")}
 }
 
 func (r IdentifiedResources) Create(resource Resource) (Resource, error) {
