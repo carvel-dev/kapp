@@ -30,7 +30,7 @@ func NewLabeledResources(labelSelector labels.Selector,
 
 // Modifies passed resources for labels and ownership
 func (a *LabeledResources) Prepare(resources []Resource, olmFunc OwnershipLabelModsFunc,
-	lsmFunc LabelScopingModsFunc, additionalLabels map[string]string, waitRuleMods []WaitingRuleMod) error {
+	lsmFunc LabelScopingModsFunc, additionalLabels map[string]string) error {
 
 	defer a.logger.DebugFunc("Prepare").Finish()
 

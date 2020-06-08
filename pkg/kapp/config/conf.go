@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 )
 
 type Conf struct {
@@ -33,7 +34,7 @@ func NewConfFromResources(resources []ctlres.Resource) ([]ctlres.Resource, Conf,
 
 	cfg := Conf{configs}
 
-	ctlres.SetGlobalWaitingRules(cfg.WaitRuleMods())
+	ctlresm.SetGlobalWaitingRules(cfg.WaitRuleMods())
 
 	return rsWithoutConfigs, cfg, nil
 }
@@ -70,11 +71,11 @@ func (c Conf) OwnershipLabelMods() func(kvs map[string]string) []ctlres.StringMa
 	}
 }
 
-func (c Conf) WaitRuleMods() []ctlres.WaitingRuleMod {
-	var mods []ctlres.WaitingRuleMod // not config.WaitingRule
+func (c Conf) WaitRuleMods() []ctlresm.WaitingRuleMod {
+	var mods []ctlresm.WaitingRuleMod // not config.WaitingRule
 	for _, cfg := range c.configs {
 		for _, rule := range cfg.WaitingRules {
-			mods = append(mods, ctlres.WaitingRuleMod{
+			mods = append(mods, ctlresm.WaitingRuleMod{
 				SupportsObservedGeneration: rule.SupportsObservedGeneration,
 				SuccessfulConditions:       rule.SuccessfulConditions,
 				FailureConditions:          rule.FailureConditions,

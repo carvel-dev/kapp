@@ -229,7 +229,7 @@ func (o *DeployOptions) newResources(
 		return nil, ctlconf.Conf{}, nil, err
 	}
 	err = labeledResources.Prepare(newResources, conf.OwnershipLabelMods(),
-		conf.LabelScopingMods(), conf.AdditionalLabels(), conf.WaitRuleMods())
+		conf.LabelScopingMods(), conf.AdditionalLabels())
 	if err != nil {
 		return nil, ctlconf.Conf{}, nil, err
 	}
