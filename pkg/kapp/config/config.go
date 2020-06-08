@@ -158,6 +158,7 @@ func NewConfigFromResource(res ctlres.Resource) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+
 	var config Config
 
 	err = yaml.Unmarshal(bs, &config)

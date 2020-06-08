@@ -8,7 +8,7 @@ import (
 	"github.com/fatih/color"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -32,26 +32,19 @@ func NewConvergedResource(res ctlres.Resource,
 }
 
 type genericResource struct {
-	Metadata   metav1.ObjectMeta
-	Generation int64
-	Status     struct {
+	Metadata metav1.ObjectMeta
+	Status   struct {
 		ObservedGeneration int64
 		Conditions         []genericCondition
 	}
 }
 
-// genericCondition describes a generic condition field
+// genericCondition describes the generic condition fields
 type genericCondition struct {
-	// Type of DaemonSet condition.
+	// Type of condition.
 	Type string `json:"type"`
-	// Status of the condition, one of True, False, Unknown.
-	Status v1.ConditionStatus `json:"status"`
-	// Last time the condition transitioned from one status to another.
-	// +optional
-	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
-	// The reason for the condition's last transition.
-	// +optional
-	Reason string `json:"reason,omitempty"`
+	// Status of the condition, one of True, False, or Unknown.
+	Status corev1.ConditionStatus `json:"status"`
 	// A human readable message indicating details about the transition.
 	// +optional
 	Message string `json:"message,omitempty"`
@@ -83,15 +76,15 @@ func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 		}
 		for _, fc := range wr.FailureConditions {
 			for _, cond := range obj.Status.Conditions {
-				if cond.Type == fc && cond.Status == v1.ConditionTrue {
+				if cond.Type == fc && cond.Status == corev1.ConditionTrue {
 					descMsgs = append(descMsgs, cond.Message)
-					return ctlresm.DoneApplyState{Done: false, Successful: false}, descMsgs, err
+					return ctlresm.DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf("Apply failed with failure condition: %v", cond.Message)}, descMsgs, err
 				}
 			}
 		}
 		for _, sc := range wr.SuccessfulConditions {
 			for _, cond := range obj.Status.Conditions {
-				if cond.Type == sc && cond.Status == v1.ConditionTrue {
+				if cond.Type == sc && cond.Status == corev1.ConditionTrue {
 					descMsgs = append(descMsgs, cond.Message)
 					return ctlresm.DoneApplyState{Done: true, Successful: true}, descMsgs, err
 				}
