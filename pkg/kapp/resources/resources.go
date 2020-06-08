@@ -34,14 +34,13 @@ const (
 )
 
 type Resources struct {
-	resourceTypes ResourceTypes
-	coreClient    kubernetes.Interface
-	dynamicClient dynamic.Interface
+	resourceTypes             ResourceTypes
+	coreClient                kubernetes.Interface
+	dynamicClient             dynamic.Interface
+	fallbackAllowedNamespaces []string
 
 	assumedAllowedNamespacesMemoLock sync.Mutex
 	assumedAllowedNamespacesMemo     *[]string
-
-	fallbackAllowedNamespaces []string
 
 	logger logger.Logger
 }
@@ -97,7 +96,12 @@ func (c *Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resou
 
 			if err != nil {
 				if !errors.IsForbidden(err) {
-					fatalErrsCh <- fmt.Errorf("Listing %#v, namespaced: %t: %s", resType.GroupVersionResource, resType.Namespaced(), err)
+					// Ignore certain GVs due to failing API backing
+					if c.resourceTypes.CanIgnoreFailingGroupVersion(resType.GroupVersion()) {
+						c.logger.Info("Ignoring group version: %#v", resType.GroupVersionResource)
+					} else {
+						fatalErrsCh <- fmt.Errorf("Listing %#v, namespaced: %t: %s", resType.GroupVersionResource, resType.Namespaced(), err)
+					}
 					return
 				}
 
@@ -109,7 +113,12 @@ func (c *Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resou
 				// TODO improve perf somehow
 				list, err = c.allForNamespaces(client, opts.ListOpts)
 				if err != nil {
-					fatalErrsCh <- fmt.Errorf("Listing %#v, namespaced: %t: %s", resType.GroupVersionResource, resType.Namespaced(), err)
+					// Ignore certain GVs due to failing API backing
+					if c.resourceTypes.CanIgnoreFailingGroupVersion(resType.GroupVersion()) {
+						c.logger.Info("Ignoring group version: %#v", resType.GroupVersionResource)
+					} else {
+						fatalErrsCh <- fmt.Errorf("Listing %#v, namespaced: %t: %s", resType.GroupVersionResource, resType.Namespaced(), err)
+					}
 					return
 				}
 			}

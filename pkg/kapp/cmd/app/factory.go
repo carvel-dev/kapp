@@ -28,13 +28,17 @@ func AppFactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.Namespac
 		return AppFactorySupportObjs{}, err
 	}
 
+	fallbackAllowedNss := []string{nsFlags.Name}
+
 	resTypes := ctlres.NewResourceTypesImpl(coreClient, ctlres.ResourceTypesImplOpts{
 		IgnoreFailingAPIServices:   resTypesFlags.IgnoreFailingAPIServices,
 		CanIgnoreFailingAPIService: resTypesFlags.CanIgnoreFailingAPIService,
 	})
 
+	resources := ctlres.NewResources(resTypes, coreClient, dynamicClient, fallbackAllowedNss, logger)
+
 	identifiedResources := ctlres.NewIdentifiedResources(
-		coreClient, dynamicClient, resTypes, []string{nsFlags.Name}, logger)
+		coreClient, resTypes, resources, fallbackAllowedNss, logger)
 
 	result := AppFactorySupportObjs{
 		CoreClient:          coreClient,
