@@ -315,9 +315,11 @@ func (c *Resources) Delete(resource Resource) error {
 
 		err = resClient.Delete(resource.Name(), delOpts)
 		if err != nil {
-			// TODO why "not found" check is needed?
-			if errors.IsNotFound(err) || strings.Contains(err.Error(), "not found") {
-				c.logger.Info("TODO resource '%s' is not found (reason: %s)", resource.Description(), errors.ReasonForError(err))
+			if errors.IsNotFound(err) {
+				c.logger.Info("TODO resource '%s' is already gone", resource.Description())
+				return nil
+			}
+			if c.isPodMetrics(resource, err) {
 				return nil
 			}
 			return c.resourceErr(err, "Deleting", resource)
@@ -354,7 +356,7 @@ func (c *Resources) Exists(resource Resource) (bool, error) {
 		defer func() { c.logger.Debug("exists %s", time.Now().UTC().Sub(t1)) }()
 	}
 
-	resClient, resType, err := c.resourceClient(resource)
+	resClient, _, err := c.resourceClient(resource)
 	if err != nil {
 		// Assume if type is not known to the API server
 		// then such resource cannot exist on the server
@@ -373,16 +375,9 @@ func (c *Resources) Exists(resource Resource) (bool, error) {
 				found = false
 				return true, nil
 			}
-			// Abnormal error case. Note that it says pod is not found even though we were checking on podmetrics.
-			// `Checking existance of resource podmetrics/knative-ingressgateway-646d475cbb-c82qb (metrics.k8s.io/v1beta1)
-			// namespace: istio-system: Error while getting pod knative-ingressgateway-646d475cbb-c82qb:
-			// pod "knative-ingressgateway-646d475cbb-c82qb" not found (reason: )`
-			if strings.Contains(err.Error(), "not found") {
-				found, err = c.expensiveExistsViaList(resType, resource)
-				if err != nil {
-					err = c.resourceErr(err, "Checking existance (expensive) of", resource)
-				}
-				return true, err
+			if c.isPodMetrics(resource, err) {
+				found = false
+				return true, nil
 			}
 			// TODO sometimes metav1.StatusReasonUnknown is returned (empty string)
 			// might be related to deletion of mutating webhook
@@ -394,6 +389,26 @@ func (c *Resources) Exists(resource Resource) (bool, error) {
 	})
 
 	return found, err
+}
+
+var (
+	// Error example: Checking existance of resource podmetrics/knative-ingressgateway-646d475cbb-c82qb (metrics.k8s.io/v1beta1)
+	//   namespace: istio-system: Error while getting pod knative-ingressgateway-646d475cbb-c82qb:
+	//   pod "knative-ingressgateway-646d475cbb-c82qb" not found (reason: )
+	// Note that it says pod is not found even though we were checking on podmetrics.
+	// (https://github.com/kubernetes-sigs/metrics-server/blob/8d7aca3c6d770bc37d93515bf731a08332b8025b/pkg/api/pod.go#L133)
+	podMetricsNotFoundErrCheck = regexp.MustCompile("Error while getting pod (.+) not found \\(reason: \\)")
+)
+
+func (c *Resources) isPodMetrics(resource Resource, err error) bool {
+	// Abnormal error case. Get/Delete on PodMetrics may fail
+	// without NotFound reason due to its dependence on Pod existance
+	if resource.Kind() == "PodMetrics" && resource.APIGroup() == "metrics.k8s.io" {
+		if podMetricsNotFoundErrCheck.MatchString(err.Error()) {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *Resources) doneRetryingErr(err error) bool {
@@ -414,25 +429,6 @@ func (c *Resources) resourceClient(resource Resource) (dynamic.ResourceInterface
 	}
 
 	return c.dynamicClient.Resource(resType.GroupVersionResource).Namespace(resource.Namespace()), resType, nil
-}
-
-func (c *Resources) expensiveExistsViaList(resType ResourceType, resource Resource) (bool, error) {
-	rs, err := c.All([]ResourceType{resType}, ResourcesAllOpts{})
-	if err != nil {
-		return false, err
-	}
-
-	// Use UniqueResourceKey instead of UID as UID may not be set (example: metrics.k8s.io/PodMetrics)
-	resourceKey := NewUniqueResourceKey(resource).String()
-
-	for _, res := range rs {
-		resKey := NewUniqueResourceKey(res).String()
-		if resKey == resourceKey {
-			return true, nil
-		}
-	}
-
-	return false, nil
 }
 
 func (c *Resources) assumedAllowedNamespaces() ([]string, error) {
