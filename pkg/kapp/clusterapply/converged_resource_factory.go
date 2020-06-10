@@ -23,6 +23,10 @@ func (f ConvergedResourceFactory) New(res ctlres.Resource,
 	associatedRsFunc func(ctlres.Resource, []ctlres.ResourceRef) ([]ctlres.Resource, error)) ConvergedResource {
 
 	specificResFactories := []SpecificResFactory{
+		// custom resource waiting behaviour
+		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
+			return ctlresm.NewCustomResource(res), nil
+		},
 		// kapp-controller app resource waiter deals with reconciliation _and_ deletion
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			return ctlresm.NewKappctrlK14sIoV1alpha1App(res), nil

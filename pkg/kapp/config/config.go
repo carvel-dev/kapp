@@ -21,6 +21,7 @@ type Config struct {
 	MinimumRequiredVersion string `json:"minimumRequiredVersion,omitempty"`
 
 	RebaseRules         []RebaseRule
+	WaitingRules        []WaitingRule
 	OwnershipLabelRules []OwnershipLabelRule
 	LabelScopingRules   []LabelScopingRule
 	TemplateRules       []TemplateRule
@@ -33,6 +34,13 @@ type Config struct {
 	// TODO validations
 	ChangeGroupBindings []ChangeGroupBinding
 	ChangeRuleBindings  []ChangeRuleBinding
+}
+
+type WaitingRule struct {
+	SupportsObservedGeneration bool             `json:"supportsObservedGeneration"`
+	SuccessfulConditions       []string         `json:"successfulConditions"`
+	FailureConditions          []string         `json:"failureConditions"`
+	ResourceMatchers           ResourceMatchers `json:"resourceMatchers"`
 }
 
 type RebaseRule struct {
