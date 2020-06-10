@@ -5,7 +5,6 @@ import (
 	"time"
 
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/k14s/kapp/pkg/kapp/util"
 )
 
@@ -30,6 +29,7 @@ func NewApplyingChanges(numTotal int, opts ApplyingChangesOpts, clusterChangeFac
 type applyResult struct {
 	Change        *ctldgraph.Change
 	ClusterChange *ClusterChange
+	DescMsgs      []string
 	Retryable     bool
 	Err           error
 }
@@ -63,15 +63,13 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 				defer applyThrottle.Done()
 
 				clusterChange := change.Change.(wrappedClusterChange).ClusterChange
+				retryable, descMsgs, err := clusterChange.Apply()
 
-				// Print apply description as close to apply as possible to "show" apply progress
-				c.ui.Notify([]string{clusterChange.ApplyDescription()})
-
-				err := clusterChange.Apply()
 				applyCh <- applyResult{
 					Change:        change,
 					ClusterChange: clusterChange,
-					Retryable:     err != nil && ctlres.IsRetryableErr(err),
+					DescMsgs:      descMsgs,
+					Retryable:     retryable,
 					Err:           err,
 				}
 			}()
@@ -82,6 +80,9 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 
 		for i := 0; i < len(nonAppliedChanges); i++ {
 			result := <-applyCh
+
+			c.ui.Notify(result.DescMsgs)
+
 			if result.Err != nil {
 				lastErr = result.Err
 				if result.Retryable {

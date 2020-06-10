@@ -135,23 +135,39 @@ func (c *ClusterChange) WaitOp() ClusterChangeWaitOp {
 
 func (c *ClusterChange) MarkNeedsWaiting() { c.markedNeedsWaiting = true }
 
-func (c *ClusterChange) Apply() error {
+func (c *ClusterChange) Apply() (bool, []string, error) {
+	descMsgs := []string{c.ApplyDescription()}
+
+	done, err := c.apply()
+	if done {
+		return false, descMsgs, err
+	}
+
+	retryable := err != nil && ctlres.IsRetryableErr(err)
+	if retryable {
+		descMsgs = append(descMsgs, uiWaitMsgPrefix+"Retryable error: "+err.Error())
+	}
+
+	return retryable, descMsgs, c.applyErr(err)
+}
+
+func (c *ClusterChange) apply() (bool, error) {
 	op := c.ApplyOp()
 
 	switch op {
 	case ClusterChangeApplyOpAdd, ClusterChangeApplyOpUpdate:
-		return c.applyErr(AddOrUpdateChange{
+		return false, AddOrUpdateChange{
 			c.change, c.identifiedResources, c.changeFactory,
-			c.changeSetFactory, c.opts.AddOrUpdateChangeOpts}.Apply())
+			c.changeSetFactory, c.opts.AddOrUpdateChangeOpts}.Apply()
 
 	case ClusterChangeApplyOpDelete:
-		return c.applyErr(DeleteChange{c.change, c.identifiedResources}.Apply())
+		return false, DeleteChange{c.change, c.identifiedResources}.Apply()
 
 	case ClusterChangeApplyOpNoop:
-		return nil
+		return true, nil
 
 	default:
-		return fmt.Errorf("Unknown change apply operation: %s", op)
+		return true, fmt.Errorf("Unknown change apply operation: %s", op)
 	}
 }
 
