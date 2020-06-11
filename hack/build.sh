@@ -19,7 +19,7 @@ build_values_path="../../../${BUILD_VALUES:-./hack/build-values-default.yml}"
 	ytt version || ( echo >&2 "ytt is required for building. Install from https://github.com/k14s/ytt"; exit 1; )
 	ytt -f . -f $build_values_path \
 		--file-mark 'generated.go.txt:exclusive-for-output=true' \
-		--output-directory ../../../tmp/
+		--dangerous-emptied-output-directory ../../../tmp/
 )
 mv tmp/generated.go.txt pkg/kapp/website/generated.go
 
