@@ -66,10 +66,10 @@ func (c Conf) OwnershipLabelMods() func(kvs map[string]string) []ctlres.StringMa
 	}
 }
 
-func (c Conf) WaitingRules() []WaitingRule {
-	var rules []WaitingRule
+func (c Conf) WaitRules() []WaitRule {
+	var rules []WaitRule
 	for _, config := range c.configs {
-		rules = append(rules, config.WaitingRules...)
+		rules = append(rules, config.WaitRules...)
 	}
 	return rules
 }

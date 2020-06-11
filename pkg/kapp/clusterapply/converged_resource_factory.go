@@ -12,13 +12,13 @@ type ConvergedResourceFactoryOpts struct {
 }
 
 type ConvergedResourceFactory struct {
-	waitingRules []ctlconf.WaitingRule
-	opts         ConvergedResourceFactoryOpts
+	waitRules []ctlconf.WaitRule
+	opts      ConvergedResourceFactoryOpts
 }
 
-func NewConvergedResourceFactory(waitingRules []ctlconf.WaitingRule,
+func NewConvergedResourceFactory(waitRules []ctlconf.WaitRule,
 	opts ConvergedResourceFactoryOpts) ConvergedResourceFactory {
-	return ConvergedResourceFactory{waitingRules, opts}
+	return ConvergedResourceFactory{waitRules, opts}
 }
 
 func (f ConvergedResourceFactory) New(res ctlres.Resource,
@@ -35,7 +35,7 @@ func (f ConvergedResourceFactory) New(res ctlres.Resource,
 			return ctlresm.NewDeleting(res), nil
 		},
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
-			return ctlresm.NewCustomWaitingResource(res, f.waitingRules), nil
+			return ctlresm.NewCustomWaitingResource(res, f.waitRules), nil
 		},
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			return ctlresm.NewApiExtensionsVxCRD(res), nil

@@ -5,17 +5,16 @@ import (
 
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type CustomWaitingResource struct {
-	resource    ctlres.Resource
-	waitingRule ctlconf.WaitingRule
+	resource ctlres.Resource
+	waitRule ctlconf.WaitRule
 }
 
-func NewCustomWaitingResource(resource ctlres.Resource, waitingRules []ctlconf.WaitingRule) *CustomWaitingResource {
-	for _, rule := range waitingRules {
+func NewCustomWaitingResource(resource ctlres.Resource, waitRules []ctlconf.WaitRule) *CustomWaitingResource {
+	for _, rule := range waitRules {
 		if rule.ResourceMatcher().Matches(resource) {
 			return &CustomWaitingResource{resource, rule}
 		}
@@ -32,10 +31,10 @@ type customWaitingResourceStruct struct {
 }
 
 type customWaitingResourceCondition struct {
-	Type    string                 `json:"type"`
-	Status  corev1.ConditionStatus `json:"status"`
-	Reason  string                 `json:"reason,omitempty"`
-	Message string                 `json:"message,omitempty"`
+	Type    string
+	Status  string
+	Reason  string
+	Message string
 }
 
 func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
@@ -47,25 +46,33 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 			"Error: Failed obj conversion: %s", err)}
 	}
 
-	if s.waitingRule.SupportsObservedGeneration && obj.Metadata.Generation != obj.Status.ObservedGeneration {
+	if s.waitRule.SupportsObservedGeneration && obj.Metadata.Generation != obj.Status.ObservedGeneration {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(
 			"Waiting for generation %d to be observed", obj.Metadata.Generation)}
 	}
 
-	for _, fc := range s.waitingRule.FailureConditions {
+	// Check on failure conditions first
+	for _, condMatcher := range s.waitRule.ConditionMatchers {
 		for _, cond := range obj.Status.Conditions {
-			if cond.Type == fc && cond.Status == corev1.ConditionTrue {
-				return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
-					"Encountered failure condition %s: %s (message: %s)", cond.Type, cond.Reason, cond.Message)}
+			if cond.Type == condMatcher.Type && cond.Status == condMatcher.Status {
+				if condMatcher.Failure {
+					return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
+						"Encountered failure condition %s == %s: %s (message: %s)",
+						cond.Type, condMatcher.Status, cond.Reason, cond.Message)}
+				}
 			}
 		}
 	}
 
-	for _, sc := range s.waitingRule.SuccessfulConditions {
+	// If no failure conditions found, check on successful ones
+	for _, condMatcher := range s.waitRule.ConditionMatchers {
 		for _, cond := range obj.Status.Conditions {
-			if cond.Type == sc && cond.Status == corev1.ConditionTrue {
-				return DoneApplyState{Done: true, Successful: true, Message: fmt.Sprintf(
-					"Encountered successful condition %s: %s (message: %s)", cond.Type, cond.Reason, cond.Message)}
+			if cond.Type == condMatcher.Type && cond.Status == condMatcher.Status {
+				if condMatcher.Success {
+					return DoneApplyState{Done: true, Successful: true, Message: fmt.Sprintf(
+						"Encountered successful condition %s == %s: %s (message: %s)",
+						cond.Type, condMatcher.Status, cond.Reason, cond.Message)}
+				}
 			}
 		}
 	}

@@ -324,7 +324,7 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 
 		msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
 
-		convergedResFactory := ctlcap.NewConvergedResourceFactory(conf.WaitingRules(), ctlcap.ConvergedResourceFactoryOpts{
+		convergedResFactory := ctlcap.NewConvergedResourceFactory(conf.WaitRules(), ctlcap.ConvergedResourceFactoryOpts{
 			IgnoreFailingAPIServices: o.ResourceTypesFlags.IgnoreFailingAPIServices,
 		})
 

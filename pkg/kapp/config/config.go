@@ -21,7 +21,7 @@ type Config struct {
 	MinimumRequiredVersion string `json:"minimumRequiredVersion,omitempty"`
 
 	RebaseRules         []RebaseRule
-	WaitingRules        []WaitingRule
+	WaitRules           []WaitRule
 	OwnershipLabelRules []OwnershipLabelRule
 	LabelScopingRules   []LabelScopingRule
 	TemplateRules       []TemplateRule
@@ -36,11 +36,17 @@ type Config struct {
 	ChangeRuleBindings  []ChangeRuleBinding
 }
 
-type WaitingRule struct {
+type WaitRule struct {
 	SupportsObservedGeneration bool
-	SuccessfulConditions       []string
-	FailureConditions          []string
+	ConditionMatchers          []WaitRuleConditionMatcher
 	ResourceMatchers           []ResourceMatcher
+}
+
+type WaitRuleConditionMatcher struct {
+	Type    string
+	Status  string
+	Failure bool
+	Success bool
 }
 
 type RebaseRule struct {
@@ -277,7 +283,7 @@ func (r LabelScopingRule) AsMods(kvs map[string]string) []ctlres.StringMapAppend
 	return stringMapAppendRule{ResourceMatchers: r.ResourceMatchers, Path: r.Path, SkipIfNotFound: true}.AsMods(kvs)
 }
 
-func (r WaitingRule) ResourceMatcher() ctlres.ResourceMatcher {
+func (r WaitRule) ResourceMatcher() ctlres.ResourceMatcher {
 	return ctlres.AnyMatcher{
 		Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
 	}

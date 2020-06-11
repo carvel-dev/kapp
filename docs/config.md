@@ -98,17 +98,36 @@ rebaseRules:
 
 `labelScopingRules` specify locations for inserting kapp generated labels that scope resources to resources within current application. `kapp.k14s.io/disable-label-scoping: ""` (value must be empty) annotation can be used to exclude an individual resource from label scoping.
 
-#### waitingRules (v0.29.0+)
+#### waitRules
 
-`waitingRules` specify how to wait for resources that kapp does not wait for by default.
+Available in v0.29.0+.
+
+`waitRules` specify how to wait for resources that kapp does not wait for by default. Each rule provides a way to specify which `status.conditions` indicate success or failure. (If this functionality is not enough to wait for resources in your use case, please reach out on Slack to discuss further.)
 
 ```yaml
-waitingRules:
+waitRules:
 - supportsObservedGeneration: true
-  failureConditions:
-  - Failed
-  successfulConditions:
-  - Deployed
+  conditionMatchers:
+  - type: Failed
+    status: "True"
+    failure: true
+  - type: Deployed
+    status: "True"
+    success: true
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: corp.com/v1, kind: DatabaseInstance}
+```
+
+```yaml
+waitRules:
+- supportsObservedGeneration: true
+  conditionMatchers:
+  - type: Ready
+    status: "False"
+    failure: true
+  - type: Ready
+    status: "True"
+    success: true
   resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: corp.com/v1, kind: Application}
 ```
