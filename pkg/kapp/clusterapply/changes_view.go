@@ -221,7 +221,8 @@ type ValueResourceConverged struct {
 }
 
 func NewValueResourceConverged(resource ctlres.Resource) ValueResourceConverged {
-	convergedResFactory := NewConvergedResourceFactory(ConvergedResourceFactoryOpts{})
+	// TODO how to retrieve waiting rules
+	convergedResFactory := NewConvergedResourceFactory(nil, ConvergedResourceFactoryOpts{})
 
 	// TODO state vs err vs output
 	state, _, err := convergedResFactory.New(resource, nil).IsDoneApplying()

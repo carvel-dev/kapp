@@ -98,6 +98,21 @@ rebaseRules:
 
 `labelScopingRules` specify locations for inserting kapp generated labels that scope resources to resources within current application. `kapp.k14s.io/disable-label-scoping: ""` (value must be empty) annotation can be used to exclude an individual resource from label scoping.
 
+#### waitingRules (v0.29.0+)
+
+`waitingRules` specify how to wait for resources that kapp does not wait for by default.
+
+```yaml
+waitingRules:
+- supportsObservedGeneration: true
+  failureConditions:
+  - Failed
+  successfulConditions:
+  - Deployed
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: corp.com/v1, kind: Application}
+```
+
 #### templateRules
 
 `templateRules` how template resources affect other resources. In above example, template config maps are said to affect deployments.

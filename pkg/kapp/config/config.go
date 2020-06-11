@@ -37,10 +37,10 @@ type Config struct {
 }
 
 type WaitingRule struct {
-	SupportsObservedGeneration bool             `json:"supportsObservedGeneration"`
-	SuccessfulConditions       []string         `json:"successfulConditions"`
-	FailureConditions          []string         `json:"failureConditions"`
-	ResourceMatchers           ResourceMatchers `json:"resourceMatchers"`
+	SupportsObservedGeneration bool
+	SuccessfulConditions       []string
+	FailureConditions          []string
+	ResourceMatchers           []ResourceMatcher
 }
 
 type RebaseRule struct {
@@ -275,6 +275,12 @@ func (r OwnershipLabelRule) AsMods(kvs map[string]string) []ctlres.StringMapAppe
 
 func (r LabelScopingRule) AsMods(kvs map[string]string) []ctlres.StringMapAppendMod {
 	return stringMapAppendRule{ResourceMatchers: r.ResourceMatchers, Path: r.Path, SkipIfNotFound: true}.AsMods(kvs)
+}
+
+func (r WaitingRule) ResourceMatcher() ctlres.ResourceMatcher {
+	return ctlres.AnyMatcher{
+		Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
+	}
 }
 
 func (ms ResourceMatchers) AsResourceMatchers() []ctlres.ResourceMatcher {

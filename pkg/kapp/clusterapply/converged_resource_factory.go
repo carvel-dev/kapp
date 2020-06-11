@@ -1,6 +1,7 @@
 package clusterapply
 
 import (
+	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -11,22 +12,19 @@ type ConvergedResourceFactoryOpts struct {
 }
 
 type ConvergedResourceFactory struct {
-	opts ConvergedResourceFactoryOpts
+	waitingRules []ctlconf.WaitingRule
+	opts         ConvergedResourceFactoryOpts
 }
 
-func NewConvergedResourceFactory(
+func NewConvergedResourceFactory(waitingRules []ctlconf.WaitingRule,
 	opts ConvergedResourceFactoryOpts) ConvergedResourceFactory {
-	return ConvergedResourceFactory{opts}
+	return ConvergedResourceFactory{waitingRules, opts}
 }
 
 func (f ConvergedResourceFactory) New(res ctlres.Resource,
 	associatedRsFunc func(ctlres.Resource, []ctlres.ResourceRef) ([]ctlres.Resource, error)) ConvergedResource {
 
 	specificResFactories := []SpecificResFactory{
-		// custom resource waiting behaviour
-		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
-			return ctlresm.NewCustomResource(res), nil
-		},
 		// kapp-controller app resource waiter deals with reconciliation _and_ deletion
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			return ctlresm.NewKappctrlK14sIoV1alpha1App(res), nil
@@ -35,6 +33,9 @@ func (f ConvergedResourceFactory) New(res ctlres.Resource,
 		// TODO shoud we make all of them deal with deletion internally?
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			return ctlresm.NewDeleting(res), nil
+		},
+		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
+			return ctlresm.NewCustomWaitingResource(res, f.waitingRules), nil
 		},
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			return ctlresm.NewApiExtensionsVxCRD(res), nil

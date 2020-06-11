@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 )
 
 type Conf struct {
@@ -32,11 +31,7 @@ func NewConfFromResources(resources []ctlres.Resource) ([]ctlres.Resource, Conf,
 		}
 	}
 
-	cfg := Conf{configs}
-
-	ctlresm.SetGlobalWaitingRules(cfg.WaitRuleMods())
-
-	return rsWithoutConfigs, cfg, nil
+	return rsWithoutConfigs, Conf{configs}, nil
 }
 
 func (c Conf) RebaseMods() []ctlres.ResourceModWithMultiple {
@@ -71,19 +66,12 @@ func (c Conf) OwnershipLabelMods() func(kvs map[string]string) []ctlres.StringMa
 	}
 }
 
-func (c Conf) WaitRuleMods() []ctlresm.WaitingRuleMod {
-	var mods []ctlresm.WaitingRuleMod // not config.WaitingRule
-	for _, cfg := range c.configs {
-		for _, rule := range cfg.WaitingRules {
-			mods = append(mods, ctlresm.WaitingRuleMod{
-				SupportsObservedGeneration: rule.SupportsObservedGeneration,
-				SuccessfulConditions:       rule.SuccessfulConditions,
-				FailureConditions:          rule.FailureConditions,
-				ResourceMatchers:           rule.ResourceMatchers.AsResourceMatchers(),
-			})
-		}
+func (c Conf) WaitingRules() []WaitingRule {
+	var rules []WaitingRule
+	for _, config := range c.configs {
+		rules = append(rules, config.WaitingRules...)
 	}
-	return mods
+	return rules
 }
 
 func (c Conf) LabelScopingMods() func(kvs map[string]string) []ctlres.StringMapAppendMod {
