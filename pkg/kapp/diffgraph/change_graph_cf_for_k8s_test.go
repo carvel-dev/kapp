@@ -11,7 +11,7 @@ import (
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
-func TestChangeGraphCFForK8s(t *testing.T) {
+func TestChangeGraphCFForK8sUpsert(t *testing.T) {
 	configYAML, err := ioutil.ReadFile("assets/cf-for-k8s.yml")
 	if err != nil {
 		t.Fatalf("Reading cf-for-k8s asset: %s", err)
@@ -46,7 +46,49 @@ func TestChangeGraphCFForK8s(t *testing.T) {
 	}
 
 	output := strings.TrimSpace(graph.PrintLinearizedStr())
-	expectedOutput := strings.TrimSpace(cfForK8sExpectedOutput)
+	expectedOutput := strings.TrimSpace(cfForK8sExpectedOutputUpsert)
+
+	if output != expectedOutput {
+		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
+	}
+}
+
+func TestChangeGraphCFForK8sDelete(t *testing.T) {
+	configYAML, err := ioutil.ReadFile("assets/cf-for-k8s.yml")
+	if err != nil {
+		t.Fatalf("Reading cf-for-k8s asset: %s", err)
+	}
+
+	configRs, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(configYAML))).Resources()
+	if err != nil {
+		t.Fatalf("Error parsing resources: %s", err)
+	}
+
+	rs, conf, err := ctlconf.NewConfFromResourcesWithDefaults(configRs)
+	if err != nil {
+		t.Fatalf("Error parsing conf defaults: %s", err)
+	}
+
+	opts := buildGraphOpts{
+		resources:           rs,
+		op:                  ctldgraph.ActualChangeOpDelete,
+		changeGroupBindings: conf.ChangeGroupBindings(),
+		changeRuleBindings:  conf.ChangeRuleBindings(),
+	}
+
+	t1 := time.Now()
+
+	graph, err := buildChangeGraphWithOpts(opts, t)
+	if err != nil {
+		t.Fatalf("Expected graph to build: %s", err)
+	}
+
+	if time.Now().Sub(t1) > time.Duration(1*time.Second) {
+		t.Fatalf("Graph build took too long")
+	}
+
+	output := strings.TrimSpace(graph.PrintLinearizedStr())
+	expectedOutput := strings.TrimSpace(cfForK8sExpectedOutputDelete)
 
 	if output != expectedOutput {
 		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
@@ -54,7 +96,7 @@ func TestChangeGraphCFForK8s(t *testing.T) {
 }
 
 const (
-	cfForK8sExpectedOutput = `
+	cfForK8sExpectedOutputUpsert = `
 (upsert) clusterrole/kpack-watcher (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/kpack-watcher-binding (rbac.authorization.k8s.io/v1) cluster
 (upsert) namespace/cf-workloads-staging (v1) cluster
@@ -302,5 +344,255 @@ const (
 (upsert) deployment/uaa (apps/v1) namespace: cf-system
 (upsert) service/uaa (v1) namespace: cf-system
 (upsert) virtualservice/uaa-external-virtual-service (networking.istio.io/v1alpha3) namespace: cf-system
+`
+
+	cfForK8sExpectedOutputDelete = `
+(delete) builder/cf-autodetect-builder (build.pivotal.io/v1alpha1) namespace: cf-workloads-staging
+(delete) virtualservice/capi-external-virtual-service (networking.istio.io/v1alpha3) namespace: cf-system
+(delete) gateway/istio-ingressgateway (networking.istio.io/v1alpha3) namespace: cf-system
+(delete) policy/cf-blobstore-allow-plaintext (authentication.istio.io/v1alpha1) namespace: cf-blobstore
+(delete) virtualservice/log-cache-external-virtual-service (networking.istio.io/v1alpha3) namespace: cf-system
+(delete) compositecontroller/cfroutesync (metacontroller.k8s.io/v1alpha1) cluster
+(delete) routebulksync/route-bulk-sync (apps.cloudfoundry.org/v1alpha1) namespace: cf-workloads
+(delete) authorizationpolicy/cfroutesync-auth-metacontroller (security.istio.io/v1beta1) namespace: cf-system
+(delete) authorizationpolicy/cfroutesync-auth-prometheus (security.istio.io/v1beta1) namespace: cf-system
+(delete) handler/cf-prometheus (config.istio.io/v1alpha2) namespace: istio-system
+(delete) instance/cfrequestcount (config.istio.io/v1alpha2) namespace: istio-system
+(delete) rule/cf-promhttp (config.istio.io/v1alpha2) namespace: istio-system
+(delete) gateway/istio-ingress (networking.istio.io/v1alpha3) namespace: cf-workloads
+(delete) gateway/ingressgateway (networking.istio.io/v1alpha3) namespace: istio-system
+(delete) sidecar/default (networking.istio.io/v1alpha3) namespace: istio-system
+(delete) meshpolicy/default (authentication.istio.io/v1alpha1) cluster
+(delete) destinationrule/istio-policy (networking.istio.io/v1alpha3) namespace: istio-system
+(delete) attributemanifest/istioproxy (config.istio.io/v1alpha2) namespace: istio-system
+(delete) attributemanifest/kubernetes (config.istio.io/v1alpha2) namespace: istio-system
+(delete) instance/requestcount (config.istio.io/v1alpha2) namespace: istio-system
+(delete) instance/requestduration (config.istio.io/v1alpha2) namespace: istio-system
+(delete) instance/requestsize (config.istio.io/v1alpha2) namespace: istio-system
+(delete) instance/responsesize (config.istio.io/v1alpha2) namespace: istio-system
+(delete) instance/tcpbytesent (config.istio.io/v1alpha2) namespace: istio-system
+(delete) instance/tcpbytereceived (config.istio.io/v1alpha2) namespace: istio-system
+(delete) instance/tcpconnectionsopened (config.istio.io/v1alpha2) namespace: istio-system
+(delete) instance/tcpconnectionsclosed (config.istio.io/v1alpha2) namespace: istio-system
+(delete) handler/prometheus (config.istio.io/v1alpha2) namespace: istio-system
+(delete) rule/promhttp (config.istio.io/v1alpha2) namespace: istio-system
+(delete) rule/promtcp (config.istio.io/v1alpha2) namespace: istio-system
+(delete) rule/promtcpconnectionopen (config.istio.io/v1alpha2) namespace: istio-system
+(delete) rule/promtcpconnectionclosed (config.istio.io/v1alpha2) namespace: istio-system
+(delete) handler/kubernetesenv (config.istio.io/v1alpha2) namespace: istio-system
+(delete) rule/kubeattrgenrulerule (config.istio.io/v1alpha2) namespace: istio-system
+(delete) rule/tcpkubeattrgenrulerule (config.istio.io/v1alpha2) namespace: istio-system
+(delete) instance/attributes (config.istio.io/v1alpha2) namespace: istio-system
+(delete) destinationrule/istio-telemetry (networking.istio.io/v1alpha3) namespace: istio-system
+(delete) sidecar/default (networking.istio.io/v1alpha3) namespace: cf-workloads
+(delete) policy/cf-db-allow-plaintext (authentication.istio.io/v1alpha1) namespace: cf-db
+(delete) virtualservice/uaa-external-virtual-service (networking.istio.io/v1alpha3) namespace: cf-system
+---
+(delete) customresourcedefinition/builds.build.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/builders.build.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/clusterbuilders.build.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/custombuilders.experimental.kpack.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/customclusterbuilders.experimental.kpack.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/images.build.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/sourceresolvers.build.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/stacks.experimental.kpack.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/stores.experimental.kpack.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/routebulksyncs.apps.cloudfoundry.org (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/attributemanifests.config.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/clusterrbacconfigs.rbac.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/destinationrules.networking.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/envoyfilters.networking.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/gateways.networking.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/httpapispecbindings.config.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/httpapispecs.config.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/meshpolicies.authentication.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/policies.authentication.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/quotaspecbindings.config.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/quotaspecs.config.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/rbacconfigs.rbac.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/rules.config.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/serviceentries.networking.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/servicerolebindings.rbac.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/serviceroles.rbac.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/virtualservices.networking.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/adapters.config.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/instances.config.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/templates.config.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/handlers.config.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/sidecars.networking.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/authorizationpolicies.security.istio.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/compositecontrollers.metacontroller.k8s.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/decoratorcontrollers.metacontroller.k8s.io (apiextensions.k8s.io/v1beta1) cluster
+(delete) customresourcedefinition/controllerrevisions.metacontroller.k8s.io (apiextensions.k8s.io/v1beta1) cluster
+---
+(delete) deployment/capi-api-server (apps/v1) namespace: cf-system
+(delete) deployment/capi-kpack-watcher (apps/v1) namespace: cf-system
+(delete) clusterrole/kpack-watcher (rbac.authorization.k8s.io/v1) cluster
+(delete) clusterrolebinding/kpack-watcher-binding (rbac.authorization.k8s.io/v1) cluster
+(delete) role/kpack-watcher-pod-logs-reader (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(delete) rolebinding/kpack-watcher-pod-logs-binding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(delete) configmap/cloud-controller-ng-yaml (v1) namespace: cf-system
+(delete) namespace/cf-workloads-staging (v1) cluster
+(delete) deployment/capi-clock (apps/v1) namespace: cf-system
+(delete) deployment/capi-deployment-updater (apps/v1) namespace: cf-system
+(delete) configmap/nginx (v1) namespace: cf-system
+(delete) secret/opi-secrets (v1) namespace: cf-system
+(delete) serviceaccount/cc-api-service-account (v1) namespace: cf-system
+(delete) clusterrolebinding/cc-api-service-account-superuser (rbac.authorization.k8s.io/v1) cluster
+(delete) secret/cc-kpack-registry-auth-secret (v1) namespace: cf-workloads-staging
+(delete) serviceaccount/cc-kpack-registry-service-account (v1) namespace: cf-workloads-staging
+(delete) service/capi (v1) namespace: cf-system
+(delete) deployment/capi-worker (apps/v1) namespace: cf-system
+(delete) networkpolicy/deny-app-ingress (networking.k8s.io/v1) namespace: cf-workloads
+(delete) podsecuritypolicy/cf-workloads-app-psp (policy/v1beta1) cluster
+(delete) podsecuritypolicy/cf-workloads-privileged-app-psp (policy/v1beta1) cluster
+(delete) podsecuritypolicy/eirini (policy/v1beta1) cluster
+(delete) serviceaccount/eirini (v1) namespace: cf-workloads
+(delete) serviceaccount/eirini-privileged (v1) namespace: cf-workloads
+(delete) serviceaccount/opi (v1) namespace: cf-system
+(delete) configmap/eirini (v1) namespace: cf-system
+(delete) role/cf-workloads-app-role (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(delete) role/cf-workloads-privileged-app-role (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(delete) role/eirini-role (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(delete) role/eirini-role (rbac.authorization.k8s.io/v1) namespace: cf-system
+(delete) rolebinding/cf-workloads-app-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(delete) rolebinding/cf-workloads-privileged-app-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(delete) rolebinding/eirini-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(delete) rolebinding/eirini-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-system
+(delete) service/eirini (v1) namespace: cf-system
+(delete) deployment/eirini (apps/v1) namespace: cf-system
+(delete) secret/eirini-internal-tls-certs (v1) namespace: cf-system
+(delete) networkpolicy/allow-app-ingress-from-ingressgateway (networking.k8s.io/v1) namespace: cf-workloads
+(delete) secret/app-registry-credentials (v1) namespace: cf-workloads
+(delete) secret/istio-ingressgateway-certs (v1) namespace: istio-system
+(delete) namespace/kpack (v1) cluster
+(delete) deployment/kpack-controller (apps/v1) namespace: kpack
+(delete) serviceaccount/controller (v1) namespace: kpack
+(delete) clusterrole/kpack-controller-admin (rbac.authorization.k8s.io/v1) cluster
+(delete) clusterrolebinding/kpack-controller-admin-binding (rbac.authorization.k8s.io/v1) cluster
+(delete) service/kpack-webhook (v1) namespace: kpack
+(delete) mutatingwebhookconfiguration/resource.webhook.kpack.pivotal.io (admissionregistration.k8s.io/v1beta1) cluster
+(delete) deployment/kpack-webhook (apps/v1) namespace: kpack
+(delete) serviceaccount/webhook (v1) namespace: kpack
+(delete) role/kpack-webhook-certs-admin (rbac.authorization.k8s.io/v1) namespace: kpack
+(delete) rolebinding/kpack-webhook-certs-admin-binding (rbac.authorization.k8s.io/v1) namespace: kpack
+(delete) clusterrole/kpack-webhook-mutatingwebhookconfiguration-admin (rbac.authorization.k8s.io/v1) cluster
+(delete) clusterrolebinding/kpack-webhook-certs-mutatingwebhookconfiguration-admin-binding (rbac.authorization.k8s.io/v1) cluster
+(delete) serviceaccount/fluentd-service-account (v1) namespace: cf-system
+(delete) clusterrole/pod-namespace-read (rbac.authorization.k8s.io/v1) namespace: cf-system
+(delete) clusterrolebinding/fluentd-service-account-pod-namespace-read (rbac.authorization.k8s.io/v1) cluster
+(delete) configmap/fluentd-config (v1) namespace: cf-system
+(delete) service/log-cache (v1) namespace: cf-system
+(delete) service/log-cache-syslog (v1) namespace: cf-system
+(delete) secret/log-cache-ca (v1) namespace: cf-system
+(delete) secret/log-cache (v1) namespace: cf-system
+(delete) secret/log-cache-metrics (v1) namespace: cf-system
+(delete) secret/log-cache-gateway (v1) namespace: cf-system
+(delete) secret/log-cache-syslog (v1) namespace: cf-system
+(delete) daemonset/fluentd (apps/v1) namespace: cf-system
+(delete) deployment/log-cache (apps/v1) namespace: cf-system
+(delete) serviceaccount/metric-proxy (v1) namespace: cf-system
+(delete) clusterrole/metric-proxy (rbac.authorization.k8s.io/v1) namespace: cf-system
+(delete) clusterrolebinding/metric-proxy (rbac.authorization.k8s.io/v1) cluster
+(delete) service/metric-proxy (v1) namespace: cf-system
+(delete) secret/metric-proxy-cert (v1) namespace: cf-system
+(delete) secret/metric-proxy-ca (v1) namespace: cf-system
+(delete) deployment/metric-proxy (apps/v1) namespace: cf-system
+(delete) namespace/cf-blobstore (v1) cluster
+(delete) secret/cf-blobstore-minio (v1) namespace: cf-blobstore
+(delete) configmap/cf-blobstore-minio (v1) namespace: cf-blobstore
+(delete) persistentvolumeclaim/cf-blobstore-minio (v1) namespace: cf-blobstore
+(delete) serviceaccount/cf-blobstore-minio (v1) namespace: cf-blobstore
+(delete) service/cf-blobstore-minio (v1) namespace: cf-blobstore
+(delete) deployment/cf-blobstore-minio (apps/v1) namespace: cf-blobstore
+(delete) configmap/cfroutesync-config (v1) namespace: cf-system
+(delete) secret/cfroutesync (v1) namespace: cf-system
+(delete) deployment/cfroutesync (apps/v1) namespace: cf-system
+(delete) service/cfroutesync (v1) namespace: cf-system
+(delete) clusterrole/istio-reader-istio-system (rbac.authorization.k8s.io/v1) cluster
+(delete) clusterrolebinding/istio-reader-istio-system (rbac.authorization.k8s.io/v1) cluster
+(delete) namespace/istio-system (v1) cluster
+(delete) serviceaccount/istio-reader-service-account (v1) namespace: istio-system
+(delete) clusterrole/istio-citadel-istio-system (rbac.authorization.k8s.io/v1) cluster
+(delete) clusterrolebinding/istio-citadel-istio-system (rbac.authorization.k8s.io/v1) cluster
+(delete) deployment/istio-citadel (apps/v1) namespace: istio-system
+(delete) poddisruptionbudget/istio-citadel (policy/v1beta1) namespace: istio-system
+(delete) service/istio-citadel (v1) namespace: istio-system
+(delete) serviceaccount/istio-citadel-service-account (v1) namespace: istio-system
+(delete) clusterrole/istio-galley-istio-system (rbac.authorization.k8s.io/v1) cluster
+(delete) clusterrolebinding/istio-galley-admin-role-binding-istio-system (rbac.authorization.k8s.io/v1) cluster
+(delete) configmap/galley-envoy-config (v1) namespace: istio-system
+(delete) configmap/istio-mesh-galley (v1) namespace: istio-system
+(delete) configmap/istio-galley-configuration (v1) namespace: istio-system
+(delete) deployment/istio-galley (apps/v1) namespace: istio-system
+(delete) poddisruptionbudget/istio-galley (policy/v1beta1) namespace: istio-system
+(delete) service/istio-galley (v1) namespace: istio-system
+(delete) serviceaccount/istio-galley-service-account (v1) namespace: istio-system
+(delete) daemonset/istio-ingressgateway (apps/v1) namespace: istio-system
+(delete) poddisruptionbudget/ingressgateway (policy/v1beta1) namespace: istio-system
+(delete) role/istio-ingressgateway-sds (rbac.authorization.k8s.io/v1) namespace: istio-system
+(delete) rolebinding/istio-ingressgateway-sds (rbac.authorization.k8s.io/v1) namespace: istio-system
+(delete) service/istio-ingressgateway (v1) namespace: istio-system
+(delete) serviceaccount/istio-ingressgateway-service-account (v1) namespace: istio-system
+(delete) clusterrole/istio-sidecar-injector-istio-system (rbac.authorization.k8s.io/v1) cluster
+(delete) clusterrolebinding/istio-sidecar-injector-admin-role-binding-istio-system (rbac.authorization.k8s.io/v1) cluster
+(delete) configmap/injector-mesh (v1) namespace: istio-system
+(delete) deployment/istio-sidecar-injector (apps/v1) namespace: istio-system
+(delete) mutatingwebhookconfiguration/istio-sidecar-injector (admissionregistration.k8s.io/v1beta1) cluster
+(delete) poddisruptionbudget/istio-sidecar-injector (policy/v1beta1) namespace: istio-system
+(delete) service/istio-sidecar-injector (v1) namespace: istio-system
+(delete) serviceaccount/istio-sidecar-injector-service-account (v1) namespace: istio-system
+(delete) configmap/istio-sidecar-injector (v1) namespace: istio-system
+(delete) horizontalpodautoscaler/istio-pilot (autoscaling/v2beta1) namespace: istio-system
+(delete) clusterrole/istio-pilot-istio-system (rbac.authorization.k8s.io/v1) cluster
+(delete) clusterrolebinding/istio-pilot-istio-system (rbac.authorization.k8s.io/v1) cluster
+(delete) configmap/pilot-envoy-config (v1) namespace: istio-system
+(delete) configmap/istio (v1) namespace: istio-system
+(delete) deployment/istio-pilot (apps/v1) namespace: istio-system
+(delete) poddisruptionbudget/istio-pilot (policy/v1beta1) namespace: istio-system
+(delete) service/istio-pilot (v1) namespace: istio-system
+(delete) serviceaccount/istio-pilot-service-account (v1) namespace: istio-system
+(delete) horizontalpodautoscaler/istio-policy (autoscaling/v2beta1) namespace: istio-system
+(delete) clusterrole/istio-policy (rbac.authorization.k8s.io/v1) cluster
+(delete) clusterrolebinding/istio-policy-admin-role-binding-istio-system (rbac.authorization.k8s.io/v1) cluster
+(delete) configmap/policy-envoy-config (v1) namespace: istio-system
+(delete) deployment/istio-policy (apps/v1) namespace: istio-system
+(delete) poddisruptionbudget/istio-policy (policy/v1beta1) namespace: istio-system
+(delete) service/istio-policy (v1) namespace: istio-system
+(delete) serviceaccount/istio-policy-service-account (v1) namespace: istio-system
+(delete) horizontalpodautoscaler/istio-telemetry (autoscaling/v2beta1) namespace: istio-system
+(delete) clusterrole/istio-mixer-istio-system (rbac.authorization.k8s.io/v1) cluster
+(delete) clusterrolebinding/istio-mixer-admin-role-binding-istio-system (rbac.authorization.k8s.io/v1) cluster
+(delete) configmap/telemetry-envoy-config (v1) namespace: istio-system
+(delete) deployment/istio-telemetry (apps/v1) namespace: istio-system
+(delete) poddisruptionbudget/istio-telemetry (policy/v1beta1) namespace: istio-system
+(delete) service/istio-telemetry (v1) namespace: istio-system
+(delete) serviceaccount/istio-mixer-service-account (v1) namespace: istio-system
+(delete) networkpolicy/pilot-network-policy (networking.k8s.io/v1) namespace: istio-system
+(delete) networkpolicy/citadel-network-policy (networking.k8s.io/v1) namespace: istio-system
+(delete) networkpolicy/mixer-network-policy (networking.k8s.io/v1) namespace: istio-system
+(delete) networkpolicy/sidecar-injector-network-policy (networking.k8s.io/v1) namespace: istio-system
+(delete) networkpolicy/ingressgateway-network-policy-pilot (networking.k8s.io/v1) namespace: istio-system
+(delete) namespace/metacontroller (v1) cluster
+(delete) serviceaccount/metacontroller (v1) namespace: metacontroller
+(delete) clusterrole/metacontroller (rbac.authorization.k8s.io/v1) cluster
+(delete) clusterrolebinding/metacontroller (rbac.authorization.k8s.io/v1) cluster
+(delete) clusterrole/aggregate-metacontroller-view (rbac.authorization.k8s.io/v1) cluster
+(delete) clusterrole/aggregate-metacontroller-edit (rbac.authorization.k8s.io/v1) cluster
+(delete) statefulset/metacontroller (apps/v1) namespace: metacontroller
+(delete) namespace/cf-db (v1) cluster
+(delete) secret/cf-db-admin-secret (v1) namespace: cf-db
+(delete) secret/cf-db-credentials (v1) namespace: cf-db
+(delete) configmap/cf-db-postgresql-init-scripts (v1) namespace: cf-db
+(delete) service/cf-db-postgresql-headless (v1) namespace: cf-db
+(delete) service/cf-db-postgresql (v1) namespace: cf-db
+(delete) statefulset/cf-db-postgresql (apps/v1) namespace: cf-db
+(delete) namespace/cf-system (v1) cluster
+(delete) configmap/uaa-config (v1) namespace: cf-system
+(delete) deployment/uaa (apps/v1) namespace: cf-system
+(delete) service/uaa (v1) namespace: cf-system
+(delete) serviceaccount/uaa (v1) namespace: cf-system
+(delete) secret/uaa-certs (v1) namespace: cf-system
+(delete) namespace/cf-workloads (v1) cluster
 `
 )

@@ -303,43 +303,58 @@ changeGroupBindings:
   # - apiVersionKindMatcher: {kind: Service, apiVersion: v1}
 
 changeRuleBindings:
+# Insert CRDs before all CRs
 - rules:
-  # [Note]: insert CRDs before all other custom resources
   - "upsert after upserting change-groups.kapp.k14s.io/crds"
   resourceMatchers:
   - andMatcher:
       matchers:
       - customResourceMatcher: {}
       - notMatcher:
-          matcher:
+          matcher: &disableDefaultAnnMatcher
             hasAnnotationMatcher:
               keys: [kapp.k14s.io/disable-default-change-group-and-rules]
 
+# Delete CRs before CRDs to retain detailed observability
+# instead of having CRD deletion trigger all CR deletion
 - rules:
   - "delete before deleting change-groups.kapp.k14s.io/crds"
+  ignoreIfCyclical: true
+  resourceMatchers:
+  - andMatcher:
+      matchers:
+      - customResourceMatcher: {}
+      - notMatcher:
+          matcher: *disableDefaultAnnMatcher
+
+# Delete non-CRs after deleting CRDs so that if CRDs use conversion
+# webhooks it's more likely that backing webhook resources are still
+# available during deletion of CRs
+- rules:
+  - "delete after deleting change-groups.kapp.k14s.io/crds"
+  ignoreIfCyclical: true
   resourceMatchers:
   - andMatcher:
       matchers:
       - notMatcher:
           matcher:
+            customResourceMatcher: {}
+      - notMatcher:
+          matcher:
             anyMatcher:
               matchers: *crdMatchers
       - notMatcher:
-          matcher:
-            hasAnnotationMatcher:
-              keys: [kapp.k14s.io/disable-default-change-group-and-rules]
+          matcher: *disableDefaultAnnMatcher
 
+# Insert namespaces before all namespaced resources
 - rules:
-  # [Note]: insert namespaces before all other namespaced resources
   - "upsert after upserting change-groups.kapp.k14s.io/namespaces"
   resourceMatchers:
   - andMatcher:
       matchers:
       - hasNamespaceMatcher: {}
       - notMatcher:
-          matcher:
-            hasAnnotationMatcher:
-              keys: [kapp.k14s.io/disable-default-change-group-and-rules]
+          matcher: *disableDefaultAnnMatcher
 
 - rules:
   - "upsert after upserting change-groups.kapp.k14s.io/storage-class"
