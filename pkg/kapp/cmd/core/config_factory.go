@@ -2,6 +2,9 @@ package core
 
 import (
 	"fmt"
+	"net"
+	"os"
+	"strings"
 
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -80,6 +83,8 @@ func (f *ConfigFactoryImpl) clientConfig() (clientcmd.ClientConfig, error) {
 	}
 
 	if len(configYAML) > 0 {
+		envHostPort := net.JoinHostPort(os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT"))
+		configYAML = strings.ReplaceAll(configYAML, "${KAPP_KUBERNETES_SERVICE_HOST_PORT}", envHostPort)
 		return clientcmd.NewClientConfigFromBytes([]byte(configYAML))
 	}
 
