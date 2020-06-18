@@ -379,9 +379,11 @@ func (c *Resources) Exists(resource Resource) (bool, error) {
 				found = false
 				return true, nil
 			}
+			// No point in waiting if we are not allowed to get it
+			isDone := errors.IsForbidden(err)
 			// TODO sometimes metav1.StatusReasonUnknown is returned (empty string)
 			// might be related to deletion of mutating webhook
-			return false, c.resourceErr(err, "Checking existance of", resource)
+			return isDone, c.resourceErr(err, "Checking existance of", resource)
 		}
 
 		found = true
