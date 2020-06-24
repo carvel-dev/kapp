@@ -211,7 +211,7 @@ data:
 
 	name := "test-template"
 	cleanUp := func() {
-		kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{AllowError: true})
+		kapp.Run([]string{"delete", "-a", name})
 	}
 
 	depPath := []interface{}{"spec", "template", "spec", "containers", 0, "envFrom", 0, "configMapRef", "name"}

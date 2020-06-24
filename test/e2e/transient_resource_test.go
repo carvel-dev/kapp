@@ -29,7 +29,7 @@ spec:
 
 	name := "test-transient-resource-inspect-delete"
 	cleanUp := func() {
-		kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{AllowError: true})
+		kapp.Run([]string{"delete", "-a", name})
 	}
 
 	cleanUp()
@@ -128,7 +128,7 @@ metadata:
 
 	name := "test-transient-resource-switch"
 	cleanUp := func() {
-		kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{AllowError: true})
+		kapp.Run([]string{"delete", "-a", name})
 	}
 
 	cleanUp()

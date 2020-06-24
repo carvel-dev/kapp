@@ -73,9 +73,9 @@ metadata:
 	name3 := "test-ignore-failing-api-services3"
 
 	cleanUp := func() {
-		kapp.RunWithOpts([]string{"delete", "-a", name1}, RunOpts{AllowError: true})
-		kapp.RunWithOpts([]string{"delete", "-a", name2}, RunOpts{AllowError: true})
-		kapp.RunWithOpts([]string{"delete", "-a", name3}, RunOpts{AllowError: true})
+		kapp.Run([]string{"delete", "-a", name1})
+		kapp.Run([]string{"delete", "-a", name2})
+		kapp.Run([]string{"delete", "-a", name3})
 	}
 
 	cleanUp()
@@ -217,9 +217,9 @@ spec: {}
 	name3 := "test-ignore-failing-group-version3"
 
 	cleanUp := func() {
-		kapp.RunWithOpts([]string{"delete", "-a", name1}, RunOpts{AllowError: true})
-		kapp.RunWithOpts([]string{"delete", "-a", name2}, RunOpts{AllowError: true})
-		kapp.RunWithOpts([]string{"delete", "-a", name3}, RunOpts{AllowError: true})
+		kapp.Run([]string{"delete", "-a", name1})
+		kapp.Run([]string{"delete", "-a", name2})
+		kapp.Run([]string{"delete", "-a", name3})
 	}
 
 	cleanUp()

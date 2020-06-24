@@ -64,7 +64,7 @@ data:
 
 	name := "test-diff"
 	cleanUp := func() {
-		kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{AllowError: true})
+		kapp.Run([]string{"delete", "-a", name})
 	}
 
 	cleanUp()
@@ -241,7 +241,7 @@ func TestDiffExitStatus(t *testing.T) {
 
 	name := "test-diff-exit-status"
 	cleanUp := func() {
-		kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{AllowError: true})
+		kapp.Run([]string{"delete", "-a", name})
 	}
 
 	cleanUp()
@@ -329,7 +329,7 @@ data:
 
 	name := "test-diff-mask-rules"
 	cleanUp := func() {
-		kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{AllowError: true})
+		kapp.Run([]string{"delete", "-a", name})
 	}
 
 	cleanUp()
