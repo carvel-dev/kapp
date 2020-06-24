@@ -43,21 +43,34 @@ func (f *ConfigFactoryImpl) ConfigureYAMLResolver(resolverFunc func() (string, e
 }
 
 func (f *ConfigFactoryImpl) RESTConfig() (*rest.Config, error) {
-	config, err := f.clientConfig()
+	isExplicitYAMLConfig, config, err := f.clientConfig()
 	if err != nil {
 		return nil, err
 	}
 
 	restConfig, err := config.ClientConfig()
 	if err != nil {
-		return nil, fmt.Errorf("Building Kubernetes config: %s", err)
+		prefixMsg := ""
+		if isExplicitYAMLConfig {
+			prefixMsg = " (explicit config given)"
+		}
+
+		hintMsg := ""
+		if strings.Contains(err.Error(), "no configuration has been provided") {
+			hintMsg = "Ensure cluster name is specified correctly in context configuration"
+		}
+		if len(hintMsg) > 0 {
+			hintMsg = " (hint: " + hintMsg + ")"
+		}
+
+		return nil, fmt.Errorf("Building Kubernetes config%s: %s%s", prefixMsg, err, hintMsg)
 	}
 
 	return restConfig, nil
 }
 
 func (f *ConfigFactoryImpl) DefaultNamespace() (string, error) {
-	config, err := f.clientConfig()
+	_, config, err := f.clientConfig()
 	if err != nil {
 		return "", err
 	}
@@ -66,26 +79,27 @@ func (f *ConfigFactoryImpl) DefaultNamespace() (string, error) {
 	return name, err
 }
 
-func (f *ConfigFactoryImpl) clientConfig() (clientcmd.ClientConfig, error) {
+func (f *ConfigFactoryImpl) clientConfig() (bool, clientcmd.ClientConfig, error) {
 	path, err := f.pathResolverFunc()
 	if err != nil {
-		return nil, fmt.Errorf("Resolving config path: %s", err)
+		return false, nil, fmt.Errorf("Resolving config path: %s", err)
 	}
 
 	context, err := f.contextResolverFunc()
 	if err != nil {
-		return nil, fmt.Errorf("Resolving config context: %s", err)
+		return false, nil, fmt.Errorf("Resolving config context: %s", err)
 	}
 
 	configYAML, err := f.yamlResolverFunc()
 	if err != nil {
-		return nil, fmt.Errorf("Resolving config YAML: %s", err)
+		return false, nil, fmt.Errorf("Resolving config YAML: %s", err)
 	}
 
 	if len(configYAML) > 0 {
 		envHostPort := net.JoinHostPort(os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT"))
 		configYAML = strings.ReplaceAll(configYAML, "${KAPP_KUBERNETES_SERVICE_HOST_PORT}", envHostPort)
-		return clientcmd.NewClientConfigFromBytes([]byte(configYAML))
+		config, err := clientcmd.NewClientConfigFromBytes([]byte(configYAML))
+		return true, config, err
 	}
 
 	// Based on https://github.com/kubernetes/kubernetes/blob/30c7df5cd822067016640aa267714204ac089172/staging/src/k8s.io/cli-runtime/pkg/genericclioptions/config_flags.go#L124
@@ -99,5 +113,5 @@ func (f *ConfigFactoryImpl) clientConfig() (clientcmd.ClientConfig, error) {
 		overrides.CurrentContext = context
 	}
 
-	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, overrides), nil
+	return false, clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, overrides), nil
 }
