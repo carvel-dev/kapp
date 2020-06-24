@@ -16,7 +16,7 @@ See [state namespace](state-namespace.md) doc page.
 
 [via slack](https://kubernetes.slack.com/archives/CH8KCCKA5/p1565600090224400)
 
-Some fields on a resource are immutable. kapp provides a `kapp.k14s.io/update-strategy` annotation that controls how kapp will update resource. One of the strategies is `fallback-on-replace` which will have kapp recreate an object (delete, wait, then create) if initial update results in `Invalid` error. See [Controlling apply via resource annotations](https://github.com/k14s/kapp/blob/master/docs/apply.md#controlling-apply-via-resource-annotations) for details.
+Some fields on a resource are immutable. kapp provides a `kapp.k14s.io/update-strategy` annotation that controls how kapp will update resource. One of the strategies is `fallback-on-replace` which will have kapp recreate an object (delete, wait, then create) if initial update results in `Invalid` error. See [Controlling apply via resource annotations](https://github.com/k14s/kapp/blob/develop/docs/apply.md#controlling-apply-via-resource-annotations) for details.
 
 ---
 ### Updating Deployments when ConfigMap changes
@@ -25,7 +25,7 @@ Some fields on a resource are immutable. kapp provides a `kapp.k14s.io/update-st
 
 [via slack](https://kubernetes.slack.com/archives/CH8KCCKA5/p1565624685226400)
 
-kapp has a feature called [versioned resources](https://github.com/k14s/kapp/blob/master/docs/diff.md#versioned-resources) that allows kapp to create uniquely named resources instead of updating resources with changes. Resources referencing versioned resources are forced to be updated with new names, and therefore are changed, thus solving a problem of how to propagate changes safely.
+kapp has a feature called [versioned resources](https://github.com/k14s/kapp/blob/develop/docs/diff.md#versioned-resources) that allows kapp to create uniquely named resources instead of updating resources with changes. Resources referencing versioned resources are forced to be updated with new names, and therefore are changed, thus solving a problem of how to propagate changes safely.
 
 ---
 ### Quick way to find common kapp command variations
@@ -55,12 +55,12 @@ Sometimes Kubernetes API server will convert submitted field values into their c
 ...
 ```
 
-Consider using [ytt](https://get-ytt.io) and [its overlay feature](https://github.com/k14s/ytt/blob/master/docs/lang-ref-ytt-overlay.md) to change values if you do not control source configuration.
+Consider using [ytt](https://get-ytt.io) and [its overlay feature](https://github.com/k14s/ytt/blob/develop/docs/lang-ref-ytt-overlay.md) to change values if you do not control source configuration.
 
 ---
 ### Changes detected after resource is modified server-side
 
-There might be cases where other system actors (various controllers) may modify resource outside of kapp. Common example is Deployment's `spec.replicas` field is modified by Horizontal Pod Autoscaler controller. To let kapp know of such external behaviour use custom `rebaseRules` configuration (see [HPA and Deployment rebase](https://github.com/k14s/kapp/blob/master/docs/hpa-deployment-rebase.md) for details).
+There might be cases where other system actors (various controllers) may modify resource outside of kapp. Common example is Deployment's `spec.replicas` field is modified by Horizontal Pod Autoscaler controller. To let kapp know of such external behaviour use custom `rebaseRules` configuration (see [HPA and Deployment rebase](https://github.com/k14s/kapp/blob/develop/docs/hpa-deployment-rebase.md) for details).
 
 ---
 ### Colors are not showing up in my CI build, in my terminal, etc.

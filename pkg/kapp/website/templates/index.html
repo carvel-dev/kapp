@@ -19,7 +19,7 @@
 
         <p class="hero">
           <a class="link-button" href="https://github.com/k14s/kapp">Github</a>
-          <a class="link-button" href="https://github.com/k14s/kapp/tree/master/docs/README.md">Docs</a>
+          <a class="link-button" href="https://github.com/k14s/kapp/tree/develop/docs/README.md">Docs</a>
           <a class="link-button" href="https://slack.kubernetes.io">#k14s in Kubernetes slack</a>
           <a class="link-button" href="https://github.com/k14s/kapp/releases">Download Binary</a>
           <a class="link-button try-online" href="#playground">Try Online <span>⤵</span></a>
@@ -39,9 +39,9 @@
               <em class="highlight">Converges application resources</em> (creates, updates and/or deletes resources) in each deploy
               <ul><li>based on comparison between provided files and live objects in the cluster</li></ul>
             </li>
-            <li>Separates calculation of changes (<a href="https://github.com/k14s/kapp/blob/master/docs/diff.md">diff stage</a>) from application of changes (<a href="https://github.com/k14s/kapp/blob/master/docs/apply.md">apply stage</a>)</li>
-            <li><a href="https://github.com/k14s/kapp/blob/master/docs/apply-waiting.md">Waits for resources</a> to be "ready"</li>
-            <li>Creates CRDs and Namespaces first and supports <a href="https://github.com/k14s/kapp/blob/master/docs/apply-ordering.md">custom change ordering</a></li>
+            <li>Separates calculation of changes (<a href="https://github.com/k14s/kapp/blob/develop/docs/diff.md">diff stage</a>) from application of changes (<a href="https://github.com/k14s/kapp/blob/develop/docs/apply.md">apply stage</a>)</li>
+            <li><a href="https://github.com/k14s/kapp/blob/develop/docs/apply-waiting.md">Waits for resources</a> to be "ready"</li>
+            <li>Creates CRDs and Namespaces first and supports <a href="https://github.com/k14s/kapp/blob/develop/docs/apply-ordering.md">custom change ordering</a></li>
             <li>
               <em class="highlight">Works without admin privileges</em> and does not depend on any custom CRDs
               <ul><li>making it possible to use <code>kapp</code> as a regular user in a single namespace</li></ul>
@@ -53,7 +53,7 @@
             </li>
             <li>Works with any group of labeled resources (<code>kapp -a label:tier=web inspect -t</code>)</li>
             <li>Works <em class="highlight">without server side components</em></li>
-            <li><a href="https://github.com/k14s/kapp/blob/master/docs/gitops.md">GitOps friendly</a> (<code>kapp app-group deploy -g all-apps --directory .</code>)</li>
+            <li><a href="https://github.com/k14s/kapp/blob/develop/docs/gitops.md">GitOps friendly</a> (<code>kapp app-group deploy -g all-apps --directory .</code>)</li>
           </ul>
         </div>
 
