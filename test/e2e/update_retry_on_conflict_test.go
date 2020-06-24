@@ -19,7 +19,7 @@ func TestUpdateRetryOnConflict_WithoutConflict(t *testing.T) {
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-master
+  name: redis-primary
 spec:
   ports:
   - port: 6380
@@ -32,7 +32,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-master
+  name: redis-primary
 spec:
   ports:
   - port: 6381
@@ -45,7 +45,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-master
+  name: redis-primary
 spec:
   ports:
   - port: 6383
@@ -58,7 +58,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-master
+  name: redis-primary
 spec:
   ports:
   - port: 6380
@@ -113,7 +113,7 @@ func TestUpdateRetryOnConflict_WithConflict(t *testing.T) {
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-master
+  name: redis-primary
 spec:
   ports:
   - port: 6380
@@ -126,7 +126,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-master
+  name: redis-primary
 spec:
   ports:
   - port: 6381
@@ -139,7 +139,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-master
+  name: redis-primary
 spec:
   ports:
   - port: 6380
@@ -201,7 +201,7 @@ func TestUpdateRetryOnConflict_WithConflictRebasedAway(t *testing.T) {
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-master
+  name: redis-primary
 spec:
   ports:
   - port: 6380
@@ -214,7 +214,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-master
+  name: redis-primary
 spec:
   ports:
   - port: 6381
@@ -236,7 +236,7 @@ rebaseRules:
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-master
+  name: redis-primary
 spec:
   ports:
   - port: 6380

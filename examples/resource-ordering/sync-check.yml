@@ -7,8 +7,8 @@ metadata:
   annotations:
     kapp.k14s.io/nonce: ""
     kapp.k14s.io/update-strategy: fallback-on-replace
-    kapp.k14s.io/change-rule: "upsert after upserting redis-master"
-    kapp.k14s.io/change-rule.1: "upsert after upserting redis-slave"
+    kapp.k14s.io/change-rule: "upsert after upserting redis-primary"
+    kapp.k14s.io/change-rule.1: "upsert after upserting redis-replica"
 spec:
   backoffLimit: 0
   activeDeadlineSeconds: 30
@@ -25,20 +25,20 @@ spec:
         - /bin/sh
         - -exc
         - |
-          master="-h redis-master -p 6379"
-          slave="-h redis-slave -p 6379"
+          primary="-h redis-primary -p 6379"
+          replica="-h redis-replica -p 6379"
 
-          redis-cli $master ping 2>&1
-          redis-cli $slave ping 2>&1
-          redis-cli $slave info 2>&1 | grep -A10 Replication
+          redis-cli $primary ping 2>&1
+          redis-cli $replica ping 2>&1
+          redis-cli $replica info 2>&1 | grep -A10 Replication
 
-          redis-cli $master set key val 2>&1
+          redis-cli $primary set key val 2>&1
           sleep 2
-          redis-cli $slave get key 2>&1
-          result=$(redis-cli $slave get key 2>&1)
+          redis-cli $replica get key 2>&1
+          result=$(redis-cli $replica get key 2>&1)
 
           if [ "x$result" != "xval" ]; then
-            echo "Expected slave to be synced to master"
+            echo "Expected replica to be synced to primary"
             exit 1
           fi
       restartPolicy: Never

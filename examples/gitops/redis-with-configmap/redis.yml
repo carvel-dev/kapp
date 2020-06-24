@@ -20,18 +20,15 @@ spec:
   containers:
   - name: redis
     image: k8s.gcr.io/redis:e2e
-    env:
-    - name: MASTER
-      value: "true"
     ports:
     - containerPort: 6379
     resources:
       limits:
         cpu: 100m
     volumeMounts:
-    - mountPath: /redis-master-data
+    - mountPath: /redis-data
       name: data
-    - mountPath: /redis-master
+    - mountPath: /redis-config
       name: config
   volumes:
   - name: data

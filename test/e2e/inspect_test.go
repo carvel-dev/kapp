@@ -18,7 +18,7 @@ func TestInspect(t *testing.T) {
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-master
+  name: redis-primary
 spec:
   ports:
   - port: 6380
@@ -26,7 +26,6 @@ spec:
   selector:
     app: redis
     tier: backend
-    role: master
 `
 
 	name := "test-inspect"
@@ -50,7 +49,7 @@ spec:
 			"age":             "<replaced>",
 			"conditions":      "",
 			"kind":            "Endpoints",
-			"name":            "redis-master",
+			"name":            "redis-primary",
 			"namespace":       "kapp-test",
 			"owner":           "cluster",
 			"reconcile_info":  "",
@@ -59,7 +58,7 @@ spec:
 			"age":             "<replaced>",
 			"conditions":      "",
 			"kind":            "Service",
-			"name":            "redis-master",
+			"name":            "redis-primary",
 			"namespace":       "kapp-test",
 			"owner":           "kapp",
 			"reconcile_info":  "",
@@ -80,7 +79,7 @@ spec:
 			"age":             "<replaced>",
 			"conditions":      "",
 			"kind":            "Service",
-			"name":            "redis-master",
+			"name":            "redis-primary",
 			"namespace":       "kapp-test",
 			"owner":           "kapp",
 			"reconcile_info":  "",
@@ -89,7 +88,7 @@ spec:
 			"age":             "<replaced>",
 			"conditions":      "",
 			"kind":            "Endpoints",
-			"name":            " L redis-master",
+			"name":            " L redis-primary",
 			"namespace":       "kapp-test",
 			"owner":           "cluster",
 			"reconcile_info":  "",

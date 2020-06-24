@@ -27,7 +27,7 @@ spec:
   groupPriorityMinimum: 100
   insecureSkipTLSVerify: true
   service:
-    name: redis-master
+    name: redis-primary
     namespace: kapp-test
   version: v1
   versionPriority: 100

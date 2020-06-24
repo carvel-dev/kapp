@@ -17,7 +17,7 @@ spec:
         app: ""
     spec:
       containers:
-      - name: master
+      - name: ubuntu
         image: ubuntu
         command: ["/bin/sh", "-c", "sleep 100003"]
         readinessProbe:
@@ -26,4 +26,3 @@ spec:
           initialDelaySeconds: 5
           timeoutSeconds: 13
           periodSeconds: 15
-

@@ -16,7 +16,7 @@ func TestUpdateFallbackOnReplace(t *testing.T) {
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-master
+  name: redis-primary
 spec:
   ports:
   - port: 6380
@@ -24,7 +24,6 @@ spec:
   selector:
     app: redis
     tier: backend
-    role: master
 `
 
 	yaml2 := `
@@ -32,7 +31,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-master
+  name: redis-primary
   annotations:
     kapp.k14s.io/update-strategy: fallback-on-replace
 spec:
@@ -43,12 +42,11 @@ spec:
   selector:
     app: redis
     tier: backend
-    role: master
 `
 
 	name := "test-update-fallback-on-replace"
 	objKind := "service"
-	objName := "redis-master"
+	objName := "redis-primary"
 	cleanUp := func() {
 		kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{AllowError: true})
 	}
@@ -94,7 +92,7 @@ func TestUpdateAlwaysReplace(t *testing.T) {
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-master
+  name: redis-primary
 spec:
   ports:
   - port: 6380
@@ -102,7 +100,6 @@ spec:
   selector:
     app: redis
     tier: backend
-    role: master
 `
 
 	yaml2 := `
@@ -110,7 +107,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-master
+  name: redis-primary
   annotations:
     kapp.k14s.io/update-strategy: always-replace
 spec:
@@ -121,12 +118,11 @@ spec:
   selector:
     app: redis
     tier: backend
-    role: master
 `
 
 	name := "test-update-always-replace"
 	objKind := "service"
-	objName := "redis-master"
+	objName := "redis-primary"
 	cleanUp := func() {
 		kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{AllowError: true})
 	}

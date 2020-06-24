@@ -3,37 +3,37 @@ apiVersion: v1
 kind: Service
 metadata:
   namespace: default
-  name: redis-slave
+  name: redis-replica
   annotations:
-    kapp.k14s.io/change-group: "redis-slave"
+    kapp.k14s.io/change-group: "redis-replica"
 spec:
   ports:
   - port: 6379
   selector:
-    app: redis-slave
+    app: redis-replica
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   namespace: default
-  name: redis-slave
+  name: redis-replica
   annotations:
-    kapp.k14s.io/change-group: "redis-slave"
-    kapp.k14s.io/change-rule: "upsert after upserting redis-master"
+    kapp.k14s.io/change-group: "redis-replica"
+    kapp.k14s.io/change-rule: "upsert after upserting redis-primary"
 spec:
   selector:
     matchLabels:
-      app: redis-slave
+      app: redis-replica
   replicas: 2
   template:
     metadata:
       labels:
-        app: redis-slave
+        app: redis-replica
     spec:
       containers:
-      - name: slave
+      - name: replica
         image: redis
-        command: [redis-server, --slaveof, redis-master, "6379"]
+        command: [redis-server, --replicaof, redis-primary, "6379"]
         resources:
           requests:
             cpu: 100m

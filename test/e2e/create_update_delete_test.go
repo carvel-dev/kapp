@@ -19,7 +19,7 @@ func TestCreateUpdateDelete(t *testing.T) {
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-master
+  name: redis-primary
 spec:
   ports:
   - port: 6380
@@ -27,7 +27,6 @@ spec:
   selector:
     app: redis
     tier: backend
-    role: master
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -65,14 +64,14 @@ data:
 	logger.Section("deploy initial", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-		NewPresentClusterResource("service", "redis-master", env.Namespace, kubectl)
+		NewPresentClusterResource("service", "redis-primary", env.Namespace, kubectl)
 		NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
 	})
 
 	logger.Section("deploy update with 1 delete, 1 update, 1 create", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
-		NewMissingClusterResource(t, "service", "redis-master", env.Namespace, kubectl)
+		NewMissingClusterResource(t, "service", "redis-primary", env.Namespace, kubectl)
 
 		config := NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
 		val := config.RawPath(ctlres.NewPathFromStrings([]string{"data", "key"}))
@@ -86,7 +85,7 @@ data:
 	logger.Section("delete application", func() {
 		kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{})
 
-		NewMissingClusterResource(t, "service", "redis-master", env.Namespace, kubectl)
+		NewMissingClusterResource(t, "service", "redis-primary", env.Namespace, kubectl)
 		NewMissingClusterResource(t, "configmap", "redis-config", env.Namespace, kubectl)
 		NewMissingClusterResource(t, "configmap", "redis-config2", env.Namespace, kubectl)
 	})
