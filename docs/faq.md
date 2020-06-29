@@ -19,6 +19,11 @@ See [state namespace](state-namespace.md) doc page.
 Some fields on a resource are immutable. kapp provides a `kapp.k14s.io/update-strategy` annotation that controls how kapp will update resource. One of the strategies is `fallback-on-replace` which will have kapp recreate an object (delete, wait, then create) if initial update results in `Invalid` error. See [Controlling apply via resource annotations](https://github.com/k14s/kapp/blob/develop/docs/apply.md#controlling-apply-via-resource-annotations) for details.
 
 ---
+### `Job.batch is invalid: ... spec.selector: Required value` error
+
+`batch.Job` resource is augmented by the Job controller with unique labels upon its creation. When using kapp to subsequently update existing Job resource, API server will return `Invalid` error since given configuration does not include `spec.selector`, and `job-name` and `controller-uid` labels. kapp's [rebase rules](https://github.com/k14s/kapp/blob/develop/docs/config.md#rebaserules) can be used to copy over necessary configuration from server side copy; however, since Job resource is mostly immutable, we recommend to use [`kapp.k14s.io/update-strategy` annotation](https://github.com/k14s/kapp/blob/develop/docs/apply.md#kappk14sioupdate-strategy) set to `fallback-on-replace` to recreate Job resource with any updates.
+
+---
 ### Updating Deployments when ConfigMap changes
 
 > Can kapp force update on ConfigMaps in Deployments/DaemonSets? Just noticed that it didn't do that and I somehow expected it to.
