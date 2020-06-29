@@ -9,12 +9,14 @@ import (
 
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/k14s/kapp/pkg/kapp/util"
+	"golang.org/x/net/http2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/util/retry"
 )
 
 // type ResourceInterface interface {
@@ -88,11 +90,16 @@ func (c *Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resou
 
 			client := c.dynamicClient.Resource(resType.GroupVersionResource)
 
-			if resType.Namespaced() {
-				list, err = client.Namespace("").List(*opts.ListOpts)
-			} else {
-				list, err = client.List(*opts.ListOpts)
-			}
+			err = util.RetryOnError(retry.DefaultBackoff, isRetriableServerRescaleError, func() error {
+				var err error
+				if resType.Namespaced() {
+					list, err = client.Namespace("").List(*opts.ListOpts)
+					return err
+				} else {
+					list, err = client.List(*opts.ListOpts)
+					return err
+				}
+			})
 
 			if err != nil {
 				if !errors.IsForbidden(err) {
@@ -214,15 +221,12 @@ func (c *Resources) Create(resource Resource) (Resource, error) {
 
 	var createdUn *unstructured.Unstructured
 
-	err = util.Retry(time.Second, 5*time.Second, func() (bool, error) {
+	err = util.RetryOnError(retry.DefaultBackoff, IsRetriableWebhookError, func() error {
 		createdUn, err = resClient.Create(resource.unstructuredPtr())
-		if err != nil {
-			return c.doneRetryingErr(err), c.resourceErr(err, "Creating", resource)
-		}
-		return true, nil
+		return err
 	})
 	if err != nil {
-		return nil, err
+		return nil, c.resourceErr(err, "Creating", resource)
 	}
 
 	return NewResourceUnstructured(*createdUn, resType), nil
@@ -244,15 +248,12 @@ func (c *Resources) Update(resource Resource) (Resource, error) {
 
 	var updatedUn *unstructured.Unstructured
 
-	err = util.Retry(time.Second, 5*time.Second, func() (bool, error) {
+	err = util.RetryOnError(retry.DefaultBackoff, IsRetriableWebhookError, func() error {
 		updatedUn, err = resClient.Update(resource.unstructuredPtr())
-		if err != nil {
-			return c.doneRetryingErr(err), c.resourceErr(err, "Updating", resource)
-		}
-		return true, nil
+		return err
 	})
 	if err != nil {
-		return nil, err
+		return nil, c.resourceErr(err, "Updating", resource)
 	}
 
 	return NewResourceUnstructured(*updatedUn, resType), nil
@@ -271,15 +272,12 @@ func (c *Resources) Patch(resource Resource, patchType types.PatchType, data []b
 
 	var patchedUn *unstructured.Unstructured
 
-	err = util.Retry(time.Second, 5*time.Second, func() (bool, error) {
+	err = util.RetryOnError(retry.DefaultBackoff, IsRetriableWebhookError, func() error {
 		patchedUn, err = resClient.Patch(resource.Name(), patchType, data)
-		if err != nil {
-			return c.doneRetryingErr(err), c.resourceErr(err, "Patching", resource)
-		}
-		return true, nil
+		return err
 	})
 	if err != nil {
-		return nil, err
+		return nil, c.resourceErr(err, "Patching", resource)
 	}
 
 	return NewResourceUnstructured(*patchedUn, resType), nil
@@ -341,8 +339,12 @@ func (c *Resources) Get(resource Resource) (Resource, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	item, err := resClient.Get(resource.Name(), metav1.GetOptions{})
+	var item *unstructured.Unstructured
+	err = util.RetryOnError(retry.DefaultBackoff, isRetriableServerRescaleError, func() error {
+		var err error
+		item, err = resClient.Get(resource.Name(), metav1.GetOptions{})
+		return err
+	})
 	if err != nil {
 		return nil, c.resourceErr(err, "Getting", resource)
 	}
@@ -368,28 +370,30 @@ func (c *Resources) Exists(resource Resource) (bool, error) {
 
 	var found bool
 
-	err = util.Retry(time.Second, time.Minute, func() (bool, error) {
+	err = util.RetryOnError(retry.DefaultBackoff, isRetriableServerRescaleError, func() error {
+		var err error
 		_, err = resClient.Get(resource.Name(), metav1.GetOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				found = false
-				return true, nil
+				return nil
 			}
 			if c.isPodMetrics(resource, err) {
 				found = false
-				return true, nil
+				return nil
 			}
-			// No point in waiting if we are not allowed to get it
-			isDone := errors.IsForbidden(err)
 			// TODO sometimes metav1.StatusReasonUnknown is returned (empty string)
 			// might be related to deletion of mutating webhook
-			return isDone, c.resourceErr(err, "Checking existance of", resource)
+			return err
 		}
 
 		found = true
-		return true, nil
+		return nil
 	})
 
+	if err != nil {
+		return false, c.resourceErr(err, "Checking existance of", resource)
+	}
 	return found, err
 }
 
@@ -411,10 +415,6 @@ func (c *Resources) isPodMetrics(resource Resource, err error) bool {
 		}
 	}
 	return false
-}
-
-func (c *Resources) doneRetryingErr(err error) bool {
-	return !IsRetryableErr(err)
 }
 
 func (c *Resources) resourceErr(err error, action string, resource Resource) error {
@@ -469,7 +469,23 @@ var (
 	conversionWebhookErrCheck = regexp.MustCompile("conversion webhook for (.+) failed:")
 )
 
-func IsRetryableErr(err error) bool {
+func isRetriableServerRescaleError(err error) bool {
+	switch err := err.(type) {
+	case *http2.GoAwayError:
+		return true
+	case *errors.StatusError:
+		if err.ErrStatus.Reason == metav1.StatusReasonServiceUnavailable {
+			return true
+		}
+	}
+	return false
+}
+
+func IsRetriableWebhookError(err error) bool {
+
+	if isRetriableServerRescaleError(err) {
+		return true
+	}
 	// TODO is there a better way to detect these errors?
 	errMsg := err.Error()
 	switch {
