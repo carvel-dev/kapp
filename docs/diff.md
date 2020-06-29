@@ -32,10 +32,13 @@ Try deploying [redis-with-configmap example](../examples/gitops/redis-with-confi
 
 ### Controlling diff via resource annotations
 
-- `kapp.k14s.io/disable-original` annotation controls whether to record provided resource copy (rarely wanted)
+#### kapp.k14s.io/disable-original
 
-  Possible values ``. In some cases it's not possible or wanted to record applied resource copy into its annotation `kapp.k14s.io/original`. One such case might be when resource is extremely lengthy (e.g. long ConfigMap or CustomResourceDefinition) and will exceed annotation value max length of 262144 bytes.
+`kapp.k14s.io/disable-original` annotation controls whether to record provided resource copy (rarely wanted)
 
+Possible values ``. In some cases it's not possible or wanted to record applied resource copy into its annotation `kapp.k14s.io/original`. One such case might be when resource is extremely lengthy (e.g. long ConfigMap or CustomResourceDefinition) and will exceed annotation value max length of 262144 bytes.
+
+---
 ### Controlling diff via deploy flags
 
 Diff summary shows quick information about what's being changed:
