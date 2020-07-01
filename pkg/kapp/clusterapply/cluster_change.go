@@ -143,7 +143,7 @@ func (c *ClusterChange) Apply() (bool, []string, error) {
 		return false, descMsgs, err
 	}
 
-	retryable := err != nil && ctlres.IsRetriableWebhookError(err)
+	retryable := err != nil && ctlres.IsResourceChangeBlockedErr(err)
 	if retryable {
 		descMsgs = append(descMsgs, uiWaitMsgPrefix+"Retryable error: "+err.Error())
 	}
