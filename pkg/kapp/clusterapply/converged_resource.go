@@ -42,12 +42,11 @@ func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 	}
 
 	if convergedResState != nil {
-		// If it is indeed done then take a quick way out and exit
+		// we're always interested in the parent's state description, regardless
+		descMsgs = append(descMsgs, c.buildParentDescMsg(c.res, *convergedResState)...)
+		// If the parent is done, remaining state calculations are waste; exit now.
 		if convergedResState.Done {
 			return *convergedResState, descMsgs, nil
-		}
-		if !convergedResState.Successful && len(associatedRs) > 0 {
-			descMsgs = append(descMsgs, c.buildParentDescMsg(c.res, *convergedResState)...)
 		}
 	}
 
@@ -112,9 +111,9 @@ func (c ConvergedResource) associatedRs() ([]ctlres.Resource, error) {
 	}
 	for _, f := range c.specificResFactories {
 		matchedRes, associatedResRefs := f(c.res, nil)
-		// checking if interface is nil
+		// Is this SpecificResFactory applicable to that kind of resource?
 		if !reflect.ValueOf(matchedRes).IsNil() {
-			// Grab associated resources only if it's benefitial
+			// querying the cluster (for associated res) is expensive
 			if len(associatedResRefs) > 0 {
 				associatedRs, err := c.associatedRsFunc(c.res, associatedResRefs)
 				if err != nil {
@@ -152,7 +151,7 @@ func (c ConvergedResource) isResourceDoneApplying(res ctlres.Resource,
 
 	for _, f := range c.specificResFactories {
 		matchedRes, _ := f(res, associatedRs)
-		// checking if interface is nil
+		// Is this SpecificResFactory applicable to that kind of resource?
 		if !reflect.ValueOf(matchedRes).IsNil() {
 			state := matchedRes.IsDoneApplying()
 			return &state, nil

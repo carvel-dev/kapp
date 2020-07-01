@@ -74,6 +74,12 @@ func (f ConvergedResourceFactory) New(res ctlres.Resource,
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			return ctlresm.NewBatchVxCronJob(res), nil
 		},
+		func(res ctlres.Resource, aRs []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
+			return ctlresm.NewAppsV1StatefulSet(res, aRs), []ctlres.ResourceRef{
+				{schema.GroupVersionResource{Group: ""}}, // for Pods
+				// omit ControllerRevisions: we'll rarely (if ever) wait on them; reporting on them is noise
+			}
+		},
 	}
 
 	return NewConvergedResource(res, associatedRsFunc, specificResFactories)
