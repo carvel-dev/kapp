@@ -9,6 +9,7 @@ import (
 
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/k14s/kapp/pkg/kapp/util"
+	"golang.org/x/net/http2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -88,11 +89,18 @@ func (c *Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resou
 
 			client := c.dynamicClient.Resource(resType.GroupVersionResource)
 
-			if resType.Namespaced() {
-				list, err = client.Namespace("").List(*opts.ListOpts)
-			} else {
-				list, err = client.List(*opts.ListOpts)
-			}
+			err = util.Retry(time.Second, 5*time.Second, func() (bool, error) {
+				var err error
+				if resType.Namespaced() {
+					list, err = client.Namespace("").List(*opts.ListOpts)
+				} else {
+					list, err = client.List(*opts.ListOpts)
+				}
+				if err != nil {
+					return doneServerRescaleErr(err), err
+				}
+				return true, nil
+			})
 
 			if err != nil {
 				if !errors.IsForbidden(err) {
@@ -217,7 +225,7 @@ func (c *Resources) Create(resource Resource) (Resource, error) {
 	err = util.Retry(time.Second, 5*time.Second, func() (bool, error) {
 		createdUn, err = resClient.Create(resource.unstructuredPtr())
 		if err != nil {
-			return c.doneRetryingErr(err), c.resourceErr(err, "Creating", resource)
+			return doneResourceChangeBlockedOrServerRescaleErr(err), c.resourceErr(err, "Creating", resource)
 		}
 		return true, nil
 	})
@@ -247,7 +255,7 @@ func (c *Resources) Update(resource Resource) (Resource, error) {
 	err = util.Retry(time.Second, 5*time.Second, func() (bool, error) {
 		updatedUn, err = resClient.Update(resource.unstructuredPtr())
 		if err != nil {
-			return c.doneRetryingErr(err), c.resourceErr(err, "Updating", resource)
+			return doneResourceChangeBlockedOrServerRescaleErr(err), c.resourceErr(err, "Updating", resource)
 		}
 		return true, nil
 	})
@@ -274,7 +282,7 @@ func (c *Resources) Patch(resource Resource, patchType types.PatchType, data []b
 	err = util.Retry(time.Second, 5*time.Second, func() (bool, error) {
 		patchedUn, err = resClient.Patch(resource.Name(), patchType, data)
 		if err != nil {
-			return c.doneRetryingErr(err), c.resourceErr(err, "Patching", resource)
+			return doneResourceChangeBlockedOrServerRescaleErr(err), c.resourceErr(err, "Patching", resource)
 		}
 		return true, nil
 	})
@@ -341,10 +349,17 @@ func (c *Resources) Get(resource Resource) (Resource, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	item, err := resClient.Get(resource.Name(), metav1.GetOptions{})
+	var item *unstructured.Unstructured
+	err = util.Retry(time.Second, 5*time.Second, func() (bool, error) {
+		var err error
+		item, err = resClient.Get(resource.Name(), metav1.GetOptions{})
+		if err != nil {
+			return doneServerRescaleErr(err), c.resourceErr(err, "Getting", resource)
+		}
+		return true, nil
+	})
 	if err != nil {
-		return nil, c.resourceErr(err, "Getting", resource)
+		return nil, err
 	}
 
 	return NewResourceUnstructured(*item, resType), nil
@@ -378,6 +393,9 @@ func (c *Resources) Exists(resource Resource) (bool, error) {
 			if c.isPodMetrics(resource, err) {
 				found = false
 				return true, nil
+			}
+			if isServerRescaleErr(err) {
+				return false, nil
 			}
 			// No point in waiting if we are not allowed to get it
 			isDone := errors.IsForbidden(err)
@@ -413,8 +431,24 @@ func (c *Resources) isPodMetrics(resource Resource, err error) bool {
 	return false
 }
 
-func (c *Resources) doneRetryingErr(err error) bool {
-	return !IsRetryableErr(err)
+func isServerRescaleErr(err error) bool {
+	switch err := err.(type) {
+	case *http2.GoAwayError:
+		return true
+	case *errors.StatusError:
+		if err.ErrStatus.Reason == metav1.StatusReasonServiceUnavailable {
+			return true
+		}
+	}
+	return false
+}
+
+func doneServerRescaleErr(err error) bool {
+	return !isServerRescaleErr(err)
+}
+
+func doneResourceChangeBlockedOrServerRescaleErr(err error) bool {
+	return !(IsResourceChangeBlockedErr(err) || isServerRescaleErr(err))
 }
 
 func (c *Resources) resourceErr(err error, action string, resource Resource) error {
@@ -469,7 +503,7 @@ var (
 	conversionWebhookErrCheck = regexp.MustCompile("conversion webhook for (.+) failed:")
 )
 
-func IsRetryableErr(err error) bool {
+func IsResourceChangeBlockedErr(err error) bool {
 	// TODO is there a better way to detect these errors?
 	errMsg := err.Error()
 	switch {
