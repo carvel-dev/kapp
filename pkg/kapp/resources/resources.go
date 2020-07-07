@@ -89,17 +89,13 @@ func (c *Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resou
 
 			client := c.dynamicClient.Resource(resType.GroupVersionResource)
 
-			err = util.Retry(time.Second, 5*time.Second, func() (bool, error) {
-				var err error
+			err = util.Retry2(time.Second, 5*time.Second, c.isServerRescaleErr, func() error {
 				if resType.Namespaced() {
 					list, err = client.Namespace("").List(*opts.ListOpts)
 				} else {
 					list, err = client.List(*opts.ListOpts)
 				}
-				if err != nil {
-					return doneServerRescaleErr(err), err
-				}
-				return true, nil
+				return err
 			})
 
 			if err != nil {
@@ -222,15 +218,12 @@ func (c *Resources) Create(resource Resource) (Resource, error) {
 
 	var createdUn *unstructured.Unstructured
 
-	err = util.Retry(time.Second, 5*time.Second, func() (bool, error) {
+	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
 		createdUn, err = resClient.Create(resource.unstructuredPtr())
-		if err != nil {
-			return doneResourceChangeBlockedOrServerRescaleErr(err), c.resourceErr(err, "Creating", resource)
-		}
-		return true, nil
+		return err
 	})
 	if err != nil {
-		return nil, err
+		return nil, c.resourceErr(err, "Creating", resource)
 	}
 
 	return NewResourceUnstructured(*createdUn, resType), nil
@@ -252,15 +245,12 @@ func (c *Resources) Update(resource Resource) (Resource, error) {
 
 	var updatedUn *unstructured.Unstructured
 
-	err = util.Retry(time.Second, 5*time.Second, func() (bool, error) {
+	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
 		updatedUn, err = resClient.Update(resource.unstructuredPtr())
-		if err != nil {
-			return doneResourceChangeBlockedOrServerRescaleErr(err), c.resourceErr(err, "Updating", resource)
-		}
-		return true, nil
+		return err
 	})
 	if err != nil {
-		return nil, err
+		return nil, c.resourceErr(err, "Updating", resource)
 	}
 
 	return NewResourceUnstructured(*updatedUn, resType), nil
@@ -279,15 +269,12 @@ func (c *Resources) Patch(resource Resource, patchType types.PatchType, data []b
 
 	var patchedUn *unstructured.Unstructured
 
-	err = util.Retry(time.Second, 5*time.Second, func() (bool, error) {
+	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
 		patchedUn, err = resClient.Patch(resource.Name(), patchType, data)
-		if err != nil {
-			return doneResourceChangeBlockedOrServerRescaleErr(err), c.resourceErr(err, "Patching", resource)
-		}
-		return true, nil
+		return err
 	})
 	if err != nil {
-		return nil, err
+		return nil, c.resourceErr(err, "Patching", resource)
 	}
 
 	return NewResourceUnstructured(*patchedUn, resType), nil
@@ -349,17 +336,16 @@ func (c *Resources) Get(resource Resource) (Resource, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var item *unstructured.Unstructured
-	err = util.Retry(time.Second, 5*time.Second, func() (bool, error) {
+
+	err = util.Retry2(time.Second, 5*time.Second, c.isServerRescaleErr, func() error {
 		var err error
 		item, err = resClient.Get(resource.Name(), metav1.GetOptions{})
-		if err != nil {
-			return doneServerRescaleErr(err), c.resourceErr(err, "Getting", resource)
-		}
-		return true, nil
+		return err
 	})
 	if err != nil {
-		return nil, err
+		return nil, c.resourceErr(err, "Getting", resource)
 	}
 
 	return NewResourceUnstructured(*item, resType), nil
@@ -394,7 +380,7 @@ func (c *Resources) Exists(resource Resource) (bool, error) {
 				found = false
 				return true, nil
 			}
-			if isServerRescaleErr(err) {
+			if c.isServerRescaleErr(err) {
 				return false, nil
 			}
 			// No point in waiting if we are not allowed to get it
@@ -431,7 +417,11 @@ func (c *Resources) isPodMetrics(resource Resource, err error) bool {
 	return false
 }
 
-func isServerRescaleErr(err error) bool {
+func (c *Resources) isGeneralRetryableErr(err error) bool {
+	return IsResourceChangeBlockedErr(err) || c.isServerRescaleErr(err)
+}
+
+func (*Resources) isServerRescaleErr(err error) bool {
 	switch err := err.(type) {
 	case *http2.GoAwayError:
 		return true
@@ -441,14 +431,6 @@ func isServerRescaleErr(err error) bool {
 		}
 	}
 	return false
-}
-
-func doneServerRescaleErr(err error) bool {
-	return !isServerRescaleErr(err)
-}
-
-func doneResourceChangeBlockedOrServerRescaleErr(err error) bool {
-	return !(IsResourceChangeBlockedErr(err) || isServerRescaleErr(err))
 }
 
 func (c *Resources) resourceErr(err error, action string, resource Resource) error {
