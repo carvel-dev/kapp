@@ -11,9 +11,11 @@ spec:
   template:
     metadata:
       name: successful-job
+      annotations:
+        kapp.k14s.io/deploy-logs: "for-new-or-existing"
     spec:
       containers:
       - name: successful-job
         image: busybox
-        command: ["/bin/sh", "-c", "sleep 11"]
+        command: ["/bin/sh", "-c", "date; sleep 11; echo DONE"]
       restartPolicy: Never

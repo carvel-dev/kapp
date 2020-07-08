@@ -54,7 +54,7 @@ Possible values: `` (default). Annotation value will be replaced with a unique I
 
 `kapp.k14s.io/deploy-logs` annotation indicates which Pods' log output to show during deploy
 
-Possible values: `` (default). Especially useful when added to Jobs. For example, see [examples/resource-ordering/sync-check.yml](../examples/resource-ordering/sync-check.yml)
+Possible values: `` (default; equivalent to `for-new`), `for-new` (only newly created Pods are tailed), `for-existing` (only existing Pods are tailed), `for-new-or-existing` (both newly created and existing Pods are tailed). Especially useful when added to Jobs. For example, see [examples/resource-ordering/sync-check.yml](../examples/resource-ordering/sync-check.yml)
 
 #### kapp.k14s.io/deploy-logs-container-names
 

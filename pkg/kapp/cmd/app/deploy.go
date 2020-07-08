@@ -17,6 +17,7 @@ import (
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctllogs "github.com/k14s/kapp/pkg/kapp/logs"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -129,7 +130,8 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	existingResources, err := o.existingResources(newResources, labeledResources, resourceFilter, supportObjs.Apps)
+	existingResources, existingPodRs, err := o.existingResources(
+		newResources, labeledResources, resourceFilter, supportObjs.Apps)
 	if err != nil {
 		return err
 	}
@@ -176,7 +178,7 @@ func (o *DeployOptions) Run() error {
 	if o.DeployFlags.Logs {
 		cancelLogsCh := make(chan struct{})
 		defer func() { close(cancelLogsCh) }()
-		go o.showLogs(supportObjs.CoreClient, supportObjs.IdentifiedResources, labelSelector, cancelLogsCh)
+		go o.showLogs(supportObjs.CoreClient, supportObjs.IdentifiedResources, existingPodRs, labelSelector, cancelLogsCh)
 	}
 
 	defer func() {
@@ -265,7 +267,7 @@ func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
 
 func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 	labeledResources *ctlres.LabeledResources, resourceFilter ctlres.ResourceFilter,
-	apps ctlapp.Apps) ([]ctlres.Resource, error) {
+	apps ctlapp.Apps) ([]ctlres.Resource, []ctlres.Resource, error) {
 
 	labelErrorResolutionFunc := func(key string, val string) string {
 		items, _ := apps.List(nil)
@@ -287,22 +289,22 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 
 	existingResources, err := labeledResources.AllAndMatching(newResources, matchingOpts)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if o.DeployFlags.Patch {
 		existingResources, err = ctlres.NewUniqueResources(existingResources).Match(newResources)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	} else {
 		if len(newResources) == 0 && !o.DeployFlags.AllowEmpty {
-			return nil, fmt.Errorf("Trying to apply empty set of resources will result in deletion of resources on cluster. " +
+			return nil, nil, fmt.Errorf("Trying to apply empty set of resources will result in deletion of resources on cluster. " +
 				"Refusing to continue unless --dangerous-allow-empty-list-of-resources is specified.")
 		}
 	}
 
-	return resourceFilter.Apply(existingResources), nil
+	return resourceFilter.Apply(existingResources), o.existingPodResources(existingResources), nil
 }
 
 func (o *DeployOptions) calculateAndPresentChanges(existingResources,
@@ -356,22 +358,62 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 	return clusterChangeSet, clusterChangesGraph, (len(clusterChanges) == 0), changesSummary, err
 }
 
+func (o *DeployOptions) existingPodResources(existingResources []ctlres.Resource) []ctlres.Resource {
+	var existingPods []ctlres.Resource
+	for _, res := range existingResources {
+		if ctlresm.NewCoreV1Pod(res) != nil {
+			existingPods = append(existingPods, res)
+		}
+	}
+	return existingPods
+}
+
 const (
-	deployLogsAnnKey          = "kapp.k14s.io/deploy-logs" // valid value is ''
+	deployLogsAnnKey              = "kapp.k14s.io/deploy-logs" // valid value is '' (default), for-new, for-existing, for-new-or-existing
+	deployLogsAnnDefault          = ""                         // equivalent to for-new
+	deployLogsAnnForNew           = "for-new"
+	deployLogsAnnForExisting      = "for-existing"
+	deployLogsAnnForNewOrExisting = "for-new-or-existing"
+
 	deployLogsContNamesAnnKey = "kapp.k14s.io/deploy-logs-container-names"
 )
 
 func (o *DeployOptions) showLogs(
 	coreClient kubernetes.Interface, identifiedResources ctlres.IdentifiedResources,
-	labelSelector labels.Selector, cancelCh chan struct{}) {
+	existingPodRs []ctlres.Resource, labelSelector labels.Selector, cancelCh chan struct{}) {
 
-	logOpts := ctllogs.PodLogOpts{Follow: true, ContainerTag: true, LinePrefix: "logs"}
+	existingPodsByUID := map[string]struct{}{}
+
+	for _, res := range existingPodRs {
+		existingPodsByUID[res.UID()] = struct{}{}
+	}
+
+	podMatcherFunc := func(pod *corev1.Pod) bool {
+		if o.DeployFlags.LogsAll {
+			return true
+		}
+
+		lvl, showLogs := pod.Annotations[deployLogsAnnKey]
+		if !showLogs {
+			return false
+		}
+
+		_, isExistingPod := existingPodsByUID[string(pod.UID)]
+
+		switch lvl {
+		case deployLogsAnnDefault, deployLogsAnnForNew:
+			return !isExistingPod
+		case deployLogsAnnForExisting:
+			return isExistingPod
+		case deployLogsAnnForNewOrExisting:
+			return true
+		default:
+			return false
+		}
+	}
 
 	podWatcher := ctlres.FilteringPodWatcher{
-		func(pod *corev1.Pod) bool {
-			_, found := pod.Annotations[deployLogsAnnKey]
-			return o.DeployFlags.LogsAll || found
-		},
+		podMatcherFunc,
 		identifiedResources.PodResources(labelSelector),
 	}
 
@@ -382,6 +424,8 @@ func (o *DeployOptions) showLogs(
 		}
 		return nil
 	}
+
+	logOpts := ctllogs.PodLogOpts{Follow: true, ContainerTag: true, LinePrefix: "logs"}
 
 	ctllogs.NewView(logOpts, podWatcher, contFilterFunc, coreClient, o.ui).Show(cancelCh)
 }
