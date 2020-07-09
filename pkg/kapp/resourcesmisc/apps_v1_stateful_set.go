@@ -7,7 +7,7 @@ import (
 )
 
 type AppsV1StatefulSet struct {
-	resource     ctlres.Resource
+	resource ctlres.Resource
 }
 
 func NewAppsV1StatefulSet(resource ctlres.Resource, associatedRs []ctlres.Resource) *AppsV1StatefulSet {
@@ -25,14 +25,15 @@ func (s AppsV1StatefulSet) IsDoneApplying() DoneApplyState {
 	statefulSet := appsv1.StatefulSet{}
 
 	err := s.resource.AsTypedObj(&statefulSet)
+	fmt.Printf("Resource: %v\n", statefulSet)
 	if err != nil {
 		return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf("Error: Failed obj conversion: %s", err)}
 	}
 
-	updateStrategy := statefulSet.Spec.UpdateStrategy
-	if updateStrategy.Type == "OnDelete" {
-		return DoneApplyState{Done: true, Successful: true}
-	}
+	//updateStrategy := statefulSet.Spec.UpdateStrategy
+	//if updateStrategy.Type == "OnDelete" {
+	//	return DoneApplyState{Done: true, Successful: true}
+	//}
 
 	if statefulSet.Generation != statefulSet.Status.ObservedGeneration {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(
@@ -40,15 +41,15 @@ func (s AppsV1StatefulSet) IsDoneApplying() DoneApplyState {
 	}
 
 	// TODO: introduce logic for partition
-
+	// Once ReadyReplicas == Replicas and UpdatedReplicas == Replicas: we can pass
 	if statefulSet.Status.ReadyReplicas < statefulSet.Status.Replicas ||
-			statefulSet.Status.UpdatedReplicas < statefulSet.Status.Replicas {
+		statefulSet.Status.UpdatedReplicas < statefulSet.Status.Replicas {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(
 			"Waiting for %d replicas to be updated and ready (currently %d updated and %d ready)",
-			  statefulSet.Status.Replicas - min(statefulSet.Status.UpdatedReplicas, statefulSet.Status.ReadyReplicas),
-			  statefulSet.Status.UpdatedReplicas,
-			  statefulSet.Status.ReadyReplicas,
-			)}
+			statefulSet.Status.Replicas-min(statefulSet.Status.UpdatedReplicas, statefulSet.Status.ReadyReplicas),
+			statefulSet.Status.UpdatedReplicas,
+			statefulSet.Status.ReadyReplicas,
+		)}
 	}
 
 	return DoneApplyState{Done: true, Successful: true}
