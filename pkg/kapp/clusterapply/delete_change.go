@@ -3,6 +3,7 @@ package clusterapply
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
@@ -15,7 +16,12 @@ const (
 	deleteStrategyDefaultAnnKey = ""
 	deleteStrategyOrphanAnnKey  = "orphan"
 
-	orphanedAnnKey = "kapp.k14s.io/orphaned"
+	appLabelKey      = "kapp.k14s.io/app" // TODO duplicated here
+	orphanedLabelKey = "kapp.k14s.io/orphaned"
+)
+
+var (
+	jsonPointerEncoder = strings.NewReplacer("~", "~0", "/", "~1")
 )
 
 type DeleteChange struct {
@@ -29,12 +35,16 @@ func (c DeleteChange) Apply() error {
 
 	switch strategy {
 	case deleteStrategyOrphanAnnKey:
-		mergePatch := map[string]interface{}{
-			"metadata": map[string]interface{}{
-				"annotations": map[string]string{
-					orphanedAnnKey: "",
-					// TODO remove current app label?
-				},
+		mergePatch := []interface{}{
+			// TODO currently we do not account for when '-a label:foo=bar' used
+			map[string]interface{}{
+				"op":   "remove",
+				"path": "/metadata/labels/" + jsonPointerEncoder.Replace(appLabelKey),
+			},
+			map[string]interface{}{
+				"op":    "add",
+				"path":  "/metadata/labels/" + jsonPointerEncoder.Replace(orphanedLabelKey),
+				"value": "",
 			},
 		}
 
@@ -43,18 +53,13 @@ func (c DeleteChange) Apply() error {
 			return err
 		}
 
-		_, err = c.identifiedResources.Patch(res, types.MergePatchType, patchJSON)
-		if err != nil {
-			return err
-		}
+		_, err = c.identifiedResources.Patch(res, types.JSONPatchType, patchJSON)
+		return err
 
 	case deleteStrategyDefaultAnnKey:
 		// TODO should we be configuring default garbage collection policy to background?
 		// https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/
-		err := c.identifiedResources.Delete(res)
-		if err != nil {
-			return err
-		}
+		return c.identifiedResources.Delete(res)
 
 	default:
 		return fmt.Errorf("Unknown delete strategy: %s", strategy)

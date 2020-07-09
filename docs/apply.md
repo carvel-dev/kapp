@@ -36,7 +36,7 @@ Possible values: `` (default), `fallback-on-replace`, `always-replace`. In some 
 
 `kapp.k14s.io/delete-strategy` annotation controls deletion behaviour
 
-Possible values: `` (default), `orphan`. By default resource is deleted, however; choosing `orphan` value will make kapp forget about this resource. Note that if this resource is owned by a different resource that's being deleted, it might still get deleted. Orphaned resources are annotated with `kapp.k14s.io/orphaned` annotation.
+Possible values: `` (default), `orphan`. By default resource is deleted, however; choosing `orphan` value will make kapp forget about this resource. Note that if this resource is owned by a different resource that's being deleted, it might still get deleted. Orphaned resources are labeled with `kapp.k14s.io/orphaned` label. As of v0.31.0+, resource is also disassociated from owning app so that it can be owned by future apps.
 
 #### kapp.k14s.io/owned-for-deletion
 
