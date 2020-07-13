@@ -2,7 +2,7 @@
 
 kapp compares resources specified in files against resources that exist in Kubernetes API. Once change set is calculated, it provides an option to apply it (see [Apply](apply.md) section for further details).
 
-There are four different types of operations: `create`, `update`, `delete`, `noop` (shown as empty). Seen in `Op` column of diff summary table.
+There are four different types of operations: `create`, `update`, `delete`, `noop` (shown as empty). Seen in `Op` column of diff summary table. Additionally there is `Op strategy` column (shorted as `Op st.`), added in v0.31.0+, that shows supplemental information how operation will be performed (for example `fallback on replace` for `update` operation).
 
 There are three different types of waiting: `reconcile` (waits until resource has converged to its desired state; see [apply waiting](apply-waiting.md) for waiting semantics), `delete` (waits until resource is gone), `noop` (shown as empty). Seen in `Wait to` column of diff summary table.
 
