@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: default
+  name: simple-app
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    simple-app: ""
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: default
+  name: simple-app
+spec:
+  selector:
+    matchLabels:
+      simple-app: ""
+  template:
+    metadata:
+      labels:
+        simple-app: ""
+    spec:
+      containers:
+      - name: simple-app
+        image: docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0
+        env:
+        - name: HELLO_MSG
+          value: stranger

@@ -83,8 +83,10 @@ $ <span class="green">kapp -y deploy -a some-app -f</span> &lt;(ytt -f ./some-ap
 $ wget -O- https://get-kapp.io/install-katacoda.sh | bash
 $ cd kapp/
 $ kapp version
-$ kapp deploy -a gb -f examples/gitops/guestbook/all-in-one.yml
-$ kapp inspect -a gb -t</pre>
+$ kapp deploy -a app1 -f examples/simple-app-example/config-1.yml
+$ kapp inspect -a app1
+$ kapp deploy -a app1 -f examples/simple-app-example/config-2.yml
+$ kapp delete -a app1</pre>
         </div>
 
         <div id="workflow">
@@ -92,68 +94,27 @@ $ kapp inspect -a gb -t</pre>
           <table>
             <tbody>
               <tr>
-                <td class="doc">In this example, we are installing app called Knative (v0.2.1).</td>
+                <td class="doc">In this example, we are installing sample app from kapp repository.</td>
                 <td class="output">
                   <pre class="terminal">
-$ kapp deploy -a knative -f examples/knative-v0.2.1/release-no-mon.yml</pre>
+$ kapp deploy -a app1 -f examples/simple-app-example/config-1.yml</pre>
                 </td>
               </tr>
               <tr>
                 <td class="doc">Changes summary shows that all resources are new.</td>
                 <td class="output">
                   <pre class="terminal">
+Target cluster 'https://x.x.x.x' (nodes: gke-dk-jan-9-pool-1-d01bcd06-bgie, 4+)
+
 Changes
 
-Namespace        Name                              Kind                      Conditions  Age  Changed  Ignored Reason
--                build-controller-admin            ClusterRoleBinding        -           -    <span class="green">add</span>      -
-~                builds.build.knative.dev          CustomResourceDefinition  -           -    <span class="green">add</span>      -
-...
-~                knative-build                     Namespace                 -           -    <span class="green">add</span>      -
-~                knative-build-admin               ClusterRole               -           -    <span class="green">add</span>      -
-~                knative-serving                   Namespace                 -           -    <span class="green">add</span>      -
-~                knative-serving-admin             ClusterRole               -           -    <span class="green">add</span>      -
-~                knative-serving-autoscaler-write  ClusterRoleBinding        -           -    <span class="green">add</span>      -
-~                knative-serving-controller-admin  ClusterRoleBinding        -           -    <span class="green">add</span>      -
-~                knative-serving-write             ClusterRole               -           -    <span class="green">add</span>      -
-...
-~                services.serving.knative.dev      CustomResourceDefinition  -           -    <span class="green">add</span>      -
-istio-system     knative-ingressgateway            Deployment                -           -    <span class="green">add</span>      -
-~                knative-ingressgateway            HorizontalPodAutoscaler   -           -    <span class="green">add</span>      -
-~                knative-ingressgateway            Service                   -           -    <span class="green">add</span>      -
-knative-build    build-controller                  Deployment                -           -    <span class="green">add</span>      -
-~                build-controller                  Service                   -           -    <span class="green">add</span>      -
-~                build-controller                  ServiceAccount            -           -    <span class="green">add</span>      -
-~                build-webhook                     Deployment                -           -    <span class="green">add</span>      -
-~                build-webhook                     Service                   -           -    <span class="green">add</span>      -
-~                config-logging                    ConfigMap                 -           -    <span class="green">add</span>      -
-~                creds-init                        Image                     -           -    <span class="green">add</span>      -
-~                gcs-fetcher                       Image                     -           -    <span class="green">add</span>      -
-~                git-init                          Image                     -           -    <span class="green">add</span>      -
-~                nop                               Image                     -           -    <span class="green">add</span>      -
-knative-serving  activator                         Deployment                -           -    <span class="green">add</span>      -
-~                activator-service                 Service                   -           -    <span class="green">add</span>      -
-~                autoscaler                        Deployment                -           -    <span class="green">add</span>      -
-~                autoscaler                        Service                   -           -    <span class="green">add</span>      -
-~                autoscaler                        ServiceAccount            -           -    <span class="green">add</span>      -
-~                config-autoscaler                 ConfigMap                 -           -    <span class="green">add</span>      -
-~                config-controller                 ConfigMap                 -           -    <span class="green">add</span>      -
-~                config-domain                     ConfigMap                 -           -    <span class="green">add</span>      -
-~                config-gc                         ConfigMap                 -           -    <span class="green">add</span>      -
-~                config-logging                    ConfigMap                 -           -    <span class="green">add</span>      -
-~                config-network                    ConfigMap                 -           -    <span class="green">add</span>      -
-~                config-observability              ConfigMap                 -           -    <span class="green">add</span>      -
-~                controller                        Deployment                -           -    <span class="green">add</span>      -
-~                controller                        Service                   -           -    <span class="green">add</span>      -
-~                controller                        ServiceAccount            -           -    <span class="green">add</span>      -
-~                fluentd-sidecar                   Image                     -           -    <span class="green">add</span>      -
-~                knative-shared-gateway            Gateway                   -           -    <span class="green">add</span>      -
-~                queue-proxy                       Image                     -           -    <span class="green">add</span>      -
-~                webhook                           Deployment                -           -    <span class="green">add</span>      -
-~                webhook                           Service                   -           -    <span class="green">add</span>      -
+Namespace  Name        Kind        Conds.  Age  Op      Op st.  Wait to    Rs  Ri
+default    simple-app  Deployment  -       -    <span class="green">create</span>  -       reconcile  -   -
+^          simple-app  Service     -       -    <span class="green">create</span>  -       reconcile  -   -
 
-51 add, 0 delete, 0 update, 0 keep
-
-51 changes</pre>
+Op:      2 create, 0 delete, 0 update, 0 noop
+Wait to: 2 reconcile, 0 delete, 0 noop
+</pre>
                 </td>
               </tr>
               <tr>
@@ -162,30 +123,20 @@ knative-serving  activator                         Deployment                -  
                   <pre class="terminal">
 Continue? [yN]: y
 
-10:23:53AM: --- applying changes
-10:23:53AM: add customresourcedefinition/builds.build.knative.dev (apiextensions.k8s.io/v1beta1) cluster
-10:23:53AM: add customresourcedefinition/buildtemplates.build.knative.dev (apiextensions.k8s.io/v1beta1) cluster
-...
-10:23:54AM: waiting on add customresourcedefinition/builds.build.knative.dev (apiextensions.k8s.io/v1beta1) cluster
-10:23:55AM: waiting on add customresourcedefinition/buildtemplates.build.knative.dev (apiextensions.k8s.io/v1beta1) cluster
-...
-10:23:59AM: add namespace/knative-build (v1) cluster
-10:23:59AM: add namespace/knative-serving (v1) cluster
-10:23:59AM: waiting on add namespace/knative-build (v1) cluster
-10:24:00AM: waiting on add namespace/knative-serving (v1) cluster
-10:24:00AM: add clusterrole/knative-build-admin (rbac.authorization.k8s.io/v1) cluster
-...
-10:24:00AM: add configmap/config-observability (v1) namespace: knative-serving
-10:24:00AM: add deployment/controller (apps/v1) namespace: knative-serving
-...
-10:24:16AM: waiting on add deployment/webhook (apps/v1) namespace: knative-serving
-10:24:17AM:  L waiting on replicaset/webhook-5d4768c744 (extensions/v1beta1) namespace: knative-serving ... done
-10:24:17AM:  L waiting on pod/webhook-5d4768c744-9zc4f (v1) namespace: knative-serving ... done
-...
-10:24:41AM: ---  waiting on 1 changes
-10:24:41AM: waiting on add service/knative-ingressgateway (v1) namespace: istio-system
-10:24:41AM:  L waiting on endpoints/knative-ingressgateway (v1) namespace: istio-system ... done
-10:24:41AM: --- changes applied
+2:12:59PM: ---- applying 2 changes [0/2 done] ----
+2:13:00PM: create service/simple-app (v1) namespace: default
+2:13:01PM: create deployment/simple-app (apps/v1) namespace: default
+2:13:01PM: ---- waiting on 2 changes [0/2 done] ----
+2:13:01PM: ok: reconcile service/simple-app (v1) namespace: default
+2:13:01PM: ongoing: reconcile deployment/simple-app (apps/v1) namespace: default
+2:13:01PM:  ^ Waiting for 1 unavailable replicas
+2:13:01PM:  L ok: waiting on replicaset/simple-app-7f9c78ccd8 (apps/v1) namespace: default
+2:13:01PM:  L ongoing: waiting on pod/simple-app-7f9c78ccd8-h7wlc (v1) namespace: default
+2:13:01PM:     ^ Pending: ContainerCreating
+2:13:01PM: ---- waiting on 1 changes [1/2 done] ----
+2:13:03PM: ok: reconcile deployment/simple-app (apps/v1) namespace: default
+2:13:03PM: ---- applying complete [2/2 done] ----
+2:13:03PM: ---- waiting complete [2/2 done] ----
 
 Succeeded</pre>
                 </td>
@@ -195,19 +146,23 @@ Succeeded</pre>
               <tr>
                 <td class="doc">
                   <code>ls</code> command shows list of all apps stored in current namespace.
-                  Apps themselves can span multiple namespaces and cluster.
+                  Apps themselves can span multiple namespaces and cluster scope.
                 </td>
                 <td class="output">
                   <pre class="terminal">
 $ kapp ls
 
+Target cluster 'https://x.x.x.x' (nodes: gke-dk-jan-9-pool-1-d01bcd06-bgie, 4+)
+
 Apps in namespace 'default'
 
-Name     Label                                 Namespaces                                            Last Change Successful  Last Change Age
-istio    kapp.k14s.io/app=1551818002314622000  (cluster),istio-system                                true                    1d
-knative  kapp.k14s.io/app=1551819837136481000  (cluster),istio-system,knative-build,knative-serving  true                    1d
+Name  Namespaces  Lcs   Lca
+app   default     true  25s
 
-2 apps
+Lcs: Last Change Successful
+Lca: Last Change Age
+
+1 apps
 
 Succeeded</pre>
                 </td>
@@ -216,7 +171,7 @@ Succeeded</pre>
             <tbody>
               <tr>
                 <td class="doc">
-                  Now let's update Knative to v0.4.0 from v0.2.1 using <code>deploy</code> command.
+                  Now let's update from one app configuration to another using <code>deploy</code> command.
                   <br/><br/>
                   Since <code>--diff-changes</code> is used, 
                   <code>kapp</code> will show detailed diff against
@@ -224,7 +179,7 @@ Succeeded</pre>
                 </td>
                 <td class="output">
                   <pre class="terminal">
-$ kapp deploy -a knative -f examples/knative-v0.4.0/release-no-mon.yml --diff-changes</pre>
+$ kapp deploy -a app1 -f examples/simple-app-example/config-2.yml --diff-changes</pre>
                 </td>
               </tr>
               <tr>
@@ -233,144 +188,105 @@ $ kapp deploy -a knative -f examples/knative-v0.4.0/release-no-mon.yml --diff-ch
                 </td>
                 <td class="output">
                   <pre class="terminal">
-...
---- add gateway/cluster-local-gateway (networking.istio.io/v1alpha3) namespace: knative-serving<span class="green">
-      0 + apiVersion: networking.istio.io/v1alpha3
-      1 + kind: Gateway
+Target cluster 'https://x.x.x.x' (nodes: gke-dk-jan-9-pool-1-d01bcd06-bgie, 4+)
+
+@@ create service/simple-app-node (v1) namespace: default @@<span class="green">
+      0 + apiVersion: v1
+      1 + kind: Service
       2 + metadata:
       3 +   labels:
-      4 +     kapp.k14s.io/app: "1551986249395299000"
-      5 +     kapp.k14s.io/association: v1.e7bcfd8c4517005ad00db9a1e77b9025
-      6 +     serving.knative.dev/release: devel
-      7 +   name: cluster-local-gateway
-      8 +   namespace: knative-serving
-      9 + spec:
-     10 +   selector:
-     11 +     istio: cluster-local-gateway
-     12 +   servers:
-     13 +   - hosts:
-     14 +     - '*'
-     15 +     port:
-     16 +       name: http
-     17 +       number: 80
-     18 +       protocol: HTTP
-     19 +</span></pre>
+      4 +     kapp.k14s.io/app: "1594663909283037000"
+      5 +     kapp.k14s.io/association: v1.6e43c1cd2c7173a969d84f77ad6a72c2
+      6 +   name: simple-app-node
+      7 +   namespace: default
+      8 + spec:
+      9 +   ports:
+     10 +   - nodePort: 31111
+     11 +     port: 80
+     12 +     targetPort: 80
+     13 +   selector:
+     14 +     kapp.k14s.io/app: "1594663909283037000"
+     15 +     simple-app: ""
+     16 +   type: NodePort
+     17 +</span>
+
+@@ create configmap/simple-app (v1) namespace: default @@<span class="green">
+      0 + apiVersion: v1
+      1 + data:
+      2 +   hello_msg: friend
+      3 + kind: ConfigMap
+      4 + metadata:
+      5 +   labels:
+      6 +     kapp.k14s.io/app: "1594663909283037000"
+      7 +     kapp.k14s.io/association: v1.afcdfc989e2a0b3f3e526dc1c4176060
+      8 +   name: simple-app
+      9 +   namespace: default
+     10 +</span></pre>
                 </td>
               </tr>
               <tr>
                 <td class="doc">This resource will be updated.</td>
                 <td class="output">
                   <pre class="terminal">
---- update service/activator-service (v1) namespace: knative-serving
-  ...
-  8,  8       kapp.k14s.io/association: v1.95eeff0c313a389c06b371a05fc2ea61<span class="green">
-      9 +     serving.knative.dev/release: devel</span>
-  9, 10     name: activator-service
- 10, 11     namespace: knative-serving
-  ...
- 17, 18     - name: http<span class="green">
-     19 +     nodePort: null</span>
- 18, 20       port: 80
- 19, 21       protocol: TCP
- 20, 22       targetPort: 8080<span class="green">
- 21, 23 +   - name: http2
-     24 +     port: 81
-     25 +     protocol: TCP
-     26 +     targetPort: 8081</span>
-     27     - name: metrics<span class="green">
- 22, 28 +     nodePort: null</span>
- 22, 29       port: 9090
- 23, 30       protocol: TCP
-  ...
- 26, 33       app: activator<span class="red">
- 27, 34 -   type: NodePort</span><span class="green">
- 28, 34 +   type: ClusterIP</span>
- 28, 35   status:
- 29, 36     loadBalancer: {}</pre>
+@@ update deployment/simple-app (apps/v1) namespace: default @@
+  ...<span class="red">
+ 29, 29           - name: HELLO_MSG
+ 30     -           value: stranger</span><span class="green">
+     30 +           valueFrom:
+     31 +             configMapKeyRef:
+     32 +               key: hello_msg
+     33 +               name: simple-app</span>
+ 31, 34           image: docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0
+ 32, 35           name: simple-app</pre>
                 </td>
               </tr>
               <tr>
                 <td class="doc">This resource is will be deleted.</td>
                 <td class="output">
                   <pre class="terminal">
---- delete image/creds-init (caching.internal.knative.dev/v1alpha1) namespace: knative-build<span class="red">
-  0     - apiVersion: caching.internal.knative.dev/v1alpha1
-  1     - kind: Image
+@@ delete service/simple-app (v1) namespace: default @@<span class="red">
+  0     - apiVersion: v1
+  1     - kind: Service
   2     - metadata:
-  3     -   annotations: {}
-  4     -   clusterName: ""
-  5     -   creationTimestamp: "2019-03-07T19:17:41Z"
-  6     -   generation: 1
-  7     -   labels:
-  8     -     kapp.k14s.io/app: "1551986249395299000"
-  9     -     kapp.k14s.io/association: v1.2bb2c5b4ed8235697a866d7a9d287361
- 10     -   name: creds-init
- 11     -   namespace: knative-build
- 12     -   resourceVersion: "26738314"
- 13     -   selfLink: /apis/caching.internal.knative.dev/v1alpha1/namespaces/knative-build/images/creds-init
- 14     -   uid: adc75788-410d-11e9-9fb1-42010a8001ed
- 15     - spec:
- 16     -   image: gcr.io/knative-releases/github.com/knative/build/cmd/creds-init@sha256:c1c11fafd337f62eea18a1f02b78e6ae6949779bed72d53d19b2870723a8f104
- 17     -</span>
-...</pre>
+  3     -   creationTimestamp: "2020-07-13T18:12:59Z"
+  4     -   labels:
+  5     -     kapp.k14s.io/app: "1594663909283037000"
+  6     -     kapp.k14s.io/association: v1.462a95c01b2a0bdc4d5acadc4a22dd74
+  7     -   name: simple-app
+  8     -   namespace: default
+  9     -   resourceVersion: "69009086"
+ 10     -   selfLink: /api/v1/namespaces/default/services/simple-app
+ 11     -   uid: 4e8bb148-2de4-46b3-a2e1-53dacbaaff34
+ 12     - spec:
+ 13     -   clusterIP: 10.76.6.94
+ 14     -   ports:
+ 15     -   - port: 80
+ 16     -     targetPort: 80
+ 17     -   selector:
+ 18     -     kapp.k14s.io/app: "1594663909283037000"
+ 19     -     simple-app: ""
+ 20     - status:
+ 21     -   loadBalancer: {}
+ 22     -</span></pre>
                 </td>
               </tr>
               <tr>
                 <td class="doc">
                   Changes summary is presented before deploy will continue.
-                  In this example, there were quite a few changes between Knative v0.2.1 and v0.4.0.
+                  There are only few changes in this example.
                 </td>
                 <td class="output">
                   <pre class="terminal">
 Changes
 
-Namespace        Name                              Kind                      Conditions  Age  Changed  Ignored Reason
--                build-controller-admin            ClusterRoleBinding        -           6m   <span class="red">del</span>      -
-~                builds.build.knative.dev          CustomResourceDefinition  <span class="green">2 OK / 2</span>    6m   <span class="red">del</span>      -
-...
-~                knative-build                     Namespace                 -           6m   <span class="red">del</span>      -
-~                knative-build-admin               ClusterRole               -           6m   <span class="red">del</span>      -
-~                knative-serving                   Namespace                 -           6m   <span class="green">mod</span>      -
-~                knative-serving-admin             ClusterRole               -           6m   <span class="green">mod</span>      -
-~                knative-serving-autoscaler-write  ClusterRoleBinding        -           6m   <span class="red">del</span>      -
-~                knative-serving-controller-admin  ClusterRoleBinding        -           6m   <span class="green">mod</span>      -
-~                knative-serving-core              ClusterRole               -           -    <span class="green">add</span>      -
-~                knative-serving-write             ClusterRole               -           6m   <span class="red">del</span>      -
-...
-istio-system     knative-ingressgateway            Deployment                <span class="green">2 OK / 2</span>    6m   <span class="red">del</span>      -
-~                knative-ingressgateway            HorizontalPodAutoscaler   <span class="green">3 OK / 3</span>    6m   <span class="red">del</span>      -
-~                knative-ingressgateway            Service                   -           6m   <span class="red">del</span>      -
-knative-build    build-controller                  Deployment                <span class="green">2 OK / 2</span>    6m   <span class="red">del</span>      -
-~                build-controller                  Service                   -           6m   <span class="red">del</span>      -
-~                build-controller                  ServiceAccount            -           6m   <span class="red">del</span>      -
-~                build-webhook                     Deployment                <span class="green">2 OK / 2</span>    6m   <span class="red">del</span>      -
-~                build-webhook                     Service                   -           6m   <span class="red">del</span>      -
-~                config-logging                    ConfigMap                 -           6m   <span class="red">del</span>      -
-~                creds-init                        Image                     -           6m   <span class="red">del</span>      -
-~                gcs-fetcher                       Image                     -           6m   <span class="red">del</span>      -
-~                git-init                          Image                     -           6m   <span class="red">del</span>      -
-~                nop                               Image                     -           6m   <span class="red">del</span>      -
-knative-serving  activator                         Deployment                <span class="green">2 OK / 2</span>    6m   <span class="green">mod</span>      -
-~                activator-service                 Service                   -           6m   <span class="green">mod</span>      -
-~                autoscaler                        Deployment                <span class="green">2 OK / 2</span>    6m   <span class="green">mod</span>      -
-~                autoscaler                        Service                   -           6m   <span class="green">mod</span>      -
-~                autoscaler                        ServiceAccount            -           6m   <span class="red">del</span>      -
-~                cluster-local-gateway             Gateway                   -           -    <span class="green">add</span>      -
-...
-~                config-observability              ConfigMap                 -           6m   <span class="green">mod</span>      -
-~                controller                        Deployment                <span class="green">2 OK / 2</span>    6m   <span class="green">mod</span>      -
-~                controller                        Service                   -           6m   <span class="green">mod</span>      -
-~                controller                        ServiceAccount            -           6m   <span class="green">mod</span>      -
-~                fluentd-sidecar                   Image                     -           6m   <span class="red">del</span>      -
-~                knative-ingress-gateway           Gateway                   -           -    <span class="green">add</span>      -
-~                knative-shared-gateway            Gateway                   -           6m   <span class="red">del</span>      -
-~                queue-proxy                       Image                     -           6m   <span class="green">mod</span>      -
-~                webhook                           Deployment                <span class="green">2 OK / 2</span>    6m   <span class="green">mod</span>      -
-~                webhook                           Service                   -           6m   <span class="green">mod</span>      -
+Namespace  Name             Kind        Conds.  Age  Op      Op st.  Wait to    Rs  Ri
+default    simple-app       ConfigMap   -       -    <span class="green">create</span>  -       reconcile  -   -
+^          simple-app       Deployment  <span class="green">2/2 t</span>   2m   <span class="green">update</span>  -       reconcile  <span class="green">ok</span>  -
+^          simple-app       Service     -       2m   <span class="red">delete</span>  -       delete     <span class="green">ok</span>  -
+^          simple-app-node  Service     -       -    <span class="green">create</span>  -       reconcile  -   -
 
-4 add, 24 delete (27 hidden), 27 update, 0 keep
-
-55 changes</pre>
+Op:      2 create, 1 delete, 1 update, 0 noop
+Wait to: 3 reconcile, 1 delete, 0 noop</pre>
                 </td>
               </tr>
               <tr>
@@ -382,27 +298,28 @@ knative-serving  activator                         Deployment                <sp
                   <pre class="terminal">
 Continue? [yN]:
 
-11:48:37AM: --- applying changes
-11:48:37AM: update customresourcedefinition/clusteringresses.networking.internal.knative.dev (apiextensions.k8s.io/v1beta1) cluster
-...
-11:48:41AM: waiting on update customresourcedefinition/services.serving.knative.dev (apiextensions.k8s.io/v1beta1) cluster
-11:48:41AM: update namespace/knative-serving (v1) cluster
-11:48:41AM: waiting on update namespace/knative-serving (v1) cluster
-11:48:42AM: update clusterrole/knative-serving-admin (rbac.authorization.k8s.io/v1) cluster
-...
-11:48:55AM: ---  waiting on 4 changes
-11:48:55AM: waiting on update deployment/activator (apps/v1) namespace: knative-serving
-11:48:56AM:  L waiting on replicaset/activator-754fc557ff (apps/v1) namespace: knative-serving ... done
-11:48:56AM:  L waiting on replicaset/activator-6b4c4b55dd (apps/v1) namespace: knative-serving ... done
-11:48:56AM:  L waiting on podmetrics/activator-6b4c4b55dd-g8jjg (metrics.k8s.io/v1beta1) namespace: knative-serving ... done
-11:48:56AM:  L waiting on pod/activator-754fc557ff-kpjkj (v1) namespace: knative-serving ... in progress: Condition Ready is not True (False)
-11:48:56AM:  L waiting on pod/activator-6b4c4b55dd-vbdr9 (v1) namespace: knative-serving ... done
-11:48:56AM:  L waiting on pod/activator-6b4c4b55dd-g8jjg (v1) namespace: knative-serving ... in progress: Deleting
-11:48:56AM:  L waiting on pod/activator-6b4c4b55dd-8zfdq (v1) namespace: knative-serving ... in progress: Deleting
-11:48:56AM: waiting on update deployment/autoscaler (apps/v1) namespace: knative-serving
-11:48:56AM:  L waiting on replicaset/autoscaler-84cfcc9f4b (extensions/v1beta1) namespace: knative-serving ... done
-...
-11:49:32AM: --- changes applied
+2:21:15PM: ---- applying 2 changes [0/4 done] ----
+2:21:15PM: delete service/simple-app (v1) namespace: default
+2:21:15PM: create configmap/simple-app (v1) namespace: default
+2:21:15PM: ---- waiting on 2 changes [0/4 done] ----
+2:21:15PM: ok: delete service/simple-app (v1) namespace: default
+2:21:15PM: ok: reconcile configmap/simple-app (v1) namespace: default
+2:21:15PM: ---- applying 2 changes [2/4 done] ----
+2:21:15PM: create service/simple-app-node (v1) namespace: default
+2:21:17PM: update deployment/simple-app (apps/v1) namespace: default
+2:21:17PM: ---- waiting on 2 changes [2/4 done] ----
+2:21:17PM: ok: reconcile service/simple-app-node (v1) namespace: default
+2:21:17PM: ongoing: reconcile deployment/simple-app (apps/v1) namespace: default
+2:21:17PM:  ^ Waiting for 1 unavailable replicas
+2:21:17PM:  L ok: waiting on replicaset/simple-app-8558f78495 (apps/v1) namespace: default
+2:21:17PM:  L ok: waiting on replicaset/simple-app-7f9c78ccd8 (apps/v1) namespace: default
+2:21:17PM:  L ok: waiting on pod/simple-app-8558f78495-zqwxt (v1) namespace: default
+2:21:17PM:  L ongoing: waiting on pod/simple-app-7f9c78ccd8-h7wlc (v1) namespace: default
+2:21:17PM:     ^ Deleting
+2:21:17PM: ---- waiting on 1 changes [3/4 done] ----
+2:21:18PM: ok: reconcile deployment/simple-app (apps/v1) namespace: default
+2:21:18PM: ---- applying complete [4/4 done] ----
+2:21:18PM: ---- waiting complete [4/4 done] ----
 
 Succeeded
 </pre>
@@ -417,24 +334,25 @@ Succeeded
                 </td>
                 <td class="output">
                   <pre class="terminal">
-$ kapp inspect -a knative --tree
+$ kapp inspect -a app1 --tree
 
-Resources in app 'knative'
+Target cluster 'https://x.x.x.x' (nodes: gke-dk-jan-9-pool-1-d01bcd06-bgie, 4+)
 
-Namespace        Name                              Kind        Conditions  Age
-...
-knative-serving  controller                        Deployment  <span class="green">2 OK / 2</span>    1d
-knative-serving   L controller-74449bc6fc          ReplicaSet  -           1d
-knative-serving   L.. controller-74449bc6fc-q76fx  Pod         <span class="green">3 OK / 3</span>    1d
-knative-serving  activator                         Deployment  <span class="green">2 OK / 2</span>    1d
-knative-serving   L activator-79495f6bdb           ReplicaSet  -           1d
-knative-serving   L.. activator-79495f6bdb-9cs59   Pod         <span class="green">3 OK / 3</span>    1d
-knative-serving   L.. activator-79495f6bdb-lp7dp   Pod         <span class="green">3 OK / 3</span>    1d
-knative-serving   L.. activator-79495f6bdb-2zt98   Pod         <span class="green">3 OK / 3</span>    1d
-knative-serving  fluentd-sidecar                   Image       -           1d
-...
+Resources in app 'app'
 
-75 resources
+Namespace  Name                              Kind        Owner    Conds.  Rs  Ri  Age
+default    simple-app                        Deployment  kapp     <span class="green">2/2 t</span>   <span class="green">ok</span>  -   8m
+default     L simple-app-7f9c78ccd8          ReplicaSet  cluster  -       <span class="green">ok</span>  -   8m
+default     L simple-app-8558f78495          ReplicaSet  cluster  -       <span class="green">ok</span>  -   28s
+default     L.. simple-app-8558f78495-zqwxt  Pod         cluster  <span class="green">4/4 t</span>   <span class="green">ok</span>  -   28s
+default    simple-app-node                   Service     kapp     -       <span class="green">ok</span>  -   28s
+default     L simple-app-node                Endpoints   cluster  -       <span class="green">ok</span>  -   28s
+default    simple-app                        ConfigMap   kapp     -       <span class="green">ok</span>  -   28s
+
+Rs: Reconcile state
+Ri: Reconcile information
+
+7 resources
 
 Succeeded</pre>
                 </td>
@@ -447,13 +365,13 @@ Succeeded</pre>
                 </td>
                 <td class="output">
                   <pre class="terminal">
-$ kapp logs -f -a knative
+$ kapp logs -f -a app1
 
-# starting tailing 'controller-74449bc6fc-q76fx > controller' logs
-# starting tailing 'autoscaler-77fd694cf7-tlzrg > autoscaler' logs
-controller-74449bc6fc-q76fx > controller | E0307 01:42:36.464925       1 reflector.go:205] github.com/knative/serving/pkg/client/informers/externalversions/factory.go:116: Failed to list *v1alpha1.PodAutoscaler: Get https://10.23.240.169:443/apis/autoscaling.internal.knative.dev/v1alpha1/podautoscalers?limit=500&resourceVersion=0: dial tcp 10.23.240.169:443: i/o timeout
-autoscaler-77fd694cf7-tlzrg > autoscaler | E0307 01:42:49.219897       1 reflector.go:205] github.com/knative/serving/vendor/k8s.io/client-go/informers/factory.go:130: Failed to list *v1.ConfigMap: Get https://10.23.240.169:443/api/v1/namespaces/knative-serving/configmaps?limit=500&resourceVersion=0: EOF
-...</pre>
+Target cluster 'https://x.x.x.x' (nodes: gke-dk-jan-9-pool-1-d01bcd06-bgie, 4+)
+
+# starting tailing 'simple-app-8558f78495-zqwxt > simple-app' logs
+simple-app-8558f78495-zqwxt > simple-app | 2020/07/13 18:21:16 Server started
+^C</pre>
                 </td>
               </tr>
             </tbody>
@@ -465,44 +383,55 @@ autoscaler-77fd694cf7-tlzrg > autoscaler | E0307 01:42:49.219897       1 reflect
                 </td>
                 <td class="output">
                   <pre class="terminal">
-$ kapp delete -a knative
+$ kapp delete -a app1
+
+Target cluster 'https://x.x.x.x' (nodes: gke-dk-jan-9-pool-1-d01bcd06-bgie, 4+)
 
 Changes
 
-Namespace        Name                                              Kind                      Conditions  Age  Changed  Ignored Reason
--                build-controller-admin                            ClusterRoleBinding        -           1d   <span class="red">del</span>      -
-~                builds.build.knative.dev                          CustomResourceDefinition  <span class="green">2 OK / 2</span>    1d   <span class="red">del</span>      -
-~                buildtemplates.build.knative.dev                  CustomResourceDefinition  <span class="green">2 OK / 2</span>    1d   <span class="red">del</span>      -
-~                clusterbuildtemplates.build.knative.dev           CustomResourceDefinition  <span class="green">2 OK / 2</span>    1d   <span class="red">del</span>      -
-~                clusteringresses.networking.internal.knative.dev  CustomResourceDefinition  <span class="green">2 OK / 2</span>    1d   <span class="red">del</span>      -
-~                configurations.serving.knative.dev                CustomResourceDefinition  <span class="green">2 OK / 2</span>    1d   <span class="red">del</span>      -
-~                images.caching.internal.knative.dev               CustomResourceDefinition  <span class="green">2 OK / 2</span>    1d   <span class="red">del</span>      -
-~                knative-build                                     Namespace                 -           1d   <span class="red">del</span>      -
-~                knative-build-admin                               ClusterRole               -           1d   <span class="red">del</span>      -
-~                knative-serving                                   Namespace                 -           1d   <span class="red">del</span>      -
-~                knative-serving-admin                             ClusterRole               -           1d   <span class="red">del</span>      -
-~                knative-serving-autoscaler-write                  ClusterRoleBinding        -           1d   <span class="red">del</span>      -
-~                knative-serving-controller-admin                  ClusterRoleBinding        -           1d   <span class="red">del</span>      -
-~                knative-serving-write                             ClusterRole               -           1d   <span class="red">del</span>      -
-~                podautoscalers.autoscaling.internal.knative.dev   CustomResourceDefinition  <span class="green">2 OK / 2</span>    1d   <span class="red">del</span>      -
-~                revisions.serving.knative.dev                     CustomResourceDefinition  <span class="green">2 OK / 2</span>    1d   <span class="red">del</span>      -
-~                routes.serving.knative.dev                        CustomResourceDefinition  <span class="green">2 OK / 2</span>    1d   <span class="red">del</span>      -
-~                services.serving.knative.dev                      CustomResourceDefinition  <span class="green">2 OK / 2</span>    1d   <span class="red">del</span>      -
-istio-system     knative-ingressgateway                            Deployment                <span class="green">2 OK / 2</span>    1d   <span class="red">del</span>      -
-~                knative-ingressgateway                            HorizontalPodAutoscaler   <span class="red">2 OK / 3</span>    1d   <span class="red">del</span>      -
-~                knative-ingressgateway                            Service                   -           1d   <span class="red">del</span>      -
-knative-build    build-controller                                  Deployment                <span class="green">2 OK / 2</span>    1d   <span class="red">del</span>      -
-~                build-controller                                  Service                   -           1d   <span class="red">del</span>      -
-~                build-controller                                  ServiceAccount            -           1d   <span class="red">del</span>      -
-...
+Namespace  Name                         Kind        Conds.  Age  Op      Op st.  Wait to  Rs  Ri
+default    simple-app                   ConfigMap   -       1m   <span class="green">delete</span>  -       delete   ok  -
+^          simple-app                   Deployment  <span class="green">2/2 t</span>   10m  <span class="green">delete</span>  -       delete   ok  -
+^          simple-app-7f9c78ccd8        ReplicaSet  -       10m  -       -       delete   ok  -
+^          simple-app-8558f78495        ReplicaSet  -       1m   -       -       delete   ok  -
+^          simple-app-8558f78495-zqwxt  Pod         <span class="green">4/4 t</span>   1m   -       -       delete   ok  -
+^          simple-app-8558f78495-zqwxt  PodMetrics  -       0s   -       -       delete   ok  -
+^          simple-app-node              Endpoints   -       1m   -       -       delete   ok  -
+^          simple-app-node              Service     -       1m   <span class="green">delete</span>  -       delete   ok  -
 
-0 add, 51 delete (24 hidden), 0 update, 0 keep
+Op:      0 create, 3 delete, 0 update, 5 noop
+Wait to: 0 reconcile, 8 delete, 0 noop
 
-51 changes
+Continue? [yN]: y
 
-Continue? [yN]:
+2:23:24PM: ---- applying 8 changes [0/8 done] ----
+2:23:24PM: noop endpoints/simple-app-node (v1) namespace: default
+2:23:24PM: noop replicaset/simple-app-7f9c78ccd8 (apps/v1) namespace: default
+2:23:24PM: noop pod/simple-app-8558f78495-zqwxt (v1) namespace: default
+2:23:24PM: noop podmetrics/simple-app-8558f78495-zqwxt (metrics.k8s.io/v1beta1) namespace: default
+2:23:24PM: noop replicaset/simple-app-8558f78495 (apps/v1) namespace: default
+2:23:24PM: delete deployment/simple-app (apps/v1) namespace: default
+2:23:24PM: delete service/simple-app-node (v1) namespace: default
+2:23:24PM: delete configmap/simple-app (v1) namespace: default
+2:23:24PM: ---- waiting on 8 changes [0/8 done] ----
+2:23:24PM: ongoing: delete replicaset/simple-app-7f9c78ccd8 (apps/v1) namespace: default
+2:23:24PM: ok: delete endpoints/simple-app-node (v1) namespace: default
+2:23:24PM: ok: delete configmap/simple-app (v1) namespace: default
+2:23:24PM: ongoing: delete replicaset/simple-app-8558f78495 (apps/v1) namespace: default
+2:23:24PM: ongoing: delete pod/simple-app-8558f78495-zqwxt (v1) namespace: default
+2:23:24PM: ok: delete service/simple-app-node (v1) namespace: default
+2:23:24PM: ok: delete deployment/simple-app (apps/v1) namespace: default
+2:23:24PM: ongoing: delete podmetrics/simple-app-8558f78495-zqwxt (metrics.k8s.io/v1beta1) namespace: default
+2:23:24PM: ---- waiting on 4 changes [4/8 done] ----
+2:23:26PM: ok: delete replicaset/simple-app-8558f78495 (apps/v1) namespace: default
+2:23:26PM: ok: delete replicaset/simple-app-7f9c78ccd8 (apps/v1) namespace: default
+2:23:26PM: ---- waiting on 2 changes [6/8 done] ----
+2:23:27PM: ok: delete podmetrics/simple-app-8558f78495-zqwxt (metrics.k8s.io/v1beta1) namespace: default
+2:23:27PM: ok: delete pod/simple-app-8558f78495-zqwxt (v1) namespace: default
+2:23:27PM: ---- applying complete [8/8 done] ----
+2:23:27PM: ---- waiting complete [8/8 done] ----
 
-...</pre>
+Succeeded</pre>
                 </td>
               </tr>
             </tbody>
