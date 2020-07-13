@@ -52,10 +52,7 @@ func (c AddOrUpdateChange) Apply() error {
 				return err
 			}
 
-			err = c.recordAppliedResource(createdRes)
-			if err != nil {
-				return err
-			}
+			return c.recordAppliedResource(createdRes)
 
 		case createStrategyFallbackOnUpdateAnnValue:
 			createdRes, err := c.identifiedResources.Create(newRes)
@@ -66,10 +63,7 @@ func (c AddOrUpdateChange) Apply() error {
 				return err
 			}
 
-			err = c.recordAppliedResource(createdRes)
-			if err != nil {
-				return err
-			}
+			return c.recordAppliedResource(createdRes)
 
 		default:
 			return fmt.Errorf("Unknown create strategy: %s", strategy)
@@ -93,10 +87,7 @@ func (c AddOrUpdateChange) Apply() error {
 				return err
 			}
 
-			err = c.recordAppliedResource(updatedRes)
-			if err != nil {
-				return err
-			}
+			return c.recordAppliedResource(updatedRes)
 
 		case updateStrategyFallbackOnReplaceAnnValue:
 			replaceIfIsInvalidErrFunc := func(err error) error {
@@ -114,10 +105,7 @@ func (c AddOrUpdateChange) Apply() error {
 				return replaceIfIsInvalidErrFunc(err)
 			}
 
-			err = c.recordAppliedResource(updatedRes)
-			if err != nil {
-				return err
-			}
+			return c.recordAppliedResource(updatedRes)
 
 		case updateStrategyAlwaysReplaceAnnValue:
 			return c.replace()
@@ -125,9 +113,10 @@ func (c AddOrUpdateChange) Apply() error {
 		default:
 			return fmt.Errorf("Unknown update strategy: %s", strategy)
 		}
-	}
 
-	return nil
+	default:
+		return fmt.Errorf("Unknown add-or-update op: %s", op)
+	}
 }
 
 func (c AddOrUpdateChange) replace() error {
