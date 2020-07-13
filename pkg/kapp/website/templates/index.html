@@ -77,7 +77,7 @@ $ <span class="green">kapp -y deploy -a some-app -f</span> &lt;(ytt -f ./some-ap
 
           <p><a class="link-button try-online" href="https://www.katacoda.com/courses/kubernetes/playground" target="_blank">Start Katacoda Playground</a></p>
 
-          <p>After launching playground, follow these steps to install <code>kapp</code> and Kubernetes Guestbook example:</p>
+          <p>After launching playground, follow these steps to install <code>kapp</code> and example k8s app:</p>
 
           <pre class="terminal">
 $ wget -O- https://get-kapp.io/install-katacoda.sh | bash
@@ -390,8 +390,8 @@ Target cluster 'https://x.x.x.x' (nodes: gke-dk-jan-9-pool-1-d01bcd06-bgie, 4+)
 Changes
 
 Namespace  Name                         Kind        Conds.  Age  Op      Op st.  Wait to  Rs  Ri
-default    simple-app                   ConfigMap   -       1m   <span class="green">delete</span>  -       delete   ok  -
-^          simple-app                   Deployment  <span class="green">2/2 t</span>   10m  <span class="green">delete</span>  -       delete   ok  -
+default    simple-app                   ConfigMap   -       1m   <span class="red">delete</span>  -       delete   ok  -
+^          simple-app                   Deployment  <span class="green">2/2 t</span>   10m  <span class="red">delete</span>  -       delete   ok  -
 ^          simple-app-7f9c78ccd8        ReplicaSet  -       10m  -       -       delete   ok  -
 ^          simple-app-8558f78495        ReplicaSet  -       1m   -       -       delete   ok  -
 ^          simple-app-8558f78495-zqwxt  Pod         <span class="green">4/4 t</span>   1m   -       -       delete   ok  -
@@ -439,7 +439,7 @@ Succeeded</pre>
         </div>
       </div>
 
-      <div id="footer">(c) 2019</div>
+      <div id="footer">c 2019 &emdash;</div>
     </div>
   </body>
 </html>
