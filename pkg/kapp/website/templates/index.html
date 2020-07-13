@@ -61,13 +61,13 @@
           <h2>Basic Usage</h2>
           <pre class="terminal">
 <span class="gray"># Configurations picked up from a directory</span>
-$ <span class="green">kapp deploy -a cass1 -f examples/cassandra/</span>
+$ <span class="green">kapp deploy -a my-app -f ./examples/simple-app-example/config-1.yml</span>
 <span class="gray spacer-before"># Can be used with helm charts, removing need for Tiller</span>
 $ <span class="green">kapp -y deploy -a my-chart -f</span> &lt;(helm template my-chart --values my-vals.yml)
 <span class="gray spacer-before"># ... and with kustomize</span>
-$ <span class="green">kapp -y deploy -a some-app -f</span> &lt;(kustomize build ./some-app)
+$ <span class="green">kapp -y deploy -a my-app -f</span> &lt;(kustomize build ./my-app)
 <span class="gray spacer-before"># ... or templated with ytt</span>
-$ <span class="green">kapp -y deploy -a some-app -f</span> &lt;(ytt -f ./some-app)</pre>
+$ <span class="green">kapp -y deploy -a my-app -f</span> &lt;(ytt -f ./examples/simple-app-example/config-1.yml)</pre>
         </div>
 
         <div id="playground">
