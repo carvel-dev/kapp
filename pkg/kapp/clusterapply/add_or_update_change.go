@@ -11,14 +11,14 @@ import (
 )
 
 const (
-	createStrategyAnnKey                   = "kapp.k14s.io/create-strategy"
-	createStrategyCreateAnnValue           = ""
-	createStrategyFallbackOnUpdateAnnValue = "fallback-on-update"
+	createStrategyAnnKey                                                = "kapp.k14s.io/create-strategy"
+	createStrategyPlainAnnValue            ClusterChangeApplyStrategyOp = ""
+	createStrategyFallbackOnUpdateAnnValue ClusterChangeApplyStrategyOp = "fallback-on-update"
 
-	updateStrategyAnnKey                    = "kapp.k14s.io/update-strategy"
-	updateStrategyUpdateAnnValue            = ""
-	updateStrategyFallbackOnReplaceAnnValue = "fallback-on-replace"
-	updateStrategyAlwaysReplaceAnnValue     = "always-replace"
+	updateStrategyAnnKey                                                 = "kapp.k14s.io/update-strategy"
+	updateStrategyPlainAnnValue             ClusterChangeApplyStrategyOp = ""
+	updateStrategyFallbackOnReplaceAnnValue ClusterChangeApplyStrategyOp = "fallback-on-replace"
+	updateStrategyAlwaysReplaceAnnValue     ClusterChangeApplyStrategyOp = "always-replace"
 )
 
 type AddOrUpdateChangeOpts struct {
@@ -33,7 +33,7 @@ type AddOrUpdateChange struct {
 	opts                AddOrUpdateChangeOpts
 }
 
-func (c AddOrUpdateChange) Apply() error {
+func (c AddOrUpdateChange) ApplyStrategy() (ApplyStrategy, error) {
 	op := c.change.Op()
 
 	switch op {
@@ -42,31 +42,18 @@ func (c AddOrUpdateChange) Apply() error {
 
 		strategy, found := newRes.Annotations()[createStrategyAnnKey]
 		if !found {
-			strategy = createStrategyCreateAnnValue
+			strategy = string(createStrategyPlainAnnValue)
 		}
 
-		switch strategy {
-		case createStrategyCreateAnnValue:
-			createdRes, err := c.identifiedResources.Create(newRes)
-			if err != nil {
-				return err
-			}
-
-			return c.recordAppliedResource(createdRes)
+		switch ClusterChangeApplyStrategyOp(strategy) {
+		case createStrategyPlainAnnValue:
+			return AddPlainStrategy{newRes, c}, nil
 
 		case createStrategyFallbackOnUpdateAnnValue:
-			createdRes, err := c.identifiedResources.Create(newRes)
-			if err != nil {
-				if errors.IsAlreadyExists(err) {
-					return c.tryToUpdateAfterCreateConflict()
-				}
-				return err
-			}
-
-			return c.recordAppliedResource(createdRes)
+			return AddOrFallbackOnUpdateStrategy{newRes, c}, nil
 
 		default:
-			return fmt.Errorf("Unknown create strategy: %s", strategy)
+			return nil, fmt.Errorf("Unknown create strategy: %s", strategy)
 		}
 
 	case ctldiff.ChangeOpUpdate:
@@ -77,45 +64,22 @@ func (c AddOrUpdateChange) Apply() error {
 			strategy = c.opts.DefaultUpdateStrategy
 		}
 
-		switch strategy {
-		case updateStrategyUpdateAnnValue:
-			updatedRes, err := c.identifiedResources.Update(newRes)
-			if err != nil {
-				if errors.IsConflict(err) {
-					return c.tryToResolveUpdateConflict(err, func(err error) error { return err })
-				}
-				return err
-			}
-
-			return c.recordAppliedResource(updatedRes)
+		switch ClusterChangeApplyStrategyOp(strategy) {
+		case updateStrategyPlainAnnValue:
+			return UpdatePlainStrategy{newRes, c}, nil
 
 		case updateStrategyFallbackOnReplaceAnnValue:
-			replaceIfIsInvalidErrFunc := func(err error) error {
-				if errors.IsInvalid(err) {
-					return c.replace()
-				}
-				return err
-			}
-
-			updatedRes, err := c.identifiedResources.Update(newRes)
-			if err != nil {
-				if errors.IsConflict(err) {
-					return c.tryToResolveUpdateConflict(err, replaceIfIsInvalidErrFunc)
-				}
-				return replaceIfIsInvalidErrFunc(err)
-			}
-
-			return c.recordAppliedResource(updatedRes)
+			return UpdateOrFallbackOnReplaceStrategy{newRes, c}, nil
 
 		case updateStrategyAlwaysReplaceAnnValue:
-			return c.replace()
+			return UpdateAlwaysReplaceStrategy{c}, nil
 
 		default:
-			return fmt.Errorf("Unknown update strategy: %s", strategy)
+			return nil, fmt.Errorf("Unknown update strategy: %s", strategy)
 		}
 
 	default:
-		return fmt.Errorf("Unknown add-or-update op: %s", op)
+		return nil, fmt.Errorf("Unknown add-or-update op: %s", op)
 	}
 }
 
@@ -277,4 +241,100 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 
 		return true, nil
 	})
+}
+
+type AddPlainStrategy struct {
+	newRes ctlres.Resource
+	aou    AddOrUpdateChange
+}
+
+func (c AddPlainStrategy) Op() ClusterChangeApplyStrategyOp { return createStrategyPlainAnnValue }
+
+func (c AddPlainStrategy) Apply() error {
+	createdRes, err := c.aou.identifiedResources.Create(c.newRes)
+	if err != nil {
+		return err
+	}
+
+	return c.aou.recordAppliedResource(createdRes)
+}
+
+type AddOrFallbackOnUpdateStrategy struct {
+	newRes ctlres.Resource
+	aou    AddOrUpdateChange
+}
+
+func (c AddOrFallbackOnUpdateStrategy) Op() ClusterChangeApplyStrategyOp {
+	return createStrategyFallbackOnUpdateAnnValue
+}
+
+func (c AddOrFallbackOnUpdateStrategy) Apply() error {
+	createdRes, err := c.aou.identifiedResources.Create(c.newRes)
+	if err != nil {
+		if errors.IsAlreadyExists(err) {
+			return c.aou.tryToUpdateAfterCreateConflict()
+		}
+		return err
+	}
+
+	return c.aou.recordAppliedResource(createdRes)
+}
+
+type UpdatePlainStrategy struct {
+	newRes ctlres.Resource
+	aou    AddOrUpdateChange
+}
+
+func (c UpdatePlainStrategy) Op() ClusterChangeApplyStrategyOp { return updateStrategyPlainAnnValue }
+
+func (c UpdatePlainStrategy) Apply() error {
+	updatedRes, err := c.aou.identifiedResources.Update(c.newRes)
+	if err != nil {
+		if errors.IsConflict(err) {
+			return c.aou.tryToResolveUpdateConflict(err, func(err error) error { return err })
+		}
+		return err
+	}
+
+	return c.aou.recordAppliedResource(updatedRes)
+}
+
+type UpdateOrFallbackOnReplaceStrategy struct {
+	newRes ctlres.Resource
+	aou    AddOrUpdateChange
+}
+
+func (c UpdateOrFallbackOnReplaceStrategy) Op() ClusterChangeApplyStrategyOp {
+	return updateStrategyFallbackOnReplaceAnnValue
+}
+
+func (c UpdateOrFallbackOnReplaceStrategy) Apply() error {
+	replaceIfIsInvalidErrFunc := func(err error) error {
+		if errors.IsInvalid(err) {
+			return c.aou.replace()
+		}
+		return err
+	}
+
+	updatedRes, err := c.aou.identifiedResources.Update(c.newRes)
+	if err != nil {
+		if errors.IsConflict(err) {
+			return c.aou.tryToResolveUpdateConflict(err, replaceIfIsInvalidErrFunc)
+		}
+		return replaceIfIsInvalidErrFunc(err)
+	}
+
+	return c.aou.recordAppliedResource(updatedRes)
+}
+
+type UpdateAlwaysReplaceStrategy struct {
+	aou AddOrUpdateChange
+}
+
+func (c UpdateAlwaysReplaceStrategy) Op() ClusterChangeApplyStrategyOp {
+	return updateStrategyAlwaysReplaceAnnValue
+}
+
+func (c UpdateAlwaysReplaceStrategy) Apply() error {
+	return c.aou.replace()
 }

@@ -110,6 +110,10 @@ func (v DiffChangeView) ApplyOp() ctlcap.ClusterChangeApplyOp {
 	}
 }
 
+func (v DiffChangeView) ApplyStrategyOp() (ctlcap.ClusterChangeApplyStrategyOp, error) {
+	return ctlcap.UnknownStrategyOp, nil
+}
+
 // Since we are diffing changes without a cluster, there will be no wait operations
 func (v DiffChangeView) WaitOp() ctlcap.ClusterChangeWaitOp { return ctlcap.ClusterChangeWaitOpNoop }
 

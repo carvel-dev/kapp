@@ -75,6 +75,7 @@ spec:
 		expected := []map[string]string{{
 			"age":             "<replaced>",
 			"op":              "",
+			"op_strategy":     "",
 			"wait_to":         "delete",
 			"conditions":      "",
 			"kind":            "Endpoints",
@@ -85,6 +86,7 @@ spec:
 		}, {
 			"age":             "<replaced>",
 			"op":              "delete",
+			"op_strategy":     "",
 			"wait_to":         "delete",
 			"conditions":      "",
 			"kind":            "Service",
@@ -148,6 +150,7 @@ metadata:
 		expected := []map[string]string{{
 			"age":             "<replaced>",
 			"op":              "update",
+			"op_strategy":     "",
 			"wait_to":         "reconcile",
 			"conditions":      "",
 			"kind":            "Endpoints",
@@ -168,6 +171,7 @@ metadata:
 		expected := []map[string]string{{
 			"age":             "<replaced>",
 			"op":              "delete",
+			"op_strategy":     "",
 			"wait_to":         "delete",
 			"conditions":      "",
 			"kind":            "Endpoints",
@@ -178,6 +182,7 @@ metadata:
 		}, {
 			"age":             "<replaced>",
 			"op":              "delete",
+			"op_strategy":     "",
 			"wait_to":         "delete",
 			"conditions":      "",
 			"kind":            "Service",

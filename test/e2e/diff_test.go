@@ -79,6 +79,7 @@ data:
 		expected := []map[string]string{{
 			"age":             "",
 			"op":              "create",
+			"op_strategy":     "",
 			"wait_to":         "reconcile",
 			"conditions":      "",
 			"kind":            "ConfigMap",
@@ -89,6 +90,7 @@ data:
 		}, {
 			"age":             "",
 			"op":              "create",
+			"op_strategy":     "",
 			"wait_to":         "reconcile",
 			"conditions":      "",
 			"kind":            "ConfigMap",
@@ -99,6 +101,7 @@ data:
 		}, {
 			"age":             "",
 			"op":              "create",
+			"op_strategy":     "",
 			"wait_to":         "reconcile",
 			"conditions":      "",
 			"kind":            "ConfigMap",
@@ -146,6 +149,7 @@ data:
 		expected := []map[string]string{{
 			"age":             "<replaced>",
 			"op":              "delete",
+			"op_strategy":     "",
 			"wait_to":         "delete",
 			"conditions":      "",
 			"kind":            "ConfigMap",
@@ -156,6 +160,7 @@ data:
 		}, {
 			"age":             "<replaced>",
 			"op":              "update",
+			"op_strategy":     "",
 			"wait_to":         "reconcile",
 			"conditions":      "",
 			"kind":            "ConfigMap",
@@ -166,6 +171,7 @@ data:
 		}, {
 			"age":             "",
 			"op":              "create",
+			"op_strategy":     "",
 			"wait_to":         "reconcile",
 			"conditions":      "",
 			"kind":            "ConfigMap",
@@ -194,6 +200,7 @@ data:
 		expected := []map[string]string{{
 			"age":             "<replaced>",
 			"op":              "delete",
+			"op_strategy":     "",
 			"wait_to":         "delete",
 			"conditions":      "",
 			"kind":            "ConfigMap",
@@ -204,6 +211,7 @@ data:
 		}, {
 			"age":             "<replaced>",
 			"op":              "delete",
+			"op_strategy":     "",
 			"wait_to":         "delete",
 			"conditions":      "",
 			"kind":            "ConfigMap",
@@ -214,6 +222,7 @@ data:
 		}, {
 			"age":             "<replaced>",
 			"op":              "delete",
+			"op_strategy":     "",
 			"wait_to":         "delete",
 			"conditions":      "",
 			"kind":            "ConfigMap",

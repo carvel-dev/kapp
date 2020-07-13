@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	deleteStrategyAnnKey        = "kapp.k14s.io/delete-strategy"
-	deleteStrategyDefaultAnnKey = ""
-	deleteStrategyOrphanAnnKey  = "orphan"
+	deleteStrategyAnnKey                                      = "kapp.k14s.io/delete-strategy"
+	deleteStrategyPlainAnnValue  ClusterChangeApplyStrategyOp = ""
+	deleteStrategyOrphanAnnValue ClusterChangeApplyStrategyOp = "orphan"
 
 	appLabelKey      = "kapp.k14s.io/app" // TODO duplicated here
 	orphanedLabelKey = "kapp.k14s.io/orphaned"
@@ -29,50 +29,27 @@ type DeleteChange struct {
 	identifiedResources ctlres.IdentifiedResources
 }
 
-func (c DeleteChange) Apply() error {
+func (c DeleteChange) ApplyStrategy() (ApplyStrategy, error) {
 	res := c.change.ExistingResource()
 	strategy := res.Annotations()[deleteStrategyAnnKey]
 
-	switch strategy {
-	case deleteStrategyOrphanAnnKey:
-		mergePatch := []interface{}{
-			// TODO currently we do not account for when '-a label:foo=bar' used
-			map[string]interface{}{
-				"op":   "remove",
-				"path": "/metadata/labels/" + jsonPointerEncoder.Replace(appLabelKey),
-			},
-			map[string]interface{}{
-				"op":    "add",
-				"path":  "/metadata/labels/" + jsonPointerEncoder.Replace(orphanedLabelKey),
-				"value": "",
-			},
-		}
+	switch ClusterChangeApplyStrategyOp(strategy) {
+	case deleteStrategyPlainAnnValue:
+		return DeletePlainStrategy{res, c}, nil
 
-		patchJSON, err := json.Marshal(mergePatch)
-		if err != nil {
-			return err
-		}
-
-		_, err = c.identifiedResources.Patch(res, types.JSONPatchType, patchJSON)
-		return err
-
-	case deleteStrategyDefaultAnnKey:
-		// TODO should we be configuring default garbage collection policy to background?
-		// https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/
-		return c.identifiedResources.Delete(res)
+	case deleteStrategyOrphanAnnValue:
+		return DeleteOrphanStrategy{res, c}, nil
 
 	default:
-		return fmt.Errorf("Unknown delete strategy: %s", strategy)
+		return nil, fmt.Errorf("Unknown delete strategy: %s", strategy)
 	}
-
-	return nil
 }
 
 func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
 	res := c.change.ExistingResource()
 
-	switch res.Annotations()[deleteStrategyAnnKey] {
-	case deleteStrategyOrphanAnnKey:
+	switch ClusterChangeApplyStrategyOp(res.Annotations()[deleteStrategyAnnKey]) {
+	case deleteStrategyOrphanAnnValue:
 		return ctlresm.DoneApplyState{Done: true, Successful: true, Message: "Resource orphaned"}, nil, nil
 	}
 
@@ -84,4 +61,47 @@ func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error)
 	}
 
 	return ctlresm.DoneApplyState{Done: !exists, Successful: true}, nil, nil
+}
+
+type DeletePlainStrategy struct {
+	res ctlres.Resource
+	d   DeleteChange
+}
+
+func (c DeletePlainStrategy) Op() ClusterChangeApplyStrategyOp { return deleteStrategyPlainAnnValue }
+
+func (c DeletePlainStrategy) Apply() error {
+	// TODO should we be configuring default garbage collection policy to background?
+	// https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/
+	return c.d.identifiedResources.Delete(c.res)
+}
+
+type DeleteOrphanStrategy struct {
+	res ctlres.Resource
+	d   DeleteChange
+}
+
+func (c DeleteOrphanStrategy) Op() ClusterChangeApplyStrategyOp { return deleteStrategyOrphanAnnValue }
+
+func (c DeleteOrphanStrategy) Apply() error {
+	mergePatch := []interface{}{
+		// TODO currently we do not account for when '-a label:foo=bar' used
+		map[string]interface{}{
+			"op":   "remove",
+			"path": "/metadata/labels/" + jsonPointerEncoder.Replace(appLabelKey),
+		},
+		map[string]interface{}{
+			"op":    "add",
+			"path":  "/metadata/labels/" + jsonPointerEncoder.Replace(orphanedLabelKey),
+			"value": "",
+		},
+	}
+
+	patchJSON, err := json.Marshal(mergePatch)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.d.identifiedResources.Patch(c.res, types.JSONPatchType, patchJSON)
+	return err
 }

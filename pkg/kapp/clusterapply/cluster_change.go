@@ -31,6 +31,18 @@ const (
 	ClusterChangeWaitOpNoop   ClusterChangeWaitOp = "noop"
 )
 
+type ClusterChangeApplyStrategyOp string
+
+const (
+	noopStrategyOp    ClusterChangeApplyStrategyOp = ""
+	UnknownStrategyOp ClusterChangeApplyStrategyOp = "unknown"
+)
+
+type ApplyStrategy interface {
+	Op() ClusterChangeApplyStrategyOp
+	Apply() error
+}
+
 type ClusterChangeOpts struct {
 	ApplyIgnored bool
 	Wait         bool
@@ -135,13 +147,23 @@ func (c *ClusterChange) WaitOp() ClusterChangeWaitOp {
 
 func (c *ClusterChange) MarkNeedsWaiting() { c.markedNeedsWaiting = true }
 
+func (c *ClusterChange) ApplyStrategyOp() (ClusterChangeApplyStrategyOp, error) {
+	strategy, err := c.applyStrategy()
+	if err != nil {
+		return UnknownStrategyOp, err
+	}
+	return strategy.Op(), nil
+}
+
 func (c *ClusterChange) Apply() (bool, []string, error) {
 	descMsgs := []string{c.ApplyDescription()}
 
-	done, err := c.apply()
-	if done {
+	strategy, err := c.applyStrategy()
+	if err != nil {
 		return false, descMsgs, err
 	}
+
+	err = strategy.Apply()
 
 	retryable := err != nil && ctlres.IsResourceChangeBlockedErr(err)
 	if retryable {
@@ -151,23 +173,23 @@ func (c *ClusterChange) Apply() (bool, []string, error) {
 	return retryable, descMsgs, c.applyErr(err)
 }
 
-func (c *ClusterChange) apply() (bool, error) {
+func (c *ClusterChange) applyStrategy() (ApplyStrategy, error) {
 	op := c.ApplyOp()
 
 	switch op {
 	case ClusterChangeApplyOpAdd, ClusterChangeApplyOpUpdate:
-		return false, AddOrUpdateChange{
+		return AddOrUpdateChange{
 			c.change, c.identifiedResources, c.changeFactory,
-			c.changeSetFactory, c.opts.AddOrUpdateChangeOpts}.Apply()
+			c.changeSetFactory, c.opts.AddOrUpdateChangeOpts}.ApplyStrategy()
 
 	case ClusterChangeApplyOpDelete:
-		return false, DeleteChange{c.change, c.identifiedResources}.Apply()
+		return DeleteChange{c.change, c.identifiedResources}.ApplyStrategy()
 
 	case ClusterChangeApplyOpNoop:
-		return true, nil
+		return NoopStrategy{}, nil
 
 	default:
-		return true, fmt.Errorf("Unknown change apply operation: %s", op)
+		return nil, fmt.Errorf("Unknown change apply operation: %s", op)
 	}
 }
 
@@ -232,3 +254,8 @@ func (c *ClusterChange) applyErr(err error) error {
 	return fmt.Errorf("Applying %s: %s%s", c.ApplyDescription(),
 		uierrs.NewSemiStructuredError(err), hintMsg)
 }
+
+type NoopStrategy struct{}
+
+func (s NoopStrategy) Op() ClusterChangeApplyStrategyOp { return noopStrategyOp }
+func (s NoopStrategy) Apply() error                     { return nil }

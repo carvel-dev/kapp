@@ -17,6 +17,7 @@ type ChangeView interface {
 	ExistingResource() ctlres.Resource
 
 	ApplyOp() ClusterChangeApplyOp
+	ApplyStrategyOp() (ClusterChangeApplyStrategyOp, error)
 	WaitOp() ClusterChangeWaitOp
 	ConfigurableTextDiff() *ctldiff.ConfigurableTextDiff
 }
@@ -41,6 +42,9 @@ func (v *ChangesView) Print(ui ui.UI) {
 	reconcileInfoHeader := uitable.NewHeader("Reconcile info")
 	reconcileInfoHeader.Title = "Ri"
 
+	opStrategyHeader := uitable.NewHeader("Op strategy")
+	opStrategyHeader.Title = "Op st."
+
 	table := uitable.Table{
 		Title: "Changes",
 		// TODO do not show total number of "changes" as it may
@@ -55,6 +59,7 @@ func (v *ChangesView) Print(ui ui.UI) {
 			conditionsHeader,
 			uitable.NewHeader("Age"),
 			uitable.NewHeader("Op"),
+			opStrategyHeader,
 			uitable.NewHeader("Wait to"),
 			reconcileStateHeader,
 			reconcileInfoHeader,
@@ -103,6 +108,7 @@ func (v *ChangesView) Print(ui ui.UI) {
 
 		row = append(row,
 			v.applyOpCode(view.ApplyOp()),
+			v.applyStrategyOpCode(view),
 			v.waitOpCode(view.WaitOp()),
 		)
 
@@ -134,6 +140,28 @@ var (
 		ClusterChangeApplyOpNoop:   "noop",
 	}
 
+	applyStrategyCodeUI = map[ClusterChangeApplyOp]map[ClusterChangeApplyStrategyOp]string{
+		ClusterChangeApplyOpAdd: {
+			createStrategyPlainAnnValue:            "",
+			createStrategyFallbackOnUpdateAnnValue: "fallback on update",
+		},
+
+		ClusterChangeApplyOpUpdate: {
+			updateStrategyPlainAnnValue:             "",
+			updateStrategyFallbackOnReplaceAnnValue: "fallback on replace",
+			updateStrategyAlwaysReplaceAnnValue:     "always replace",
+		},
+
+		ClusterChangeApplyOpDelete: {
+			deleteStrategyPlainAnnValue:  "",
+			deleteStrategyOrphanAnnValue: "orphan",
+		},
+
+		ClusterChangeApplyOpNoop: {
+			noopStrategyOp: "",
+		},
+	}
+
 	waitOpCodeUI = map[ClusterChangeWaitOp]string{
 		ClusterChangeWaitOpOK:     "reconcile",
 		ClusterChangeWaitOpDelete: "delete",
@@ -154,6 +182,18 @@ func (v *ChangesView) applyOpCode(op ClusterChangeApplyOp) uitable.Value {
 	default:
 		return uitable.NewValueString("???")
 	}
+}
+
+func (v *ChangesView) applyStrategyOpCode(view ChangeView) uitable.Value {
+	strategyOp, err := view.ApplyStrategyOp()
+	if err == nil {
+		if codeUIs, found := applyStrategyCodeUI[view.ApplyOp()]; found {
+			if codeUI, found := codeUIs[strategyOp]; found {
+				return uitable.NewValueString(codeUI)
+			}
+		}
+	}
+	return uitable.NewValueString("???")
 }
 
 func (v *ChangesView) waitOpCode(op ClusterChangeWaitOp) uitable.Value {
