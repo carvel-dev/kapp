@@ -201,7 +201,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for replicas: [2-3] to be updated (currently 0 of 3 updated)",
+		Message:    "Waiting for replicas [2-3] to be updated due to partition update strategy (currently 0/2 updated)",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)

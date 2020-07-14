@@ -39,7 +39,16 @@ func (s AppsV1StatefulSet) IsDoneApplying() DoneApplyState {
 			Message: fmt.Sprintf("Error: Failed to find spec.replicas")}
 	}
 
-	// TODO: introduce logic for partition
+	if statefulSet.Status.UpdatedReplicas + *statefulSet.Spec.UpdateStrategy.RollingUpdate.Partition <=
+		  *statefulSet.Spec.Replicas {
+		return DoneApplyState{Done: false, Message: fmt.Sprintf(
+			"Waiting for replicas [%d-%d] to be updated due to partition update strategy (currently %d/%d updated)",
+			*statefulSet.Spec.UpdateStrategy.RollingUpdate.Partition + 1,
+			*statefulSet.Spec.Replicas,
+			statefulSet.Status.UpdatedReplicas,
+			*statefulSet.Spec.Replicas - *statefulSet.Spec.UpdateStrategy.RollingUpdate.Partition)}
+	}
+
 	// Once ReadyReplicas == Replicas and UpdatedReplicas == Replicas: we can pass
 	if statefulSet.Status.UpdatedReplicas < *statefulSet.Spec.Replicas {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(
