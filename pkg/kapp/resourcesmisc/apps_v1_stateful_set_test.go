@@ -215,21 +215,21 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for 3 replicas to be updated (currently 1 updated)",
+		Message:    "Waiting for replicas [2-3] to be updated due to partition update strategy (currently 1/2 updated)",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
 	}
 
 	// StatefulSet Controller updated all pods, and all but the last pod are ready.
-	currentData = strings.Replace(currentData, "updatedReplicas: 1", "updatedReplicas: 3", -1)
-	currentData = strings.Replace(currentData, "currentReplicas: 2", "currentReplicas: 0", -1)
+	currentData = strings.Replace(currentData, "updatedReplicas: 1", "updatedReplicas: 2", -1)
+	currentData = strings.Replace(currentData, "currentReplicas: 2", "currentReplicas: 1", -1)
 
 	state = buildStatefulSet(currentData, t).IsDoneApplying()
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for 3 replicas to be ready (currently 2 ready)",
+		Message:    "Waiting for replicas [2-3] to be ready due to partition update strategy (currently 2/3 ready)",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
