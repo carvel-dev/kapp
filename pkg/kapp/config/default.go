@@ -177,7 +177,8 @@ ownershipLabelRules:
   - apiVersionKindMatcher: {apiVersion: batch/v2alpha1, kind: Job}
 
 - path: [spec, jobTemplate, spec, template, metadata, labels]
-  resourceMatchers:
+  resourceMatchers: &cronJob
+  - apiVersionKindMatcher: {apiVersion: batch/v1, kind: CronJob}
   - apiVersionKindMatcher: {apiVersion: batch/v1beta1, kind: CronJob}
   - apiVersionKindMatcher: {apiVersion: batch/v2alpha1, kind: CronJob}
 
@@ -210,6 +211,20 @@ templateRules:
       resourceMatchers: *withPodTemplate
     - path: [spec, template, spec, volumes, {allIndexes: true}, configMap]
       resourceMatchers: *withPodTemplate
+
+    - path: [spec, jobTemplate, spec, template, spec, containers, {allIndexes: true}, env, {allIndexes: true}, valueFrom, configMapKeyRef]
+      resourceMatchers: *cronJob
+    - path: [spec, jobTemplate, spec, template, spec, containers, {allIndexes: true}, envFrom, {allIndexes: true}, configMapRef]
+      resourceMatchers: *cronJob
+    - path: [spec, jobTemplate, spec, template, spec, initContainers, {allIndexes: true}, env, {allIndexes: true}, valueFrom, configMapKeyRef]
+      resourceMatchers: *cronJob
+    - path: [spec, jobTemplate, spec, template, spec, initContainers, {allIndexes: true}, envFrom, {allIndexes: true}, configMapRef]
+      resourceMatchers: *cronJob
+    - path: [spec, jobTemplate, spec, template, spec, volumes, {allIndexes: true}, projected, sources, {allIndexes: true}, configMap]
+      resourceMatchers: *cronJob
+    - path: [spec, jobTemplate, spec, template, spec, volumes, {allIndexes: true}, configMap]
+      resourceMatchers: *cronJob
+
     - path: [spec, volumes, {allIndexes: true}, configMap]
       resourceMatchers:
       - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
@@ -233,6 +248,23 @@ templateRules:
       nameKey: secretName
     - path: [spec, template, spec, volumes, {allIndexes: true}, projected, sources, {allIndexes: true}, secret]
       resourceMatchers: *withPodTemplate
+
+    - path: [spec, jobTemplate, spec, template, spec, containers, {allIndexes: true}, env, {allIndexes: true}, valueFrom, secretKeyRef]
+      resourceMatchers: *cronJob
+    - path: [spec, jobTemplate, spec, template, spec, containers, {allIndexes: true}, envFrom, {allIndexes: true}, secretRef]
+      resourceMatchers: *cronJob
+    - path: [spec, jobTemplate, spec, template, spec, initContainers, {allIndexes: true}, env, {allIndexes: true}, valueFrom, secretKeyRef]
+      resourceMatchers: *cronJob
+    - path: [spec, jobTemplate, spec, template, spec, initContainers, {allIndexes: true}, envFrom, {allIndexes: true}, secretRef]
+      resourceMatchers: *cronJob
+    - path: [spec, jobTemplate, spec, template, spec, imagePullSecrets, {allIndexes: true}]
+      resourceMatchers: *cronJob
+    - path: [spec, jobTemplate, spec, template, spec, volumes, {allIndexes: true}, secret]
+      resourceMatchers: *cronJob
+      nameKey: secretName
+    - path: [spec, jobTemplate, spec, template, spec, volumes, {allIndexes: true}, projected, sources, {allIndexes: true}, secret]
+      resourceMatchers: *cronJob
+
     - path: [spec, volumes, {allIndexes: true}, secret]
       resourceMatchers:
       - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
