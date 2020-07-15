@@ -48,7 +48,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for 3 replicas to be updated (currently 1 updated)",
+		Message:    "Waiting for 3 replicas to be updated (currently 1 of 3)",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
@@ -62,7 +62,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for 3 replicas to be ready (currently 2 ready)",
+		Message:    "Waiting for 3 replicas to be ready (currently 2 of 3)",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
@@ -116,7 +116,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for 3 replicas to be updated (currently 0 updated)",
+		Message:    "Waiting for 3 replicas to be updated (currently 0 of 3)",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
@@ -130,7 +130,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for 3 replicas to be updated (currently 1 updated)",
+		Message:    "Waiting for 3 replicas to be updated (currently 1 of 3)",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
@@ -144,7 +144,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for 3 replicas to be ready (currently 2 ready)",
+		Message:    "Waiting for 3 replicas to be ready (currently 2 of 3)",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
@@ -201,7 +201,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for replicas [2-3] to be updated due to partition update strategy (currently 0/2 updated)",
+		Message:    "Waiting for 2 (of 3 total) replicas to be updated (currently 0 of 2)",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
@@ -215,7 +215,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for replicas [2-3] to be updated due to partition update strategy (currently 1/2 updated)",
+		Message:    "Waiting for 2 (of 3 total) replicas to be updated (currently 1 of 2)",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
@@ -229,7 +229,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for replicas [2-3] to be ready due to partition update strategy (currently 2/3 ready)",
+		Message:    "Waiting for 3 replicas to be ready (currently 2 of 3)",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
