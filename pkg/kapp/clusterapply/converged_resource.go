@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/fatih/color"
+	"github.com/cppforlife/color"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 )

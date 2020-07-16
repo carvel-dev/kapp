@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fatih/color"
+	"github.com/cppforlife/color"
 	"github.com/k14s/difflib"
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 )

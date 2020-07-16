@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"github.com/fatih/color"
+	"github.com/cppforlife/color"
 
 	. "github.com/cppforlife/go-cli-ui/ui/table"
 )

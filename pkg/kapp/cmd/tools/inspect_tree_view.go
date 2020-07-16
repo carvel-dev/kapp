@@ -5,9 +5,9 @@ import (
 	"io"
 	"strings"
 
+	"github.com/cppforlife/color"
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
-	"github.com/fatih/color"
 	ctlcap "github.com/k14s/kapp/pkg/kapp/clusterapply"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"

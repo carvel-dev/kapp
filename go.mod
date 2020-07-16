@@ -7,11 +7,11 @@ require (
 	github.com/Azure/go-autorest v10.15.0+incompatible // indirect
 	github.com/aws/aws-lambda-go v1.9.0
 	github.com/cppforlife/cobrautil v0.0.0-20200108171912-b289811fd2b9
-	github.com/cppforlife/go-cli-ui v0.0.0-20200505234325-512793797f05
+	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
+	github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
 	github.com/cppforlife/go-patch v0.2.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
-	github.com/fatih/color v1.7.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/gogo/protobuf v1.1.1 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
@@ -45,5 +45,3 @@ require (
 	k8s.io/apimachinery v0.0.0-20180621070125-103fd098999d // kubernetes-1.11.0
 	k8s.io/client-go v8.0.0+incompatible // kubernetes-1.11.0
 )
-
-replace github.com/fatih/color => github.com/k14s/color v1.9.1-0.20200321223841-ba5534bd301c

@@ -15,7 +15,9 @@ github.com/aws/aws-lambda-go/lambda/messages
 github.com/aws/aws-lambda-go/lambdacontext
 # github.com/cppforlife/cobrautil v0.0.0-20200108171912-b289811fd2b9
 github.com/cppforlife/cobrautil
-# github.com/cppforlife/go-cli-ui v0.0.0-20200505234325-512793797f05
+# github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
+github.com/cppforlife/color
+# github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
 github.com/cppforlife/go-cli-ui/errors
 github.com/cppforlife/go-cli-ui/ui
 github.com/cppforlife/go-cli-ui/ui/table
@@ -24,8 +26,6 @@ github.com/cppforlife/go-cli-ui/ui/test
 github.com/cppforlife/go-patch/patch
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 github.com/dgrijalva/jwt-go
-# github.com/fatih/color v1.7.0 => github.com/k14s/color v1.9.1-0.20200321223841-ba5534bd301c
-github.com/fatih/color
 # github.com/ghodss/yaml v1.0.0
 github.com/ghodss/yaml
 # github.com/gogo/protobuf v1.1.1
