@@ -5,7 +5,6 @@ go 1.13
 require (
 	cloud.google.com/go v0.25.0 // indirect
 	github.com/Azure/go-autorest v10.15.0+incompatible // indirect
-	github.com/aryann/difflib v0.0.0-20200108171459-b101e55e0592
 	github.com/aws/aws-lambda-go v1.9.0
 	github.com/cppforlife/cobrautil v0.0.0-20200108171912-b289811fd2b9
 	github.com/cppforlife/go-cli-ui v0.0.0-20200505234325-512793797f05
@@ -25,6 +24,7 @@ require (
 	github.com/imdario/mergo v0.3.5 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/json-iterator/go v0.0.0-20180701071628-ab8a2e0c74be // indirect
+	github.com/k14s/difflib v0.0.0-20200108171459-b101e55e0592
 	github.com/k14s/kapp-controller v0.1.0
 	github.com/mitchellh/go-wordwrap v1.0.0
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -45,7 +45,5 @@ require (
 	k8s.io/apimachinery v0.0.0-20180621070125-103fd098999d // kubernetes-1.11.0
 	k8s.io/client-go v8.0.0+incompatible // kubernetes-1.11.0
 )
-
-replace github.com/aryann/difflib => github.com/k14s/difflib v0.0.0-20200108171459-b101e55e0592
 
 replace github.com/fatih/color => github.com/k14s/color v1.9.1-0.20200321223841-ba5534bd301c

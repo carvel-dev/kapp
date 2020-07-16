@@ -7,8 +7,6 @@ github.com/Azure/go-autorest/autorest/azure
 github.com/Azure/go-autorest/autorest/date
 github.com/Azure/go-autorest/logger
 github.com/Azure/go-autorest/version
-# github.com/aryann/difflib v0.0.0-20200108171459-b101e55e0592 => github.com/k14s/difflib v0.0.0-20200108171459-b101e55e0592
-github.com/aryann/difflib
 # github.com/aws/aws-lambda-go v1.9.0
 github.com/aws/aws-lambda-go/events
 github.com/aws/aws-lambda-go/lambda
@@ -68,6 +66,8 @@ github.com/imdario/mergo
 github.com/inconshreveable/mousetrap
 # github.com/json-iterator/go v0.0.0-20180701071628-ab8a2e0c74be
 github.com/json-iterator/go
+# github.com/k14s/difflib v0.0.0-20200108171459-b101e55e0592
+github.com/k14s/difflib
 # github.com/k14s/kapp-controller v0.1.0
 github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1
 # github.com/mattn/go-colorable v0.1.4

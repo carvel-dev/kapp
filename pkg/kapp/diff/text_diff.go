@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aryann/difflib"
+	"github.com/k14s/difflib"
 )
 
 type TextDiff struct {
