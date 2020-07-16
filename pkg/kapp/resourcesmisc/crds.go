@@ -41,7 +41,11 @@ func (c *ResourceTypes) IsNamespaced(res ctlres.Resource) (bool, error) {
 
 	isNamespaced, found := scopeMap[fullKind]
 	if !found {
-		return false, fmt.Errorf("Expected to find kind '%s', but did not", fullKind)
+		msgs := []string{
+			"- Kubernetes API server did not have matching apiVersion + kind",
+			"- No matching CRD was found in given configuration",
+		}
+		return false, fmt.Errorf("Expected to find kind '%s', but did not:\n%s", fullKind, strings.Join(msgs, "\n"))
 	}
 
 	return isNamespaced, nil
