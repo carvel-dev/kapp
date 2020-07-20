@@ -261,14 +261,14 @@ customResourceMatcher: {}
 
 Path specifies location within a resource (as used `rebaseRules` and `ownershipLabelRules`):
 
-```yaml
+```
 [spec, clusterIP]
 ```
 
-```yaml
+```
 [spec, volumeClaimTemplates, {allIndexes: true}, metadata, labels]
 ```
 
-```yaml
+```
 [spec, volumeClaimTemplates, {index: 0}, metadata, labels]
 ```
