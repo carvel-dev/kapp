@@ -40,21 +40,20 @@ func (s AppsV1StatefulSet) IsDoneApplying() DoneApplyState {
 	}
 
 	replicasToUpdate := *statefulSet.Spec.Replicas
-	updateString := ""
+	clarification := ""
 	if partition(statefulSet) {
 		replicasToUpdate -= *statefulSet.Spec.UpdateStrategy.RollingUpdate.Partition
-		updateString = fmt.Sprintf(" (of %d total)", *statefulSet.Spec.Replicas)
+		clarification = fmt.Sprintf(" (of %d total)", *statefulSet.Spec.Replicas)
 	}
 
-	if statefulSet.Status.UpdatedReplicas  < replicasToUpdate {
+	if statefulSet.Status.UpdatedReplicas < replicasToUpdate {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(
 			"Waiting for %d%s replicas to be updated (currently %d of %d)",
 			replicasToUpdate,
-			updateString,
+			clarification,
 			statefulSet.Status.UpdatedReplicas,
 			replicasToUpdate)}
 	}
-
 
 	if statefulSet.Status.ReadyReplicas < *statefulSet.Spec.Replicas {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(

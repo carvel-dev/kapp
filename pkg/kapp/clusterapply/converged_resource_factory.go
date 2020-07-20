@@ -76,7 +76,7 @@ func (f ConvergedResourceFactory) New(res ctlres.Resource,
 		},
 		func(res ctlres.Resource, aRs []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			return ctlresm.NewAppsV1StatefulSet(res, aRs), []ctlres.ResourceRef{
-				{schema.GroupVersionResource{Group: "apps"}}, // for ReplicaSets
+				{schema.GroupVersionResource{Group: "apps"}}, // for StatefulSet, ControllerRevision
 				{schema.GroupVersionResource{Group: ""}},     // for Pods
 			}
 		},
