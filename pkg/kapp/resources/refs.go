@@ -15,6 +15,9 @@ type PartialResourceRef struct {
 func (r PartialResourceRef) Matches(other schema.GroupVersionResource) bool {
 	s := r.GroupVersionResource
 
+	// TODO: support matching on Group+Resource
+	// so that, for example, SpecificResFactory's can fine-tune which resources
+	// are fetched.
 	switch {
 	case len(s.Version) > 0 && len(s.Resource) > 0:
 		return s == other

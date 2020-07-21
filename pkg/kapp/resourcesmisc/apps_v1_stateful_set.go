@@ -39,41 +39,31 @@ func (s AppsV1StatefulSet) IsDoneApplying() DoneApplyState {
 			Message: fmt.Sprintf("Error: Failed to find spec.replicas")}
 	}
 
-	replicasToUpdate := *statefulSet.Spec.Replicas
+	toUpdate := *statefulSet.Spec.Replicas
 	clarification := ""
-	if partition(statefulSet) {
-		replicasToUpdate -= *statefulSet.Spec.UpdateStrategy.RollingUpdate.Partition
-		clarification = fmt.Sprintf(" (of %d total)", *statefulSet.Spec.Replicas)
+	if s.partition(statefulSet) {
+		toUpdate -= *statefulSet.Spec.UpdateStrategy.RollingUpdate.Partition
+		clarification = fmt.Sprintf(" (updating only %d of %d total)",
+			toUpdate, *statefulSet.Spec.Replicas)
 	}
 
-	if statefulSet.Status.UpdatedReplicas < replicasToUpdate {
+	notUpdated := toUpdate - statefulSet.Status.UpdatedReplicas
+	if notUpdated > 0 {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(
-			"Waiting for %d%s replicas to be updated (currently %d of %d)",
-			replicasToUpdate,
-			clarification,
-			statefulSet.Status.UpdatedReplicas,
-			replicasToUpdate)}
+			"Waiting for %d replicas to be updated%s", notUpdated, clarification)}
 	}
 
-	if statefulSet.Status.ReadyReplicas < *statefulSet.Spec.Replicas {
+	notReady := *statefulSet.Spec.Replicas - statefulSet.Status.ReadyReplicas
+	if notReady > 0 {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(
-			"Waiting for %d replicas to be ready (currently %d of %d)",
-			*statefulSet.Spec.Replicas,
-			statefulSet.Status.ReadyReplicas,
-			*statefulSet.Spec.Replicas)}
+			"Waiting for %d replicas to be ready", notReady)}
 	}
 
 	return DoneApplyState{Done: true, Successful: true}
 }
 
-func partition(statefulSet appsv1.StatefulSet) bool {
+func (AppsV1StatefulSet) partition(statefulSet appsv1.StatefulSet) bool {
 	return statefulSet.Spec.UpdateStrategy.RollingUpdate != nil &&
+		statefulSet.Spec.UpdateStrategy.RollingUpdate.Partition != nil &&
 		*statefulSet.Spec.UpdateStrategy.RollingUpdate.Partition > 0
-}
-
-func min(a, b int32) int32 {
-	if a < b {
-		return a
-	}
-	return b
 }

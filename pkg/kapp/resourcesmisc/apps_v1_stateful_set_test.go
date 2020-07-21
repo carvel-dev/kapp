@@ -48,7 +48,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for 3 replicas to be updated (currently 1 of 3)",
+		Message:    "Waiting for 2 replicas to be updated",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
@@ -62,7 +62,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for 3 replicas to be ready (currently 2 of 3)",
+		Message:    "Waiting for 1 replicas to be ready",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
@@ -108,7 +108,7 @@ status:
 	}
 
 	// StatefulSet controller marks one of the "current" pods for deletion. (but all 3 are still ready, at this moment)
-	currentData = strings.Replace(currentData, "updatedReplicas: 3", "updatedReplicas: 0", -1)  // new image ==> new updateRevision ==> now, there are no pods of that revision
+	currentData = strings.Replace(currentData, "updatedReplicas: 3", "updatedReplicas: 0", -1) // new image ==> new updateRevision ==> now, there are no pods of that revision
 	currentData = strings.Replace(currentData, "currentReplicas: 3", "currentReplicas: 2", -1)
 	currentData = strings.Replace(currentData, "observedGeneration: 1", "observedGeneration: 2", -1)
 
@@ -116,7 +116,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for 3 replicas to be updated (currently 0 of 3)",
+		Message:    "Waiting for 3 replicas to be updated",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
@@ -130,7 +130,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for 3 replicas to be updated (currently 1 of 3)",
+		Message:    "Waiting for 2 replicas to be updated",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
@@ -144,7 +144,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for 3 replicas to be ready (currently 2 of 3)",
+		Message:    "Waiting for 1 replicas to be ready",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
@@ -193,7 +193,7 @@ status:
 	}
 
 	// StatefulSet controller marks one of the "current" pods for deletion. (but all 3 are still ready, at this moment)
-	currentData = strings.Replace(currentData, "updatedReplicas: 3", "updatedReplicas: 0", -1)  // new image ==> new updateRevision ==> now, there are no pods of that revision
+	currentData = strings.Replace(currentData, "updatedReplicas: 3", "updatedReplicas: 0", -1) // new image ==> new updateRevision ==> now, there are no pods of that revision
 	currentData = strings.Replace(currentData, "currentReplicas: 3", "currentReplicas: 2", -1)
 	currentData = strings.Replace(currentData, "observedGeneration: 1", "observedGeneration: 2", -1)
 
@@ -201,7 +201,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for 2 (of 3 total) replicas to be updated (currently 0 of 2)",
+		Message:    "Waiting for 2 replicas to be updated (updating only 2 of 3 total)",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
@@ -215,7 +215,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for 2 (of 3 total) replicas to be updated (currently 1 of 2)",
+		Message:    "Waiting for 1 replicas to be updated (updating only 2 of 3 total)",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
@@ -229,7 +229,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Waiting for 3 replicas to be ready (currently 2 of 3)",
+		Message:    "Waiting for 1 replicas to be ready",
 	}
 	if state != expectedState {
 		t.Fatalf("Found incorrect state: %#v", state)
