@@ -150,6 +150,7 @@ var (
 			updateStrategyPlainAnnValue:             "",
 			updateStrategyFallbackOnReplaceAnnValue: "fallback on replace",
 			updateStrategyAlwaysReplaceAnnValue:     "always replace",
+			updateStrategySkipAnnValue:              "skip",
 		},
 
 		ClusterChangeApplyOpDelete: {

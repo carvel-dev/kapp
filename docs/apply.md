@@ -31,7 +31,7 @@ Possible values: `` (default), `fallback-on-replace`, `always-replace`, `skip`. 
 - `` means to issue plain update call
 - `fallback-on-replace` causes kapp to fallback to resource replacement if update call results in `Invalid` error. Note that if resource is replaced (= delete + create), it may be negatively affected (loss of persistent data, loss of availability, etc.). For example, if Deployment or DaemonSet is first deleted and then created then associated Pods will be recreated as well, but all at the same time (even if rolling update is enabled), which likely causes an availability gap.
 - `always-replace` causes kapp to always delete and then create resource (See note above as well.)
-- `skip` causes kapp to not apply update (it will show up in a diff next time)
+- `skip` causes kapp to not apply update (it will show up in a diff next time). Available in v0.33.0+.
 
 #### kapp.k14s.io/delete-strategy
 
