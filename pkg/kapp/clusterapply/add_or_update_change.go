@@ -19,6 +19,7 @@ const (
 	updateStrategyPlainAnnValue             ClusterChangeApplyStrategyOp = ""
 	updateStrategyFallbackOnReplaceAnnValue ClusterChangeApplyStrategyOp = "fallback-on-replace"
 	updateStrategyAlwaysReplaceAnnValue     ClusterChangeApplyStrategyOp = "always-replace"
+	updateStrategySkipAnnValue              ClusterChangeApplyStrategyOp = "skip"
 )
 
 type AddOrUpdateChangeOpts struct {
@@ -73,6 +74,9 @@ func (c AddOrUpdateChange) ApplyStrategy() (ApplyStrategy, error) {
 
 		case updateStrategyAlwaysReplaceAnnValue:
 			return UpdateAlwaysReplaceStrategy{c}, nil
+
+		case updateStrategySkipAnnValue:
+			return UpdateSkipStrategy{c}, nil
 
 		default:
 			return nil, fmt.Errorf("Unknown update strategy: %s", strategy)
@@ -338,3 +342,13 @@ func (c UpdateAlwaysReplaceStrategy) Op() ClusterChangeApplyStrategyOp {
 func (c UpdateAlwaysReplaceStrategy) Apply() error {
 	return c.aou.replace()
 }
+
+type UpdateSkipStrategy struct {
+	aou AddOrUpdateChange
+}
+
+func (c UpdateSkipStrategy) Op() ClusterChangeApplyStrategyOp {
+	return updateStrategySkipAnnValue
+}
+
+func (c UpdateSkipStrategy) Apply() error { return nil }
