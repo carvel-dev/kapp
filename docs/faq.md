@@ -60,7 +60,7 @@ Sometimes Kubernetes API server will convert submitted field values into their c
 ...
 ```
 
-Consider using [ytt](https://get-ytt.io) and [its overlay feature](lang-ref-ytt-overlay.md) to change values if you do not control source configuration.
+Consider using [ytt](https://get-ytt.io) and [its overlay feature](https://github.com/k14s/ytt/blob/develop/docs/lang-ref-ytt-overlay.md) to change values if you do not control source configuration.
 
 ---
 ### Changes detected after resource is modified server-side
@@ -99,15 +99,11 @@ kapp explicitly decided against basic 3 way merge, instead allowing the user to 
 Resources: [merge method](merge-method.md), [rebase rules](config.md#rebaserules)
 
 ---
-#### Can I force an update for a change that does not produce a diff?
-
-If kapp does not detect changes, it won't perform an update. To force changes regardless you can provide the [`kapp.k14s.io/nonce`](apply.md#kappk14siononce) annotation. That way, every time you deploy the resource will appear to have changes.
-
----
 #### How can I use kapp with AWS and terraform provider?
 
 You can use a kubeconfig like [this](https://github.com/k14s/kapp-controller/blob/develop/pkg/deploy/service_accounts.go#L77)
 Be sure to replace host, ca, token and namespace fields with your values.
+
 ---
 #### How can I push an app to a namespace that may or may not already exist?
 
@@ -116,7 +112,7 @@ kapp cannot to deploy to a nonexistent namespace since kapp needs to save genera
 Resources: [State Namespace](state-namespace.md)
 
 ---
-#### How can I get the raw kapp inspect diff?
+#### How can I remove decorative headings from kapp inspect output?
 
 kapp supports a `--tty` flag which, when set to false will only output the desired diff to stdout.
 
