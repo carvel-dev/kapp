@@ -99,10 +99,9 @@ kapp explicitly decided against basic 3 way merge, instead allowing the user to 
 Resources: [merge method](merge-method.md), [rebase rules](config.md#rebaserules)
 
 ---
-#### How can I use kapp with AWS and terraform provider?
+#### Can I force an update for a change that does not produce a diff?
 
-You can use a kubeconfig like [this](https://github.com/k14s/kapp-controller/blob/develop/pkg/deploy/service_accounts.go#L77)
-Be sure to replace host, ca, token and namespace fields with your values.
+If kapp does not detect changes, it won't perform an update. To force changes regardless you can provide the [`kapp.k14s.io/nonce`](apply.md#kappk14siononce) annotation. That way, every time you deploy the resource will appear to have changes.
 
 ---
 #### How can I push an app to a namespace that may or may not already exist?
