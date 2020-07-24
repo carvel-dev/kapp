@@ -6,60 +6,108 @@
     <!-- google analytics -->
   </head>
   <body>
-    <div id="k14s-tools">
-      <p>Part of <a href="https://k14s.io">k14s.io</a>: <a href="https://get-ytt.io">ytt</a> | <a href="https://get-kbld.io">kbld</a> | kapp | <a href="https://github.com/k14s/kwt">kwt</a></p>
-    </div>
-
     <div class="content">
-      <div id="header">
-        <h1><span class="logo">$<strong>kapp</strong></span></h1>
+      <div id="nav">
+        <h1><span class="logo">kapp <span class="partof">part of <a href="https://k14s.io">k14s</a></span></span></h1>
+        <ul>
+          <li><a href="https://slack.kubernetes.io">Slack</a></li>
+          <li><a href="https://github.com/k14s/kapp">Github</a></li>
+          <li><a href="#">Community</a></li>
+          <li><a href="#">Resources</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="https://github.com/k14s/kapp/tree/develop/docs/README.md">Docs</a></li>
+        </ul>
+      </div>
 
-        <p class="hero"><code>kapp</code> is a simple deployment tool focused on the concept of<br/>
-        "Kubernetes application" &mdash; a set of resources with the same label.</p>
-
-        <p class="hero">
-          <a class="link-button" href="https://github.com/k14s/kapp">Github</a>
-          <a class="link-button" href="https://github.com/k14s/kapp/tree/develop/docs/README.md">Docs</a>
-          <a class="link-button" href="https://slack.kubernetes.io">#k14s in Kubernetes slack</a>
+      <div id="hero">
+        <div class="bg">&nbsp;</div>
+        <h2>Take control of your Kubernetes resources</h2>
+        <p>Deploy and view groups of Kubernetes resources as "applications". Apply changes safely and predictably, watching resources as they converge.</p>
+        <p>
+          <a class="link-button try-online link-button-primary" href="#playground">Try Online <span>⤵</span></a>
           <a class="link-button" href="https://github.com/k14s/kapp/releases">Download Binary</a>
-          <a class="link-button try-online" href="#playground">Try Online <span>⤵</span></a>
         </p>
       </div>
 
-      <div id="intro">
-        <div id="features">
-          <h2>Features</h2>
-          <ul>
-            <li>Works with standard Kubernetes YAMLs</li>
-            <li>
-              <em class="highlight">Focuses exclusively on deployment workflow</em>, not packaging or templating
-              <ul><li>but plays well with tools (such as <a href="https://get-ytt.io">ytt</a>, <a href="https://github.com/kubernetes-sigs/kustomize">kustomize</a> and <a href="https://helm.sh/docs/helm/#helm-template">helm template</a> command, etc.) that produce Kubernetes configuration</li></ul>
-            </li>
-            <li>
-              <em class="highlight">Converges application resources</em> (creates, updates and/or deletes resources) in each deploy
-              <ul><li>based on comparison between provided files and live objects in the cluster</li></ul>
-            </li>
-            <li>Separates calculation of changes (<a href="https://github.com/k14s/kapp/blob/develop/docs/diff.md">diff stage</a>) from application of changes (<a href="https://github.com/k14s/kapp/blob/develop/docs/apply.md">apply stage</a>)</li>
-            <li><a href="https://github.com/k14s/kapp/blob/develop/docs/apply-waiting.md">Waits for resources</a> to be "ready"</li>
-            <li>Creates CRDs and Namespaces first and supports <a href="https://github.com/k14s/kapp/blob/develop/docs/apply-ordering.md">custom change ordering</a></li>
-            <li>
-              <em class="highlight">Works without admin privileges</em> and does not depend on any custom CRDs
-              <ul><li>making it possible to use <code>kapp</code> as a regular user in a single namespace</li></ul>
-            </li>
-            <li>Records application <em class="highlight">deployment history</em></li>
-            <li>
-              Opt-in resource <em class="highlight">version management</em>
-              <ul><li>for example, to trigger Deployment rollout when ConfigMap changes</li></ul>
-            </li>
-            <li>Works with any group of labeled resources (<code>kapp -a label:tier=web inspect -t</code>)</li>
-            <li>Works <em class="highlight">without server side components</em></li>
-            <li><a href="https://github.com/k14s/kapp/blob/develop/docs/gitops.md">GitOps friendly</a> (<code>kapp app-group deploy -g all-apps --directory .</code>)</li>
-          </ul>
-        </div>
+      <div id="highlights">
+        <ul>
+          <li>
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M2.5 19h19v2h-19v-2zm19.57-9.36c-.21-.8-1.04-1.28-1.84-1.06L14.92 10l-6.9-6.43-1.93.51 4.14 7.17-4.97 1.33-1.97-1.54-1.45.39 1.82 3.16.77 1.33L21 11.49c.81-.23 1.28-1.05 1.07-1.85z"/></svg>
+            <h3>Lightweight</h3>
+            <p>kapp is a CLI that does not require server-side components, elevated privileges nor any custom resources. It works well in RBAC-constrained clusters.</p>
+          </li>
+          <li>
+            <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24" viewBox="0 0 24 24" width="24"><g><rect fill="none" height="24" width="24"/></g><g><g/><g><path d="M21,5l-9-4L3,5v6c0,5.55,3.84,10.74,9,12c2.3-0.56,4.33-1.9,5.88-3.71l-3.12-3.12c-1.94,1.29-4.58,1.07-6.29-0.64 c-1.95-1.95-1.95-5.12,0-7.07c1.95-1.95,5.12-1.95,7.07,0c1.71,1.71,1.92,4.35,0.64,6.29l2.9,2.9C20.29,15.69,21,13.38,21,11V5z"/><circle cx="12" cy="12" r="3"/></g></g></svg>
+            <h3>Explicit</h3>
+            <p>kapp calculates changes between your configuration and live cluster state (a set of create, update, and delete operations) and applies changes you approve. It reports how resources are converging to their desired state providing insight into progress of the deployment.</p>
+          </li>
+          <li>
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M14 5h8v2h-8V5zm0 5.5h8v2h-8v-2zm0 5.5h8v2h-8v-2zM2 11.5C2 15.08 4.92 18 8.5 18H9v2l3-3-3-3v2h-.5C6.02 16 4 13.98 4 11.5S6.02 7 8.5 7H12V5H8.5C4.92 5 2 7.92 2 11.5z"/></svg>
+            <h3>Dependency-aware</h3>
+            <p>kapp orders certain resources (e.g. CRDs and Namespaces are installed before the resources that need them). Add your own rules to declare dependencies (e.g. a Job running DB migrations must finish before the Deployment is updated).</p>
+          </li>
+        </ul>
+      </div>
 
-        <div id="basic-usage">
-          <h2>Basic Usage</h2>
-          <pre class="terminal">
+      <div id="features">
+        <h2>Features</h2>
+        <ul>
+          <li>
+            <em class="highlight">Focuses exclusively on deployment procedure</em> and plays well with configuration tools such as <a href="https://get-ytt.io">ytt</a>, <a href="https://github.com/kubernetes-sigs/kustomize">kustomize</a>, <a href="https://helm.sh/docs/helm/#helm-template">helm template</a>, and any other tool that can produce standard Kubernetes YAML configuration.
+            <pre class="terminal">$ <span class="green">kapp deploy -a my-app -f</span> <( ... config tool of your choice ... )</pre>
+          </li>
+          <li>
+            <em class="highlight">Converges application resources</em> (create, update and/or delete resources) in each deploy
+            based on comparison between provided configuration and live cluster state.
+            <pre class="terminal">
+Namespace  Name             Kind        Conds.  Age  Op      Wait to    Rs  Ri
+default    simple-app       ConfigMap   -       -    <span class="green">create</span>  reconcile  -   -
+^          simple-app       Deployment  <span class="green">2/2 t</span>   2m   <span class="green">update</span>  reconcile  <span class="green">ok</span>  -
+^          simple-app       Service     -       2m   <span class="red">delete</span>  delete     <span class="green">ok</span>  -
+^          simple-app-node  Service     -       -    <span class="green">create</span>  reconcile  -   -</pre>
+          </li>
+          <li>
+            Keeps <a href="https://github.com/k14s/kapp/blob/develop/docs/diff.md">diff stage</a> (changes are calculated) separate from <a href="https://github.com/k14s/kapp/blob/develop/docs/apply.md">apply stage</a> (applying changes to the cluster) which increases deployment safety, visibility, and confidence.
+            <pre class="terminal">
+Op:      2 create, 0 delete, 0 update, 0 noop
+Wait to: 2 reconcile, 0 delete, 0 noop
+
+Continue? [yN]:</pre>
+          </li>
+          <li>
+            <a href="https://github.com/k14s/kapp/blob/develop/docs/apply-waiting.md"><em class="highlight">Waits for resources</em></a> to "reconcile"
+            <pre class="terminal">
+2:13:01PM: ---- waiting on 2 changes [0/2 done] ----
+2:13:01PM: ok: reconcile service/simple-app (v1) namespace: default
+2:13:01PM: ongoing: reconcile deployment/simple-app (apps/v1) namespace: default
+2:13:01PM:  ^ Waiting for 1 unavailable replicas
+2:13:01PM:  L ok: waiting on replicaset/simple-app-7f9c78ccd8 (apps/v1) namespace: default
+2:13:01PM:  L ongoing: waiting on pod/simple-app-7f9c78ccd8-h7wlc (v1) namespace: default
+2:13:01PM:     ^ Pending: ContainerCreating</pre>
+          </li>
+          <li><em class="highlight">Creates CRDs and Namespaces first</em> and supports <a href="https://github.com/k14s/kapp/blob/develop/docs/apply-ordering.md">custom change ordering</a></li>
+          <li><em class="highlight">Track Pod logs</em> as part of the deploy to better understand progress</li>
+          <li>
+            <em class="highlight">Works without admin privileges</em> and does not depend on any custom CRDs
+            making it possible to use <code>kapp</code> as a regular user in a single namespace
+          </li>
+          <li>Records application <em class="highlight">deployment history</em></li>
+          <li>
+            Opt-in resource <em class="highlight">version management</em> for example, to trigger Deployment rollout when ConfigMap changes
+            <pre class="terminal">
+Namespace  Name              Kind        Conds.  Age  Op      Wait to    Rs  Ri
+default    simple-app        Deployment  2/2 t   18s  <span class="green">update</span>  reconcile  ok  -
+^          simple-app-ver-2  ConfigMap   -       -    <span class="green">create</span>  reconcile  -   -</pre>
+          </li>
+          <li>Works with any group of labeled resources, for example, <code>kapp -a label:tier=web inspect -t</code></li>
+          <li>Works <em class="highlight">without server side components</em></li>
+          <li><a href="https://github.com/k14s/kapp/blob/develop/docs/gitops.md">GitOps friendly</a> via CLI command <code>kapp app-group deploy -g all-apps --directory .</code> or <a href="https://github.com/k14s/kapp-controller">kapp-controller</a></li>
+        </ul>
+      </div>
+
+      <div id="basic-usage">
+        <h2>Basic Usage</h2>
+        <pre class="terminal">
 <span class="gray"># Configurations picked up from a directory</span>
 $ <span class="green">kapp deploy -a my-app -f ./examples/simple-app-example/config-1.yml</span>
 <span class="gray spacer-before"># Can be used with helm charts, removing need for Tiller</span>
@@ -68,42 +116,41 @@ $ <span class="green">kapp -y deploy -a my-chart -f</span> &lt;(helm template my
 $ <span class="green">kapp -y deploy -a my-app -f</span> &lt;(kustomize build ./my-app)
 <span class="gray spacer-before"># ... or templated with ytt</span>
 $ <span class="green">kapp -y deploy -a my-app -f</span> &lt;(ytt -f ./examples/simple-app-example/config-1.yml)</pre>
-        </div>
+</pre>
+      </div>
 
-        <div id="playground">
-          <h2>Playground</h2>
+      <div id="workflow">
+        <h2 id="playground">Playground and Example Workflow</h2>
 
-          <p>Try out <code>kapp</code> in Katacoda Kubernetes interactive playground or check out <a href="#workflow">example workflow</a> below:</p>
+        <p>You can follow along in Katacoda Kubernetes playground while going through below workflow. To set up playground:</p>
 
-          <p><a class="link-button try-online" href="https://www.katacoda.com/courses/kubernetes/playground" target="_blank">Start Katacoda Playground</a></p>
-
-          <p>After launching playground, follow these steps to install <code>kapp</code> and example k8s app:</p>
-
-          <pre class="terminal">
+        <ol>
+          <li><a href="https://www.katacoda.com/courses/kubernetes/playground" target="_blank">Open Katacoda Playground</a></li>
+          <li>then, click "Start scenario" button</li>
+          <li>focus in "Terminal Host 1" prompt</li>
+          <li>
+            and install <code>kapp</code> in playground before continuing with the workflow
+            <pre class="terminal">
 $ wget -O- https://get-kapp.io/install-katacoda.sh | bash
 $ cd kapp/
-$ kapp version
-$ kapp deploy -a app1 -f examples/simple-app-example/config-1.yml
-$ kapp inspect -a app1
-$ kapp deploy -a app1 -f examples/simple-app-example/config-2.yml
-$ kapp delete -a app1</pre>
-        </div>
+$ kapp version</pre>
+          </li>
+        </ol>
 
-        <div id="workflow">
-          <h2>Example Workflow</h2>
-          <table>
-            <tbody>
-              <tr>
-                <td class="doc">In this example, we are installing sample app from kapp repository.</td>
-                <td class="output">
-                  <pre class="terminal">
-$ kapp deploy -a app1 -f examples/simple-app-example/config-1.yml</pre>
-                </td>
-              </tr>
-              <tr>
-                <td class="doc">Changes summary shows that all resources are new.</td>
-                <td class="output">
-                  <pre class="terminal">
+        <p>And now onto using <code>kapp</code>:</p>
+
+        <table>
+          <tbody>
+            <tr>
+              <td class="doc">
+                In this example, we are installing example app from <a href="https://github.com/k14s/kapp">kapp repository</a>.
+                <br/><br/>
+                Changes summary shows that all resources are new.
+              </td>
+              <td class="output">
+                <pre class="terminal">
+$ kapp deploy -a app1 -f examples/simple-app-example/config-1.yml
+
 Target cluster 'https://x.x.x.x' (nodes: gke-dk-jan-9-pool-1-d01bcd06-bgie, 4+)
 
 Changes
@@ -115,12 +162,12 @@ default    simple-app  Deployment  -       -    <span class="green">create</span
 Op:      2 create, 0 delete, 0 update, 0 noop
 Wait to: 2 reconcile, 0 delete, 0 noop
 </pre>
-                </td>
-              </tr>
-              <tr>
-                <td class="doc">Let's confirm to continue, and follow deployment progress.</td>
-                <td class="output">
-                  <pre class="terminal">
+              </td>
+            </tr>
+            <tr>
+              <td class="doc">Let's confirm to continue, and follow deployment progress.</td>
+              <td class="output">
+                <pre class="terminal">
 Continue? [yN]: y
 
 2:12:59PM: ---- applying 2 changes [0/2 done] ----
@@ -139,17 +186,17 @@ Continue? [yN]: y
 2:13:03PM: ---- waiting complete [2/2 done] ----
 
 Succeeded</pre>
-                </td>
-              </tr>
-            </tbody>
-            <tbody>
-              <tr>
-                <td class="doc">
-                  <code>ls</code> command shows list of all apps stored in current namespace.
-                  Apps themselves can span multiple namespaces and cluster scope.
-                </td>
-                <td class="output">
-                  <pre class="terminal">
+              </td>
+            </tr>
+          </tbody>
+          <tbody>
+            <tr>
+              <td class="doc">
+                <code>ls</code> command shows list of all apps stored in current namespace.
+                Apps themselves can span multiple namespaces and cluster scope.
+              </td>
+              <td class="output">
+                <pre class="terminal">
 $ kapp ls
 
 Target cluster 'https://x.x.x.x' (nodes: gke-dk-jan-9-pool-1-d01bcd06-bgie, 4+)
@@ -165,118 +212,113 @@ Lca: Last Change Age
 1 apps
 
 Succeeded</pre>
-                </td>
-              </tr>
-            </tbody>
-            <tbody>
-              <tr>
-                <td class="doc">
-                  Now let's update from one app configuration to another using <code>deploy</code> command.
-                  <br/><br/>
-                  Since <code>--diff-changes</code> is used, 
-                  <code>kapp</code> will show detailed diff against
-                  versions of resources in the cluster.
-                </td>
-                <td class="output">
-                  <pre class="terminal">
-$ kapp deploy -a app1 -f examples/simple-app-example/config-2.yml --diff-changes</pre>
-                </td>
-              </tr>
-              <tr>
-                <td class="doc">
-                  This resource will be created.
-                </td>
-                <td class="output">
-                  <pre class="terminal">
+              </td>
+            </tr>
+          </tbody>
+          <tbody>
+            <tr>
+              <td class="doc">
+                Now let's update from one app configuration to another using <code>deploy</code> command.
+                <br/><br/>
+                Since <code>--diff-changes</code> is used, 
+                <code>kapp</code> will show detailed diff against
+                versions of resources in the cluster.
+                <br/><br/>
+                These first two resources will be created.
+              </td>
+              <td class="output">
+                <pre class="terminal">
+$ kapp deploy -a app1 -f examples/simple-app-example/config-2.yml --diff-changes
+
 Target cluster 'https://x.x.x.x' (nodes: gke-dk-jan-9-pool-1-d01bcd06-bgie, 4+)
 
 @@ create service/simple-app-node (v1) namespace: default @@<span class="green">
-      0 + apiVersion: v1
-      1 + kind: Service
-      2 + metadata:
-      3 +   labels:
-      4 +     kapp.k14s.io/app: "1594663909283037000"
-      5 +     kapp.k14s.io/association: v1.6e43c1cd2c7173a969d84f77ad6a72c2
-      6 +   name: simple-app-node
-      7 +   namespace: default
-      8 + spec:
-      9 +   ports:
-     10 +   - nodePort: 31111
-     11 +     port: 80
-     12 +     targetPort: 80
-     13 +   selector:
-     14 +     kapp.k14s.io/app: "1594663909283037000"
-     15 +     simple-app: ""
-     16 +   type: NodePort
-     17 +</span>
+    0 + apiVersion: v1
+    1 + kind: Service
+    2 + metadata:
+    3 +   labels:
+    4 +     kapp.k14s.io/app: "1594663909283037000"
+    5 +     kapp.k14s.io/association: v1.6e43c1cd2c7173a969d84f77ad6a72c2
+    6 +   name: simple-app-node
+    7 +   namespace: default
+    8 + spec:
+    9 +   ports:
+   10 +   - nodePort: 31111
+   11 +     port: 80
+   12 +     targetPort: 80
+   13 +   selector:
+   14 +     kapp.k14s.io/app: "1594663909283037000"
+   15 +     simple-app: ""
+   16 +   type: NodePort
+   17 +</span>
 
 @@ create configmap/simple-app (v1) namespace: default @@<span class="green">
-      0 + apiVersion: v1
-      1 + data:
-      2 +   hello_msg: friend
-      3 + kind: ConfigMap
-      4 + metadata:
-      5 +   labels:
-      6 +     kapp.k14s.io/app: "1594663909283037000"
-      7 +     kapp.k14s.io/association: v1.afcdfc989e2a0b3f3e526dc1c4176060
-      8 +   name: simple-app
-      9 +   namespace: default
-     10 +</span></pre>
-                </td>
-              </tr>
-              <tr>
-                <td class="doc">This resource will be updated.</td>
-                <td class="output">
-                  <pre class="terminal">
+    0 + apiVersion: v1
+    1 + data:
+    2 +   hello_msg: friend
+    3 + kind: ConfigMap
+    4 + metadata:
+    5 +   labels:
+    6 +     kapp.k14s.io/app: "1594663909283037000"
+    7 +     kapp.k14s.io/association: v1.afcdfc989e2a0b3f3e526dc1c4176060
+    8 +   name: simple-app
+    9 +   namespace: default
+   10 +</span></pre>
+              </td>
+            </tr>
+            <tr>
+              <td class="doc">This resource will be updated.</td>
+              <td class="output">
+                <pre class="terminal">
 @@ update deployment/simple-app (apps/v1) namespace: default @@
-  ...<span class="red">
- 29, 29           - name: HELLO_MSG
- 30     -           value: stranger</span><span class="green">
-     30 +           valueFrom:
-     31 +             configMapKeyRef:
-     32 +               key: hello_msg
-     33 +               name: simple-app</span>
- 31, 34           image: docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0
- 32, 35           name: simple-app</pre>
-                </td>
-              </tr>
-              <tr>
-                <td class="doc">This resource is will be deleted.</td>
-                <td class="output">
-                  <pre class="terminal">
+...<span class="red">
+29, 29           - name: HELLO_MSG
+30     -           value: stranger</span><span class="green">
+   30 +           valueFrom:
+   31 +             configMapKeyRef:
+   32 +               key: hello_msg
+   33 +               name: simple-app</span>
+31, 34           image: docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0
+32, 35           name: simple-app</pre>
+              </td>
+            </tr>
+            <tr>
+              <td class="doc">This resource is will be deleted.</td>
+              <td class="output">
+                <pre class="terminal">
 @@ delete service/simple-app (v1) namespace: default @@<span class="red">
-  0     - apiVersion: v1
-  1     - kind: Service
-  2     - metadata:
-  3     -   creationTimestamp: "2020-07-13T18:12:59Z"
-  4     -   labels:
-  5     -     kapp.k14s.io/app: "1594663909283037000"
-  6     -     kapp.k14s.io/association: v1.462a95c01b2a0bdc4d5acadc4a22dd74
-  7     -   name: simple-app
-  8     -   namespace: default
-  9     -   resourceVersion: "69009086"
- 10     -   selfLink: /api/v1/namespaces/default/services/simple-app
- 11     -   uid: 4e8bb148-2de4-46b3-a2e1-53dacbaaff34
- 12     - spec:
- 13     -   clusterIP: 10.76.6.94
- 14     -   ports:
- 15     -   - port: 80
- 16     -     targetPort: 80
- 17     -   selector:
- 18     -     kapp.k14s.io/app: "1594663909283037000"
- 19     -     simple-app: ""
- 20     - status:
- 21     -   loadBalancer: {}
- 22     -</span></pre>
-                </td>
-              </tr>
-              <tr>
-                <td class="doc">
-                  Changes summary is presented before deploy will continue.
-                  There are only few changes in this example.
-                </td>
-                <td class="output">
-                  <pre class="terminal">
+0     - apiVersion: v1
+1     - kind: Service
+2     - metadata:
+3     -   creationTimestamp: "2020-07-13T18:12:59Z"
+4     -   labels:
+5     -     kapp.k14s.io/app: "1594663909283037000"
+6     -     kapp.k14s.io/association: v1.462a95c01b2a0bdc4d5acadc4a22dd74
+7     -   name: simple-app
+8     -   namespace: default
+9     -   resourceVersion: "69009086"
+10     -   selfLink: /api/v1/namespaces/default/services/simple-app
+11     -   uid: 4e8bb148-2de4-46b3-a2e1-53dacbaaff34
+12     - spec:
+13     -   clusterIP: 10.76.6.94
+14     -   ports:
+15     -   - port: 80
+16     -     targetPort: 80
+17     -   selector:
+18     -     kapp.k14s.io/app: "1594663909283037000"
+19     -     simple-app: ""
+20     - status:
+21     -   loadBalancer: {}
+22     -</span></pre>
+              </td>
+            </tr>
+            <tr>
+              <td class="doc">
+                Changes summary is presented before deploy will continue.
+                There are only few changes in this example.
+              </td>
+              <td class="output">
+                <pre class="terminal">
 Changes
 
 Namespace  Name             Kind        Conds.  Age  Op      Op st.  Wait to    Rs  Ri
@@ -287,15 +329,15 @@ default    simple-app       ConfigMap   -       -    <span class="green">create<
 
 Op:      2 create, 1 delete, 1 update, 0 noop
 Wait to: 3 reconcile, 1 delete, 0 noop</pre>
-                </td>
-              </tr>
-              <tr>
-                <td class="doc">
-                  Detailed progress log shows <code>kapp</code> waiting for
-                  associated resources to be ready. Readiness checks are specific to resource types.
-                </td>
-                <td class="output">
-                  <pre class="terminal">
+              </td>
+            </tr>
+            <tr>
+              <td class="doc">
+                Detailed progress log shows <code>kapp</code> waiting for
+                associated resources to be ready. Readiness checks are specific to resource types.
+              </td>
+              <td class="output">
+                <pre class="terminal">
 Continue? [yN]:
 
 2:21:15PM: ---- applying 2 changes [0/4 done] ----
@@ -323,17 +365,17 @@ Continue? [yN]:
 
 Succeeded
 </pre>
-                </td>
-              </tr>
-            </tbody>
-            <tbody>
-              <tr>
-                <td class="doc">
-                  <code>inspect</code> command shows list of live objects associated with given app.
-                  <code>--tree</code> view optionally shows simple parent-child resource relationships.
-                </td>
-                <td class="output">
-                  <pre class="terminal">
+              </td>
+            </tr>
+          </tbody>
+          <tbody>
+            <tr>
+              <td class="doc">
+                <code>inspect</code> command shows list of live objects associated with given app.
+                <code>--tree</code> view optionally shows simple parent-child resource relationships.
+              </td>
+              <td class="output">
+                <pre class="terminal">
 $ kapp inspect -a app1 --tree
 
 Target cluster 'https://x.x.x.x' (nodes: gke-dk-jan-9-pool-1-d01bcd06-bgie, 4+)
@@ -355,16 +397,16 @@ Ri: Reconcile information
 7 resources
 
 Succeeded</pre>
-                </td>
-              </tr>
-            </tbody>
-            <tbody>
-              <tr>
-                <td class="doc">
-                  <code>logs</code> command starts streaming logs from all Pods associated with given app.
-                </td>
-                <td class="output">
-                  <pre class="terminal">
+              </td>
+            </tr>
+          </tbody>
+          <tbody>
+            <tr>
+              <td class="doc">
+                <code>logs</code> command starts streaming logs from all Pods associated with given app.
+              </td>
+              <td class="output">
+                <pre class="terminal">
 $ kapp logs -f -a app1
 
 Target cluster 'https://x.x.x.x' (nodes: gke-dk-jan-9-pool-1-d01bcd06-bgie, 4+)
@@ -372,17 +414,17 @@ Target cluster 'https://x.x.x.x' (nodes: gke-dk-jan-9-pool-1-d01bcd06-bgie, 4+)
 # starting tailing 'simple-app-8558f78495-zqwxt > simple-app' logs
 simple-app-8558f78495-zqwxt > simple-app | 2020/07/13 18:21:16 Server started
 ^C</pre>
-                </td>
-              </tr>
-            </tbody>
-            <tbody>
-              <tr>
-                <td class="doc">
-                  <code>delete</code> command finds all resources in the cluster associated with given app,
-                  issues delete operation and waits for them be be deleted.
-                </td>
-                <td class="output">
-                  <pre class="terminal">
+              </td>
+            </tr>
+          </tbody>
+          <tbody>
+            <tr>
+              <td class="doc">
+                <code>delete</code> command finds all resources in the cluster associated with given app,
+                issues delete operation and waits for them be be deleted.
+              </td>
+              <td class="output">
+                <pre class="terminal">
 $ kapp delete -a app1
 
 Target cluster 'https://x.x.x.x' (nodes: gke-dk-jan-9-pool-1-d01bcd06-bgie, 4+)
@@ -432,14 +474,36 @@ Continue? [yN]: y
 2:23:27PM: ---- waiting complete [8/8 done] ----
 
 Succeeded</pre>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <div id="footer">c 2019 &mdash;</div>
+      <div id="authors">
+        <h2>k14s Team</h2>
+        <p>ytt is released as open source software and provides community support through our <a href="https://github.com/k14s/kapp/issues">GitHub project page</a>.</p>
+        <p>The k14s project team welcomes contributions from the community, please see our contributing documentation.</p>
+      </div>
+
+      <div id="footer">
+        <ul>
+          <li>
+            <a href="#"><svg class="svg-inline--fa fa-slack fa-w-14 fa-lg fa-fw mr-1" aria-hidden="true" data-prefix="fab" data-icon="slack" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" data-fa-i2svg=""><path fill="currentColor" d="M244.2 217.5l19.3 57.7-59.8 20-19.3-57.7 59.8-20zm41.4 243.7C131.6 507.4 65 471.6 18.8 317.6S8.4 97 162.4 50.8C316.4 4.6 383 40.4 429.2 194.4c46.2 154 10.4 220.6-143.6 266.8zM366.2 265c-3.9-12.2-17.2-18.6-29.4-14.7l-29 9.7-19.3-57.7 29-9.7c12.2-3.9 18.6-17.2 14.7-29.4-3.9-12.2-17.2-18.6-29.4-14.7l-29 9.7-10-30.1c-3.9-12.2-17.2-18.6-29.4-14.7-12.2 3.9-18.6 17.2-14.7 29.4l10 30.1-59.8 20.1-10-30.1c-3.9-12.2-17.2-18.6-29.4-14.7-12.2 3.9-18.6 17.2-14.7 29.4l10 30.1-29 9.7c-12.2 3.9-18.6 17.2-14.7 29.4 3.2 9.3 12.2 15.4 21.5 15.8 4.3.6 7.7-1 36.9-10.7l19.3 57.7-29 9.7c-12.2 3.9-18.6 17.2-14.7 29.4 3.2 9.3 12.2 15.4 21.5 15.8 4.3.6 7.7-1 36.9-10.7l10 30.1c3.7 10.8 15.8 18.6 29.4 14.7 12.2-3.9 18.6-17.2 14.7-29.4l-10-30.1 59.8-20.1 10 30.1c3.7 10.8 15.8 18.6 29.4 14.7 12.2-3.9 18.6-17.2 14.7-29.4l-10-30.1 29-9.7c12.2-4.2 18.6-17.5 14.7-29.6z"></path></svg> Slack</a>
+          </li>
+          <li>
+            <a href="#"><svg class="svg-inline--fa fa-github fa-w-16 fa-lg fa-fw mr-1" aria-hidden="true" data-prefix="fab" data-icon="github" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512" data-fa-i2svg=""><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"></path></svg> Github</a>
+          </li>
+          <li>
+            <a href="#"><svg class="svg-inline--fa fa-twitter fa-w-16 fa-lg fa-fw mr-1" aria-hidden="true" data-prefix="fab" data-icon="twitter" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" data-fa-i2svg=""><path fill="currentColor" d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"></path></svg> Twitter</a>
+          </li>
+        </ul>
+
+        <p>&copy; 2020 k14s Authors.</p>
+
+        <p class="vmware"><a href="http://vmware.github.io/" class="vm-logo">A VMware-backed project. <img src="data:image/jpeg;base64, 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" alt="VMware logo" /></a>
+        </p>
+      </div>
     </div>
   </body>
 </html>
