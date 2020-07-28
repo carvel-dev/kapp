@@ -30,7 +30,7 @@ Some fields on a resource are immutable. kapp provides a `kapp.k14s.io/update-st
 
 [via slack](https://kubernetes.slack.com/archives/CH8KCCKA5/p1565624685226400)
 
-kapp has a feature called [versioned resources](https://github.com/k14s/kapp/blob/develop/docs/diff.md#versioned-resources) that allows kapp to create uniquely named resources instead of updating resources with changes. Resources referencing versioned resources are forced to be updated with new names, and therefore are changed, thus solving a problem of how to propagate changes safely.
+kapp has a feature called [versioned resources](diff.md#versioned-resources) that allows kapp to create uniquely named resources instead of updating resources with changes. Resources referencing versioned resources are forced to be updated with new names, and therefore are changed, thus solving a problem of how to propagate changes safely.
 
 ---
 ### Quick way to find common kapp command variations
@@ -71,3 +71,55 @@ There might be cases where other system actors (various controllers) may modify 
 ### Colors are not showing up in my CI build, in my terminal, etc.
 
 Try setting `FORCE_COLOR=1` environment variable to force enabling color output. Available in v0.23.0+.
+
+---
+### How can I version apps deployed by kapp?
+
+kapp itself does not provide any notion of versioning, since it's just a tool to reconcile config. You can include a ConfigMap in your deployment with the metadata needed. e.g. git commit, release notes, etc.
+
+You can also use [versioned resources](diff.md#versioned-resources) to represent an update to a resource as an entirely new resource.
+
+---
+#### `Resource ... is associated with a different label value`
+
+Resource ownership is tracked by app labels. kapp manages a metadata `ConfigMap` for each deployed application. Each contains a generated label used to track all the application's resources. Since the `ConfigMap`'s are stored in the current namespace by default, you may see this error when the `ConfigMaps` are stored in another namespace. Target a namespace using `--namespace`.
+
+Additional resources: [State Namespace](state-namespace.md), [Slack Thread](https://kubernetes.slack.com/archives/CH8KCCKA5/p1589264289257000)
+
+---
+#### kapp hangs when trying to delete a resource
+
+By default, kapp won't delete resources it didn't create. You can force kapp to apply this ignored change using `--apply-ignored` [flag](apply.md#controlling-apply-via-deploy-flags).
+
+---
+#### How does kapp handle merging?
+
+kapp explicitly decided against basic 3 way merge, instead allowing the user to specify how to resolve conflicts.
+
+Resources: [merge method](merge-method.md), [rebase rules](config.md#rebaserules)
+
+---
+#### Can I force an update for a change that does not produce a diff?
+
+If kapp does not detect changes, it won't perform an update. To force changes regardless you can provide the [`kapp.k14s.io/nonce`](apply.md#kappk14siononce) annotation. That way, every time you deploy the resource will appear to have changes.
+
+---
+#### How can I push an app to a namespace that may or may not already exist?
+
+kapp cannot to deploy to a nonexistent namespace since kapp needs to save generated label (in a configmap) before creating app resources. You can target a namespace with `-n.`
+
+Resources: [State Namespace](state-namespace.md)
+
+---
+#### How can I remove decorative headings from kapp inspect output?
+
+kapp supports a `--tty` flag which, when set to false will only output the desired diff to stdout.
+
+ `kapp inspect --raw --tty=false`
+
+Additional resources: [tty flag in kapp code](https://github.com/k14s/kapp/blob/3f3e207d7198cdedd6985761ecb0d9616a84e305/pkg/kapp/cmd/ui_flags.go#L20)
+
+---
+#### How can I get kapp to skip waiting on (some) resources?
+
+kapp has custom wait behavior applied per resource via [resource annotations](apply-waiting.md#controlling-waiting-via-resource-annotations). When used, the resource will be applied to the cluster, but will not wait to reconcile.
