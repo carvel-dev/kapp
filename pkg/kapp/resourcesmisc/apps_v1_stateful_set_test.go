@@ -38,6 +38,7 @@ metadata:
 spec:
   replicas: 3
 status:
+  replicas: 1
   currentReplicas: 1
   observedGeneration: 1
   updatedReplicas: 1
@@ -57,6 +58,7 @@ status:
 	currentData = strings.Replace(currentData, "currentReplicas: 1", "currentReplicas: 3", -1)
 	currentData = strings.Replace(currentData, "updatedReplicas: 1", "updatedReplicas: 3", -1)
 	currentData = strings.Replace(currentData, "readyReplicas: 0", "readyReplicas: 2", -1)
+	currentData = strings.Replace(currentData, "status:\n  replicas: 1", "status:\n  replicas: 3", -1)
 
 	state = buildStatefulSet(currentData, t).IsDoneApplying()
 	expectedState = ctlresm.DoneApplyState{
@@ -91,6 +93,7 @@ metadata:
 spec:
   replicas: 3
 status:
+  replicas: 3
   currentReplicas: 3
   observedGeneration: 1
   updatedReplicas: 3
@@ -176,6 +179,7 @@ spec:
     rollingUpdate:
       partition: 1
 status:
+  replicas: 3
   currentReplicas: 3
   observedGeneration: 1
   updatedReplicas: 3
@@ -236,6 +240,74 @@ status:
 	}
 
 	currentData = strings.Replace(currentData, "readyReplicas: 2", "readyReplicas: 3", -1)
+
+	state = buildStatefulSet(currentData, t).IsDoneApplying()
+	expectedState = ctlresm.DoneApplyState{
+		Done:       true,
+		Successful: true,
+		Message:    "",
+	}
+	if state != expectedState {
+		t.Fatalf("Found incorrect state: %#v", state)
+	}
+}
+
+func TestAppsV1StatefulSetScaleDown(t *testing.T) {
+	currentData := `
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web
+  generation: 2
+spec:
+  replicas: 1
+status:
+  replicas: 2
+  currentReplicas: 2
+  observedGeneration: 1
+  updatedReplicas: 2
+  readyReplicas: 2
+`
+
+	state := buildStatefulSet(currentData, t).IsDoneApplying()
+	expectedState := ctlresm.DoneApplyState{
+		Done:       false,
+		Successful: false,
+		Message:    "Waiting for generation 2 to be observed",
+	}
+	if state != expectedState {
+		t.Fatalf("Found incorrect state: %#v", state)
+	}
+
+	// StatefulSet controller marks one of the "current" pods for deletion. Updated == current since scaling change does not create a new revision.
+	currentData = strings.Replace(currentData, "updatedReplicas: 2", "updatedReplicas: 1", -1)
+	currentData = strings.Replace(currentData, "currentReplicas: 2", "currentReplicas: 1", -1)
+	currentData = strings.Replace(currentData, "observedGeneration: 1", "observedGeneration: 2", -1)
+
+	state = buildStatefulSet(currentData, t).IsDoneApplying()
+	expectedState = ctlresm.DoneApplyState{
+		Done:       false,
+		Successful: false,
+		Message:    "Waiting for 1 replicas to be deleted",
+	}
+	if state != expectedState {
+		t.Fatalf("Found incorrect state: %#v", state)
+	}
+
+	currentData = strings.Replace(currentData, "readyReplicas: 2", "readyReplicas: 1", -1)
+
+	state = buildStatefulSet(currentData, t).IsDoneApplying()
+	expectedState = ctlresm.DoneApplyState{
+		Done:       false,
+		Successful: false,
+		Message:    "Waiting for 1 replicas to be deleted",
+	}
+	if state != expectedState {
+		t.Fatalf("Found incorrect state: %#v", state)
+	}
+
+	// StatefulSet Controller has finished removing replicas
+	currentData = strings.Replace(currentData, "status:\n  replicas: 2", "status:\n  replicas: 1", -1)
 
 	state = buildStatefulSet(currentData, t).IsDoneApplying()
 	expectedState = ctlresm.DoneApplyState{
