@@ -102,7 +102,7 @@ rebaseRules:
 
 Available in v0.29.0+.
 
-`waitRules` specify how to wait for resources that kapp does not wait for by default. Each rule provides a way to specify which `status.conditions` indicate success or failure. (If this functionality is not enough to wait for resources in your use case, please reach out on Slack to discuss further.)
+`waitRules` specify how to wait for resources that kapp does not wait for by default. Each rule provides a way to specify which `status.conditions` indicate success or failure. Once a condition matches the status' value kapp will exit waiting and report the result. (If this functionality is not enough to wait for resources in your use case, please reach out on Slack to discuss further.)
 
 ```yaml
 waitRules:
