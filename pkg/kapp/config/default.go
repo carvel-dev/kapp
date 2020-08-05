@@ -211,14 +211,39 @@ ownershipLabelRules:
 labelScopingRules:
 - path: [spec, selector]
   resourceMatchers:
-  - apiVersionKindMatcher: {apiVersion: v1, kind: Service}
-
-- path: [spec, selector, matchLabels]
-  resourceMatchers: *withPodTemplate
+  - andMatcher:
+      matchers:
+      - notMatcher:
+          # Keep older annotation for backwards compatibility
+          matcher: &disableLabelScopingAnnMatcher
+            hasAnnotationMatcher:
+              keys: [kapp.k14s.io/disable-label-scoping]
+      - notMatcher:
+          matcher: &disableDefaultLabelScopingRulesAnnMatcher
+            hasAnnotationMatcher:
+              keys: [kapp.k14s.io/disable-default-label-scoping-rules]
+      - apiVersionKindMatcher: {apiVersion: v1, kind: Service}
 
 - path: [spec, selector, matchLabels]
   resourceMatchers:
-  - apiVersionKindMatcher: {apiVersion: policy/v1beta1, kind: PodDisruptionBudget}
+  - andMatcher:
+      matchers:
+      - notMatcher:
+          matcher: *disableLabelScopingAnnMatcher
+      - notMatcher:
+          matcher: *disableDefaultLabelScopingRulesAnnMatcher
+      - anyMatcher:
+          matchers: *withPodTemplate
+
+- path: [spec, selector, matchLabels]
+  resourceMatchers:
+  - andMatcher:
+      matchers:
+      - notMatcher:
+          matcher: *disableLabelScopingAnnMatcher
+      - notMatcher:
+          matcher: *disableDefaultLabelScopingRulesAnnMatcher
+      - apiVersionKindMatcher: {apiVersion: policy/v1beta1, kind: PodDisruptionBudget}
 
 templateRules:
 - resourceMatchers:

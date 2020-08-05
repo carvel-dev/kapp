@@ -96,7 +96,7 @@ rebaseRules:
 
 #### labelScopingRules
 
-`labelScopingRules` specify locations for inserting kapp generated labels that scope resources to resources within current application. `kapp.k14s.io/disable-label-scoping: ""` (value must be empty) annotation can be used to exclude an individual resource from label scoping.
+`labelScopingRules` specify locations for inserting kapp generated labels that scope resources to resources within current application. `kapp.k14s.io/disable-default-label-scoping-rules: ""` (as of v0.33.0+, or use `kapp.k14s.io/disable-label-scoping: ""` in earlier versions) annotation can be used to exclude an individual resource from label scoping.
 
 #### waitRules
 
