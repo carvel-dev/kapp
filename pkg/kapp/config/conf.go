@@ -48,7 +48,7 @@ func (c Conf) DiffAgainstLastAppliedFieldExclusionMods() []ctlres.FieldRemoveMod
 	var mods []ctlres.FieldRemoveMod
 	for _, config := range c.configs {
 		for _, rule := range config.DiffAgainstLastAppliedFieldExclusionRules {
-			mods = append(mods, rule.AsMods()...)
+			mods = append(mods, rule.AsMod())
 		}
 	}
 	return mods
@@ -59,7 +59,7 @@ func (c Conf) OwnershipLabelMods() func(kvs map[string]string) []ctlres.StringMa
 		var mods []ctlres.StringMapAppendMod
 		for _, config := range c.configs {
 			for _, rule := range config.OwnershipLabelRules {
-				mods = append(mods, rule.AsMods(kvs)...)
+				mods = append(mods, rule.AsMod(kvs))
 			}
 		}
 		return mods
@@ -79,7 +79,7 @@ func (c Conf) LabelScopingMods() func(kvs map[string]string) []ctlres.StringMapA
 		var mods []ctlres.StringMapAppendMod
 		for _, config := range c.configs {
 			for _, rule := range config.LabelScopingRules {
-				mods = append(mods, rule.AsMods(kvs)...)
+				mods = append(mods, rule.AsMod(kvs))
 			}
 		}
 		return mods

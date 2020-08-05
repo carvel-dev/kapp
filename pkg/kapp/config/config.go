@@ -240,47 +240,60 @@ func (r RebaseRule) AsMods() []ctlres.ResourceModWithMultiple {
 	}
 
 	for _, path := range paths {
-		for _, matcher := range r.ResourceMatchers {
-			switch r.Type {
-			case "copy":
-				mods = append(mods, ctlres.FieldCopyMod{
-					ResourceMatcher: matcher.AsResourceMatcher(),
-					Path:            path,
-					Sources:         r.Sources,
-				})
+		switch r.Type {
+		case "copy":
+			mods = append(mods, ctlres.FieldCopyMod{
+				ResourceMatcher: ctlres.AnyMatcher{
+					Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
+				},
+				Path:    path,
+				Sources: r.Sources,
+			})
 
-			case "remove":
-				mods = append(mods, ctlres.FieldRemoveMod{
-					ResourceMatcher: matcher.AsResourceMatcher(),
-					Path:            path,
-				})
+		case "remove":
+			mods = append(mods, ctlres.FieldRemoveMod{
+				ResourceMatcher: ctlres.AnyMatcher{
+					Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
+				},
+				Path: path,
+			})
 
-			default:
-				panic(fmt.Sprintf("Unknown rebase rule type: %s (supported: copy, remove)", r.Type)) // TODO
-			}
+		default:
+			panic(fmt.Sprintf("Unknown rebase rule type: %s (supported: copy, remove)", r.Type)) // TODO
 		}
 	}
 
 	return mods
 }
 
-func (r DiffAgainstLastAppliedFieldExclusionRule) AsMods() []ctlres.FieldRemoveMod {
-	var mods []ctlres.FieldRemoveMod
-	for _, matcher := range r.ResourceMatchers {
-		mods = append(mods, ctlres.FieldRemoveMod{
-			ResourceMatcher: matcher.AsResourceMatcher(),
-			Path:            r.Path,
-		})
+func (r DiffAgainstLastAppliedFieldExclusionRule) AsMod() ctlres.FieldRemoveMod {
+	return ctlres.FieldRemoveMod{
+		ResourceMatcher: ctlres.AnyMatcher{
+			Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
+		},
+		Path: r.Path,
 	}
-	return mods
 }
 
-func (r OwnershipLabelRule) AsMods(kvs map[string]string) []ctlres.StringMapAppendMod {
-	return stringMapAppendRule{ResourceMatchers: r.ResourceMatchers, Path: r.Path}.AsMods(kvs)
+func (r OwnershipLabelRule) AsMod(kvs map[string]string) ctlres.StringMapAppendMod {
+	return ctlres.StringMapAppendMod{
+		ResourceMatcher: ctlres.AnyMatcher{
+			Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
+		},
+		Path: r.Path,
+		KVs:  kvs,
+	}
 }
 
-func (r LabelScopingRule) AsMods(kvs map[string]string) []ctlres.StringMapAppendMod {
-	return stringMapAppendRule{ResourceMatchers: r.ResourceMatchers, Path: r.Path, SkipIfNotFound: true}.AsMods(kvs)
+func (r LabelScopingRule) AsMod(kvs map[string]string) ctlres.StringMapAppendMod {
+	return ctlres.StringMapAppendMod{
+		ResourceMatcher: ctlres.AnyMatcher{
+			Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
+		},
+		Path:           r.Path,
+		SkipIfNotFound: true,
+		KVs:            kvs,
+	}
 }
 
 func (r WaitRule) ResourceMatcher() ctlres.ResourceMatcher {
