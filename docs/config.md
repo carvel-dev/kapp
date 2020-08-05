@@ -92,7 +92,7 @@ rebaseRules:
 
 #### ownershipLabelRules
 
-`ownershipLabelRules` specify locations for inserting kapp generated labels. These labels allow kapp to track which resources belong to which application. For resources that describe creation of other resources (e.g. `Deployment` or `StatefulSet`), configuration may need to specify where to insert labels for child resources that will be created.
+`ownershipLabelRules` specify locations for inserting kapp generated labels. These labels allow kapp to track which resources belong to which application. For resources that describe creation of other resources (e.g. `Deployment` or `StatefulSet`), configuration may need to specify where to insert labels for child resources that will be created. `kapp.k14s.io/disable-default-ownership-label-rules: ""` (value must be empty) annotation can be be used to exclude an individual resource from default onwership label rules.
 
 #### labelScopingRules
 

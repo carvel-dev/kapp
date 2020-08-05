@@ -137,50 +137,76 @@ ownershipLabelRules:
   - allMatcher: {}
 
 - path: [spec, template, metadata, labels]
-  resourceMatchers: &withPodTemplate
-  # Deployment
-  - apiVersionKindMatcher: {apiVersion: apps/v1, kind: Deployment}
-  - apiVersionKindMatcher: {apiVersion: apps/v1beta2, kind: Deployment}
-  - apiVersionKindMatcher: {apiVersion: apps/v1beta1, kind: Deployment}
-  - apiVersionKindMatcher: {apiVersion: extensions/v1beta1, kind: Deployment}
-  # ReplicaSet
-  - apiVersionKindMatcher: {apiVersion: apps/v1, kind: ReplicaSet}
-  - apiVersionKindMatcher: {apiVersion: apps/v1beta2, kind: ReplicaSet}
-  - apiVersionKindMatcher: {apiVersion: apps/v1beta1, kind: ReplicaSet}
-  - apiVersionKindMatcher: {apiVersion: extensions/v1beta1, kind: ReplicaSet}
-  # StatefulSet
-  - apiVersionKindMatcher: {apiVersion: apps/v1, kind: StatefulSet}
-  - apiVersionKindMatcher: {apiVersion: apps/v1beta2, kind: StatefulSet}
-  - apiVersionKindMatcher: {apiVersion: apps/v1beta1, kind: StatefulSet}
-  - apiVersionKindMatcher: {apiVersion: extensions/v1beta1, kind: StatefulSet}
-  # DaemonSet
-  - apiVersionKindMatcher: {apiVersion: apps/v1, kind: DaemonSet}
-  - apiVersionKindMatcher: {apiVersion: apps/v1beta2, kind: DaemonSet}
-  - apiVersionKindMatcher: {apiVersion: apps/v1beta1, kind: DaemonSet}
-  - apiVersionKindMatcher: {apiVersion: extensions/v1beta1, kind: DaemonSet}
-  # Job
-  - apiVersionKindMatcher: {apiVersion: batch/v1, kind: Job}
+  resourceMatchers:
+  - andMatcher:
+      matchers:
+      - notMatcher:
+          matcher: &disableDefaultOwnershipLabelRulesAnnMatcher
+            hasAnnotationMatcher:
+              keys: [kapp.k14s.io/disable-default-ownership-label-rules]
+      - anyMatcher:
+          matchers: &withPodTemplate
+          # Deployment
+          - apiVersionKindMatcher: {apiVersion: apps/v1, kind: Deployment}
+          - apiVersionKindMatcher: {apiVersion: apps/v1beta2, kind: Deployment}
+          - apiVersionKindMatcher: {apiVersion: apps/v1beta1, kind: Deployment}
+          - apiVersionKindMatcher: {apiVersion: extensions/v1beta1, kind: Deployment}
+          # ReplicaSet
+          - apiVersionKindMatcher: {apiVersion: apps/v1, kind: ReplicaSet}
+          - apiVersionKindMatcher: {apiVersion: apps/v1beta2, kind: ReplicaSet}
+          - apiVersionKindMatcher: {apiVersion: apps/v1beta1, kind: ReplicaSet}
+          - apiVersionKindMatcher: {apiVersion: extensions/v1beta1, kind: ReplicaSet}
+          # StatefulSet
+          - apiVersionKindMatcher: {apiVersion: apps/v1, kind: StatefulSet}
+          - apiVersionKindMatcher: {apiVersion: apps/v1beta2, kind: StatefulSet}
+          - apiVersionKindMatcher: {apiVersion: apps/v1beta1, kind: StatefulSet}
+          - apiVersionKindMatcher: {apiVersion: extensions/v1beta1, kind: StatefulSet}
+          # DaemonSet
+          - apiVersionKindMatcher: {apiVersion: apps/v1, kind: DaemonSet}
+          - apiVersionKindMatcher: {apiVersion: apps/v1beta2, kind: DaemonSet}
+          - apiVersionKindMatcher: {apiVersion: apps/v1beta1, kind: DaemonSet}
+          - apiVersionKindMatcher: {apiVersion: extensions/v1beta1, kind: DaemonSet}
+          # Job
+          - apiVersionKindMatcher: {apiVersion: batch/v1, kind: Job}
 
 # TODO It seems that these labels are being ignored
 # https://github.com/kubernetes/kubernetes/issues/74916
 - path: [spec, volumeClaimTemplates, {allIndexes: true}, metadata, labels]
   resourceMatchers:
-  # StatefulSet
-  - apiVersionKindMatcher: {apiVersion: apps/v1, kind: StatefulSet}
-  - apiVersionKindMatcher: {apiVersion: apps/v1beta1, kind: StatefulSet}
-  - apiVersionKindMatcher: {apiVersion: extensions/v1beta1, kind: StatefulSet}
+  - andMatcher:
+      matchers:
+      - notMatcher:
+          matcher: *disableDefaultOwnershipLabelRulesAnnMatcher
+      - anyMatcher:
+          matchers:
+          # StatefulSet
+          - apiVersionKindMatcher: {apiVersion: apps/v1, kind: StatefulSet}
+          - apiVersionKindMatcher: {apiVersion: apps/v1beta1, kind: StatefulSet}
+          - apiVersionKindMatcher: {apiVersion: extensions/v1beta1, kind: StatefulSet}
 
 - path: [spec, template, metadata, labels]
   resourceMatchers:
-  - apiVersionKindMatcher: {apiVersion: batch/v1, kind: Job}
-  - apiVersionKindMatcher: {apiVersion: batch/v1beta1, kind: Job}
-  - apiVersionKindMatcher: {apiVersion: batch/v2alpha1, kind: Job}
+  - andMatcher:
+      matchers:
+      - notMatcher:
+          matcher: *disableDefaultOwnershipLabelRulesAnnMatcher
+      - anyMatcher:
+          matchers:
+          - apiVersionKindMatcher: {apiVersion: batch/v1, kind: Job}
+          - apiVersionKindMatcher: {apiVersion: batch/v1beta1, kind: Job}
+          - apiVersionKindMatcher: {apiVersion: batch/v2alpha1, kind: Job}
 
 - path: [spec, jobTemplate, spec, template, metadata, labels]
-  resourceMatchers: &cronJob
-  - apiVersionKindMatcher: {apiVersion: batch/v1, kind: CronJob}
-  - apiVersionKindMatcher: {apiVersion: batch/v1beta1, kind: CronJob}
-  - apiVersionKindMatcher: {apiVersion: batch/v2alpha1, kind: CronJob}
+  resourceMatchers:
+  - andMatcher:
+      matchers:
+      - notMatcher:
+          matcher: *disableDefaultOwnershipLabelRulesAnnMatcher
+      - anyMatcher:
+          matchers: &cronJob
+          - apiVersionKindMatcher: {apiVersion: batch/v1, kind: CronJob}
+          - apiVersionKindMatcher: {apiVersion: batch/v1beta1, kind: CronJob}
+          - apiVersionKindMatcher: {apiVersion: batch/v2alpha1, kind: CronJob}
 
 labelScopingRules:
 - path: [spec, selector]
@@ -343,7 +369,7 @@ changeRuleBindings:
       matchers:
       - customResourceMatcher: {}
       - notMatcher:
-          matcher: &disableDefaultAnnMatcher
+          matcher: &disableDefaultChangeGroupAnnMatcher
             hasAnnotationMatcher:
               keys: [kapp.k14s.io/disable-default-change-group-and-rules]
 
@@ -357,7 +383,7 @@ changeRuleBindings:
       matchers:
       - customResourceMatcher: {}
       - notMatcher:
-          matcher: *disableDefaultAnnMatcher
+          matcher: *disableDefaultChangeGroupAnnMatcher
 
 # Delete non-CRs after deleting CRDs so that if CRDs use conversion
 # webhooks it's more likely that backing webhook resources are still
@@ -376,7 +402,7 @@ changeRuleBindings:
             anyMatcher:
               matchers: *crdMatchers
       - notMatcher:
-          matcher: *disableDefaultAnnMatcher
+          matcher: *disableDefaultChangeGroupAnnMatcher
 
 # Insert namespaces before all namespaced resources
 - rules:
@@ -386,7 +412,7 @@ changeRuleBindings:
       matchers:
       - hasNamespaceMatcher: {}
       - notMatcher:
-          matcher: *disableDefaultAnnMatcher
+          matcher: *disableDefaultChangeGroupAnnMatcher
 
 - rules:
   - "upsert after upserting change-groups.kapp.k14s.io/storage-class"
