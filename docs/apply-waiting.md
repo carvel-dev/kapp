@@ -12,7 +12,7 @@ kapp includes builtin rules on how to wait for the following resource types:
 - [`batch/<any>/CronJob`](../pkg/kapp/resourcesmisc/batch_vx_cron_job.go): immediately considers as done
 - [`/v1/Pod`](../pkg/kapp/resourcesmisc/core_v1_pod.go): looks at `status.phase`
 - [`/v1/Service`](../pkg/kapp/resourcesmisc/core_v1_service.go): wait for `spec.clusterIP` and/or `status.loadBalancer.ingress` to become set
-- [`apps/v1/StatefulSet`](pkg/kapp/resourcesmisc/apps_v1_stateful_set.go): [see "apps/v1/StatefulSet resource" below](#apps-v1-StatefulSet-resource)
+- [`apps/v1/StatefulSet`](pkg/kapp/resourcesmisc/apps_v1_stateful_set.go): [see "apps/v1/StatefulSet resource" below](#appsv1statefulset-resource)
 
 If resource is not affected by the above rules, its waiting behaviour depends on aggregate of waiting states of its associated resources (associated resources are resources that share same `kapp.k14s.io/association` label value).
 
@@ -29,14 +29,11 @@ kapp by default waits for `apps/v1/Deployment` resource to have `status.unavaila
 
 #### apps/v1/StatefulSet resource
 
-Available in v0.32.0
+Available in v0.32.0+.
 
-When deploying a `apps/v1/StatefulSet` resource, `kapp` will wait for any pods
-created from the updated template to be ready. This behaviour depends on the [update strategy](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies)
-used.
+kapp will wait for any pods created from the updated template to be ready based on StatefulSet's status. This behaviour depends on the [update strategy](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies) used.
 
-Note: For the `OnDelete` strategy, `kapp` will not continue with a
-deploy until the user manually deletes existing pods.
+Note: kapp does not do anything special when `OnDelete` strategy is used. It will wait for StatefulSet to report it's reconciled (expecting some actor in the system to delete Pods per `OnDelete` requirements).
 
 #### Custom waiting behaviour
 
