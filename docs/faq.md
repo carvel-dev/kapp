@@ -75,51 +75,42 @@ Try setting `FORCE_COLOR=1` environment variable to force enabling color output.
 ---
 ### How can I version apps deployed by kapp?
 
-kapp itself does not provide any notion of versioning, since it's just a tool to reconcile config. You can include a ConfigMap in your deployment with the metadata needed. e.g. git commit, release notes, etc.
-
-You can also use [versioned resources](diff.md#versioned-resources) to represent an update to a resource as an entirely new resource.
+kapp itself does not provide any notion of versioning, since it's just a tool to reconcile config. We recommend to include a ConfigMap in your deployment with application metadata e.g. git commit, release notes, etc.
 
 ---
 #### `Resource ... is associated with a different label value`
 
-Resource ownership is tracked by app labels. kapp manages a metadata `ConfigMap` for each deployed application. Each contains a generated label used to track all the application's resources. Since the `ConfigMap`'s are stored in the current namespace by default, you may see this error when the `ConfigMaps` are stored in another namespace. Target a namespace using `--namespace`.
+Resource ownership is tracked by app labels. kapp expects that each resource is owned by exactly one app.
+
+If you are receiving this error and are using correct app name, it might be that you are targeting wrong namespace where app is located. Use `--namespace` to set correct namespace.
 
 Additional resources: [State Namespace](state-namespace.md), [Slack Thread](https://kubernetes.slack.com/archives/CH8KCCKA5/p1589264289257000)
 
 ---
-#### kapp hangs when trying to delete a resource
+#### Why does kapp hang when trying to delete a resource?
 
-By default, kapp won't delete resources it didn't create. You can force kapp to apply this ignored change using `--apply-ignored` [flag](apply.md#controlling-apply-via-deploy-flags).
+By default, kapp won't delete resources it didn't create. You can see which resources are owned by kapp in output of `kapp inspect -a app-name` in its `Owner` column. You can force kapp to apply this ignored change using `--apply-ignored` [flag](apply.md#controlling-apply-via-deploy-flags). Alternatively if you are able to set [kapp.k14s.io/owned-for-deletion](apply.md#kappk14sioowned-for-deletion) annotation on resource that will be created, kapp will take that as a request to "own it" for deletion. This comes in handy for example with PVCs created by StatefulSet.
 
 ---
 #### How does kapp handle merging?
 
-kapp explicitly decided against basic 3 way merge, instead allowing the user to specify how to resolve conflicts.
+kapp explicitly decided against _basic_ 3 way merge, instead allowing the user to specify how to resolve conflicts via rebase rules.
 
 Resources: [merge method](merge-method.md), [rebase rules](config.md#rebaserules)
 
 ---
 #### Can I force an update for a change that does not produce a diff?
 
-If kapp does not detect changes, it won't perform an update. To force changes regardless you can provide the [`kapp.k14s.io/nonce`](apply.md#kappk14siononce) annotation. That way, every time you deploy the resource will appear to have changes.
-
----
-#### How can I push an app to a namespace that may or may not already exist?
-
-kapp cannot to deploy to a nonexistent namespace since kapp needs to save generated label (in a configmap) before creating app resources. You can target a namespace with `-n.`
-
-Resources: [State Namespace](state-namespace.md)
+If kapp does not detect changes, it won't perform an update. To force changes every time you can set [`kapp.k14s.io/nonce`](apply.md#kappk14siononce) annotation. That way, every time you deploy the resource will appear to have changes.
 
 ---
 #### How can I remove decorative headings from kapp inspect output?
 
-kapp supports a `--tty` flag which, when set to false will only output the desired diff to stdout.
-
- `kapp inspect --raw --tty=false`
+Use `--tty=false` flag which will disable decorative output. Example: `kapp inspect --raw --tty=false`.
 
 Additional resources: [tty flag in kapp code](https://github.com/k14s/kapp/blob/3f3e207d7198cdedd6985761ecb0d9616a84e305/pkg/kapp/cmd/ui_flags.go#L20)
 
 ---
-#### How can I get kapp to skip waiting on (some) resources?
+#### How can I get kapp to skip waiting on some resources?
 
-kapp has custom wait behavior applied per resource via [resource annotations](apply-waiting.md#controlling-waiting-via-resource-annotations). When used, the resource will be applied to the cluster, but will not wait to reconcile.
+kapp allows to control waiting behavior per resource via [resource annotations](apply-waiting.md#controlling-waiting-via-resource-annotations). When used, the resource will be applied to the cluster, but will not wait to reconcile.
