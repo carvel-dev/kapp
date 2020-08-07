@@ -1,3 +1,8 @@
+/* Variables */
+:root {
+  --base-color: #78BE20;  /* "Leaf" */
+}
+
 /* Reset */
 html, body, ol, ul, li { margin: 0; padding: 0; }
 p {
@@ -12,12 +17,11 @@ body {
   background: #fdfdfd;
   line-height: 1.5;
 }
-h2 { font-weight: lighter; }
 
 /* Links */
 a, a:visited, a:hover {
-  color: #333;
-  text-decoration: underline; 
+  color: var(--base-color);
+  text-decoration: underline;
 }
 
 /* Content */
@@ -39,7 +43,7 @@ a, a:visited, a:hover {
 
 /* Hero stuff */
 #hero {
-  background: #212971;
+  background: var(--base-color);
   background-repeat: repeat;
   color: #fff;
   clear: both;
@@ -70,8 +74,11 @@ a, a:visited, a:hover {
   padding: 15px 20px 13px;
   border-radius: 5px;
   color: #fff;
-  border: 1px solid #fff;  
+  display: inline-block;
+  width: 150px;
+  border: 1px solid #fff;
   text-transform: uppercase;
+  text-align: center;
   font-size: 12px;
   text-decoration: none;
   font-weight: bold;
@@ -82,21 +89,20 @@ a, a:visited, a:hover {
   color: #fff;
 }
 #hero .link-button:hover {
-  text-decoration: underline;
+  box-shadow: 2px 2px 10px #0000009e;
 }
 #hero .link-button-primary,
 #hero .link-button-primary:hover,
 #hero .link-button-primary:visited {
-  background: #1fcfec;
+  background: #ffffff;
   color: #333;
   border-color: #0f29b5;
-  box-shadow: 2px 2px 10px #0000009e, inset 0px -10px 14px #9ff6ff87;
   border-width: 0;
   padding-top: 16px;
   padding-bottom: 14px;
 }
 #hero .link-button-primary:hover {
-  box-shadow: 2px 2px 10px #0000009e, inset 0px -10px 14px #9ff6ff;
+  box-shadow: 2px 2px 10px #0000009e;
 }
 
 /* Nav */
@@ -119,29 +125,31 @@ a, a:visited, a:hover {
 }
 
 /* Highlights */
-#highlights { position: relative; }
+#highlights {
+  position: relative;
+  border-spacing: 10px;  /* contents are displayed as a table */
+}
 #highlights ul {
+  display: table-row;
   overflow: hidden;
   margin: 0 -50px;
   padding: 0 17px 15px;
 }
 #highlights li {
+  display: table-cell;
   width: 260px;
-  height: 175px;
-  float: left;
   text-align: center;
   border: 1px solid #efefef;
   padding: 30px 20px;
-  margin: 15px;
   list-style-type: none;
   background: #fff;
   box-shadow: 0 2px 4px 0 rgba(0,0,0,.1);
 }
 #highlights svg {
-  width: 50px;
-  height: 50px;
+  width: 90px;
+  height: 90px;
   display: inline-block;
-  fill: #00c0c0;
+  fill: var(--base-color);
 }
 #highlights a,
 #highlights h3 {
@@ -155,22 +163,47 @@ a, a:visited, a:hover {
 #features { margin-bottom: 50px; }
 #features > ul { list-style-type: none; }
 #features > ul > li {
-  padding: 20px;
-  border: 1px solid #efefef;
-  border-width: 1px 0 0 0;
+  margin: 40px 0px 40px 0px;
+  border: 1px solid #e8e8e8;
+  display: flex;
+}
+#features .icon {
+  background: var(--base-color);
+  text-align: center;
+  width: 15%;
+  display: flex;
+  align-items: center;
+}
+#features svg {
+  fill: #ffffff;
+  transform: scale(0.6, 0.6);
+  margin: auto;
+}
+#features .card {
+  margin: 40px;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  width: 85%
+}
+#features h3 {
+  display: block;
+  font-size: 25px;
+  font-weight: lighter;
+  margin: 0;
 }
 #features li:nth-child(even) {
-  border-left: 180px solid transparent;
+  flex-direction: row-reverse;
 }
 #features li:nth-child(odd) {
-  border-right: 180px solid transparent; /* #283176 */
+  flex-direction: row;
 }
 #features > ul > li ul {
   margin-left: 30px;
 }
 #features .highlight {
-  background: #ffc;
   font-style: normal;
+  font-weight: bold;
 }
 
 /* Basic usage */
@@ -185,11 +218,11 @@ a, a:visited, a:hover {
 
 /* Authors */
 #authors {
-  background: #eafcff;
-  color: #000;
+  background: #1D428A;
+  color: #fff;
   clear: both;
-  margin: 0 -50px;
-  padding: 30px 50px;
+  margin: 0px -50px;
+  padding: 12px 38px 24px 38px;
 }
 #authors a,
 #authors a:visited,
@@ -199,18 +232,20 @@ a, a:visited, a:hover {
 
 /* Footer */
 #footer {
-  padding: 30px 0;
+  margin: 18px -50px 0px -50px
 }
-#footer p {
-  width: 400px;
+#footer .copyright {
+  float: right;
+  margin-right: 18px;
 }
-#footer .vmware { margin: 0; }
+#footer .vmware {
+  float: right;
+}
 #footer .vmware img {
   display: block;
   margin-top: 7px;
 }
 #footer ul {
-  float: right;
   list-style-type: none;
 }
 #footer li { float: left; }
@@ -257,10 +292,10 @@ p code {
 code, .terminal, .logo {
   font-family: Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace;
 }
+
 li code, p code {
   font-size: 90%;
 }
-
 
 
 
@@ -324,9 +359,4 @@ li code, p code {
 #workflow ol {
   margin-left: 30px;
   margin-bottom: 20px;
-}
-
-/* Highlights */
-#highlights li {
-  height: 240px;
 }
