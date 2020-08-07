@@ -130,17 +130,18 @@ a, a:visited, a:hover {
   border-spacing: 10px;  /* contents are displayed as a table */
 }
 #highlights ul {
-  display: table-row;
+  display: flex;
   overflow: hidden;
   margin: 0 -50px;
   padding: 0 17px 15px;
+  flex-wrap: wrap;
 }
 #highlights li {
-  display: table-cell;
   width: 260px;
   text-align: center;
   border: 1px solid #efefef;
   padding: 30px 20px;
+  margin: 15px;
   list-style-type: none;
   background: #fff;
   box-shadow: 0 2px 4px 0 rgba(0,0,0,.1);
