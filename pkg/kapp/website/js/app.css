@@ -20,7 +20,7 @@ body {
 
 /* Links */
 a, a:visited, a:hover {
-  color: var(--base-color);
+  color: #0091DA  ;
   text-decoration: underline;
 }
 
@@ -179,6 +179,7 @@ a, a:visited, a:hover {
   fill: #ffffff;
   transform: scale(0.6, 0.6);
   margin: auto;
+  width: 100%;   /* without this, (at least) Chrome assigns 0px */
 }
 #features .card {
   margin: 40px;
@@ -219,7 +220,7 @@ a, a:visited, a:hover {
 
 /* Authors */
 #authors {
-  background: #1D428A;
+  background: var(--base-color);
   color: #fff;
   clear: both;
   margin: 0px -50px;
