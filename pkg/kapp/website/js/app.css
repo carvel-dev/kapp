@@ -406,3 +406,29 @@ li code, p code {
   margin-left: 30px;
   margin-bottom: 20px;
 }
+
+/* Banner */
+.banner {
+  background-color: #EC7700;
+  color: #777;
+  font-size: 20px;
+  margin: 10px -50px;
+  padding: 10px 50px ;
+  text-align: center;
+  clear: both;
+}
+.banner p {
+  margin: 0px;
+  color: white;
+}
+
+.banner a, .banner a:visited{
+  margin: 0px;
+  color: white;
+  text-decoration-color: lightgrey;
+}
+
+.banner a:hover {
+  color: white;
+  text-decoration-color: white;
+}
