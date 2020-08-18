@@ -92,17 +92,17 @@ rebaseRules:
 
 #### ownershipLabelRules
 
-`ownershipLabelRules` specify locations for inserting kapp generated labels. These labels allow kapp to track which resources belong to which application. For resources that describe creation of other resources (e.g. `Deployment` or `StatefulSet`), configuration may need to specify where to insert labels for child resources that will be created.
+`ownershipLabelRules` specify locations for inserting kapp generated labels. These labels allow kapp to track which resources belong to which application. For resources that describe creation of other resources (e.g. `Deployment` or `StatefulSet`), configuration may need to specify where to insert labels for child resources that will be created. `kapp.k14s.io/disable-default-ownership-label-rules: ""` (value must be empty) annotation can be be used to exclude an individual resource from default onwership label rules.
 
 #### labelScopingRules
 
-`labelScopingRules` specify locations for inserting kapp generated labels that scope resources to resources within current application. `kapp.k14s.io/disable-label-scoping: ""` (value must be empty) annotation can be used to exclude an individual resource from label scoping.
+`labelScopingRules` specify locations for inserting kapp generated labels that scope resources to resources within current application. `kapp.k14s.io/disable-default-label-scoping-rules: ""` (as of v0.33.0+, or use `kapp.k14s.io/disable-label-scoping: ""` in earlier versions) annotation can be used to exclude an individual resource from label scoping.
 
 #### waitRules
 
 Available in v0.29.0+.
 
-`waitRules` specify how to wait for resources that kapp does not wait for by default. Each rule provides a way to specify which `status.conditions` indicate success or failure. (If this functionality is not enough to wait for resources in your use case, please reach out on Slack to discuss further.)
+`waitRules` specify how to wait for resources that kapp does not wait for by default. Each rule provides a way to specify which `status.conditions` indicate success or failure. Once any of the condition matchers successfully match against one of the resource's conditions, kapp will stop waiting for the matched resource and report any failures. (If this functionality is not enough to wait for resources in your use case, please reach out on Slack to discuss further.)
 
 ```yaml
 waitRules:

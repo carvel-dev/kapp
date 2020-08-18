@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package resourcesmisc
 
 import (
@@ -47,16 +50,25 @@ func (s AppsV1StatefulSet) IsDoneApplying() DoneApplyState {
 			toUpdate, *statefulSet.Spec.Replicas)
 	}
 
+	// ensure replicas have been updated
 	notUpdated := toUpdate - statefulSet.Status.UpdatedReplicas
 	if notUpdated > 0 {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(
 			"Waiting for %d replicas to be updated%s", notUpdated, clarification)}
 	}
 
+	// ensure replicas are available
 	notReady := *statefulSet.Spec.Replicas - statefulSet.Status.ReadyReplicas
 	if notReady > 0 {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(
 			"Waiting for %d replicas to be ready", notReady)}
+	}
+
+	// ensure all replicas have been deleted when scaling down
+	notDeleted := statefulSet.Status.Replicas - *statefulSet.Spec.Replicas
+	if notDeleted > 0 {
+		return DoneApplyState{Done: false, Message: fmt.Sprintf(
+			"Waiting for %d replicas to be deleted", notDeleted)}
 	}
 
 	return DoneApplyState{Done: true, Successful: true}

@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package resources
 
 import (
@@ -7,10 +10,6 @@ import (
 
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	"k8s.io/apimachinery/pkg/labels"
-)
-
-const (
-	disableLabelScopingAnnKey = "kapp.k14s.io/disable-label-scoping" // valid value is ''
 )
 
 type OwnershipLabelModsFunc func(kvs map[string]string) []StringMapAppendMod
@@ -57,19 +56,10 @@ func (a *LabeledResources) Prepare(resources []Resource, olmFunc OwnershipLabelM
 			}
 		}
 
-		// Scope labels on all resources except ones that explicitly opt out
-		disableLSVal, disableLabelScoping := res.Annotations()[disableLabelScopingAnnKey]
-		if disableLabelScoping {
-			if disableLSVal != "" {
-				return fmt.Errorf("Expected annotation '%s' on resource '%s' to have value ''",
-					disableLabelScopingAnnKey, res.Description())
-			}
-		} else {
-			for _, t := range lsmFunc(map[string]string{labelKey: labelVal}) {
-				err := t.Apply(res)
-				if err != nil {
-					return err
-				}
+		for _, t := range lsmFunc(map[string]string{labelKey: labelVal}) {
+			err := t.Apply(res)
+			if err != nil {
+				return err
 			}
 		}
 	}

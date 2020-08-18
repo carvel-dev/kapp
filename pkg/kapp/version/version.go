@@ -1,5 +1,8 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package version
 
 const (
-	Version = "0.32.0"
+	Version = "0.33.0"
 )

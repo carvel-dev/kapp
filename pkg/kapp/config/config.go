@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package config
 
 import (
@@ -104,61 +107,6 @@ type ChangeRuleBinding struct {
 	ResourceMatchers []ResourceMatcher
 }
 
-type ResourceMatchers []ResourceMatcher
-
-type ResourceMatcher struct {
-	AllMatcher               *AllMatcher // default
-	AnyMatcher               *AnyMatcher
-	NotMatcher               *NotMatcher
-	AndMatcher               *AndMatcher
-	APIGroupKindMatcher      *APIGroupKindMatcher
-	APIVersionKindMatcher    *APIVersionKindMatcher `json:"apiVersionKindMatcher"`
-	KindNamespaceNameMatcher *KindNamespaceNameMatcher
-	HasAnnotationMatcher     *HasAnnotationMatcher
-	HasNamespaceMatcher      *HasNamespaceMatcher
-	CustomResourceMatcher    *CustomResourceMatcher
-}
-
-type AllMatcher struct{}
-
-type AnyMatcher struct {
-	Matchers []ResourceMatcher
-}
-
-type NotMatcher struct {
-	Matcher ResourceMatcher
-}
-
-type AndMatcher struct {
-	Matchers []ResourceMatcher
-}
-
-type APIGroupKindMatcher struct {
-	APIGroup string `json:"apiGroup"`
-	Kind     string
-}
-
-type APIVersionKindMatcher struct {
-	APIVersion string `json:"apiVersion"`
-	Kind       string
-}
-
-type KindNamespaceNameMatcher struct {
-	Kind      string
-	Namespace string
-	Name      string
-}
-
-type HasAnnotationMatcher struct {
-	Keys []string
-}
-
-type HasNamespaceMatcher struct {
-	Names []string
-}
-
-type CustomResourceMatcher struct{}
-
 func NewConfigFromResource(res ctlres.Resource) (Config, error) {
 	bs, err := res.AsYAMLBytes()
 	if err != nil {
@@ -240,116 +188,64 @@ func (r RebaseRule) AsMods() []ctlres.ResourceModWithMultiple {
 	}
 
 	for _, path := range paths {
-		for _, matcher := range r.ResourceMatchers {
-			switch r.Type {
-			case "copy":
-				mods = append(mods, ctlres.FieldCopyMod{
-					ResourceMatcher: matcher.AsResourceMatcher(),
-					Path:            path,
-					Sources:         r.Sources,
-				})
+		switch r.Type {
+		case "copy":
+			mods = append(mods, ctlres.FieldCopyMod{
+				ResourceMatcher: ctlres.AnyMatcher{
+					Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
+				},
+				Path:    path,
+				Sources: r.Sources,
+			})
 
-			case "remove":
-				mods = append(mods, ctlres.FieldRemoveMod{
-					ResourceMatcher: matcher.AsResourceMatcher(),
-					Path:            path,
-				})
+		case "remove":
+			mods = append(mods, ctlres.FieldRemoveMod{
+				ResourceMatcher: ctlres.AnyMatcher{
+					Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
+				},
+				Path: path,
+			})
 
-			default:
-				panic(fmt.Sprintf("Unknown rebase rule type: %s (supported: copy, remove)", r.Type)) // TODO
-			}
+		default:
+			panic(fmt.Sprintf("Unknown rebase rule type: %s (supported: copy, remove)", r.Type)) // TODO
 		}
 	}
 
 	return mods
 }
 
-func (r DiffAgainstLastAppliedFieldExclusionRule) AsMods() []ctlres.FieldRemoveMod {
-	var mods []ctlres.FieldRemoveMod
-	for _, matcher := range r.ResourceMatchers {
-		mods = append(mods, ctlres.FieldRemoveMod{
-			ResourceMatcher: matcher.AsResourceMatcher(),
-			Path:            r.Path,
-		})
+func (r DiffAgainstLastAppliedFieldExclusionRule) AsMod() ctlres.FieldRemoveMod {
+	return ctlres.FieldRemoveMod{
+		ResourceMatcher: ctlres.AnyMatcher{
+			Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
+		},
+		Path: r.Path,
 	}
-	return mods
 }
 
-func (r OwnershipLabelRule) AsMods(kvs map[string]string) []ctlres.StringMapAppendMod {
-	return stringMapAppendRule{ResourceMatchers: r.ResourceMatchers, Path: r.Path}.AsMods(kvs)
+func (r OwnershipLabelRule) AsMod(kvs map[string]string) ctlres.StringMapAppendMod {
+	return ctlres.StringMapAppendMod{
+		ResourceMatcher: ctlres.AnyMatcher{
+			Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
+		},
+		Path: r.Path,
+		KVs:  kvs,
+	}
 }
 
-func (r LabelScopingRule) AsMods(kvs map[string]string) []ctlres.StringMapAppendMod {
-	return stringMapAppendRule{ResourceMatchers: r.ResourceMatchers, Path: r.Path, SkipIfNotFound: true}.AsMods(kvs)
+func (r LabelScopingRule) AsMod(kvs map[string]string) ctlres.StringMapAppendMod {
+	return ctlres.StringMapAppendMod{
+		ResourceMatcher: ctlres.AnyMatcher{
+			Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
+		},
+		Path:           r.Path,
+		SkipIfNotFound: true,
+		KVs:            kvs,
+	}
 }
 
 func (r WaitRule) ResourceMatcher() ctlres.ResourceMatcher {
 	return ctlres.AnyMatcher{
 		Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
-	}
-}
-
-func (ms ResourceMatchers) AsResourceMatchers() []ctlres.ResourceMatcher {
-	var result []ctlres.ResourceMatcher
-	for _, matcher := range ms {
-		result = append(result, matcher.AsResourceMatcher())
-	}
-	return result
-}
-
-func (m ResourceMatcher) AsResourceMatcher() ctlres.ResourceMatcher {
-	switch {
-	case m.AllMatcher != nil:
-		return ctlres.AllMatcher{}
-
-	case m.AnyMatcher != nil:
-		return ctlres.AnyMatcher{
-			Matchers: ResourceMatchers(m.AnyMatcher.Matchers).AsResourceMatchers(),
-		}
-
-	case m.AndMatcher != nil:
-		return ctlres.AndMatcher{
-			Matchers: ResourceMatchers(m.AndMatcher.Matchers).AsResourceMatchers(),
-		}
-
-	case m.NotMatcher != nil:
-		return ctlres.NotMatcher{
-			Matcher: m.NotMatcher.Matcher.AsResourceMatcher(),
-		}
-
-	case m.KindNamespaceNameMatcher != nil:
-		return ctlres.KindNamespaceNameMatcher{
-			Kind:      m.KindNamespaceNameMatcher.Kind,
-			Namespace: m.KindNamespaceNameMatcher.Namespace,
-			Name:      m.KindNamespaceNameMatcher.Name,
-		}
-
-	case m.APIGroupKindMatcher != nil:
-		return ctlres.APIGroupKindMatcher{
-			APIGroup: m.APIGroupKindMatcher.APIGroup,
-			Kind:     m.APIGroupKindMatcher.Kind,
-		}
-
-	case m.APIVersionKindMatcher != nil:
-		return ctlres.APIVersionKindMatcher{
-			APIVersion: m.APIVersionKindMatcher.APIVersion,
-			Kind:       m.APIVersionKindMatcher.Kind,
-		}
-
-	case m.HasAnnotationMatcher != nil:
-		return ctlres.HasAnnotationMatcher{
-			Keys: m.HasAnnotationMatcher.Keys,
-		}
-
-	case m.HasNamespaceMatcher != nil:
-		return ctlres.HasNamespaceMatcher{
-			Names: m.HasNamespaceMatcher.Names,
-		}
-
-	case m.CustomResourceMatcher != nil:
-		return ctlres.CustomResourceMatcher{}
-
-	default:
-		panic(fmt.Sprintf("Unknown resource matcher specified: %#v", m))
 	}
 }
