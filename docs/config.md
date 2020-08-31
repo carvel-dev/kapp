@@ -165,7 +165,7 @@ Available in v0.25.0+.
 
 Resource matchers (as used by `rebaseRules` and `ownershipLabelRules`):
 
-#### all
+#### allMatcher
 
 Matches all resources
 
@@ -173,7 +173,7 @@ Matches all resources
 allMatcher: {}
 ```
 
-#### any
+#### anyMatcher
 
 Matches resources that match one of matchers
 
@@ -184,7 +184,7 @@ anyMatcher:
   - apiVersionKindMatcher: {apiVersion: extensions/v1alpha1, kind: Deployment}
 ```
 
-#### not
+#### notMatcher
 
 Matches any resource that does not match given matcher
 
@@ -194,7 +194,7 @@ notMatcher:
     apiVersionKindMatcher: {apiVersion: apps/v1, kind: Deployment}
 ```
 
-#### and
+#### andMatcher
 
 Matches any resource that matches all given matchers
 
@@ -254,6 +254,15 @@ Matches any resource that is not part of builtin k8s API groups (e.g. apps, batc
 
 ```yaml
 customResourceMatcher: {}
+```
+
+#### emptyFieldMatcher
+
+Matches any resource that has empty specified field
+
+```yaml
+emptyFieldMatcher:
+  path: [aggregationRule]
 ```
 
 ---

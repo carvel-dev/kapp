@@ -22,6 +22,7 @@ type ResourceMatcher struct {
 	HasAnnotationMatcher     *HasAnnotationMatcher
 	HasNamespaceMatcher      *HasNamespaceMatcher
 	CustomResourceMatcher    *CustomResourceMatcher
+	EmptyFieldMatcher        *EmptyFieldMatcher
 }
 
 type AllMatcher struct{}
@@ -63,6 +64,10 @@ type HasNamespaceMatcher struct {
 }
 
 type CustomResourceMatcher struct{}
+
+type EmptyFieldMatcher struct {
+	Path ctlres.Path
+}
 
 func (ms ResourceMatchers) AsResourceMatchers() []ctlres.ResourceMatcher {
 	var result []ctlres.ResourceMatcher
@@ -123,6 +128,9 @@ func (m ResourceMatcher) AsResourceMatcher() ctlres.ResourceMatcher {
 
 	case m.CustomResourceMatcher != nil:
 		return ctlres.CustomResourceMatcher{}
+
+	case m.EmptyFieldMatcher != nil:
+		return ctlres.EmptyFieldMatcher{Path: m.EmptyFieldMatcher.Path}
 
 	default:
 		panic(fmt.Sprintf("Unknown resource matcher specified: %#v", m))
