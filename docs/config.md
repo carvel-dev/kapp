@@ -258,6 +258,8 @@ customResourceMatcher: {}
 
 #### emptyFieldMatcher
 
+Available in v0.34.0+.
+
 Matches any resource that has empty specified field
 
 ```yaml
