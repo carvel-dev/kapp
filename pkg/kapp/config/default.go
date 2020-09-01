@@ -114,6 +114,11 @@ rebaseRules:
   sources: [new, existing]
   resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: apiextensions.k8s.io/v1beta1, kind: CustomResourceDefinition}
+
+- path: [spec, conversion, webhook, clientConfig, caBundle]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: apiextensions.k8s.io/v1, kind: CustomResourceDefinition}
 
 - path: [spec, nodeName]
