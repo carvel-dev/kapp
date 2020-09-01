@@ -7,6 +7,12 @@ import (
 	"fmt"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	corev1 "k8s.io/api/core/v1"
+)
+
+const (
+	configLabelKey     = "kapp.k14s.io/config"
+	configMapConfigKey = "config.yml"
 )
 
 type Conf struct {
@@ -18,23 +24,62 @@ func NewConfFromResources(resources []ctlres.Resource) ([]ctlres.Resource, Conf,
 	var configs []Config
 
 	for _, res := range resources {
-		if res.APIVersion() == configAPIVersion {
-			if res.Kind() == configKind {
-				config, err := NewConfigFromResource(res)
-				if err != nil {
-					return nil, Conf{}, err
-				}
-				configs = append(configs, config)
-			} else {
-				errMsg := "Unexpected kind in resource '%s', wanted '%s'"
-				return nil, Conf{}, fmt.Errorf(errMsg, res.Description(), configKind)
+		_, isLabeledAsConfig := res.Labels()[configLabelKey]
+
+		switch {
+		case res.APIVersion() == configAPIVersion:
+			config, err := NewConfigFromResource(res)
+			if err != nil {
+				return nil, Conf{}, fmt.Errorf(
+					"Parsing resource '%s' as kapp config: %s", res.Description(), err)
 			}
-		} else {
+			configs = append(configs, config)
+
+		case isLabeledAsConfig:
+			config, err := newConfigFromConfigMapRes(res)
+			if err != nil {
+				return nil, Conf{}, fmt.Errorf(
+					"Parsing resource '%s' labeled as kapp config: %s", res.Description(), err)
+			}
+			// Make sure to add ConfigMap resource to regular resources list
+			// (our goal of allowing kapp config in ConfigMaps is to allow
+			// both kubectl and kapp to work against exactly same configuration;
+			// hence want to preserve same behaviour)
+			rsWithoutConfigs = append(rsWithoutConfigs, res)
+			configs = append(configs, config)
+
+		default:
 			rsWithoutConfigs = append(rsWithoutConfigs, res)
 		}
 	}
 
 	return rsWithoutConfigs, Conf{configs}, nil
+}
+
+func newConfigFromConfigMapRes(res ctlres.Resource) (Config, error) {
+	if res.APIVersion() != "v1" || res.Kind() != "ConfigMap" {
+		errMsg := "Expected kapp config to be within v1/ConfigMap but apiVersion or kind do not match"
+		return Config{}, fmt.Errorf(errMsg, res.Description())
+	}
+
+	configCM := corev1.ConfigMap{}
+
+	err := res.AsTypedObj(&configCM)
+	if err != nil {
+		return Config{}, fmt.Errorf("Converting resource to ConfigMap: %s", err)
+	}
+
+	configStr, found := configCM.Data[configMapConfigKey]
+	if !found {
+		return Config{}, fmt.Errorf("Expected to find field 'data.\"%s\"', but did not", configMapConfigKey)
+	}
+
+	configRes, err := ctlres.NewResourceFromBytes([]byte(configStr))
+	if err != nil {
+		return Config{}, fmt.Errorf("Parsing kapp config as resource: %s", err)
+	}
+
+	return NewConfigFromResource(configRes)
 }
 
 func (c Conf) RebaseMods() []ctlres.ResourceModWithMultiple {

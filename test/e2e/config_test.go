@@ -29,14 +29,26 @@ rebaseRules:
       kind: ConfigMap
       namespace: kapp-test
       name: first
-- path: [data, keep]
-  type: copy
-  sources: [existing, new]
-  resourceMatchers:
-  - kindNamespaceNameMatcher:
-      kind: ConfigMap
-      namespace: kapp-test
-      name: second
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kapp-config
+  labels:
+    kapp.k14s.io/config: ""
+data:
+  config.yml: |
+    apiVersion: kapp.k14s.io/v1alpha1
+    kind: Config
+    rebaseRules:
+    - path: [data, keep]
+      type: copy
+      sources: [existing, new]
+      resourceMatchers:
+      - kindNamespaceNameMatcher:
+          kind: ConfigMap
+          namespace: kapp-test
+          name: second
 `
 
 	yaml1 := `

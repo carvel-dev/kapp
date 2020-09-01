@@ -108,6 +108,18 @@ type ChangeRuleBinding struct {
 }
 
 func NewConfigFromResource(res ctlres.Resource) (Config, error) {
+	if res.APIVersion() != configAPIVersion {
+		return Config{}, fmt.Errorf(
+			"Expected kapp config to have apiVersion '%s', but was '%s'",
+			configAPIVersion, res.APIVersion())
+	}
+
+	if res.Kind() != configKind {
+		return Config{}, fmt.Errorf(
+			"Expected kapp config to have kind '%s', but was '%s'",
+			configKind, res.Kind())
+	}
+
 	bs, err := res.AsYAMLBytes()
 	if err != nil {
 		return Config{}, err

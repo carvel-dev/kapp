@@ -283,3 +283,32 @@ Path specifies location within a resource (as used `rebaseRules` and `ownershipL
 ```
 [spec, volumeClaimTemplates, {index: 0}, metadata, labels]
 ```
+
+---
+### Config wrapped in ConfigMap
+
+Available of v0.34.0+.
+
+Config resource could be wrapped in a ConfigMap to support same deployment configuration by tools that do not understand kapp's `Config` resource directly. ConfigMap carrying kapp config must to be labeled with `kapp.k14s.io/config` and have `config.yml` data key. Such config maps will be applied to the cluster, unlike config given as `Config` resource.
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-kapp-config
+  labels:
+    kapp.k14s.io/config: ""
+data:
+  config.yml: |
+    apiVersion: kapp.k14s.io/v1alpha1
+    kind: Config
+    rebaseRules:
+    - path: [rules]
+      type: copy
+      sources: [existing, new]
+      resourceMatchers:
+      - notMatcher:
+          matcher:
+            emptyFieldMatcher:
+              path: [aggregationRule]
+```
