@@ -1,0 +1,11 @@
+---
+apiVersion: kapp.k14s.io/v1alpha1
+kind: Config
+
+rebaseRules:
+# Copy over annotations (calico added by the cluster)
+- path: [metadata, annotations]
+  type: copy
+  sources: [existing, new]
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}

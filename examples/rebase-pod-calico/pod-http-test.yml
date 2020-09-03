@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    helm.sh/hook: test-success
+    kbld.k14s.io/images: |
+      - Metas:
+        - Tag: latest
+          Type: resolved
+          URL: curlimages/curl
+        URL: index.docker.io/curlimages/curl@sha256:bd5bbd35f89b867c1dccbc84b8be52f3f74dea20b46c5fe0db3780e040afcb6f
+  name: bitwarden-http-test
+spec:
+  containers:
+  - command:
+    - sh
+    - -c
+    - set -o pipefail && curl -s bitwarden:80 | grep 'Bitwarden Web Vault'
+    image: index.docker.io/curlimages/curl@sha256:bd5bbd35f89b867c1dccbc84b8be52f3f74dea20b46c5fe0db3780e040afcb6f
+    name: curl
+  restartPolicy: Never
