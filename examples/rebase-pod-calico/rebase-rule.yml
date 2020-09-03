@@ -1,10 +1,11 @@
 ---
 apiVersion: kapp.k14s.io/v1alpha1
 kind: Config
-
 rebaseRules:
 # Copy over annotations (calico added by the cluster)
-- path: [metadata, annotations]
+- paths:
+  - [metadata, annotations, cni.projectcalico.org/podIP]
+  - [metadata, annotations, cni.projectcalico.org/podIPs]
   type: copy
   sources: [existing, new]
   resourceMatchers:

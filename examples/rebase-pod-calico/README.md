@@ -1,4 +1,4 @@
-# Calico rebaseRule
+# Rebase rules for Pods on Calico
 
 Kapp will [merge](https://github.com/k14s/kapp/blob/develop/docs/merge-method.md) resources
 with what's in the cluster to determine when to apply changes. The merge can be customized
@@ -19,21 +19,8 @@ change. Running kapp with the `-c` flag will produces an error similar to this o
 The above error was produced deploying the example pod in this folder. The first deploy will
 pass, the second will fail.
 
-Adding the rebase-rule.yml will tell kapp to copy existing annotations during deployments for
-all v1 Pods, which matches this example pod.
-```yaml
----
-apiVersion: kapp.k14s.io/v1alpha1
-kind: Config
+Adding the [rebase-rule.yml](rebase-rule.yml) will tell kapp to copy existing annotations
+during deployments for all v1 Pods, which matches this example pod.
 
-rebaseRules:
-# Copy over annotations (calico added by the cluster)
-- path: [metadata, annotations]
-  type: copy
-  sources: [existing, new]
-  resourceMatchers:
-  - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
-```
-
-This is only necessary for Pods, when using a Deployment kapp will compare changes to the
-Deployment resource which in turn creates the Pod resource(s) where the annotation is added.
+This is only necessary when directly deploying Pods on Calico, when using a Deployment kapp
+will compare changes to the Deployment resource which in turn creates the Pod resource(s) where the annotation is added.
