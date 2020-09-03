@@ -1,0 +1,5 @@
+@@ update pod/bitwarden-http-test (v1) namespace: bitwarden @@
+  ...
+  3,  3     annotations:
+  4     -     cni.projectcalico.org/podIP: 10.1.108.198/32
+  5     -     cni.projectcalico.org/podIPs: 
