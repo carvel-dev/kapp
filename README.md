@@ -1,7 +1,7 @@
 # kapp
 
 - Website: https://get-kapp.io
-- Slack: [#k14s in Kubernetes slack](https://slack.kubernetes.io)
+- Slack: [#carvel in Kubernetes slack](https://slack.kubernetes.io)
 - [Docs](docs/README.md) with topics about diff, apply, gitops, config, _blog posts and talks_ etc.
 - Install: grab prebuilt binaries from the [Releases page](https://github.com/k14s/kapp/releases) or [Homebrew k14s tap](https://github.com/k14s/homebrew-tap).
 
