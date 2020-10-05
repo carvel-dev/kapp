@@ -1,6 +1,6 @@
 ## Config
 
-kapp supports custom `Config` resource to specify its own configuration. Config resource is never applied to the cluster, though it follows general Kubernetes resource format. Multiple config resources are allowed.
+kapp supports custom `Config` resource to specify its own configuration. It's expected to be included with your other Kubernetes configuration. Config resource is never applied to the cluster, though it follows general Kubernetes resource format. Multiple config resources are allowed.
 
 kapp comes with __built-in configuration__ (see it via `kapp deploy-config`) that includes rules for common resources.
 
