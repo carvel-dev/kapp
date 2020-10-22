@@ -18,6 +18,17 @@ import (
 )
 
 func main() {
+	err := nonExitingMain()
+	if err != nil {
+		if typedErr, ok := err.(cmdapp.ExitStatus); ok {
+			os.Exit(typedErr.ExitStatus())
+		}
+		os.Exit(1)
+	}
+}
+
+// nonExitingMain does not use os.Exit to make sure Go runs defers
+func nonExitingMain() error {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	// TODO logs
@@ -31,11 +42,9 @@ func main() {
 	err := command.Execute()
 	if err != nil {
 		confUI.ErrorLinef("kapp: Error: %v", uierrs.NewMultiLineError(err))
-		if typedErr, ok := err.(cmdapp.ExitStatus); ok {
-			os.Exit(typedErr.ExitStatus())
-		}
-		os.Exit(1)
+		return err
 	}
 
 	confUI.PrintLinef("Succeeded")
+	return nil
 }
