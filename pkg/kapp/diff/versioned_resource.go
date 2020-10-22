@@ -18,17 +18,17 @@ const (
 	nameSuffixSep = "-ver-"
 )
 
-type TemplateResource struct {
+type VersionedResource struct {
 	res      ctlres.Resource
 	allRules []ctlconf.TemplateRule
 }
 
-func (d TemplateResource) SetTemplatedName(ver int) {
+func (d VersionedResource) SetBaseName(ver int) {
 	name := fmt.Sprintf("%s%s%d", d.res.Name(), nameSuffixSep, ver)
 	d.res.SetName(name)
 }
 
-func (d TemplateResource) NonTemplatedName() (string, string) {
+func (d VersionedResource) BaseNameAndVersion() (string, string) {
 	name := d.res.Name()
 	pieces := strings.Split(name, nameSuffixSep)
 	if len(pieces) > 1 {
@@ -37,33 +37,33 @@ func (d TemplateResource) NonTemplatedName() (string, string) {
 	return name, ""
 }
 
-func (d TemplateResource) Version() int {
-	_, ver := d.NonTemplatedName()
+func (d VersionedResource) Version() int {
+	_, ver := d.BaseNameAndVersion()
 	if len(ver) == 0 {
-		panic(fmt.Sprintf("Missing template version in resource '%s'", d.res.Description()))
+		panic(fmt.Sprintf("Missing version in versioned resource '%s'", d.res.Description()))
 	}
 
 	verInt, err1 := strconv.Atoi(ver)
 	if err1 != nil {
-		panic(fmt.Sprintf("Invalid template version in resource '%s'", d.res.Description()))
+		panic(fmt.Sprintf("Invalid version in versioned resource '%s'", d.res.Description()))
 	}
 
 	return verInt
 }
 
-func (d TemplateResource) UniqTemplateKey() ctlres.UniqueResourceKey {
-	nonTemplatedName, _ := d.NonTemplatedName()
-	return ctlres.NewUniqueResourceKeyWithCustomName(d.res, nonTemplatedName)
+func (d VersionedResource) UniqVersionedKey() ctlres.UniqueResourceKey {
+	baseName, _ := d.BaseNameAndVersion()
+	return ctlres.NewUniqueResourceKeyWithCustomName(d.res, baseName)
 }
 
-func (d TemplateResource) UpdateAffected(rs []ctlres.Resource) error {
+func (d VersionedResource) UpdateAffected(rs []ctlres.Resource) error {
 	rules, err := d.matchingRules()
 	if err != nil {
 		return err
 	}
 
 	for _, rule := range rules {
-		// TODO template that apply to other templates?
+		// TODO versioned resources that affect other versioned resources
 		err = d.updateAffected(rule, rs)
 		if err != nil {
 			return err
@@ -73,7 +73,7 @@ func (d TemplateResource) UpdateAffected(rs []ctlres.Resource) error {
 	return nil
 }
 
-func (d TemplateResource) updateAffected(rule ctlconf.TemplateRule, rs []ctlres.Resource) error {
+func (d VersionedResource) updateAffected(rule ctlconf.TemplateRule, rs []ctlres.Resource) error {
 	for _, affectedObjRef := range rule.AffectedResources.ObjectReferences {
 		matchers := ctlconf.ResourceMatchers(affectedObjRef.ResourceMatchers).AsResourceMatchers()
 
@@ -94,10 +94,10 @@ func (d TemplateResource) updateAffected(rule ctlconf.TemplateRule, rs []ctlres.
 	return nil
 }
 
-func (d TemplateResource) buildObjRefReplacementFunc(
+func (d VersionedResource) buildObjRefReplacementFunc(
 	affectedObjRef ctlconf.TemplateAffectedObjRef) func(map[string]interface{}) error {
 
-	nonTemplatedName, _ := d.NonTemplatedName()
+	baseName, _ := d.BaseNameAndVersion()
 
 	return func(typedObj map[string]interface{}) error {
 		bs, err := json.Marshal(typedObj)
@@ -114,11 +114,11 @@ func (d TemplateResource) buildObjRefReplacementFunc(
 
 		// Check as many rules as possible
 		if len(affectedObjRef.NameKey) > 0 {
-			if typedObj[affectedObjRef.NameKey] != nonTemplatedName {
+			if typedObj[affectedObjRef.NameKey] != baseName {
 				return nil
 			}
 		} else {
-			if objRef.Name != nonTemplatedName {
+			if objRef.Name != baseName {
 				return nil
 			}
 		}
@@ -143,7 +143,7 @@ func (d TemplateResource) buildObjRefReplacementFunc(
 	}
 }
 
-func (d TemplateResource) matchingRules() ([]ctlconf.TemplateRule, error) {
+func (d VersionedResource) matchingRules() ([]ctlconf.TemplateRule, error) {
 	var result []ctlconf.TemplateRule
 
 	for _, rule := range d.allRules {

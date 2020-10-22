@@ -320,7 +320,7 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 		changeFactory := ctldiff.NewChangeFactory(conf.RebaseMods(), conf.DiffAgainstLastAppliedFieldExclusionMods())
 		changeSetFactory := ctldiff.NewChangeSetFactory(o.DiffFlags.ChangeSetOpts, changeFactory)
 
-		changes, err := ctldiff.NewChangeSetWithTemplates(
+		changes, err := ctldiff.NewChangeSetWithVersionedRs(
 			existingResources, newResources, conf.TemplateRules(),
 			o.DiffFlags.ChangeSetOpts, changeFactory).Calculate()
 		if err != nil {

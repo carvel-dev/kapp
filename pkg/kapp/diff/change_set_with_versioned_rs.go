@@ -13,81 +13,81 @@ import (
 )
 
 const (
-	templateAnnKey        = "kapp.k14s.io/versioned" // Value is ignored
-	templateNumVersAnnKey = "kapp.k14s.io/num-versions"
+	versionedResAnnKey        = "kapp.k14s.io/versioned" // Value is ignored
+	versionedResNumVersAnnKey = "kapp.k14s.io/num-versions"
 )
 
-type ChangeSetWithTemplates struct {
+type ChangeSetWithVersionedRs struct {
 	existingRs, newRs []ctlres.Resource
 	rules             []ctlconf.TemplateRule
 	opts              ChangeSetOpts
 	changeFactory     ChangeFactory
 }
 
-func NewChangeSetWithTemplates(existingRs, newRs []ctlres.Resource,
-	rules []ctlconf.TemplateRule, opts ChangeSetOpts, changeFactory ChangeFactory) *ChangeSetWithTemplates {
+func NewChangeSetWithVersionedRs(existingRs, newRs []ctlres.Resource,
+	rules []ctlconf.TemplateRule, opts ChangeSetOpts, changeFactory ChangeFactory) *ChangeSetWithVersionedRs {
 
-	return &ChangeSetWithTemplates{existingRs, newRs, rules, opts, changeFactory}
+	return &ChangeSetWithVersionedRs{existingRs, newRs, rules, opts, changeFactory}
 }
 
-func (d ChangeSetWithTemplates) Calculate() ([]Change, error) {
-	existingRs := newTemplateResources(d.existingRs)
-	existingRsByTemplate := d.groupResourcesByTemplate(existingRs.Template)
+func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
+	existingRs := newVersionedResources(d.existingRs)
+	existingRsGrouped := d.groupResources(existingRs.Versioned)
 
-	newRs := newTemplateResources(d.newRs)
+	newRs := newVersionedResources(d.newRs)
 	allChanges := []Change{}
 
-	d.assignNewNames(newRs, existingRsByTemplate)
+	d.assignNewNames(newRs, existingRsGrouped)
 
 	// First try to calculate changes will update references on all resources
-	// (which includes templated and non-templated resources)
-	_, _, err := d.addChanges(newRs, existingRsByTemplate)
+	// (which includes versioned and non-versioned resources)
+	_, _, err := d.addChanges(newRs, existingRsGrouped)
 	if err != nil {
 		return nil, err
 	}
 
 	// Since there might have been circular dependencies;
 	// second try catches ones that werent changed during first run
-	addChanges, alreadyAdded, err := d.addChanges(newRs, existingRsByTemplate)
+	addChanges, alreadyAdded, err := d.addChanges(newRs, existingRsGrouped)
 	if err != nil {
 		return nil, err
 	}
 
 	allChanges = append(allChanges, addChanges...)
 
-	keepAndDeleteChanges, err := d.keepAndDeleteChanges(existingRsByTemplate, alreadyAdded)
+	keepAndDeleteChanges, err := d.keepAndDeleteChanges(existingRsGrouped, alreadyAdded)
 	if err != nil {
 		return nil, err
 	}
 
 	allChanges = append(allChanges, keepAndDeleteChanges...)
 
-	nonTemplateChangeSet := NewChangeSet(
-		existingRs.NonTemplate, newRs.NonTemplate, d.opts, d.changeFactory)
+	nonVersionedChangeSet := NewChangeSet(
+		existingRs.NonVersioned, newRs.NonVersioned, d.opts, d.changeFactory)
 
-	nonTemplateChanges, err := nonTemplateChangeSet.Calculate()
+	nonVersionedChanges, err := nonVersionedChangeSet.Calculate()
 	if err != nil {
 		return nil, err
 	}
 
-	allChanges = append(allChanges, nonTemplateChanges...)
+	allChanges = append(allChanges, nonVersionedChanges...)
 
 	return allChanges, nil
 }
 
-func (d ChangeSetWithTemplates) groupResourcesByTemplate(rs []ctlres.Resource) map[string][]ctlres.Resource {
+func (d ChangeSetWithVersionedRs) groupResources(rs []ctlres.Resource) map[string][]ctlres.Resource {
 	result := map[string][]ctlres.Resource{}
 
-	groupByTemplateFunc := func(res ctlres.Resource) string {
-		if _, found := res.Annotations()[templateAnnKey]; found {
-			return TemplateResource{res, nil}.UniqTemplateKey().String()
+	groupByFunc := func(res ctlres.Resource) string {
+		if _, found := res.Annotations()[versionedResAnnKey]; found {
+			return VersionedResource{res, nil}.UniqVersionedKey().String()
 		}
-		panic("Expected to find template annotation on resource")
+		panic("Expected to find versioned annotation on resource")
 	}
 
-	for resKey, subRs := range (GroupResources{rs, groupByTemplateFunc}).Resources() {
+	for resKey, subRs := range (GroupResources{rs, groupByFunc}).Resources() {
 		sort.Slice(subRs, func(i, j int) bool {
-			return TemplateResource{subRs[i], nil}.Version() < TemplateResource{subRs[j], nil}.Version()
+			return VersionedResource{subRs[i], nil}.Version() < VersionedResource{subRs[j], nil}.Version()
 		})
 		result[resKey] = subRs
 	}
@@ -95,35 +95,35 @@ func (d ChangeSetWithTemplates) groupResourcesByTemplate(rs []ctlres.Resource) m
 	return result
 }
 
-func (d ChangeSetWithTemplates) assignNewNames(
-	newRs templateResources, existingRsByTemplate map[string][]ctlres.Resource) {
+func (d ChangeSetWithVersionedRs) assignNewNames(
+	newRs versionedResources, existingRsGrouped map[string][]ctlres.Resource) {
 
 	// TODO name isnt used during diffing, should it?
-	for _, newRes := range newRs.Template {
-		newTemplateRes := TemplateResource{newRes, nil}
-		newResKey := newTemplateRes.UniqTemplateKey().String()
+	for _, newRes := range newRs.Versioned {
+		newVerRes := VersionedResource{newRes, nil}
+		newResKey := newVerRes.UniqVersionedKey().String()
 
-		if existingRs, found := existingRsByTemplate[newResKey]; found {
+		if existingRs, found := existingRsGrouped[newResKey]; found {
 			existingRes := existingRs[len(existingRs)-1]
-			newTemplateRes.SetTemplatedName(TemplateResource{existingRes, nil}.Version() + 1)
+			newVerRes.SetBaseName(VersionedResource{existingRes, nil}.Version() + 1)
 		} else {
-			newTemplateRes.SetTemplatedName(1)
+			newVerRes.SetBaseName(1)
 		}
 	}
 }
 
-func (d ChangeSetWithTemplates) addChanges(
-	newRs templateResources, existingRsByTemplate map[string][]ctlres.Resource) (
+func (d ChangeSetWithVersionedRs) addChanges(
+	newRs versionedResources, existingRsGrouped map[string][]ctlres.Resource) (
 	[]Change, map[string]ctlres.Resource, error) {
 
 	changes := []Change{}
 	alreadyAdded := map[string]ctlres.Resource{}
 
-	for _, newRes := range newRs.Template {
-		newResKey := TemplateResource{newRes, nil}.UniqTemplateKey().String()
+	for _, newRes := range newRs.Versioned {
+		newResKey := VersionedResource{newRes, nil}.UniqVersionedKey().String()
 		usedRes := newRes
 
-		if existingRs, found := existingRsByTemplate[newResKey]; found {
+		if existingRs, found := existingRsGrouped[newResKey]; found {
 			existingRes := existingRs[len(existingRs)-1]
 
 			// Calculate update change to determine if anything changed
@@ -150,15 +150,15 @@ func (d ChangeSetWithTemplates) addChanges(
 			changes = append(changes, addChange)
 		}
 
-		// Update both templates and non-templates
-		tplRes := TemplateResource{usedRes, d.rules}
+		// Update both versioned and non-versioned
+		verRes := VersionedResource{usedRes, d.rules}
 
-		err := tplRes.UpdateAffected(newRs.NonTemplate)
+		err := verRes.UpdateAffected(newRs.NonVersioned)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		err = tplRes.UpdateAffected(newRs.Template)
+		err = verRes.UpdateAffected(newRs.Versioned)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -169,7 +169,7 @@ func (d ChangeSetWithTemplates) addChanges(
 	return changes, alreadyAdded, nil
 }
 
-func (d ChangeSetWithTemplates) newAddChangeFromUpdateChange(
+func (d ChangeSetWithVersionedRs) newAddChangeFromUpdateChange(
 	newRes ctlres.Resource, updateChange Change) Change {
 
 	// Use update's diffs but create a change for new resource
@@ -181,14 +181,14 @@ func (d ChangeSetWithTemplates) newAddChangeFromUpdateChange(
 	return addChange
 }
 
-func (d ChangeSetWithTemplates) keepAndDeleteChanges(
-	existingRsByTemplate map[string][]ctlres.Resource,
+func (d ChangeSetWithVersionedRs) keepAndDeleteChanges(
+	existingRsGrouped map[string][]ctlres.Resource,
 	alreadyAdded map[string]ctlres.Resource) ([]Change, error) {
 
 	changes := []Change{}
 
 	// Find existing resources that were not already diffed (not in new set of resources)
-	for existingResKey, existingRs := range existingRsByTemplate {
+	for existingResKey, existingRs := range existingRsGrouped {
 		numToKeep := 0
 
 		if newRes, found := alreadyAdded[existingResKey]; found {
@@ -220,7 +220,7 @@ func (d ChangeSetWithTemplates) keepAndDeleteChanges(
 	return changes, nil
 }
 
-func (d ChangeSetWithTemplates) newKeepChange(existingRes ctlres.Resource) Change {
+func (d ChangeSetWithVersionedRs) newKeepChange(existingRes ctlres.Resource) Change {
 	// Use update's diffs but create a change for new resource
 	addChange := NewChangePrecalculated(existingRes, nil, nil)
 	// TODO private field access
@@ -228,18 +228,18 @@ func (d ChangeSetWithTemplates) newKeepChange(existingRes ctlres.Resource) Chang
 	return addChange
 }
 
-func (ChangeSetWithTemplates) numOfResourcesToKeep(res ctlres.Resource) (int, error) {
+func (ChangeSetWithVersionedRs) numOfResourcesToKeep(res ctlres.Resource) (int, error) {
 	// TODO get rid of arbitrary cut off
 	numToKeep := 5
 
-	if numToKeepAnn, found := res.Annotations()[templateNumVersAnnKey]; found {
+	if numToKeepAnn, found := res.Annotations()[versionedResNumVersAnnKey]; found {
 		var err error
 		numToKeep, err = strconv.Atoi(numToKeepAnn)
 		if err != nil {
-			return 0, fmt.Errorf("Expected annotation '%s' value to be an integer", templateNumVersAnnKey)
+			return 0, fmt.Errorf("Expected annotation '%s' value to be an integer", versionedResNumVersAnnKey)
 		}
 		if numToKeep < 1 {
-			return 0, fmt.Errorf("Expected annotation '%s' value to be a >= 1", templateNumVersAnnKey)
+			return 0, fmt.Errorf("Expected annotation '%s' value to be a >= 1", versionedResNumVersAnnKey)
 		}
 	} else {
 		numToKeep = 5
@@ -248,7 +248,7 @@ func (ChangeSetWithTemplates) numOfResourcesToKeep(res ctlres.Resource) (int, er
 	return numToKeep, nil
 }
 
-func (d ChangeSetWithTemplates) newChange(existingRes, newRes ctlres.Resource) (Change, error) {
+func (d ChangeSetWithVersionedRs) newChange(existingRes, newRes ctlres.Resource) (Change, error) {
 	changeFactoryFunc := d.changeFactory.NewExactChange
 	if d.opts.AgainstLastApplied {
 		changeFactoryFunc = d.changeFactory.NewChangeAgainstLastApplied
@@ -256,22 +256,22 @@ func (d ChangeSetWithTemplates) newChange(existingRes, newRes ctlres.Resource) (
 	return changeFactoryFunc(existingRes, newRes)
 }
 
-type templateResources struct {
-	Template    []ctlres.Resource
-	NonTemplate []ctlres.Resource
+type versionedResources struct {
+	Versioned    []ctlres.Resource
+	NonVersioned []ctlres.Resource
 }
 
-func newTemplateResources(rs []ctlres.Resource) templateResources {
-	var result templateResources
+func newVersionedResources(rs []ctlres.Resource) versionedResources {
+	var result versionedResources
 	for _, res := range rs {
-		// Expect that template resources should not be transient
-		// (Annotations may have been copied from templated resources
-		// onto transient resources for non-template related purposes).
-		_, hasTemplateAnn := res.Annotations()[templateAnnKey]
-		if hasTemplateAnn && !res.Transient() {
-			result.Template = append(result.Template, res)
+		// Expect that versioned resources should not be transient
+		// (Annotations may have been copied from versioned resources
+		// onto transient resources for non-versioning related purposes).
+		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
+		if hasVersionedAnn && !res.Transient() {
+			result.Versioned = append(result.Versioned, res)
 		} else {
-			result.NonTemplate = append(result.NonTemplate, res)
+			result.NonVersioned = append(result.NonVersioned, res)
 		}
 	}
 	return result
