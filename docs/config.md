@@ -134,7 +134,7 @@ waitRules:
 
 #### templateRules
 
-`templateRules` how template resources affect other resources. In above example, template config maps are said to affect deployments.
+`templateRules` specify how versioned resources affect other resources. In above example, versioned config maps are said to affect deployments. [Read more about versioned resources](diff.md#versioned-resources).
 
 #### additionalLabels
 
