@@ -13,8 +13,7 @@ Highlights:
   - example: updated Pod 0, then Pod 1, then Pod 2
 - Pods are recreated when ConfigMap changes
   - ConfigMap is marked as versioned resource (via `kapp.k14s.io/versioned` annotation)
-- allows to change any Pod configuration since Pods are recreated
-  - STS does not allow to change a lot of initial configuration
+- allows to change any configuration in any way since all resources are managed directly
 - target specific Pods via DNS via per-Pod created Service (e.g. redis-0 is a Service)
 - since we deployed this via one-off kapp invocation if Pod gets deleted from the cluster, it will not be recreated
   - to address this, make sure that kapp deploy is continiously executed
