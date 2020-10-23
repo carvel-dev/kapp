@@ -1,0 +1,95 @@
+#@ load("@ytt:data", "data")
+
+#@ cfg_name = data.values.name+"-config"
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: #@ data.values.name
+spec:
+  selector: 
+    redis: ""
+  ports:
+  - port: 6379
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: #@ cfg_name
+  annotations:
+    kapp.k14s.io/versioned: ""
+data:
+  redis-config: |
+    maxmemory 4mb
+    maxmemory-policy allkeys-lru
+
+#@ def idx_name(idx): return data.values.name+"-"+str(idx)
+
+#@ for idx in range(0, data.values.replicas):
+#@ curr_idx_name = idx_name(idx)
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: #@ curr_idx_name
+  annotations:
+    kapp.k14s.io/update-strategy: fallback-on-replace
+    kapp.k14s.io/change-group: #@ curr_idx_name
+    #@ if/end idx > 0:
+    kapp.k14s.io/change-rule: #@ "upsert after upserting "+idx_name(idx-1)
+  labels:
+    redis: ""
+    #@yaml/text-templated-strings
+    (@= curr_idx_name @): ""
+spec:
+  containers:
+  - name: redis
+    image: k8s.gcr.io/redis:e2e
+    ports:
+    - containerPort: 6379
+    resources:
+      limits:
+        cpu: 100m
+    volumeMounts:
+    - mountPath: /redis-data
+      name: data
+    - mountPath: /redis-config
+      name: config
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: #@ curr_idx_name
+  - name: config
+    configMap:
+      name: #@ cfg_name
+      items:
+      - key: redis-config
+        path: redis.conf
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: #@ curr_idx_name
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+
+#@ if/end data.values.per_pod_service:
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: #@ curr_idx_name
+spec:
+  selector: 
+    redis: ""
+    #@yaml/text-templated-strings
+    (@= curr_idx_name @): ""
+  ports:
+  - port: 6379
+
+#@ end
