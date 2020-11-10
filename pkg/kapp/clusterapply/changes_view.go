@@ -115,7 +115,7 @@ func (v *ChangesView) Print(ui ui.UI) {
 			v.waitOpCode(view.WaitOp()),
 		)
 
-		if resource.IsProvisioned() {
+		if view.ExistingResource() != nil {
 			syncVal := NewValueResourceConverged(view.ExistingResource())
 			row = append(row, syncVal.StateVal, syncVal.ReasonVal)
 		} else {
