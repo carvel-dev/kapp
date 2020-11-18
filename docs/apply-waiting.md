@@ -4,7 +4,7 @@ kapp includes builtin rules on how to wait for the following resource types:
 
 - [any resource with `metadata.deletionTimestamp`](../pkg/kapp/resourcesmisc/deleting.go): wait for resource to be fully removed
 - [any resource matching Config's waitRules](../pkg/kapp/resourcesmisc/custom_waiting_resource.go): [see "Custom waiting behaviour" below](#custom-waiting-behaviour)
-- [`apiextensions.k8s.io/<any>/CustomResourceDefinition`](../pkg/kapp/resourcesmisc/api_extensions_vx_crd.go): wait for all conditions to turn `True`
+- [`apiextensions.k8s.io/<any>/CustomResourceDefinition`](../pkg/kapp/resourcesmisc/api_extensions_vx_crd.go): wait for Established and NamesAccepted conditions to be `True` (note that this is wait rule for CustomResourceDefinition resource itself, not CRs)
 - [`apps/v1/DaemonSet`](../pkg/kapp/resourcesmisc/apps_v1_daemon_set.go): wait for `status.numberUnavailable` to be 0
 - [`apps/v1/Deployment`](../pkg/kapp/resourcesmisc/apps_v1_deployment.go): [see "apps/v1/Deployment resource" below](#apps-v1-deployment-resource)
 - [`apps/v1/ReplicaSet`](../pkg/kapp/resourcesmisc/apps_v1_replica_set.go): wait for `status.replicas == status.availableReplicas`
