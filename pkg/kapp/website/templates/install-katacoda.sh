@@ -11,10 +11,10 @@ install() {
 	# Start Kubernetes on Katacoda
 	launch.sh
 
-	wget -O- https://k14s.io/install.sh | bash
+	wget -O- https://carvel.dev/install.sh | bash
 
-	git clone https://github.com/k14s/kapp
-	echo "Cloned github.com/k14s/kapp for examples"
+	git clone https://github.com/vmware-tanzu/carvel-kapp
+	echo "Cloned github.com/vmware-tanzu/carvel-kapp for examples"
 }
 
 install

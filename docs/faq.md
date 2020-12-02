@@ -16,12 +16,12 @@ See [state namespace](state-namespace.md) doc page.
 
 [via slack](https://kubernetes.slack.com/archives/CH8KCCKA5/p1565600090224400)
 
-Some fields on a resource are immutable. kapp provides a `kapp.k14s.io/update-strategy` annotation that controls how kapp will update resource. One of the strategies is `fallback-on-replace` which will have kapp recreate an object (delete, wait, then create) if initial update results in `Invalid` error. See [Controlling apply via resource annotations](https://github.com/k14s/kapp/blob/develop/docs/apply.md#controlling-apply-via-resource-annotations) for details.
+Some fields on a resource are immutable. kapp provides a `kapp.k14s.io/update-strategy` annotation that controls how kapp will update resource. One of the strategies is `fallback-on-replace` which will have kapp recreate an object (delete, wait, then create) if initial update results in `Invalid` error. See [Controlling apply via resource annotations](https://github.com/vmware-tanzu/carvel-kapp/blob/develop/docs/apply.md#controlling-apply-via-resource-annotations) for details.
 
 ---
 ### `Job.batch is invalid: ... spec.selector: Required value` error
 
-`batch.Job` resource is augmented by the Job controller with unique labels upon its creation. When using kapp to subsequently update existing Job resource, API server will return `Invalid` error since given configuration does not include `spec.selector`, and `job-name` and `controller-uid` labels. kapp's [rebase rules](https://github.com/k14s/kapp/blob/develop/docs/config.md#rebaserules) can be used to copy over necessary configuration from server side copy; however, since Job resource is mostly immutable, we recommend to use [`kapp.k14s.io/update-strategy` annotation](https://github.com/k14s/kapp/blob/develop/docs/apply.md#kappk14sioupdate-strategy) set to `fallback-on-replace` to recreate Job resource with any updates.
+`batch.Job` resource is augmented by the Job controller with unique labels upon its creation. When using kapp to subsequently update existing Job resource, API server will return `Invalid` error since given configuration does not include `spec.selector`, and `job-name` and `controller-uid` labels. kapp's [rebase rules](https://github.com/vmware-tanzu/carvel-kapp/blob/develop/docs/config.md#rebaserules) can be used to copy over necessary configuration from server side copy; however, since Job resource is mostly immutable, we recommend to use [`kapp.k14s.io/update-strategy` annotation](https://github.com/vmware-tanzu/carvel-kapp/blob/develop/docs/apply.md#kappk14sioupdate-strategy) set to `fallback-on-replace` to recreate Job resource with any updates.
 
 ---
 ### Updating Deployments when ConfigMap changes
@@ -60,12 +60,12 @@ Sometimes Kubernetes API server will convert submitted field values into their c
 ...
 ```
 
-Consider using [ytt](https://get-ytt.io) and [its overlay feature](https://github.com/k14s/ytt/blob/develop/docs/lang-ref-ytt-overlay.md) to change values if you do not control source configuration.
+Consider using [ytt](https://get-ytt.io) and [its overlay feature](https://github.com/vmware-tanzu/carvel-ytt/blob/develop/docs/lang-ref-ytt-overlay.md) to change values if you do not control source configuration.
 
 ---
 ### Changes detected after resource is modified server-side
 
-There might be cases where other system actors (various controllers) may modify resource outside of kapp. Common example is Deployment's `spec.replicas` field is modified by Horizontal Pod Autoscaler controller. To let kapp know of such external behaviour use custom `rebaseRules` configuration (see [HPA and Deployment rebase](https://github.com/k14s/kapp/blob/develop/docs/hpa-deployment-rebase.md) for details).
+There might be cases where other system actors (various controllers) may modify resource outside of kapp. Common example is Deployment's `spec.replicas` field is modified by Horizontal Pod Autoscaler controller. To let kapp know of such external behaviour use custom `rebaseRules` configuration (see [HPA and Deployment rebase](https://github.com/vmware-tanzu/carvel-kapp/blob/develop/docs/hpa-deployment-rebase.md) for details).
 
 ---
 ### Colors are not showing up in my CI build, in my terminal, etc.
@@ -108,7 +108,7 @@ If kapp does not detect changes, it won't perform an update. To force changes ev
 
 Use `--tty=false` flag which will disable decorative output. Example: `kapp inspect --raw --tty=false`.
 
-Additional resources: [tty flag in kapp code](https://github.com/k14s/kapp/blob/3f3e207d7198cdedd6985761ecb0d9616a84e305/pkg/kapp/cmd/ui_flags.go#L20)
+Additional resources: [tty flag in kapp code](https://github.com/vmware-tanzu/carvel-kapp/blob/3f3e207d7198cdedd6985761ecb0d9616a84e305/pkg/kapp/cmd/ui_flags.go#L20)
 
 ---
 #### How can I get kapp to skip waiting on some resources?

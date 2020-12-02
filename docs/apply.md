@@ -43,7 +43,7 @@ Possible values: `` (default), `orphan`. By default resource is deleted, however
 
 `kapp.k14s.io/owned-for-deletion` annotation controls resource deletion during `kapp delete` command
 
-Possible values: ``. By default non-kapp owned resources are not explicitly deleted by kapp, but expected to be deleted by the cluster (for example Endpoints resource for each Service). In some cases it's desired to annotate non-kapp owned resource so that it does get explicitly deleted, possibly because cluster does not plan to delete it (e.g. PVCs created by StatefulSet are not deleted by StatefulSet controller; [https://github.com/k14s/kapp/issues/36](https://github.com/k14s/kapp/issues/36)).
+Possible values: ``. By default non-kapp owned resources are not explicitly deleted by kapp, but expected to be deleted by the cluster (for example Endpoints resource for each Service). In some cases it's desired to annotate non-kapp owned resource so that it does get explicitly deleted, possibly because cluster does not plan to delete it (e.g. PVCs created by StatefulSet are not deleted by StatefulSet controller; [https://github.com/vmware-tanzu/carvel-kapp/issues/36](https://github.com/vmware-tanzu/carvel-kapp/issues/36)).
 
 #### kapp.k14s.io/nonce
 

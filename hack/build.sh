@@ -16,7 +16,7 @@ build_values_path="../../../${BUILD_VALUES:-./hack/build-values-default.yml}"
 	# template all playground assets into a single Go file
 	cd pkg/kapp/website;
 
-	ytt version || ( echo >&2 "ytt is required for building. Install from https://github.com/k14s/ytt"; exit 1; )
+	ytt version || ( echo >&2 "ytt is required for building. Install from https://github.com/vmware-tanzu/carvel-ytt"; exit 1; )
 	ytt -f . -f $build_values_path \
 		--file-mark 'generated.go.txt:exclusive-for-output=true' \
 		--dangerous-emptied-output-directory ../../../tmp/
