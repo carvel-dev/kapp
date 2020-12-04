@@ -70,7 +70,7 @@ func (r ResourceWithHistory) AllowsRecordingLastApplied() bool {
 func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ctlres.Resource, error) {
 	// Use compact representation to take as little space as possible
 	// because annotation value max length is 262144 characters
-	// (https://github.com/k14s/kapp/issues/48).
+	// (https://github.com/vmware-tanzu/carvel-kapp/issues/48).
 	appliedResBytes, err := appliedChange.AppliedResource().AsCompactBytes()
 	if err != nil {
 		return nil, err

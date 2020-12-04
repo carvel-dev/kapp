@@ -13,10 +13,10 @@ Given information above there are multiple ways to converge:
 
 Overriding is not really an option as it removes potentially important cluster changes (e.g. removes replicas value as scaled by HPA).
 
-Regarding explicit vs implicit: we decided to go with the explicit option. kapp allows users to add [rebase rules](https://github.com/k14s/kapp/blob/develop/docs/config.md) to specify exactly which information to retain from existing resources. That gives control to the user to decide what's important to be kept based on cluster state and what's not. This method ensures that there are no _surprising_ changes left in the cluster (if basic 3 way merge was used, then user cannot confidently know how final resource will look like; ... imagine if you had a field `allowUnauthenticatedRequests: true` in some resource that someone flipped on in your cluster, and your configs never specified it; it would not be removed unless you decide to also specify this field in your configs).
+Regarding explicit vs implicit: we decided to go with the explicit option. kapp allows users to add [rebase rules](https://github.com/vmware-tanzu/carvel-kapp/blob/develop/docs/config.md) to specify exactly which information to retain from existing resources. That gives control to the user to decide what's important to be kept based on cluster state and what's not. This method ensures that there are no _surprising_ changes left in the cluster (if basic 3 way merge was used, then user cannot confidently know how final resource will look like; ... imagine if you had a field `allowUnauthenticatedRequests: true` in some resource that someone flipped on in your cluster, and your configs never specified it; it would not be removed unless you decide to also specify this field in your configs).
 
 kapp comes with some common k8s rebase rules. you can see them via `kapp deploy-config`.
 
 tldr: kapp takes user provided config as the only source of truth, but also allows to explicitly specify that certain fields are cluster controlled. This method guarantees that clusters don't drift, which is better than what basic 3 way merge provides.
 
-Originally answered [here](https://github.com/k14s/kapp/issues/58#issuecomment-559214883).
+Originally answered [here](https://github.com/vmware-tanzu/carvel-kapp/issues/58#issuecomment-559214883).

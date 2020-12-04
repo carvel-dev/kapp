@@ -221,7 +221,7 @@ const (
 func (o *DeleteOptions) changeIgnored(resources []ctlres.Resource) {
 	// Good example for use of this annotation is PVCs created by StatefulSet
 	// (PVCs do not get deleted when StatefulSet is deleted:
-	// https://github.com/k14s/kapp/issues/36)
+	// https://github.com/vmware-tanzu/carvel-kapp/issues/36)
 	for _, res := range resources {
 		if _, found := res.Annotations()[ownedForDeletionAnnKey]; found {
 			res.MarkTransient(false)

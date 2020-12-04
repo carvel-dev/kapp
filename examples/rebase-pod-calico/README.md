@@ -1,8 +1,8 @@
 # Rebase rules for Pods on Calico
 
-Kapp will [merge](https://github.com/k14s/kapp/blob/develop/docs/merge-method.md) resources
+Kapp will [merge](https://github.com/vmware-tanzu/carvel-kapp/blob/develop/docs/merge-method.md) resources
 with what's in the cluster to determine when to apply changes. The merge can be customized
-with [rebaseRules](https://github.com/k14s/kapp/blob/develop/docs/config.md).
+with [rebaseRules](https://github.com/vmware-tanzu/carvel-kapp/blob/develop/docs/config.md).
 
 In the case of Calico pods get an annotation with their IP address in it. By default this
 annotation will be removed by kapp during a deployment, which will fail as an invalid pod
