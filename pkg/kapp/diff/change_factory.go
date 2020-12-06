@@ -19,10 +19,17 @@ func NewChangeFactory(rebaseMods []ctlres.ResourceModWithMultiple,
 }
 
 func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Resource) (Change, error) {
+	// Retain original copy of existing resource and use it
+	// for rebasing last applied resource and new resource.
+	existingResForRebasing := existingRes
+
 	if existingRes != nil {
+		// If we have copy of last applied resource (assuming it's still "valid"),
+		// use it as an existing resource to provide "smart" diff instead of
+		// diffing against resource that is actually stored on cluster.
 		lastAppliedRes := f.NewResourceWithHistory(existingRes).LastAppliedResource()
 		if lastAppliedRes != nil {
-			rebasedLastAppliedRes, err := NewRebasedResource(existingRes, lastAppliedRes, f.rebaseMods).Resource()
+			rebasedLastAppliedRes, err := NewRebasedResource(existingResForRebasing, lastAppliedRes, f.rebaseMods).Resource()
 			if err != nil {
 				return nil, err
 			}
@@ -46,7 +53,7 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Re
 		newRes = historylessNewRes
 	}
 
-	rebasedNewRes, err := NewRebasedResource(existingRes, newRes, f.rebaseMods).Resource()
+	rebasedNewRes, err := NewRebasedResource(existingResForRebasing, newRes, f.rebaseMods).Resource()
 	if err != nil {
 		return nil, err
 	}

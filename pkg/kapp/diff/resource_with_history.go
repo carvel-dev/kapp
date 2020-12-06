@@ -41,6 +41,8 @@ func (r ResourceWithHistory) HistorylessResource() (ctlres.Resource, error) {
 	return resourceWithoutHistory{r.resource}.Resource()
 }
 
+// LastAppliedResource will return "last applied" resource that was saved
+// iff it still matches actually saved resource on the cluster (noted at the time of saving).
 func (r ResourceWithHistory) LastAppliedResource() ctlres.Resource {
 	recalculatedLastAppliedChanges, expectedDiffMD5, expectedDiff := r.recalculateLastAppliedChange()
 
