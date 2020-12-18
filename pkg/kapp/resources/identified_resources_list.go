@@ -55,6 +55,16 @@ func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []Resou
 		}
 	}
 
+	// Dump any resources that do not contain Labels
+	// as they cannot be kapp resources
+	var newResources []Resource
+	for _, res := range resources {
+		if len(res.Labels()) > 0 {
+			newResources = append(newResources, res)
+		}
+	}
+	resources = newResources
+
 	return r.pickPreferredVersions(resources)
 }
 

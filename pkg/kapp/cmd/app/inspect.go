@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/cppforlife/go-cli-ui/ui"
+	// "github.com/davecgh/go-spew/spew"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
@@ -82,6 +83,7 @@ func (o *InspectOptions) Run() error {
 	}
 
 	resources = resourceFilter.Apply(resources)
+
 	source := fmt.Sprintf("app '%s'", app.Name())
 
 	switch {
