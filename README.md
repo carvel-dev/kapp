@@ -3,7 +3,7 @@
 - Website: https://get-kapp.io
 - Slack: [#carvel in Kubernetes slack](https://slack.kubernetes.io)
 - [Docs](docs/README.md) with topics about diff, apply, gitops, config, _blog posts and talks_ etc.
-- Install: grab prebuilt binaries from the [Releases page](https://github.com/vmware-tanzu/carvel-kapp/releases) or [Homebrew k14s tap](https://github.com/k14s/homebrew-tap).
+- Install: grab prebuilt binaries from the [Releases page](https://github.com/vmware-tanzu/carvel-kapp/releases) or [Homebrew Carvel tap](https://github.com/github.com/vmware-tanzu/homebrew-carvel).
 
 `kapp` (pronounced: `kap`) CLI encourages Kubernetes users to manage resources in bulk by working with "Kubernetes applications" (sets of resources with the same label). It focuses on resource diffing, labeling, deployment and deletion. Unlike tools like Helm, `kapp` considers YAML templating and management of packages outside of its scope, though it works great with tools that generate Kubernetes configuration.
 
