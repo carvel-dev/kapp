@@ -151,7 +151,7 @@ ownershipLabelRules:
       - notMatcher:
           matcher: &disableDefaultOwnershipLabelRulesAnnMatcher
             hasAnnotationMatcher:
-              keys: [kapp.k14s.io/disable-default-ownership-label-rules]
+              keyvalues: [{key: kapp.k14s.io/disable-default-ownership-label-rules}]
       - anyMatcher:
           matchers: &withPodTemplate
           # Deployment
@@ -225,11 +225,11 @@ labelScopingRules:
           # Keep older annotation for backwards compatibility
           matcher: &disableLabelScopingAnnMatcher
             hasAnnotationMatcher:
-              keys: [kapp.k14s.io/disable-label-scoping]
+              keyvalues: [{key: kapp.k14s.io/disable-label-scoping}]
       - notMatcher:
           matcher: &disableDefaultLabelScopingRulesAnnMatcher
             hasAnnotationMatcher:
-              keys: [kapp.k14s.io/disable-default-label-scoping-rules]
+              keyvalues: [{key: kapp.k14s.io/disable-default-label-scoping-rules}]
       - apiVersionKindMatcher: {apiVersion: v1, kind: Service}
 
 - path: [spec, selector, matchLabels]
@@ -404,7 +404,7 @@ changeRuleBindings:
       - notMatcher:
           matcher: &disableDefaultChangeGroupAnnMatcher
             hasAnnotationMatcher:
-              keys: [kapp.k14s.io/disable-default-change-group-and-rules]
+              keyvalues: [{key: kapp.k14s.io/disable-default-change-group-and-rules}]
 
 # Delete CRs before CRDs to retain detailed observability
 # instead of having CRD deletion trigger all CR deletion

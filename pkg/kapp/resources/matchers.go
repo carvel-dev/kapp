@@ -85,16 +85,23 @@ func (m AndMatcher) Matches(res Resource) bool {
 	return true
 }
 
+type KeyValue struct {
+	Key   string
+	Value *string
+}
+
 type HasAnnotationMatcher struct {
-	Keys []string
+	KeyValues []KeyValue
 }
 
 var _ ResourceMatcher = HasAnnotationMatcher{}
 
 func (m HasAnnotationMatcher) Matches(res Resource) bool {
 	anns := res.Annotations()
-	for _, key := range m.Keys {
-		if _, found := anns[key]; !found {
+	for _, key := range m.KeyValues {
+		if annVal, found := anns[key.Key]; !found {
+			return false
+		} else if key.Value != nil && *key.Value != annVal {
 			return false
 		}
 	}

@@ -81,7 +81,7 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
+	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(existingResources)
 	if err != nil {
 		return err
 	}

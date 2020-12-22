@@ -56,7 +56,7 @@ type KindNamespaceNameMatcher struct {
 }
 
 type HasAnnotationMatcher struct {
-	Keys []string
+	KeyValues []ctlres.KeyValue
 }
 
 type HasNamespaceMatcher struct {
@@ -118,7 +118,7 @@ func (m ResourceMatcher) AsResourceMatcher() ctlres.ResourceMatcher {
 
 	case m.HasAnnotationMatcher != nil:
 		return ctlres.HasAnnotationMatcher{
-			Keys: m.HasAnnotationMatcher.Keys,
+			KeyValues: m.HasAnnotationMatcher.KeyValues,
 		}
 
 	case m.HasNamespaceMatcher != nil:
