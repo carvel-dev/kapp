@@ -5,7 +5,6 @@ go 1.13
 require (
 	cloud.google.com/go v0.25.0 // indirect
 	github.com/Azure/go-autorest v10.15.0+incompatible // indirect
-	github.com/aws/aws-lambda-go v1.9.0
 	github.com/cppforlife/cobrautil v0.0.0-20200108171912-b289811fd2b9
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
 	github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f

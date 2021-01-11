@@ -2,7 +2,7 @@
 
 set -e -x -u
 
-BUILD_VALUES= ./hack/build.sh
+./hack/build.sh
 
 # makes builds reproducible
 export CGO_ENABLED=0

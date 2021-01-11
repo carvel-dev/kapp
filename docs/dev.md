@@ -4,13 +4,7 @@
 ./hack/build.sh
 export KAPP_E2E_NAMESPACE=kapp-test
 ./hack/test-all.sh
-
-# include goog analytics in 'kapp website' command for https://get-kapp.io
-# (goog analytics is _not_ included in release binaries)
-BUILD_VALUES=./hack/build-values-get-kapp-io.yml ./hack/build.sh
 ```
-
-`build.sh` depends on [ytt](https://github.com/vmware-tanzu/carvel-ytt).
 
 ## Source Code Structure
 
@@ -35,7 +29,6 @@ For those interested in extending and improving `kapp`, below is a quick referen
 - [pkg/kapp/resourcesmisc](https://github.com/vmware-tanzu/carvel-kapp/tree/develop/pkg/kapp/resourcesmisc) contains objects for waiting on different resource types (e.g. Deployment, Service, Pod, etc.)
 - [pkg/kapp/logs](https://github.com/vmware-tanzu/carvel-kapp/tree/develop/pkg/kapp/logs) supports log streaming for `kapp logs` command
 - [test/e2e](https://github.com/vmware-tanzu/carvel-kapp/tree/develop/test/e2e) includes e2e tests that can run against any k8s cluster.
-- [pkg/kapp/website](https://github.com/vmware-tanzu/carvel-kapp/tree/develop/pkg/kapp/website) has HTML and JS assets used by `kapp website` command and ultimately https://get-kapp.io.
 
 ### Design Principles
 

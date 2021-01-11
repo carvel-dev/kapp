@@ -117,8 +117,6 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	appCmd.AddCommand(cmdtools.NewListLabelsCmd(cmdtools.NewListLabelsOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	cmd.AddCommand(appCmd)
 
-	cmd.AddCommand(NewWebsiteCmd(NewWebsiteOptions()))
-
 	// Last one runs first
 	cobrautil.VisitCommands(cmd, func(cmd *cobra.Command) {
 		origRunE := cmd.RunE

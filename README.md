@@ -1,6 +1,6 @@
 # kapp
 
-- Website: https://get-kapp.io
+- Website: https://carvel.dev/kapp
 - Slack: [#carvel in Kubernetes slack](https://slack.kubernetes.io)
 - [Docs](docs/README.md) with topics about diff, apply, gitops, config, _blog posts and talks_ etc.
 - Install: grab prebuilt binaries from the [Releases page](https://github.com/vmware-tanzu/carvel-kapp/releases) or [Homebrew Carvel tap](https://github.com/vmware-tanzu/homebrew-carvel).
@@ -9,7 +9,7 @@
 
 ![](docs/kapp-deploy-screenshot.png)
 
-See [https://get-kapp.io](https://get-kapp.io) for detailed example workflow.
+See [https://carvel.dev/kapp](https://carvel.dev/kapp) for detailed example workflow.
 
 Features:
 
