@@ -1,1 +1,1 @@
-This page has moved to [https://carvel.dev/kbld/docs/latest/state-namespace/](https://carvel.dev/kbld/docs/latest/state-namespace/).
+This page has moved to [https://carvel.dev/kapp/docs/latest/state-namespace/](https://carvel.dev/kapp/docs/latest/state-namespace/).

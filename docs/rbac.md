@@ -1,1 +1,1 @@
-This page has moved to [https://carvel.dev/kbld/docs/latest/rbac/](https://carvel.dev/kbld/docs/latest/rbac/).
+This page has moved to [https://carvel.dev/kapp/docs/latest/rbac/](https://carvel.dev/kapp/docs/latest/rbac/).

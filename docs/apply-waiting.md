@@ -1,1 +1,1 @@
-This page has moved to [https://carvel.dev/kbld/docs/latest/apply-waiting/](https://carvel.dev/kbld/docs/latest/apply-waiting/).
+This page has moved to [https://carvel.dev/kapp/docs/latest/apply-waiting/](https://carvel.dev/kapp/docs/latest/apply-waiting/).

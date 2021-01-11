@@ -1,1 +1,1 @@
-This page has moved to [https://carvel.dev/kbld/docs/latest/diff/](https://carvel.dev/kbld/docs/latest/diff/).
+This page has moved to [https://carvel.dev/kapp/docs/latest/diff/](https://carvel.dev/kapp/docs/latest/diff/).
