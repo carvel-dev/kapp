@@ -39,7 +39,7 @@ Please join us during our online community meetings ([Zoom link](http://communit
 Join [Google Group](https://groups.google.com/g/carvel-dev) to get updates on the project and invites to community meetings.
 You can chat with us on Kubernetes Slack in the #carvel channel and follow us on Twitter at @carvel_dev.
 
-Check out which organizations are using and contributing to Carvel: [Adopter's list](https://github.com/vmware-tanzu/carvel/ADOPTERS.md)
+Check out which organizations are using and contributing to Carvel: [Adopter's list](https://github.com/vmware-tanzu/carvel/blob/master/ADOPTERS.md)
 
 ## Development
 
