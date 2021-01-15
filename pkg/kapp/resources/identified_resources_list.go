@@ -36,7 +36,7 @@ func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []Resou
 		resTypes = MatchingAny(resTypes, resRefs)
 	}
 
-	allOpts := ResourcesAllOpts{
+	allOpts := AllOpts{
 		ListOpts: &metav1.ListOptions{
 			LabelSelector: labelSelector.String(),
 		},

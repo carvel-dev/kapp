@@ -41,7 +41,7 @@ func (f ConvergedResourceFactory) New(res ctlres.Resource,
 			return ctlresm.NewCustomWaitingResource(res, f.waitRules), nil
 		},
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
-			return ctlresm.NewApiExtensionsVxCRD(res), nil
+			return ctlresm.NewAPIExtensionsVxCRD(res), nil
 		},
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			return ctlresm.NewAPIRegistrationV1APIService(res, f.opts.IgnoreFailingAPIServices), nil

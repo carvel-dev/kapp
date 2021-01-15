@@ -63,12 +63,11 @@ func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 			return ctlresm.DoneApplyState{Done: true}, descMsgs,
 				fmt.Errorf("Expected annotation '%s' on resource '%s' to have value ''",
 					disableAssociatedResourcesWaitingAnnKey, c.res.Description())
-		} else {
-			if convergedResState != nil {
-				return *convergedResState, descMsgs, nil
-			}
-			return ctlresm.DoneApplyState{Done: true, Successful: true}, descMsgs, nil
 		}
+		if convergedResState != nil {
+			return *convergedResState, descMsgs, nil
+		}
+		return ctlresm.DoneApplyState{Done: true, Successful: true}, descMsgs, nil
 	}
 
 	associatedRsStates := []ctlresm.DoneApplyState{}

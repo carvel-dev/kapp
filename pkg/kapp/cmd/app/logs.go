@@ -19,7 +19,7 @@ type LogsOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	AppFlags  AppFlags
+	AppFlags  Flags
 	LogsFlags LogsFlags
 }
 
@@ -54,7 +54,7 @@ func (o *LogsOptions) Run() error {
 		return err
 	}
 
-	app, supportObjs, err := AppFactory(o.depsFactory, o.AppFlags, ResourceTypesFlags{}, o.logger)
+	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}

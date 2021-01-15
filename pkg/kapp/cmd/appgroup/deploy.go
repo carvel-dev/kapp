@@ -21,7 +21,7 @@ type DeployOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	AppGroupFlags AppGroupFlags
+	AppGroupFlags Flags
 	DeployFlags   DeployFlags
 	AppFlags      DeployAppFlags
 }
@@ -76,7 +76,7 @@ func (o *DeployOptions) Run() error {
 		}
 	}
 
-	supportObjs, err := cmdapp.AppFactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger)
+	supportObjs, err := cmdapp.FactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}
@@ -132,7 +132,7 @@ func (o *DeployOptions) deployApp(app appGroupApp) error {
 		app.Name, o.AppGroupFlags.NamespaceFlags.Name, app.Path)
 
 	deployOpts := cmdapp.NewDeployOptions(o.ui, o.depsFactory, o.logger)
-	deployOpts.AppFlags = cmdapp.AppFlags{
+	deployOpts.AppFlags = cmdapp.Flags{
 		Name:           app.Name,
 		NamespaceFlags: o.AppGroupFlags.NamespaceFlags,
 	}
@@ -157,7 +157,7 @@ func (o *DeployOptions) deleteApp(name string) error {
 		name, o.AppGroupFlags.NamespaceFlags.Name)
 
 	deleteOpts := cmdapp.NewDeleteOptions(o.ui, o.depsFactory, o.logger)
-	deleteOpts.AppFlags = cmdapp.AppFlags{
+	deleteOpts.AppFlags = cmdapp.Flags{
 		Name:           name,
 		NamespaceFlags: o.AppGroupFlags.NamespaceFlags,
 	}

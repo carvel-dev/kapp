@@ -85,7 +85,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 				return nil, fmt.Errorf("%s: Errored: %s", desc, err)
 			}
 			if state.Done {
-				c.numWaited += 1
+				c.numWaited++
 			}
 
 			switch {

@@ -29,7 +29,7 @@ type RecordedApp struct {
 	identifiedResources    ctlres.IdentifiedResources
 	appInDiffNsHintMsgFunc func(string) string
 
-	memoizedMeta *AppMeta
+	memoizedMeta *Meta
 	logger       logger.Logger
 }
 
@@ -71,7 +71,7 @@ func (a *RecordedApp) UpdateUsedGVs(gvs []schema.GroupVersion) error {
 		}
 	}
 
-	return a.update(func(meta *AppMeta) {
+	return a.update(func(meta *Meta) {
 		meta.UsedGVs = uniqGVs
 	})
 }
@@ -87,7 +87,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 				KappIsAppLabelKey: kappIsAppLabelValue,
 			},
 		},
-		Data: AppMeta{
+		Data: Meta{
 			LabelKey:   kappAppLabelKey,
 			LabelValue: fmt.Sprintf("%d", time.Now().UTC().UnixNano()),
 		}.AsData(),
@@ -221,14 +221,14 @@ func (a *RecordedApp) labeledApp() (*LabeledApp, error) {
 	return &LabeledApp{sel, a.identifiedResources}, nil
 }
 
-func (a *RecordedApp) Meta() (AppMeta, error) { return a.meta() }
+func (a *RecordedApp) Meta() (Meta, error) { return a.meta() }
 
-func (a *RecordedApp) setMeta(app corev1.ConfigMap) (AppMeta, error) {
+func (a *RecordedApp) setMeta(app corev1.ConfigMap) (Meta, error) {
 	meta, err := NewAppMetaFromData(app.Data)
 	if err != nil {
 		errMsg := "App '%s' (namespace: %s) backed by ConfigMap '%s' did not contain parseable app metadata: %s"
 		hintText := " (hint: ConfigMap was overriden by another user?)"
-		return AppMeta{}, fmt.Errorf(errMsg+hintText, a.name, a.nsName, a.name, err)
+		return Meta{}, fmt.Errorf(errMsg+hintText, a.name, a.nsName, a.name, err)
 	}
 
 	a.memoizedMeta = &meta
@@ -236,7 +236,7 @@ func (a *RecordedApp) setMeta(app corev1.ConfigMap) (AppMeta, error) {
 	return meta, nil
 }
 
-func (a *RecordedApp) meta() (AppMeta, error) {
+func (a *RecordedApp) meta() (Meta, error) {
 	if a.memoizedMeta != nil {
 		// set if bulk read on initialization
 		return *a.memoizedMeta, nil
@@ -245,10 +245,10 @@ func (a *RecordedApp) meta() (AppMeta, error) {
 	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(a.name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return AppMeta{}, fmt.Errorf("App '%s' (namespace: %s) does not exist: %s%s",
+			return Meta{}, fmt.Errorf("App '%s' (namespace: %s) does not exist: %s%s",
 				a.name, a.nsName, err, a.appInDiffNsHintMsgFunc(a.name))
 		}
-		return AppMeta{}, fmt.Errorf("Getting app: %s", err)
+		return Meta{}, fmt.Errorf("Getting app: %s", err)
 	}
 
 	return a.setMeta(*app)
@@ -295,7 +295,7 @@ func (a *RecordedApp) BeginChange(meta ChangeMeta) (Change, error) {
 	return memoizingChange, nil
 }
 
-func (a *RecordedApp) update(doFunc func(*AppMeta)) error {
+func (a *RecordedApp) update(doFunc func(*Meta)) error {
 	change, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(a.name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("Getting app: %s", err)
@@ -355,7 +355,7 @@ func (c appTrackingChange) Delete() error {
 }
 
 func (c appTrackingChange) syncOnApp() error {
-	return c.app.update(func(meta *AppMeta) {
+	return c.app.update(func(meta *Meta) {
 		meta.LastChangeName = c.change.Name()
 		meta.LastChange = c.change.meta
 	})

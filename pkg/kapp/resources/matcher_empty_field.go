@@ -17,7 +17,7 @@ func (m EmptyFieldMatcher) Matches(res Resource) bool {
 	return m.check(res.unstructured().Object, m.Path)
 }
 
-func (t EmptyFieldMatcher) check(obj interface{}, path Path) bool {
+func (m EmptyFieldMatcher) check(obj interface{}, path Path) bool {
 	for i, part := range path {
 		switch {
 		case part.MapKey != nil:
@@ -42,7 +42,7 @@ func (t EmptyFieldMatcher) check(obj interface{}, path Path) bool {
 				}
 
 				for _, obj := range typedObj {
-					empty := t.check(obj, path[i+1:])
+					empty := m.check(obj, path[i+1:])
 					if !empty {
 						return false
 					}

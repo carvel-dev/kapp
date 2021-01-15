@@ -67,7 +67,7 @@ func (a *LabeledApp) Delete() error {
 
 func (a *LabeledApp) Rename(_ string) error { return fmt.Errorf("Not supported") }
 
-func (a *LabeledApp) Meta() (AppMeta, error) { return AppMeta{}, nil }
+func (a *LabeledApp) Meta() (Meta, error) { return Meta{}, nil }
 
 func (a *LabeledApp) Changes() ([]Change, error)             { return nil, nil }
 func (a *LabeledApp) LastChange() (Change, error)            { return nil, nil }

@@ -223,8 +223,8 @@ func NewChangesCountsView() *ChangesCountsView {
 }
 
 func (v *ChangesCountsView) Add(applyOp ClusterChangeApplyOp, waitOp ClusterChangeWaitOp) {
-	v.applyOps[applyOp] += 1
-	v.waitOps[waitOp] += 1
+	v.applyOps[applyOp]++
+	v.waitOps[waitOp]++
 }
 
 func (v *ChangesCountsView) Strings(table bool) []string {

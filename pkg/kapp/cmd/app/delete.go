@@ -23,7 +23,7 @@ type DeleteOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	AppFlags            AppFlags
+	AppFlags            Flags
 	DiffFlags           cmdtools.DiffFlags
 	ResourceFilterFlags cmdtools.ResourceFilterFlags
 	ApplyFlags          ApplyFlags
@@ -54,7 +54,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 func (o *DeleteOptions) Run() error {
 	failingAPIServicesPolicy := o.ResourceTypesFlags.FailingAPIServicePolicy()
 
-	app, supportObjs, err := AppFactory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
+	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (o *DeleteOptions) Run() error {
 }
 
 func (o *DeleteOptions) existingResources(app ctlapp.App,
-	supportObjs AppFactorySupportObjs) ([]ctlres.Resource, bool, error) {
+	supportObjs FactorySupportObjs) ([]ctlres.Resource, bool, error) {
 
 	labelSelector, err := app.LabelSelector()
 	if err != nil {
@@ -169,7 +169,7 @@ func (o *DeleteOptions) existingResources(app ctlapp.App,
 }
 
 func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Resource, conf ctlconf.Conf,
-	supportObjs AppFactorySupportObjs) (ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, bool, error) {
+	supportObjs FactorySupportObjs) (ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, bool, error) {
 
 	var clusterChangeSet ctlcap.ClusterChangeSet
 

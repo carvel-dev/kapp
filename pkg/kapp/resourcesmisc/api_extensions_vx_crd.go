@@ -8,28 +8,28 @@ import (
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
-type ApiExtensionsVxCRD struct {
+type APIExtensionsVxCRD struct {
 	resource ctlres.Resource
 }
 
-func NewApiExtensionsVxCRD(resource ctlres.Resource) *ApiExtensionsVxCRD {
+func NewAPIExtensionsVxCRD(resource ctlres.Resource) *APIExtensionsVxCRD {
 	matcher := ctlres.APIGroupKindMatcher{
 		APIGroup: "apiextensions.k8s.io",
 		Kind:     "CustomResourceDefinition",
 	}
 	if matcher.Matches(resource) {
-		return &ApiExtensionsVxCRD{resource}
+		return &APIExtensionsVxCRD{resource}
 	}
 	return nil
 }
 
-func (s ApiExtensionsVxCRD) IsDoneApplying() DoneApplyState {
+func (s APIExtensionsVxCRD) IsDoneApplying() DoneApplyState {
 	// CRD conditions: https://github.com/kubernetes/apiextensions-apiserver/blob/master/pkg/apis/apiextensions
 	allTrue, msg := Conditions{s.resource}.IsSelectedTrue([]string{"Established", "NamesAccepted"})
 	return DoneApplyState{Done: allTrue, Successful: allTrue, Message: msg}
 }
 
-func (s ApiExtensionsVxCRD) contents() (crdObj, error) {
+func (s APIExtensionsVxCRD) contents() (crdObj, error) {
 	bs, err := s.resource.AsYAMLBytes()
 	if err != nil {
 		return crdObj{}, err

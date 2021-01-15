@@ -8,12 +8,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type AppGroupFlags struct {
+type Flags struct {
 	NamespaceFlags cmdcore.NamespaceFlags
 	Name           string
 }
 
-func (s *AppGroupFlags) Set(cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
+func (s *Flags) Set(cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
 	s.NamespaceFlags.Set(cmd, flagsFactory)
 
 	cmd.Flags().StringVarP(&s.Name, "group", "g", "", "Set app group name")

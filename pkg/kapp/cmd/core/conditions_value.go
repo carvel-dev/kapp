@@ -38,9 +38,9 @@ func (t ConditionsValue) String() string {
 		for _, cond := range conditions {
 			if typedCond, ok := cond.(map[string]interface{}); ok {
 				if typedStatus, ok := typedCond["status"].(string); ok {
-					totalNum += 1
+					totalNum++
 					if typedStatus == "True" {
-						okNum += 1
+						okNum++
 					}
 				}
 			}

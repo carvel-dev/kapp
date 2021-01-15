@@ -54,7 +54,7 @@ var (
 func (MaskedResource) maskValues(typedObj map[string]interface{}) error {
 	// Needed for deterministic value indexing
 	var sortedKeys []string
-	for k, _ := range typedObj {
+	for k := range typedObj {
 		sortedKeys = append(sortedKeys, k)
 	}
 	sort.Strings(sortedKeys)
@@ -68,13 +68,13 @@ func (MaskedResource) maskValues(typedObj map[string]interface{}) error {
 			// since it's better to indicate change when there is no change vs
 			// no change when there is actually a change.
 			maskVal = fmt.Sprintf("<-- unknown value not shown (#%d)", maskedResourceValueLastIdx)
-			maskedResourceValueLastIdx += 1
+			maskedResourceValueLastIdx++
 		} else {
 			valIdx, found := maskedResourceValues[string(valBs)]
 			if !found {
 				valIdx = maskedResourceValueLastIdx
 				maskedResourceValues[string(valBs)] = valIdx
-				maskedResourceValueLastIdx += 1
+				maskedResourceValueLastIdx++
 			}
 			maskVal = fmt.Sprintf("<-- value not shown (#%d)", valIdx)
 		}
