@@ -58,20 +58,20 @@ func (c *Change) IsDirectlyWaitingFor(changeToFind *Change) bool {
 	return false
 }
 
-func (g *Change) IsTransitivelyWaitingFor(changeToFind *Change) bool {
+func (c *Change) IsTransitivelyWaitingFor(changeToFind *Change) bool {
 	alreadyChecked := map[*Change]struct{}{}
 	alreadyVisited := map[*Change]struct{}{}
-	return g.isTransitivelyWaitingFor(changeToFind, alreadyChecked, alreadyVisited)
+	return c.isTransitivelyWaitingFor(changeToFind, alreadyChecked, alreadyVisited)
 }
 
-func (g *Change) isTransitivelyWaitingFor(changeToFind *Change,
+func (c *Change) isTransitivelyWaitingFor(changeToFind *Change,
 	alreadyChecked map[*Change]struct{}, alreadyVisited map[*Change]struct{}) bool {
 
-	if g.IsDirectlyWaitingFor(changeToFind) {
+	if c.IsDirectlyWaitingFor(changeToFind) {
 		return true
 	}
 
-	for _, change := range g.WaitingFor {
+	for _, change := range c.WaitingFor {
 		if _, checked := alreadyChecked[change]; checked {
 			continue
 		}

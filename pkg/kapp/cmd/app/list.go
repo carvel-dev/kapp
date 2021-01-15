@@ -53,7 +53,7 @@ func (o *ListOptions) Run() error {
 		nsHeader.Hidden = false
 	}
 
-	supportObjs, err := AppFactoryClients(o.depsFactory, o.NamespaceFlags, ResourceTypesFlags{}, o.logger)
+	supportObjs, err := FactoryClients(o.depsFactory, o.NamespaceFlags, ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}

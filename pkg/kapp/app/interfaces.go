@@ -12,7 +12,7 @@ type App interface {
 	Name() string
 	Namespace() string
 	Description() string
-	Meta() (AppMeta, error)
+	Meta() (Meta, error)
 
 	LabelSelector() (labels.Selector, error)
 	UsedGVs() ([]schema.GroupVersion, error)

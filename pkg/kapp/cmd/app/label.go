@@ -15,7 +15,7 @@ type LabelOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	AppFlags AppFlags
+	AppFlags Flags
 }
 
 func NewLabelOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *LabelOptions {
@@ -36,7 +36,7 @@ func NewLabelCmd(o *LabelOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 }
 
 func (o *LabelOptions) Run() error {
-	app, _, err := AppFactory(o.depsFactory, o.AppFlags, ResourceTypesFlags{}, o.logger)
+	app, _, err := Factory(o.depsFactory, o.AppFlags, ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}

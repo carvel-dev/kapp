@@ -117,19 +117,19 @@ func (c AddOrUpdateChange) replace() error {
 	return c.recordAppliedResource(updatedRes)
 }
 
-func (a AddOrUpdateChange) tryToResolveUpdateConflict(
+func (c AddOrUpdateChange) tryToResolveUpdateConflict(
 	origErr error, updateFallbackFunc func(error) error) error {
 
 	errMsgPrefix := "Failed to update due to resource conflict "
 
 	for i := 0; i < 10; i++ {
-		latestExistingRes, err := a.identifiedResources.Get(a.change.ExistingResource())
+		latestExistingRes, err := c.identifiedResources.Get(c.change.ExistingResource())
 		if err != nil {
 			return err
 		}
 
-		changeSet := a.changeSetFactory.New([]ctlres.Resource{latestExistingRes},
-			[]ctlres.Resource{a.change.AppliedResource()})
+		changeSet := c.changeSetFactory.New([]ctlres.Resource{latestExistingRes},
+			[]ctlres.Resource{c.change.AppliedResource()})
 
 		recalcChanges, err := changeSet.Calculate()
 		if err != nil {
@@ -142,11 +142,11 @@ func (a AddOrUpdateChange) tryToResolveUpdateConflict(
 		if recalcChanges[0].Op() != ctldiff.ChangeOpUpdate {
 			return fmt.Errorf("Expected recalculated change to be an update")
 		}
-		if recalcChanges[0].OpsDiff().MinimalMD5() != a.change.OpsDiff().MinimalMD5() {
+		if recalcChanges[0].OpsDiff().MinimalMD5() != c.change.OpsDiff().MinimalMD5() {
 			return fmt.Errorf(errMsgPrefix+"(approved diff no longer matches): %s", origErr)
 		}
 
-		updatedRes, err := a.identifiedResources.Update(recalcChanges[0].NewResource())
+		updatedRes, err := c.identifiedResources.Update(recalcChanges[0].NewResource())
 		if err != nil {
 			if errors.IsConflict(err) {
 				continue
@@ -154,23 +154,23 @@ func (a AddOrUpdateChange) tryToResolveUpdateConflict(
 			return updateFallbackFunc(err)
 		}
 
-		return a.recordAppliedResource(updatedRes)
+		return c.recordAppliedResource(updatedRes)
 	}
 
 	return fmt.Errorf(errMsgPrefix+"(tried multiple times): %s", origErr)
 }
 
-func (a AddOrUpdateChange) tryToUpdateAfterCreateConflict() error {
+func (c AddOrUpdateChange) tryToUpdateAfterCreateConflict() error {
 	var lastUpdateErr error
 
 	for i := 0; i < 10; i++ {
-		latestExistingRes, err := a.identifiedResources.Get(a.change.NewResource())
+		latestExistingRes, err := c.identifiedResources.Get(c.change.NewResource())
 		if err != nil {
 			return err
 		}
 
-		changeSet := a.changeSetFactory.New([]ctlres.Resource{latestExistingRes},
-			[]ctlres.Resource{a.change.AppliedResource()})
+		changeSet := c.changeSetFactory.New([]ctlres.Resource{latestExistingRes},
+			[]ctlres.Resource{c.change.AppliedResource()})
 
 		recalcChanges, err := changeSet.Calculate()
 		if err != nil {
@@ -184,7 +184,7 @@ func (a AddOrUpdateChange) tryToUpdateAfterCreateConflict() error {
 			return fmt.Errorf("Expected recalculated change to be an update")
 		}
 
-		updatedRes, err := a.identifiedResources.Update(recalcChanges[0].NewResource())
+		updatedRes, err := c.identifiedResources.Update(recalcChanges[0].NewResource())
 		if err != nil {
 			if errors.IsConflict(err) {
 				lastUpdateErr = err
@@ -193,7 +193,7 @@ func (a AddOrUpdateChange) tryToUpdateAfterCreateConflict() error {
 			return err
 		}
 
-		return a.recordAppliedResource(updatedRes)
+		return c.recordAppliedResource(updatedRes)
 	}
 
 	return fmt.Errorf("Failed to update (after trying to create) "+

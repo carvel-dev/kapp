@@ -94,7 +94,7 @@ func (g *ResourceTypesImpl) canIgnoreFailingGroupVersions(groupVers map[schema.G
 		return true
 	}
 	if g.opts.CanIgnoreFailingAPIService != nil {
-		for groupVer, _ := range groupVers {
+		for groupVer := range groupVers {
 			if !g.opts.CanIgnoreFailingAPIService(groupVer) {
 				return false
 			}

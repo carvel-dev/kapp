@@ -20,7 +20,7 @@ type ListOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	AppFlags cmdapp.AppFlags
+	AppFlags cmdapp.Flags
 }
 
 func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ListOptions {
@@ -39,7 +39,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 }
 
 func (o *ListOptions) Run() error {
-	app, _, err := cmdapp.AppFactory(o.depsFactory, o.AppFlags, cmdapp.ResourceTypesFlags{}, o.logger)
+	app, _, err := cmdapp.Factory(o.depsFactory, o.AppFlags, cmdapp.ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}

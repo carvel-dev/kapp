@@ -23,7 +23,7 @@ type DeleteOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	AppGroupFlags AppGroupFlags
+	AppGroupFlags Flags
 	DeployFlags   DeployFlags
 	AppFlags      DeleteAppFlags
 }
@@ -54,7 +54,7 @@ func (o *DeleteOptions) Run() error {
 		return fmt.Errorf("Expected group name to be non-empty")
 	}
 
-	supportObjs, err := cmdapp.AppFactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger)
+	supportObjs, err := cmdapp.FactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (o *DeleteOptions) deleteApp(name string) error {
 		name, o.AppGroupFlags.NamespaceFlags.Name)
 
 	deleteOpts := cmdapp.NewDeleteOptions(o.ui, o.depsFactory, o.logger)
-	deleteOpts.AppFlags = cmdapp.AppFlags{
+	deleteOpts.AppFlags = cmdapp.Flags{
 		Name:           name,
 		NamespaceFlags: o.AppGroupFlags.NamespaceFlags,
 	}

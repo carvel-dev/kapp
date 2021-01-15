@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-type AppMeta struct {
+type Meta struct {
 	LabelKey   string `json:"labelKey"`
 	LabelValue string `json:"labelValue"`
 
@@ -20,18 +20,18 @@ type AppMeta struct {
 	UsedGVs []schema.GroupVersion `json:"usedGVs,omitempty"`
 }
 
-func NewAppMetaFromData(data map[string]string) (AppMeta, error) {
-	var meta AppMeta
+func NewAppMetaFromData(data map[string]string) (Meta, error) {
+	var meta Meta
 
 	err := json.Unmarshal([]byte(data["spec"]), &meta)
 	if err != nil {
-		return AppMeta{}, fmt.Errorf("Parsing app metadata: %s", err)
+		return Meta{}, fmt.Errorf("Parsing app metadata: %s", err)
 	}
 
 	return meta, nil
 }
 
-func (m AppMeta) AsString() string {
+func (m Meta) AsString() string {
 	bytes, err := json.Marshal(m)
 	if err != nil {
 		panic(fmt.Sprintf("Encoding app meta: %s", err))
@@ -40,10 +40,10 @@ func (m AppMeta) AsString() string {
 	return string(bytes)
 }
 
-func (m AppMeta) AsData() map[string]string {
+func (m Meta) AsData() map[string]string {
 	return map[string]string{"spec": m.AsString()}
 }
 
-func (m AppMeta) Labels() map[string]string {
+func (m Meta) Labels() map[string]string {
 	return map[string]string{m.LabelKey: m.LabelValue}
 }

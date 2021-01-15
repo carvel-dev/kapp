@@ -17,7 +17,7 @@ type RenameOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	AppFlags AppFlags
+	AppFlags Flags
 	NewName  string
 }
 
@@ -40,7 +40,7 @@ func NewRenameCmd(o *RenameOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *RenameOptions) Run() error {
-	app, _, err := AppFactory(o.depsFactory, o.AppFlags, ResourceTypesFlags{}, o.logger)
+	app, _, err := Factory(o.depsFactory, o.AppFlags, ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}

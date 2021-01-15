@@ -32,7 +32,7 @@ type DeployOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	AppFlags            AppFlags
+	AppFlags            Flags
 	FileFlags           cmdtools.FileFlags
 	DiffFlags           cmdtools.DiffFlags
 	ResourceFilterFlags cmdtools.ResourceFilterFlags
@@ -85,7 +85,7 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 func (o *DeployOptions) Run() error {
 	failingAPIServicesPolicy := o.ResourceTypesFlags.FailingAPIServicePolicy()
 
-	app, supportObjs, err := AppFactory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
+	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
 	if err != nil {
 		return err
 	}
@@ -311,7 +311,7 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 }
 
 func (o *DeployOptions) calculateAndPresentChanges(existingResources,
-	newResources []ctlres.Resource, conf ctlconf.Conf, supportObjs AppFactorySupportObjs) (
+	newResources []ctlres.Resource, conf ctlconf.Conf, supportObjs FactorySupportObjs) (
 	ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, bool, string, error) {
 
 	var clusterChangeSet ctlcap.ClusterChangeSet

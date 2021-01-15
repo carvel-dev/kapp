@@ -17,7 +17,7 @@ type GCOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	AppFlags cmdapp.AppFlags
+	AppFlags cmdapp.Flags
 	Max      int
 }
 
@@ -38,7 +38,7 @@ func NewGCCmd(o *GCOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 }
 
 func (o *GCOptions) Run() error {
-	app, _, err := cmdapp.AppFactory(o.depsFactory, o.AppFlags, cmdapp.ResourceTypesFlags{}, o.logger)
+	app, _, err := cmdapp.Factory(o.depsFactory, o.AppFlags, cmdapp.ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}

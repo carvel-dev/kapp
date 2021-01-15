@@ -66,7 +66,7 @@ type unstructItems struct {
 	Items   []unstructured.Unstructured
 }
 
-func (c *Resources) All(resTypes []ResourceType, opts ResourcesAllOpts) ([]Resource, error) {
+func (c *Resources) All(resTypes []ResourceType, opts AllOpts) ([]Resource, error) {
 	defer c.logger.DebugFunc("All").Finish()
 
 	if opts.ListOpts == nil {
@@ -178,9 +178,6 @@ func (c *Resources) allForNamespaces(client dynamic.NamespaceableResourceInterfa
 				if !errors.IsForbidden(err) {
 					fatalErrsCh <- err
 					return
-				} else {
-					// TODO warnErrsCh <- fmt.Errorf("Listing %#v, namespaced: %t: %s", resType.GroupVersionResource, resType.Namespaced(), err)
-					// Continue trying other namespaces
 				}
 			} else {
 				unstructItemsCh <- resList
@@ -503,7 +500,7 @@ func IsResourceChangeBlockedErr(err error) bool {
 	}
 }
 
-type ResourcesAllOpts struct {
+type AllOpts struct {
 	ListOpts *metav1.ListOptions
 }
 

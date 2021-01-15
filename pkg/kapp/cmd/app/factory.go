@@ -11,24 +11,24 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-type AppFactorySupportObjs struct {
+type FactorySupportObjs struct {
 	CoreClient          kubernetes.Interface
 	ResourceTypes       *ctlres.ResourceTypesImpl
 	IdentifiedResources ctlres.IdentifiedResources
 	Apps                ctlapp.Apps
 }
 
-func AppFactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFlags,
-	resTypesFlags ResourceTypesFlags, logger logger.Logger) (AppFactorySupportObjs, error) {
+func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFlags,
+	resTypesFlags ResourceTypesFlags, logger logger.Logger) (FactorySupportObjs, error) {
 
 	coreClient, err := depsFactory.CoreClient()
 	if err != nil {
-		return AppFactorySupportObjs{}, err
+		return FactorySupportObjs{}, err
 	}
 
 	dynamicClient, err := depsFactory.DynamicClient()
 	if err != nil {
-		return AppFactorySupportObjs{}, err
+		return FactorySupportObjs{}, err
 	}
 
 	fallbackAllowedNss := []string{nsFlags.Name}
@@ -43,7 +43,7 @@ func AppFactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.Namespac
 	identifiedResources := ctlres.NewIdentifiedResources(
 		coreClient, resTypes, resources, fallbackAllowedNss, logger)
 
-	result := AppFactorySupportObjs{
+	result := FactorySupportObjs{
 		CoreClient:          coreClient,
 		ResourceTypes:       resTypes,
 		IdentifiedResources: identifiedResources,
@@ -53,17 +53,17 @@ func AppFactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.Namespac
 	return result, nil
 }
 
-func AppFactory(depsFactory cmdcore.DepsFactory, appFlags AppFlags,
-	resTypesFlags ResourceTypesFlags, logger logger.Logger) (ctlapp.App, AppFactorySupportObjs, error) {
+func Factory(depsFactory cmdcore.DepsFactory, appFlags Flags,
+	resTypesFlags ResourceTypesFlags, logger logger.Logger) (ctlapp.App, FactorySupportObjs, error) {
 
-	supportingObjs, err := AppFactoryClients(depsFactory, appFlags.NamespaceFlags, resTypesFlags, logger)
+	supportingObjs, err := FactoryClients(depsFactory, appFlags.NamespaceFlags, resTypesFlags, logger)
 	if err != nil {
-		return nil, AppFactorySupportObjs{}, err
+		return nil, FactorySupportObjs{}, err
 	}
 
 	app, err := supportingObjs.Apps.Find(appFlags.Name)
 	if err != nil {
-		return nil, AppFactorySupportObjs{}, err
+		return nil, FactorySupportObjs{}, err
 	}
 
 	return app, supportingObjs, nil

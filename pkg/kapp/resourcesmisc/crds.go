@@ -11,16 +11,16 @@ import (
 )
 
 type ResourceTypes struct {
-	localCRDs      []*ApiExtensionsVxCRD
+	localCRDs      []*APIExtensionsVxCRD
 	resourceTypes  ctlres.ResourceTypes
 	memoizedScopes map[string]bool
 }
 
 func NewResourceTypes(newResources []ctlres.Resource, resourceTypes ctlres.ResourceTypes) *ResourceTypes {
-	var localCRDs []*ApiExtensionsVxCRD
+	var localCRDs []*APIExtensionsVxCRD
 
 	for _, newRes := range newResources {
-		crd := NewApiExtensionsVxCRD(newRes)
+		crd := NewAPIExtensionsVxCRD(newRes)
 		if crd != nil {
 			localCRDs = append(localCRDs, crd)
 		}
