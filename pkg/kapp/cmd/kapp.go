@@ -135,7 +135,7 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 
 	// Last one runs first
 	cobrautil.VisitCommands(cmd, finishDebugLog, cobrautil.ReconfigureCmdWithSubcmd,
-		cobrautil.DisallowExtraArgs, configureUIAndLogger, cobrautil.WrapRunEForCmd(cobrautil.ResolveFlagsForCmd))
+		cobrautil.ReconfigureLeafCmds(cobrautil.DisallowExtraArgs), configureUIAndLogger, cobrautil.WrapRunEForCmd(cobrautil.ResolveFlagsForCmd))
 
 	return cmd
 }
