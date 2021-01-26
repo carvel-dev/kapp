@@ -117,8 +117,7 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	appCmd.AddCommand(cmdtools.NewListLabelsCmd(cmdtools.NewListLabelsOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	cmd.AddCommand(appCmd)
 
-	// Last one runs first
-	cobrautil.VisitCommands(cmd, func(cmd *cobra.Command) {
+	finishDebugLog := func(cmd *cobra.Command) {
 		origRunE := cmd.RunE
 		if origRunE != nil {
 			cmd.RunE = func(cmd2 *cobra.Command, args []string) error {
@@ -126,18 +125,17 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 				return origRunE(cmd2, args)
 			}
 		}
-	})
+	}
 
-	cobrautil.VisitCommands(cmd, cobrautil.ReconfigureCmdWithSubcmd)
-	cobrautil.VisitCommands(cmd, cobrautil.ReconfigureLeafCmd)
-
-	cobrautil.VisitCommands(cmd, cobrautil.WrapRunEForCmd(func(*cobra.Command, []string) error {
+	configureUIAndLogger := cobrautil.WrapRunEForCmd(func(*cobra.Command, []string) error {
 		o.UIFlags.ConfigureUI(o.ui)
 		o.LoggerFlags.Configure(o.logger)
 		return nil
-	}))
+	})
 
-	cobrautil.VisitCommands(cmd, cobrautil.WrapRunEForCmd(cobrautil.ResolveFlagsForCmd))
+	// Last one runs first
+	cobrautil.VisitCommands(cmd, finishDebugLog, cobrautil.ReconfigureCmdWithSubcmd,
+		cobrautil.DisallowExtraArgs, configureUIAndLogger, cobrautil.WrapRunEForCmd(cobrautil.ResolveFlagsForCmd))
 
 	return cmd
 }
