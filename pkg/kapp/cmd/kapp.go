@@ -82,7 +82,6 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	o.configFactory.ConfigureYAMLResolver(o.KubeconfigFlags.YAML.Value)
 
 	cmd.AddCommand(NewVersionCmd(NewVersionOptions(o.ui), flagsFactory))
-	cmd.AddCommand(NewCmdCompletion())
 
 	cmd.AddCommand(cmdapp.NewListCmd(cmdapp.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	cmd.AddCommand(cmdapp.NewInspectCmd(cmdapp.NewInspectOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
@@ -137,6 +136,10 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	cobrautil.VisitCommands(cmd, finishDebugLog, cobrautil.ReconfigureCmdWithSubcmd,
 		cobrautil.ReconfigureLeafCmds(cobrautil.DisallowExtraArgs), configureUIAndLogger, cobrautil.WrapRunEForCmd(cobrautil.ResolveFlagsForCmd))
 
+	// Completion command have to be added after the VisitCommands
+	// This due to the ReconfigureLeafCmds that we do not want to have enforced for the completion
+	// This configurations forces all nodes to do not accept extra args, but the completion requires 1 extra arg
+	cmd.AddCommand(NewCmdCompletion())
 	return cmd
 }
 

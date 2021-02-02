@@ -32,15 +32,29 @@ func NewCmdCompletion() *cobra.Command {
   source <(kapp completion zsh)
 
   # zsh on osx / oh-my-zsh
-  kapp completion zsh > "${fpath[1]}/_kapp"`
+  kapp completion zsh > "${fpath[1]}/_kapp"
+
+  # fish:
+  kapp completion fish | source
+
+  # To load completions for each session, execute once:
+  kapp completion fish > ~/.config/fish/completions/kapp.fish
+
+  # powershell:
+  kapp completion powershell | Out-String | Invoke-Expression
+
+  # To load completions for every new session, run:
+  kapp completion powershell > kapp.ps1
+  # and source this file from your powershell profile.
+`
 
 	cmd := &cobra.Command{
-		Use:       "completion [bash|zsh|fish]",
+		Use:       "completion [bash|zsh|fish|powershell]",
 		Short:     "Output shell completion code for the specified shell (bash, zsh or fish)",
 		Long:      "Output shell completion code for the specified shell (bash, zsh or fish).",
 		Example:   example,
-		Args:      cobra.ExactArgs(1),
-		ValidArgs: []string{"bash", "zsh"},
+		ValidArgs: []string{"bash", "zsh", "fish", "powershell"},
+		Args:      cobra.ExactValidArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out, err := getCompletion(args[0], cmd.Parent())
 			if err != nil {
@@ -65,10 +79,10 @@ func getCompletion(sh string, parent *cobra.Command) (string, error) {
 		err = parent.GenBashCompletion(&buf)
 	case "zsh":
 		err = parent.GenZshCompletion(&buf)
-	// TODO requires update of cobra
-	// case "fish":
-	// 	err = parent.GenFishCompletion(&buf, true)
-
+	case "fish":
+		err = parent.GenFishCompletion(&buf, true)
+	case "powershell":
+		err = parent.GenPowerShellCompletion(&buf)
 	default:
 		err = errors.New("unsupported shell type (must be bash, zsh or fish): " + sh)
 	}
