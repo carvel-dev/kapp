@@ -47,6 +47,15 @@ func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []Resou
 		return nil, err
 	}
 
+	// Filter resources by label in case of aggregated api https://github.com/vmware-tanzu/carvel-kapp/issues/160
+	var filteredResources []Resource
+	for _, res := range resources {
+		if labelSelector.Matches(labels.Set(res.Labels())) {
+			filteredResources = append(filteredResources, res)
+		}
+	}
+	resources = filteredResources
+
 	// Mark resources that were not created by kapp as transient
 	for i, res := range resources {
 		if !NewIdentityAnnotation(res).Valid() {

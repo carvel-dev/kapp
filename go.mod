@@ -23,6 +23,7 @@ require (
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
+	github.com/stretchr/testify v1.7.0
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.2.8
