@@ -14,13 +14,13 @@ import (
 type IdentifiedResources struct {
 	coreClient                kubernetes.Interface
 	resourceTypes             ResourceTypes
-	resources                 *Resources
+	resources                 Resources
 	fallbackAllowedNamespaces []string
 	logger                    logger.Logger
 }
 
 func NewIdentifiedResources(coreClient kubernetes.Interface, resourceTypes ResourceTypes,
-	resources *Resources, fallbackAllowedNamespaces []string, logger logger.Logger) IdentifiedResources {
+	resources Resources, fallbackAllowedNamespaces []string, logger logger.Logger) IdentifiedResources {
 
 	return IdentifiedResources{coreClient, resourceTypes, resources,
 		fallbackAllowedNamespaces, logger.NewPrefixed("IdentifiedResources")}

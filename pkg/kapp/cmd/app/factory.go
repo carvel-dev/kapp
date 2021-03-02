@@ -38,7 +38,7 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 		CanIgnoreFailingAPIService: resTypesFlags.CanIgnoreFailingAPIService,
 	})
 
-	resources := ctlres.NewResources(resTypes, coreClient, dynamicClient, fallbackAllowedNss, logger)
+	resources := ctlres.NewImpl(resTypes, coreClient, dynamicClient, fallbackAllowedNss, logger)
 
 	identifiedResources := ctlres.NewIdentifiedResources(
 		coreClient, resTypes, resources, fallbackAllowedNss, logger)
