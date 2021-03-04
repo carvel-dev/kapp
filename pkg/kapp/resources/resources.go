@@ -47,7 +47,7 @@ type Resources interface {
 	Create(resource Resource) (Resource, error)
 }
 
-type Impl struct {
+type ResourcesImpl struct {
 	resourceTypes             ResourceTypes
 	coreClient                kubernetes.Interface
 	dynamicClient             dynamic.Interface
@@ -59,10 +59,10 @@ type Impl struct {
 	logger logger.Logger
 }
 
-func NewImpl(resourceTypes ResourceTypes, coreClient kubernetes.Interface,
-	dynamicClient dynamic.Interface, fallbackAllowedNamespaces []string, logger logger.Logger) *Impl {
+func NewResourcesImpl(resourceTypes ResourceTypes, coreClient kubernetes.Interface,
+	dynamicClient dynamic.Interface, fallbackAllowedNamespaces []string, logger logger.Logger) *ResourcesImpl {
 
-	return &Impl{
+	return &ResourcesImpl{
 		resourceTypes:             resourceTypes,
 		coreClient:                coreClient,
 		dynamicClient:             dynamicClient,
@@ -76,7 +76,7 @@ type unstructItems struct {
 	Items   []unstructured.Unstructured
 }
 
-func (c *Impl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, error) {
+func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, error) {
 	defer c.logger.DebugFunc("All").Finish()
 
 	if opts.ListOpts == nil {
@@ -164,7 +164,7 @@ func (c *Impl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, error) {
 	return resources, nil
 }
 
-func (c *Impl) allForNamespaces(client dynamic.NamespaceableResourceInterface, listOpts *metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+func (c *ResourcesImpl) allForNamespaces(client dynamic.NamespaceableResourceInterface, listOpts *metav1.ListOptions) (*unstructured.UnstructuredList, error) {
 	defer c.logger.DebugFunc("allForNamespaces").Finish()
 
 	allowedNs, err := c.assumedAllowedNamespaces()
@@ -212,7 +212,7 @@ func (c *Impl) allForNamespaces(client dynamic.NamespaceableResourceInterface, l
 	return list, nil
 }
 
-func (c *Impl) Create(resource Resource) (Resource, error) {
+func (c *ResourcesImpl) Create(resource Resource) (Resource, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { c.logger.Debug("create %s", time.Now().UTC().Sub(t1)) }()
@@ -239,7 +239,7 @@ func (c *Impl) Create(resource Resource) (Resource, error) {
 	return NewResourceUnstructured(*createdUn, resType), nil
 }
 
-func (c *Impl) Update(resource Resource) (Resource, error) {
+func (c *ResourcesImpl) Update(resource Resource) (Resource, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { c.logger.Debug("update %s", time.Now().UTC().Sub(t1)) }()
@@ -266,7 +266,7 @@ func (c *Impl) Update(resource Resource) (Resource, error) {
 	return NewResourceUnstructured(*updatedUn, resType), nil
 }
 
-func (c *Impl) Patch(resource Resource, patchType types.PatchType, data []byte) (Resource, error) {
+func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data []byte) (Resource, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { c.logger.Debug("patch %s", time.Now().UTC().Sub(t1)) }()
@@ -290,7 +290,7 @@ func (c *Impl) Patch(resource Resource, patchType types.PatchType, data []byte) 
 	return NewResourceUnstructured(*patchedUn, resType), nil
 }
 
-func (c *Impl) Delete(resource Resource) error {
+func (c *ResourcesImpl) Delete(resource Resource) error {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { c.logger.Debug("delete %s", time.Now().UTC().Sub(t1)) }()
@@ -336,7 +336,7 @@ func (c *Impl) Delete(resource Resource) error {
 	return nil
 }
 
-func (c *Impl) Get(resource Resource) (Resource, error) {
+func (c *ResourcesImpl) Get(resource Resource) (Resource, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { c.logger.Debug("get %s", time.Now().UTC().Sub(t1)) }()
@@ -361,7 +361,7 @@ func (c *Impl) Get(resource Resource) (Resource, error) {
 	return NewResourceUnstructured(*item, resType), nil
 }
 
-func (c *Impl) Exists(resource Resource) (bool, error) {
+func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { c.logger.Debug("exists %s", time.Now().UTC().Sub(t1)) }()
@@ -416,7 +416,7 @@ var (
 	podMetricsNotFoundErrCheck = regexp.MustCompile("Error while getting pod (.+) not found \\(reason: \\)")
 )
 
-func (c *Impl) isPodMetrics(resource Resource, err error) bool {
+func (c *ResourcesImpl) isPodMetrics(resource Resource, err error) bool {
 	// Abnormal error case. Get/Delete on PodMetrics may fail
 	// without NotFound reason due to its dependence on Pod existance
 	if resource.Kind() == "PodMetrics" && resource.APIGroup() == "metrics.k8s.io" {
@@ -427,11 +427,11 @@ func (c *Impl) isPodMetrics(resource Resource, err error) bool {
 	return false
 }
 
-func (c *Impl) isGeneralRetryableErr(err error) bool {
+func (c *ResourcesImpl) isGeneralRetryableErr(err error) bool {
 	return IsResourceChangeBlockedErr(err) || c.isServerRescaleErr(err)
 }
 
-func (*Impl) isServerRescaleErr(err error) bool {
+func (*ResourcesImpl) isServerRescaleErr(err error) bool {
 	switch err := err.(type) {
 	case *http2.GoAwayError:
 		return true
@@ -443,14 +443,14 @@ func (*Impl) isServerRescaleErr(err error) bool {
 	return false
 }
 
-func (c *Impl) resourceErr(err error, action string, resource Resource) error {
+func (c *ResourcesImpl) resourceErr(err error, action string, resource Resource) error {
 	if typedErr, ok := err.(errors.APIStatus); ok {
 		return resourceStatusErr{resourcePlainErr{err, action, resource}, typedErr.Status()}
 	}
 	return resourcePlainErr{err, action, resource}
 }
 
-func (c *Impl) resourceClient(resource Resource) (dynamic.ResourceInterface, ResourceType, error) {
+func (c *ResourcesImpl) resourceClient(resource Resource) (dynamic.ResourceInterface, ResourceType, error) {
 	resType, err := c.resourceTypes.Find(resource)
 	if err != nil {
 		return nil, ResourceType{}, err
@@ -459,7 +459,7 @@ func (c *Impl) resourceClient(resource Resource) (dynamic.ResourceInterface, Res
 	return c.dynamicClient.Resource(resType.GroupVersionResource).Namespace(resource.Namespace()), resType, nil
 }
 
-func (c *Impl) assumedAllowedNamespaces() ([]string, error) {
+func (c *ResourcesImpl) assumedAllowedNamespaces() ([]string, error) {
 	c.assumedAllowedNamespacesMemoLock.Lock()
 	defer c.assumedAllowedNamespacesMemoLock.Unlock()
 

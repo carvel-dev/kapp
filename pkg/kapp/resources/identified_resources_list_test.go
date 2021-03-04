@@ -3,68 +3,37 @@
 package resources
 
 import (
-	"github.com/cppforlife/go-cli-ui/ui"
-	logger2 "github.com/k14s/kapp/pkg/kapp/logger"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"testing"
 
+	"github.com/cppforlife/go-cli-ui/ui"
+	"github.com/k14s/kapp/pkg/kapp/logger"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 func TestIdentifiedResourcesListReturnsLabeledResources(t *testing.T) {
-	mockedResTypes := new(ResourceTypesMock)
-	mockedRess := new(ResourcesMock)
+	fakeResourceTypes := &FakeResourceTypes{}
+	fakeResources := &FakeResources{t}
 
-	mockedRess.Mock.On("All").Return(makeNewResources(t), nil)
-
-	ui := ui.NewNoopUI()
-	logger := logger2.NewUILogger(ui)
-	identifiedResources := NewIdentifiedResources(nil, mockedResTypes, mockedRess, []string{}, logger)
-
-	kappLabel := make(map[string]string)
-	kappLabel["kapp.k14s.io/app"] = "app-name"
-	sel := labels.Set(kappLabel).AsSelector()
+	identifiedResources := NewIdentifiedResources(nil, fakeResourceTypes, fakeResources, []string{}, logger.NewUILogger(ui.NewNoopUI()))
+	sel := labels.Set(map[string]string{"some-label": "value"}).AsSelector()
 
 	resources, err := identifiedResources.List(sel, nil)
-
-	mockedRess.AssertCalled(t, "All")
 	require.Nil(t, err)
 	require.NotNil(t, resources)
 
-	for _, res := range resources {
-		require.Contains(t, res.Labels(), "kapp.k14s.io/app")
-		require.Equal(t, res.Labels()["kapp.k14s.io/app"], kappLabel["kapp.k14s.io/app"])
-	}
+	require.Equal(t, 1, len(resources))
+	require.Contains(t, resources[0].Labels(), "some-label")
+	require.Equal(t, resources[0].Labels()["some-label"], "value")
 }
 
-type ResourcesMock struct {
-	mock.Mock
+type FakeResources struct {
+	t *testing.T
 }
 
-func (r *ResourcesMock) All([]ResourceType, AllOpts) ([]Resource, error) {
-	args := r.Called()
-	return args.Get(0).([]Resource), args.Error(1)
-}
-func (r *ResourcesMock) Delete(Resource) error                                     { return nil }
-func (r *ResourcesMock) Exists(Resource) (bool, error)                             { return true, nil }
-func (r *ResourcesMock) Get(Resource) (Resource, error)                            { return nil, nil }
-func (r *ResourcesMock) Patch(Resource, types.PatchType, []byte) (Resource, error) { return nil, nil }
-func (r *ResourcesMock) Update(Resource) (Resource, error)                         { return nil, nil }
-func (r *ResourcesMock) Create(Resource) (Resource, error)                         { return nil, nil }
-
-type ResourceTypesMock struct {
-	mock.Mock
-}
-
-func (r *ResourceTypesMock) All() ([]ResourceType, error)                          { return nil, nil }
-func (r *ResourceTypesMock) Find(Resource) (ResourceType, error)                   { return ResourceType{}, nil }
-func (r *ResourceTypesMock) CanIgnoreFailingGroupVersion(schema.GroupVersion) bool { return true }
-
-func makeNewResources(t *testing.T) []Resource {
-	t.Helper()
+func (r *FakeResources) All([]ResourceType, AllOpts) ([]Resource, error) {
 	antreaBs := `---
 apiVersion: clusterinformation.antrea.tanzu.vmware.com/v1beta1
 kind: AntreaControllerInfo
@@ -77,42 +46,24 @@ version: v0.10.1
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    deployment.kubernetes.io/revision: "1"
-    kapp.k14s.io/identity: v1;default/apps/Deployment/nginx-deployment;apps/v1
-    kapp.k14s.io/original: '{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"labels":{"app":"nginx","kapp.k14s.io/app":"1614279362730868000","kapp.k14s.io/association":"v1.5771d3c49b880a055e733831a44ae242"},"name":"nginx-deployment","namespace":"default"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"nginx","kapp.k14s.io/app":"1614279362730868000"}},"template":{"metadata":{"labels":{"app":"nginx","kapp.k14s.io/app":"1614279362730868000","kapp.k14s.io/association":"v1.5771d3c49b880a055e733831a44ae242"}},"spec":{"containers":[{"image":"nginx:1.14.2","name":"nginx","ports":[{"containerPort":80}]}]}}}}'
-    kapp.k14s.io/original-diff-md5: 2b7269146768d693cb97b932660a532d
   labels:
-    app: nginx
-    kapp.k14s.io/app: "app-name"
-    kapp.k14s.io/association: v1.5771d3c49b880a055e733831a44ae242
-  name: nginx-deployment
-  namespace: default
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: nginx
-      kapp.k14s.io/app: "1614279362730868000"
-  template:
-    metadata:
-      labels:
-        app: nginx
-        kapp.k14s.io/app: "1614279362730868000"
-        kapp.k14s.io/association: v1.5771d3c49b880a055e733831a44ae242
-    spec:
-      containers:
-      - image: nginx:1.14.2
-        name: nginx
-        ports:
-        - containerPort: 80
-          protocol: TCP
+    some-label: "value"
 `
 
-	antreaRes, err := NewResourceFromBytes([]byte(antreaBs))
-	require.Nil(t, err)
-	deploymentRes, err := NewResourceFromBytes([]byte(deploymentBs))
-	require.Nil(t, err)
+	antreaRes := MustNewResourceFromBytes([]byte(antreaBs))
+	deploymentRes := MustNewResourceFromBytes([]byte(deploymentBs))
 
-	return []Resource{antreaRes, deploymentRes}
+	return []Resource{antreaRes, deploymentRes}, nil
 }
+func (r *FakeResources) Delete(Resource) error                                     { return nil }
+func (r *FakeResources) Exists(Resource) (bool, error)                             { return true, nil }
+func (r *FakeResources) Get(Resource) (Resource, error)                            { return nil, nil }
+func (r *FakeResources) Patch(Resource, types.PatchType, []byte) (Resource, error) { return nil, nil }
+func (r *FakeResources) Update(Resource) (Resource, error)                         { return nil, nil }
+func (r *FakeResources) Create(Resource) (Resource, error)                         { return nil, nil }
+
+type FakeResourceTypes struct{}
+
+func (r *FakeResourceTypes) All() ([]ResourceType, error)                          { return nil, nil }
+func (r *FakeResourceTypes) Find(Resource) (ResourceType, error)                   { return ResourceType{}, nil }
+func (r *FakeResourceTypes) CanIgnoreFailingGroupVersion(schema.GroupVersion) bool { return true }

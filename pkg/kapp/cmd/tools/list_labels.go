@@ -128,7 +128,7 @@ func (o *ListLabelsOptions) listResources() ([]ctlres.Resource, error) {
 	}
 
 	resTypes := ctlres.NewResourceTypesImpl(coreClient, ctlres.ResourceTypesImplOpts{})
-	resources := ctlres.NewImpl(resTypes, coreClient, dynamicClient, nil, o.logger)
+	resources := ctlres.NewResourcesImpl(resTypes, coreClient, dynamicClient, nil, o.logger)
 	identifiedResources := ctlres.NewIdentifiedResources(coreClient, resTypes, resources, nil, o.logger)
 
 	labelSelector, err := labels.Parse("!kapp")
