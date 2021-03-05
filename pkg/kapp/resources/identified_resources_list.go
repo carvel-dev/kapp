@@ -47,6 +47,18 @@ func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []Resou
 		return nil, err
 	}
 
+	// Check returned resources against label selector
+	// in case of Kubernetes APIs returned resources that do not match.
+	// This can happen if custom aggregated APIs did not implement label selector filtering.
+	// (https://github.com/vmware-tanzu/carvel-kapp/issues/160)
+	var filteredResources []Resource
+	for _, res := range resources {
+		if labelSelector.Matches(labels.Set(res.Labels())) {
+			filteredResources = append(filteredResources, res)
+		}
+	}
+	resources = filteredResources
+
 	// Mark resources that were not created by kapp as transient
 	for i, res := range resources {
 		if !NewIdentityAnnotation(res).Valid() {
