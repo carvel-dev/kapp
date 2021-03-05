@@ -1,12 +1,13 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
-package resources
+package resources_test
 
 import (
 	"testing"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/k14s/kapp/pkg/kapp/logger"
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -17,7 +18,7 @@ func TestIdentifiedResourcesListReturnsLabeledResources(t *testing.T) {
 	fakeResourceTypes := &FakeResourceTypes{}
 	fakeResources := &FakeResources{t}
 
-	identifiedResources := NewIdentifiedResources(nil, fakeResourceTypes, fakeResources, []string{}, logger.NewUILogger(ui.NewNoopUI()))
+	identifiedResources := ctlres.NewIdentifiedResources(nil, fakeResourceTypes, fakeResources, []string{}, logger.NewUILogger(ui.NewNoopUI()))
 	sel := labels.Set(map[string]string{"some-label": "value"}).AsSelector()
 
 	resources, err := identifiedResources.List(sel, nil)
@@ -33,7 +34,7 @@ type FakeResources struct {
 	t *testing.T
 }
 
-func (r *FakeResources) All([]ResourceType, AllOpts) ([]Resource, error) {
+func (r *FakeResources) All([]ctlres.ResourceType, ctlres.AllOpts) ([]ctlres.Resource, error) {
 	antreaBs := `---
 apiVersion: clusterinformation.antrea.tanzu.vmware.com/v1beta1
 kind: AntreaControllerInfo
@@ -50,20 +51,24 @@ metadata:
     some-label: "value"
 `
 
-	antreaRes := MustNewResourceFromBytes([]byte(antreaBs))
-	deploymentRes := MustNewResourceFromBytes([]byte(deploymentBs))
+	antreaRes := ctlres.MustNewResourceFromBytes([]byte(antreaBs))
+	deploymentRes := ctlres.MustNewResourceFromBytes([]byte(deploymentBs))
 
-	return []Resource{antreaRes, deploymentRes}, nil
+	return []ctlres.Resource{antreaRes, deploymentRes}, nil
 }
-func (r *FakeResources) Delete(Resource) error                                     { return nil }
-func (r *FakeResources) Exists(Resource) (bool, error)                             { return true, nil }
-func (r *FakeResources) Get(Resource) (Resource, error)                            { return nil, nil }
-func (r *FakeResources) Patch(Resource, types.PatchType, []byte) (Resource, error) { return nil, nil }
-func (r *FakeResources) Update(Resource) (Resource, error)                         { return nil, nil }
-func (r *FakeResources) Create(Resource) (Resource, error)                         { return nil, nil }
+func (r *FakeResources) Delete(ctlres.Resource) error                 { return nil }
+func (r *FakeResources) Exists(ctlres.Resource) (bool, error)         { return true, nil }
+func (r *FakeResources) Get(ctlres.Resource) (ctlres.Resource, error) { return nil, nil }
+func (r *FakeResources) Patch(ctlres.Resource, types.PatchType, []byte) (ctlres.Resource, error) {
+	return nil, nil
+}
+func (r *FakeResources) Update(ctlres.Resource) (ctlres.Resource, error) { return nil, nil }
+func (r *FakeResources) Create(ctlres.Resource) (ctlres.Resource, error) { return nil, nil }
 
 type FakeResourceTypes struct{}
 
-func (r *FakeResourceTypes) All() ([]ResourceType, error)                          { return nil, nil }
-func (r *FakeResourceTypes) Find(Resource) (ResourceType, error)                   { return ResourceType{}, nil }
+func (r *FakeResourceTypes) All() ([]ctlres.ResourceType, error) { return nil, nil }
+func (r *FakeResourceTypes) Find(ctlres.Resource) (ctlres.ResourceType, error) {
+	return ctlres.ResourceType{}, nil
+}
 func (r *FakeResourceTypes) CanIgnoreFailingGroupVersion(schema.GroupVersion) bool { return true }
