@@ -4,7 +4,6 @@
 package e2e
 
 import (
-	"fmt"
 	"reflect"
 	"regexp"
 	"strings"
@@ -288,12 +287,5 @@ func checkChangesOutput(t *testing.T, actualOutput, expectedOutput string) {
 	if actualOutput != expectedOutput {
 		t.Fatalf("Expected output to match:  %d >>>%s<<< vs %d >>>%s<<<",
 			len(actualOutput), actualOutput, len(expectedOutput), expectedOutput)
-	}
-}
-
-func printLines(heading, str string) {
-	fmt.Printf("%s:\n", heading)
-	for _, line := range strings.Split(str, "\n") {
-		fmt.Printf(">>>%s<<<\n", line)
 	}
 }

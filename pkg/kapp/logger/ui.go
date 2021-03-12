@@ -11,7 +11,9 @@ import (
 )
 
 const (
+	// nolint: deadcode,unused
 	loggerLevelError = "error"
+	// nolint: deadcode,unused
 	loggerLevelInfo  = "info"
 	loggerLevelDebug = "debug"
 )

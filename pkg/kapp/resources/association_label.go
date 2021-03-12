@@ -12,7 +12,6 @@ import (
 
 const (
 	kappAssociationLabelKey = "kapp.k14s.io/association"
-	kappAssociationLabelV1  = "v1"
 )
 
 type AssociationLabel struct {
