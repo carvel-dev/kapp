@@ -18,10 +18,6 @@ const (
 	ChangeOpKeep   ChangeOp = "keep" // unchanged
 )
 
-var (
-	allChangeOps = []ChangeOp{ChangeOpAdd, ChangeOpDelete, ChangeOpUpdate, ChangeOpKeep}
-)
-
 type Change interface {
 	NewOrExistingResource() ctlres.Resource
 	NewResource() ctlres.Resource
