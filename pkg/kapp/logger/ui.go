@@ -11,9 +11,7 @@ import (
 )
 
 const (
-	// nolint: deadcode,unused
 	loggerLevelError = "error"
-	// nolint: deadcode,unused
 	loggerLevelInfo  = "info"
 	loggerLevelDebug = "debug"
 )
@@ -31,11 +29,11 @@ func NewUILogger(ui ui.UI) *UILogger { return &UILogger{"", ui, false} }
 func (l *UILogger) SetDebug(debug bool) { l.debug = debug }
 
 func (l *UILogger) Error(msg string, args ...interface{}) {
-	l.ui.BeginLinef(l.msg(loggerLevelDebug, msg), args...)
+	l.ui.BeginLinef(l.msg(loggerLevelError, msg), args...)
 }
 
 func (l *UILogger) Info(msg string, args ...interface{}) {
-	l.ui.BeginLinef(l.msg(loggerLevelDebug, msg), args...)
+	l.ui.BeginLinef(l.msg(loggerLevelInfo, msg), args...)
 }
 
 func (l *UILogger) Debug(msg string, args ...interface{}) {
