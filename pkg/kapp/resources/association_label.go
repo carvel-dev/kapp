@@ -12,6 +12,7 @@ import (
 
 const (
 	kappAssociationLabelKey = "kapp.k14s.io/association"
+	kappAssociationLabelV1  = "v1"
 )
 
 type AssociationLabel struct {
@@ -25,7 +26,7 @@ func NewAssociationLabel(resource Resource) AssociationLabel {
 func (a AssociationLabel) v1Value() string {
 	// max 63 char for label values
 	key := fmt.Sprintf("%x", md5.Sum([]byte(NewUniqueResourceKey(a.resource).String())))
-	return kappIdentityAnnV1 + "." + key
+	return kappAssociationLabelV1 + "." + key
 }
 
 func (a AssociationLabel) Key() string   { return kappAssociationLabelKey }
