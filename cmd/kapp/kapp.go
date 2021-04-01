@@ -45,6 +45,6 @@ func nonExitingMain() error {
 		return err
 	}
 
-	confUI.PrintLinef("Succeeded")
+	confUI.ErrorLinef("Succeeded")
 	return nil
 }
