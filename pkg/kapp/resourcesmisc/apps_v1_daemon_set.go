@@ -38,6 +38,14 @@ func (s AppsV1DaemonSet) IsDoneApplying() DoneApplyState {
 			"Waiting for generation %d to be observed", dset.Generation)}
 	}
 
+	// ensure updated pods are actually scheduled before checking number unavailable to avoid
+	// race condition between pod scheduler and kapp state check
+	notReady := dset.Status.DesiredNumberScheduled-dset.Status.UpdatedNumberScheduled
+	if notReady > 0 {
+		return DoneApplyState{Done: false, Message: fmt.Sprintf(
+			"Waiting for %d updated pods to be scheduled", notReady)}
+	}
+
 	if dset.Status.NumberUnavailable > 0 {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(
 			"Waiting for %d unavailable pods", dset.Status.NumberUnavailable)}
