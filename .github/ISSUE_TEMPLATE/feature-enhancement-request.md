@@ -1,7 +1,10 @@
 ---
 name: Feature request
 about: Suggest an idea for kapp
-labels: carvel-triage,enhancement
+title: ''
+labels: carvel-triage, enhancement
+assignees: ''
+
 ---
 
 **Describe the problem/challenge you have**
@@ -14,3 +17,13 @@ labels: carvel-triage,enhancement
 
 **Anything else you would like to add:**
 [Additional information that will assist in solving the issue.]
+
+---
+Vote on this request
+
+This is an invitation to the community to vote on issues, to help us prioritize our backlog. Use the "smiley face" up to the right of this comment to vote.
+
+👍 "I would like to see this addressed as soon as possible"
+👎 "There are other more important things to focus on right now"
+
+We are also happy to receive and review Pull Requests if you want to help working on this issue.
