@@ -429,10 +429,14 @@ func (c *ResourcesImpl) isPodMetrics(resource Resource, err error) bool {
 
 func (c *ResourcesImpl) isGeneralRetryableErr(err error) bool {
 	return IsResourceChangeBlockedErr(err) || c.isServerRescaleErr(err) ||
-		isResourceQuotaConflict(err) || errors.IsTooManyRequests(err)
+		c.isResourceQuotaConflict(err) || errors.IsTooManyRequests(err)
 }
 
-func isResourceQuotaConflict(err error) bool {
+// Fixes issues I observed with GKE:
+// Operation cannot be fulfilled on resourcequotas "gke-resource-quotas": the object has been modified;
+// please apply your changes to the latest version and try again (reason: Conflict)
+// Works around: https://github.com/kubernetes/kubernetes/issues/67761 by retrying.
+func (c *ResourcesImpl) isResourceQuotaConflict(err error) bool {
 	return errors.IsConflict(err) && strings.Contains(err.Error(), "Operation cannot be fulfilled on resourcequota")
 }
 
