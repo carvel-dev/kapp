@@ -428,10 +428,15 @@ func (c *ResourcesImpl) isPodMetrics(resource Resource, err error) bool {
 }
 
 func (c *ResourcesImpl) isGeneralRetryableErr(err error) bool {
-	return IsResourceChangeBlockedErr(err) || c.isServerRescaleErr(err)
+	return IsResourceChangeBlockedErr(err) || c.isServerRescaleErr(err) ||
+		isResourceQuotaConflict(err) || errors.IsTooManyRequests(err)
 }
 
-func (*ResourcesImpl) isServerRescaleErr(err error) bool {
+func isResourceQuotaConflict(err error) bool {
+	return errors.IsConflict(err) && strings.Contains(err.Error(), "Operation cannot be fulfilled on resourcequota")
+}
+
+func (c *ResourcesImpl) isServerRescaleErr(err error) bool {
 	switch err := err.(type) {
 	case *http2.GoAwayError:
 		return true
