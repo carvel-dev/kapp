@@ -17,6 +17,7 @@ type ConfigFactory interface {
 	ConfigurePathResolver(func() (string, error))
 	ConfigureContextResolver(func() (string, error))
 	ConfigureYAMLResolver(func() (string, error))
+	ConfigureClient(float32, int)
 	RESTConfig() (*rest.Config, error)
 	DefaultNamespace() (string, error)
 }
@@ -25,6 +26,9 @@ type ConfigFactoryImpl struct {
 	pathResolverFunc    func() (string, error)
 	contextResolverFunc func() (string, error)
 	yamlResolverFunc    func() (string, error)
+
+	qps   float32
+	burst int
 }
 
 var _ ConfigFactory = &ConfigFactoryImpl{}
@@ -43,6 +47,11 @@ func (f *ConfigFactoryImpl) ConfigureContextResolver(resolverFunc func() (string
 
 func (f *ConfigFactoryImpl) ConfigureYAMLResolver(resolverFunc func() (string, error)) {
 	f.yamlResolverFunc = resolverFunc
+}
+
+func (f *ConfigFactoryImpl) ConfigureClient(qps float32, burst int) {
+	f.qps = qps
+	f.burst = burst
 }
 
 func (f *ConfigFactoryImpl) RESTConfig() (*rest.Config, error) {
@@ -67,6 +76,11 @@ func (f *ConfigFactoryImpl) RESTConfig() (*rest.Config, error) {
 		}
 
 		return nil, fmt.Errorf("Building Kubernetes config%s: %s%s", prefixMsg, err, hintMsg)
+	}
+
+	if f.qps > 0.0 {
+		restConfig.QPS = f.qps
+		restConfig.Burst = f.burst
 	}
 
 	return restConfig, nil
