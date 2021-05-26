@@ -28,6 +28,7 @@ type KappOptions struct {
 
 	UIFlags         UIFlags
 	LoggerFlags     LoggerFlags
+	KubeAPIFlags    cmdcore.KubeAPIFlags
 	KubeconfigFlags cmdcore.KubeconfigFlags
 }
 
@@ -75,6 +76,7 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 
 	o.UIFlags.Set(cmd, flagsFactory)
 	o.LoggerFlags.Set(cmd, flagsFactory)
+	o.KubeAPIFlags.Set(cmd, flagsFactory)
 	o.KubeconfigFlags.Set(cmd, flagsFactory)
 
 	o.configFactory.ConfigurePathResolver(o.KubeconfigFlags.Path.Value)
@@ -126,15 +128,16 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		}
 	}
 
-	configureUIAndLogger := cobrautil.WrapRunEForCmd(func(*cobra.Command, []string) error {
+	configureGlobal := cobrautil.WrapRunEForCmd(func(*cobra.Command, []string) error {
 		o.UIFlags.ConfigureUI(o.ui)
 		o.LoggerFlags.Configure(o.logger)
+		o.KubeAPIFlags.Configure(o.configFactory)
 		return nil
 	})
 
 	// Last one runs first
 	cobrautil.VisitCommands(cmd, finishDebugLog, cobrautil.ReconfigureCmdWithSubcmd,
-		cobrautil.ReconfigureLeafCmds(cobrautil.DisallowExtraArgs), configureUIAndLogger, cobrautil.WrapRunEForCmd(cobrautil.ResolveFlagsForCmd))
+		cobrautil.ReconfigureLeafCmds(cobrautil.DisallowExtraArgs), configureGlobal, cobrautil.WrapRunEForCmd(cobrautil.ResolveFlagsForCmd))
 
 	// Completion command have to be added after the VisitCommands
 	// This due to the ReconfigureLeafCmds that we do not want to have enforced for the completion

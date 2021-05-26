@@ -37,10 +37,6 @@ func (f *DepsFactoryImpl) DynamicClient() (dynamic.Interface, error) {
 		return nil, err
 	}
 
-	// TODO high QPS
-	config.QPS = 1000
-	config.Burst = 1000
-
 	clientset, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("Building Dynamic clientset: %s", err)
@@ -56,9 +52,6 @@ func (f *DepsFactoryImpl) CoreClient() (kubernetes.Interface, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	config.QPS = 1000
-	config.Burst = 1000
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
