@@ -1,6 +1,6 @@
 module github.com/k14s/kapp
 
-go 1.13
+go 1.16
 
 require (
 	github.com/Azure/go-autorest v10.15.0+incompatible // indirect
