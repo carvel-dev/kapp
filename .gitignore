@@ -1,5 +1,6 @@
 /kapp
 /kapp-darwin-amd64
+/kapp-darwin-arm64
 /kapp-linux-amd64
 /kapp-linux-arm64
 /kapp-windows-amd64.exe
