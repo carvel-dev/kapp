@@ -127,6 +127,26 @@ rebaseRules:
   resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
 
+# ServiceAccount controller appends secret named '${metadata.name}-token-${rand}' after the save
+- ytt:
+    overlayContractV1:
+      overlay.yml: |
+        #@ load("@ytt:data", "data")
+        #@ load("@ytt:overlay", "overlay")
+
+        #@ res_name = data.values.existing.metadata.name
+        #@ secrets = data.values.existing.secrets
+
+        #@overlay/match by=overlay.all
+        ---
+        secrets:
+        #@ for k in secrets:
+        #@ if/end k.name.startswith(res_name+"-token-"):
+        - name: #@ k.name
+        #@ end
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: v1, kind: ServiceAccount}
+
 diffAgainstLastAppliedFieldExclusionRules:
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
   resourceMatchers: *appsV1DeploymentWithRevAnnKey

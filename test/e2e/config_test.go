@@ -8,7 +8,10 @@ import (
 	"strings"
 	"testing"
 
+	uitest "github.com/cppforlife/go-cli-ui/ui/test"
+	"github.com/ghodss/yaml"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConfig(t *testing.T) {
@@ -129,4 +132,262 @@ data:
 			t.Fatalf("Expected value to be correct: %#v", secondData)
 		}
 	})
+}
+
+func TestYttRebaseRule_ServiceAccountRebaseTokenSecret(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+
+	// ServiceAccount controller appends secret named '${metadata.name}-token-${rand}'
+	yaml1 := `
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-sa
+secrets:
+- name: some-secret`
+
+	yaml2 := `
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-sa
+secrets:
+- name: some-secret
+- name: new-some-secret`
+
+	name := "test-config-ytt-rebase-sa-rebase"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	var generatedSecretName string
+
+	logger.Section("initial deploy", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		secrets := NewPresentClusterResource("serviceaccount", "test-sa", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
+		if len(secrets) != 2 {
+			t.Fatalf("Expected one set and one generated secret")
+		}
+		if !reflect.DeepEqual(secrets[0], map[string]interface{}{"name": "some-secret"}) {
+			t.Fatalf("Expected provided secret at idx0: %#v", secrets[0])
+		}
+		generatedSecretName = secrets[1].(map[string]interface{})["name"].(string)
+		if !strings.HasPrefix(generatedSecretName, "test-sa-token-") {
+			t.Fatalf("Expected generated secret at idx1: %#v", secrets[1])
+		}
+	})
+
+	logger.Section("deploy no change as rebase rule should retain generated secret", func() {
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		resp := uitest.JSONUIFromBytes(t, []byte(out))
+		expected := []map[string]string{}
+
+		if !reflect.DeepEqual(resp.Tables[0].Rows, expected) {
+			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
+		}
+		if resp.Tables[0].Notes[0] != "Op:      0 create, 0 delete, 0 update, 0 noop" {
+			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
+		}
+	})
+
+	logger.Section("deploy with additional secret, but retain existing generated secret", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
+
+		secrets := NewPresentClusterResource("serviceaccount", "test-sa", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
+		if len(secrets) != 3 {
+			t.Fatalf("Expected one set and one generated secret")
+		}
+		if !reflect.DeepEqual(secrets[0], map[string]interface{}{"name": "some-secret"}) {
+			t.Fatalf("Expected provided secret at idx0: %#v", secrets[0])
+		}
+		if !reflect.DeepEqual(secrets[1], map[string]interface{}{"name": "new-some-secret"}) {
+			t.Fatalf("Expected provided secret at idx1: %#v", secrets[0])
+		}
+		if !reflect.DeepEqual(secrets[2], map[string]interface{}{"name": generatedSecretName}) {
+			t.Fatalf("Expected previous generated secret at idx2: %#v", secrets[1])
+		}
+	})
+}
+
+func TestYttRebaseRule_OverlayContractV1(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+
+	config := `
+---
+apiVersion: kapp.k14s.io/v1alpha1
+kind: Config
+
+rebaseRules:
+- ytt:
+    overlayContractV1:
+      overlay.yml: |
+        #@ load("@ytt:data", "data")
+        #@ load("@ytt:overlay", "overlay")
+
+        #@overlay/match by=overlay.all
+        ---
+        data:
+          #! will be visible in data.values._current in next ytt rebase
+          #@overlay/match missing_ok=True
+          changed_in_rebase_rule: "1"
+  resourceMatchers:
+  - allMatcher: {}
+
+- ytt:
+    overlayContractV1:
+      overlay.yml: |
+        #@ load("@ytt:data", "data")
+        #@ load("@ytt:yaml", "yaml")
+        #@ load("@ytt:overlay", "overlay")
+
+        #@overlay/match by=overlay.all
+        ---
+        data:
+          #! expected to find this key from prev rebase rule
+          changed_in_rebase_rule: "2"
+
+          #@ if not hasattr(data.values.existing.data, "values"):
+
+          #! this would run on the first rebase
+          #@overlay/match missing_ok=True
+          values: #@ yaml.encode(data.values)
+
+          #@ else:
+
+          #! this would run on the second rebase since existing
+          #! resource contains prev applied values
+          #@overlay/match missing_ok=True
+          values: #@ data.values.existing.data.values
+
+          #@ end
+
+  resourceMatchers:
+  - allMatcher: {}
+`
+
+	yaml1 := `
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-cm
+data:
+  key1: val1`
+
+	name := "test-config-ytt-rebase-overlay-contract-v1"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	var cm ClusterResource
+
+	logger.Section("initial deploy (rebase does not run since there is no existing resource)", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(config + yaml1)})
+
+		cm = NewPresentClusterResource("configmap", "test-cm", env.Namespace, kubectl)
+		data := cm.RawPath(ctlres.NewPathFromStrings([]string{"data"})).(map[string]interface{})
+
+		require.Equal(t, map[string]interface{}{"key1": "val1"}, data)
+	})
+
+	var expectedDataStr string
+
+	logger.Section("second deploy (rebase runs)", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(config + yaml1)})
+
+		expectedDataStr = asYAML(t, map[string]interface{}{
+			"key1": "val1",
+			// Following fields are accessible via data.values inside ytt:
+			// - data.values.existing: resource from live cluster
+			// - data.values.new: resource from config (post-prep)
+			// - data.values._current: resource after previous rebase rules already applied
+			"values": asYAML(t, map[string]interface{}{
+				"existing": func() interface{} {
+					raw := cm.Raw()
+					metadata := raw["metadata"].(map[string]interface{})
+					anns := metadata["annotations"].(map[string]interface{})
+					delete(anns, "kapp.k14s.io/identity")
+					return raw
+				}(),
+				"_current": func() interface{} {
+					raw := cm.Raw()
+					metadata := raw["metadata"].(map[string]interface{})
+					delete(metadata, "annotations")
+					data := raw["data"].(map[string]interface{})
+					data["changed_in_rebase_rule"] = "1"
+					return raw
+				}(),
+				"new": map[string]interface{}{
+					"apiVersion": "v1",
+					"kind":       "ConfigMap",
+					"metadata": map[string]interface{}{
+						"name": "test-cm",
+						// Namespace is added as part of kapp preparation step for input resources
+						"namespace": env.Namespace,
+						// These labels are added as part of kapp preparation step for input resources
+						"labels": map[string]interface{}{
+							"kapp.k14s.io/app":         cm.Labels()["kapp.k14s.io/app"],
+							"kapp.k14s.io/association": cm.Labels()["kapp.k14s.io/association"],
+						},
+					},
+					"data": map[string]interface{}{
+						"key1": "val1",
+					},
+				},
+			}),
+			"changed_in_rebase_rule": "2",
+		})
+
+		cm = NewPresentClusterResource("configmap", "test-cm", env.Namespace, kubectl)
+		data := cm.RawPath(ctlres.NewPathFromStrings([]string{"data"})).(map[string]interface{})
+
+		require.Equal(t, expectedDataStr, asYAML(t, data))
+	})
+
+	logger.Section("third deploy with no changes (rebase runs)", func() {
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(config + yaml1)})
+
+		resp := uitest.JSONUIFromBytes(t, []byte(out))
+		expected := []map[string]string{}
+
+		if !reflect.DeepEqual(resp.Tables[0].Rows, expected) {
+			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
+		}
+		if resp.Tables[0].Notes[0] != "Op:      0 create, 0 delete, 0 update, 0 noop" {
+			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
+		}
+
+		cm = NewPresentClusterResource("configmap", "test-cm", env.Namespace, kubectl)
+		data := cm.RawPath(ctlres.NewPathFromStrings([]string{"data"})).(map[string]interface{})
+
+		require.Equal(t, expectedDataStr, asYAML(t, data))
+	})
+}
+
+func asYAML(t *testing.T, val interface{}) string {
+	bs, err := yaml.Marshal(val)
+	require.NoError(t, err)
+	return string(bs)
 }

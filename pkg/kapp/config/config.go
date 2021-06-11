@@ -10,6 +10,7 @@ import (
 	semver "github.com/hashicorp/go-version"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/k14s/kapp/pkg/kapp/version"
+	"github.com/k14s/kapp/pkg/kapp/yttresmod"
 )
 
 const (
@@ -54,10 +55,25 @@ type WaitRuleConditionMatcher struct {
 
 type RebaseRule struct {
 	ResourceMatchers []ResourceMatcher
-	Path             ctlres.Path
-	Paths            []ctlres.Path
-	Type             string
-	Sources          []ctlres.FieldCopyModSource
+
+	Path    ctlres.Path
+	Paths   []ctlres.Path
+	Type    string
+	Sources []ctlres.FieldCopyModSource
+
+	Ytt *RebaseRuleYtt
+}
+
+type RebaseRuleYtt struct {
+	// Contracts are named (eg overlay) and versioned (eg v1)
+	// to provide a stable interface to rule authors.
+	// Multiple contracts will be offered at the same time
+	// so that existing rules do not not break as we decide to evolve running environment.
+	OverlayContractV1 *RebaseRuleYttOverlayContractV1 `json:"overlayContractV1"`
+}
+
+type RebaseRuleYttOverlayContractV1 struct {
+	OverlayYAML string `json:"overlay.yml"`
 }
 
 type DiffAgainstLastAppliedFieldExclusionRule struct {
@@ -180,6 +196,12 @@ func (c Config) Validate() error {
 }
 
 func (r RebaseRule) Validate() error {
+	if r.Ytt != nil {
+		if len(r.Path) > 0 || len(r.Paths) > 0 || len(r.Type) > 0 || len(r.Sources) > 0 {
+			return fmt.Errorf("Expected only resourceMatchers specified with ytt configuration")
+		}
+		return nil
+	}
 	if len(r.Path) > 0 && len(r.Paths) > 0 {
 		return fmt.Errorf("Expected only one of path or paths specified")
 	}
@@ -190,6 +212,21 @@ func (r RebaseRule) Validate() error {
 }
 
 func (r RebaseRule) AsMods() []ctlres.ResourceModWithMultiple {
+	if r.Ytt != nil {
+		switch {
+		case r.Ytt.OverlayContractV1 != nil:
+			return []ctlres.ResourceModWithMultiple{yttresmod.OverlayContractV1Mod{
+				ResourceMatcher: ctlres.AnyMatcher{
+					Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
+				},
+				OverlayYAML: r.Ytt.OverlayContractV1.OverlayYAML,
+			}}
+
+		default:
+			panic("Unknown rebase rule ytt contract (supported: overlayContractV1)")
+		}
+	}
+
 	var mods []ctlres.ResourceModWithMultiple
 	var paths []ctlres.Path
 

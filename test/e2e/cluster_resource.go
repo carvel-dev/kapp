@@ -35,6 +35,10 @@ func (r ClusterResource) UID() string {
 	return uid
 }
 
+func (r ClusterResource) Labels() map[string]string {
+	return r.res.Labels()
+}
+
 func (r ClusterResource) Raw() map[string]interface{} {
 	return r.res.DeepCopyRaw()
 }
