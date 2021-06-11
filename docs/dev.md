@@ -1,8 +1,10 @@
 ## Building
 
 ```bash
+kind create cluster
 ./hack/build.sh
 export KAPP_E2E_NAMESPACE=kapp-test
+kubectl create ns $KAPP_E2E_NAMESPACE
 ./hack/test-all.sh
 ```
 
