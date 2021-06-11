@@ -45,6 +45,7 @@ type Resource interface {
 	Equal(res Resource) bool
 	DeepCopy() Resource
 	DeepCopyRaw() map[string]interface{}
+	DeepCopyIntoFrom(res Resource)
 	AsYAMLBytes() ([]byte, error)
 	AsCompactBytes() ([]byte, error)
 	AsTypedObj(obj interface{}) error
@@ -231,6 +232,10 @@ func (r *ResourceImpl) DeepCopy() Resource {
 
 func (r *ResourceImpl) DeepCopyRaw() map[string]interface{} {
 	return r.un.DeepCopy().UnstructuredContent()
+}
+
+func (r *ResourceImpl) DeepCopyIntoFrom(res Resource) {
+	r.setUnstructured(unstructured.Unstructured{res.DeepCopyRaw()})
 }
 
 func (r *ResourceImpl) AsYAMLBytes() ([]byte, error) {
