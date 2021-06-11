@@ -25,6 +25,7 @@ type Config struct {
 	MinimumRequiredVersion string `json:"minimumRequiredVersion,omitempty"`
 
 	RebaseRules         []RebaseRule
+	ModificationRules   []ModificationRule
 	WaitRules           []WaitRule
 	OwnershipLabelRules []OwnershipLabelRule
 	LabelScopingRules   []LabelScopingRule
@@ -65,6 +66,15 @@ type RebaseRule struct {
 }
 
 type RebaseRuleYtt struct {
+	TemplateYAML string `json:"template.yml"`
+}
+
+type ModificationRule struct {
+	ResourceMatchers []ResourceMatcher
+	Ytt              *ModificationRuleYtt
+}
+
+type ModificationRuleYtt struct {
 	TemplateYAML string `json:"template.yml"`
 }
 
@@ -184,6 +194,13 @@ func (c Config) Validate() error {
 		}
 	}
 
+	for i, rule := range c.ModificationRules {
+		err := rule.Validate()
+		if err != nil {
+			return fmt.Errorf("Validating modification rule %d: %s", i, err)
+		}
+	}
+
 	return nil
 }
 
@@ -247,6 +264,25 @@ func (r RebaseRule) AsMods() []ctlres.ResourceModWithMultiple {
 	}
 
 	return mods
+}
+
+func (r ModificationRule) Validate() error {
+	if r.Ytt != nil {
+		return nil
+	}
+	return fmt.Errorf("Expected to find ytt configuration")
+}
+
+func (r ModificationRule) AsMods() []ctlres.ResourceModWithMultiple {
+	if r.Ytt != nil {
+		return []ctlres.ResourceModWithMultiple{yttresmod.Mod{
+			ResourceMatcher: ctlres.AnyMatcher{
+				Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
+			},
+			TemplateYAML: r.Ytt.TemplateYAML,
+		}}
+	}
+	return nil
 }
 
 func (r DiffAgainstLastAppliedFieldExclusionRule) AsMod() ctlres.FieldRemoveMod {

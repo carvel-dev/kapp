@@ -134,10 +134,16 @@ func (d ChangeSetWithVersionedRs) addChanges(
 
 			switch updateChange.Op() {
 			case ChangeOpUpdate:
-				changes = append(changes, d.newAddChangeFromUpdateChange(newRes, updateChange))
+				newChange, err := d.newChange(nil, newRes)
+				if err != nil {
+					return nil, nil, err
+				}
+				changes = append(changes, d.newAddChangeFromUpdateChange(newChange, updateChange))
+
 			case ChangeOpKeep:
 				// Use latest copy of resource to update affected resources
 				usedRes = existingRes
+
 			default:
 				panic(fmt.Sprintf("Unexpected change op %s", updateChange.Op()))
 			}
@@ -169,11 +175,9 @@ func (d ChangeSetWithVersionedRs) addChanges(
 	return changes, alreadyAdded, nil
 }
 
-func (d ChangeSetWithVersionedRs) newAddChangeFromUpdateChange(
-	newRes ctlres.Resource, updateChange Change) Change {
-
+func (d ChangeSetWithVersionedRs) newAddChangeFromUpdateChange(newChange, updateChange Change) Change {
 	// Use update's diffs but create a change for new resource
-	addChange := NewChangePrecalculated(nil, newRes, newRes)
+	addChange := NewChangePrecalculated(nil, newChange.NewResource(), newChange.AppliedResource())
 	// TODO private field access
 	addChange.op = ChangeOpAdd
 	addChange.configurableTextDiff = updateChange.ConfigurableTextDiff()

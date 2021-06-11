@@ -75,7 +75,11 @@ func (t Mod) ApplyFromMultiple(res ctlres.Resource, srcs map[ctlres.FieldCopyMod
 func (t Mod) valuesYAML(srcs map[ctlres.FieldCopyModSource]ctlres.Resource) ([]byte, error) {
 	values := map[string]interface{}{}
 	for src, res := range srcs {
-		values[string(src)] = res.DeepCopyRaw()
+		if res != nil {
+			values[string(src)] = res.DeepCopyRaw()
+		} else {
+			values[string(src)] = nil
+		}
 	}
 	return yaml.Marshal(values)
 }

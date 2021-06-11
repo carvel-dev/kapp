@@ -9,13 +9,18 @@ import (
 
 type ChangeFactory struct {
 	rebaseMods                               []ctlres.ResourceModWithMultiple
+	modificationMods                         []ctlres.ResourceModWithMultiple
 	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod
 }
 
 func NewChangeFactory(rebaseMods []ctlres.ResourceModWithMultiple,
 	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod) ChangeFactory {
 
-	return ChangeFactory{rebaseMods, diffAgainstLastAppliedFieldExclusionMods}
+	return ChangeFactory{rebaseMods, nil, diffAgainstLastAppliedFieldExclusionMods}
+}
+
+func (f ChangeFactory) Modifying(modificationMods []ctlres.ResourceModWithMultiple) ChangeFactory {
+	return ChangeFactory{f.rebaseMods, modificationMods, f.diffAgainstLastAppliedFieldExclusionMods}
 }
 
 func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Resource) (Change, error) {
@@ -53,6 +58,12 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Re
 		newRes = historylessNewRes
 	}
 
+	// Apply modifications to new resource as if they are coming from the configuration file
+	newRes, err := NewModifiedResource(existingResForRebasing, newRes, f.modificationMods).Resource()
+	if err != nil {
+		return nil, err
+	}
+
 	rebasedNewRes, err := NewRebasedResource(existingResForRebasing, newRes, f.rebaseMods).Resource()
 	if err != nil {
 		return nil, err
@@ -78,6 +89,12 @@ func (f ChangeFactory) NewExactChange(existingRes, newRes ctlres.Resource) (Chan
 		}
 
 		newRes = historylessNewRes
+	}
+
+	// Apply modifications to new resource as if they are coming from the configuration file
+	newRes, err := NewModifiedResource(existingRes, newRes, f.modificationMods).Resource()
+	if err != nil {
+		return nil, err
 	}
 
 	rebasedNewRes, err := NewRebasedResource(existingRes, newRes, f.rebaseMods).Resource()

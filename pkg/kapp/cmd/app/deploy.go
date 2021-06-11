@@ -322,7 +322,7 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 
 		changes, err := ctldiff.NewChangeSetWithVersionedRs(
 			existingResources, newResources, conf.TemplateRules(),
-			o.DiffFlags.ChangeSetOpts, changeFactory).Calculate()
+			o.DiffFlags.ChangeSetOpts, changeFactory.Modifying(conf.ModificationMods())).Calculate()
 		if err != nil {
 			return clusterChangeSet, nil, false, "", err
 		}
