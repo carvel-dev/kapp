@@ -9,14 +9,14 @@ require (
 	github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
 	github.com/cppforlife/go-patch v0.2.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf // indirect
 	github.com/googleapis/gnostic v0.2.0 // indirect
 	github.com/gophercloud/gophercloud v0.0.0-20180727150635-f8826f28e31a // indirect
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect
 	github.com/hashicorp/go-version v1.2.0
 	github.com/imdario/mergo v0.3.5 // indirect
-	github.com/k14s/difflib v0.0.0-20200108171459-b101e55e0592
+	github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57
 	github.com/k14s/kapp-controller v0.1.0
+	github.com/k14s/ytt v0.34.0
 	github.com/mitchellh/go-wordwrap v1.0.0
 	github.com/onsi/ginkgo v1.11.0 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
