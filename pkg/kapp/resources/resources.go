@@ -429,7 +429,8 @@ func (c *ResourcesImpl) isPodMetrics(resource Resource, err error) bool {
 
 func (c *ResourcesImpl) isGeneralRetryableErr(err error) bool {
 	return IsResourceChangeBlockedErr(err) || c.isServerRescaleErr(err) ||
-		c.isResourceQuotaConflict(err) || errors.IsTooManyRequests(err)
+		c.isResourceQuotaConflict(err) || errors.IsTooManyRequests(err) ||
+		c.isClusterRolesConflict(err)
 }
 
 // Fixes issues I observed with GKE:
@@ -438,6 +439,15 @@ func (c *ResourcesImpl) isGeneralRetryableErr(err error) bool {
 // Works around: https://github.com/kubernetes/kubernetes/issues/67761 by retrying.
 func (c *ResourcesImpl) isResourceQuotaConflict(err error) bool {
 	return errors.IsConflict(err) && strings.Contains(err.Error(), "Operation cannot be fulfilled on resourcequota")
+}
+
+// Rule in ClusterRole is updated by control plane when Aggregated ClusterRoles is used.
+// It is conflicted with kapp deploy sometimes and observed the error:
+// Error: Applying update clusterrole/knative-serving-admin (rbac.authorization.k8s.io/v1) cluster:
+//  Failed to update due to resource conflict (approved diff no longer matches)
+//    Updating resource clusterrole/knative-serving-admin (rbac.authorization.k8s.io/v1) cluster:
+func (c *ResourcesImpl) isClusterRolesConflict(err error) bool {
+	return errors.IsConflict(err) && strings.Contains(err.Error(), "Operation cannot be fulfilled on clusterroles.rbac.authorization.k8s.io")
 }
 
 func (c *ResourcesImpl) isServerRescaleErr(err error) bool {
