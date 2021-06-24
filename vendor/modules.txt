@@ -64,7 +64,7 @@ github.com/gophercloud/gophercloud/pagination
 ## explicit
 github.com/gregjones/httpcache
 github.com/gregjones/httpcache/diskcache
-# github.com/hashicorp/go-version v1.2.0
+# github.com/hashicorp/go-version v1.3.0
 ## explicit
 github.com/hashicorp/go-version
 # github.com/imdario/mergo v0.3.5
