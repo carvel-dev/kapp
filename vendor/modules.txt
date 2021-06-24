@@ -84,7 +84,7 @@ github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.11
 github.com/mattn/go-isatty
-# github.com/mitchellh/go-wordwrap v1.0.0
+# github.com/mitchellh/go-wordwrap v1.0.1
 ## explicit
 github.com/mitchellh/go-wordwrap
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
