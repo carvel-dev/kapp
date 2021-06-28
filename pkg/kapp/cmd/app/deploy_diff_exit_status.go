@@ -12,14 +12,14 @@ type ExitStatus interface {
 }
 
 type DeployDiffExitStatus struct {
-	hasNoChanges bool
+	HasNoChanges bool
 }
 
 var _ ExitStatus = DeployDiffExitStatus{}
 
 func (d DeployDiffExitStatus) Error() string {
 	numStr := "pending changes"
-	if d.hasNoChanges {
+	if d.HasNoChanges {
 		numStr = "no pending changes"
 	}
 	return fmt.Sprintf("Exiting after diffing with %s (exit status %d)",
@@ -27,7 +27,7 @@ func (d DeployDiffExitStatus) Error() string {
 }
 
 func (d DeployDiffExitStatus) ExitStatus() int {
-	if d.hasNoChanges {
+	if d.HasNoChanges {
 		return 2
 	}
 	return 3
