@@ -102,7 +102,7 @@ func (o *DeployOptions) Run() error {
 	}
 
 	if o.AppFlags.DiffFlags.Run && o.AppFlags.DiffFlags.ExitStatus {
-		var hasNoChanges = exitCode == 3
+		var hasNoChanges = exitCode == 2
 		return cmdapp.DeployDiffExitStatus{HasNoChanges: hasNoChanges}
 	}
 
