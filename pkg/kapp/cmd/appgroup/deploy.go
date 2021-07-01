@@ -80,9 +80,9 @@ func (o *DeployOptions) Run() error {
 
 				if deployErr.ExitStatus() == 1 {
 					return err
-				} else {
-					exitCode = math.Max(exitCode, float64(deployErr.ExitStatus()))
 				}
+				exitCode = math.Max(exitCode, float64(deployErr.ExitStatus()))
+
 			} else {
 				return err
 			}
