@@ -8,8 +8,6 @@ import (
 	"io/ioutil"
 	"math"
 	"path/filepath"
-	"reflect"
-
 	"github.com/cppforlife/go-cli-ui/ui"
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
@@ -75,14 +73,8 @@ func (o *DeployOptions) Run() error {
 	for _, appGroupApp := range updatedApps {
 		err := o.deployApp(appGroupApp)
 		if err != nil {
-			if reflect.TypeOf(err).Name() == "DeployDiffExitStatus" {
-				var deployErr cmdapp.DeployDiffExitStatus = err.(cmdapp.DeployDiffExitStatus)
-
-				if deployErr.ExitStatus() == 1 {
-					return err
-				}
+            if deployErr, ok := err.(cmdapp.DeployDiffExitStatus); ok {
 				exitCode = math.Max(exitCode, float64(deployErr.ExitStatus()))
-
 			} else {
 				return err
 			}
@@ -110,7 +102,7 @@ func (o *DeployOptions) Run() error {
 	}
 
 	if o.AppFlags.DiffFlags.Run && o.AppFlags.DiffFlags.ExitStatus {
-		var hasNoChanges = exitCode < 3
+		var hasNoChanges = exitCode == 3
 		return cmdapp.DeployDiffExitStatus{HasNoChanges: hasNoChanges}
 	}
 
