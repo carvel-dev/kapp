@@ -84,9 +84,9 @@ func (a *LabeledResources) All() ([]Resource, error) {
 }
 
 type AllAndMatchingOpts struct {
-	SkipResourceOwnershipCheck      bool
-	BlacklistedResourcesByLabelKeys []string
-	LabelErrorResolutionFunc        func(string, string) string
+	SkipResourceOwnershipCheck     bool
+	DisallowedResourcesByLabelKeys []string
+	LabelErrorResolutionFunc       func(string, string) string
 }
 
 // AllAndMatching returns set of all labeled resources
@@ -115,7 +115,7 @@ func (a *LabeledResources) AllAndMatching(newResources []Resource, opts AllAndMa
 
 	resources = append(resources, nonLabeledResources...)
 
-	err = a.checkBlacklistedLabels(resources, opts.BlacklistedResourcesByLabelKeys)
+	err = a.checkDisallowedLabels(resources, opts.DisallowedResourcesByLabelKeys)
 	if err != nil {
 		return nil, err
 	}
@@ -158,15 +158,15 @@ func (a *LabeledResources) checkResourceOwnership(resources []Resource, opts All
 	return nil
 }
 
-func (a *LabeledResources) checkBlacklistedLabels(resources []Resource, blacklistedLblKeys []string) error {
+func (a *LabeledResources) checkDisallowedLabels(resources []Resource, disallowedLblKeys []string) error {
 	var errs []error
 
 	for _, res := range resources {
 		labels := res.Labels()
-		for _, blacklistedLblKey := range blacklistedLblKeys {
-			if _, found := labels[blacklistedLblKey]; found {
-				errMsg := "Resource '%s' has a blacklisted label '%s'"
-				errs = append(errs, fmt.Errorf(errMsg, res.Description(), blacklistedLblKey))
+		for _, disallowedLblKey := range disallowedLblKeys {
+			if _, found := labels[disallowedLblKey]; found {
+				errMsg := "Resource '%s' has a disallowed label '%s'"
+				errs = append(errs, fmt.Errorf(errMsg, res.Description(), disallowedLblKey))
 			}
 		}
 	}
@@ -176,7 +176,7 @@ func (a *LabeledResources) checkBlacklistedLabels(resources []Resource, blacklis
 		for _, err := range errs {
 			msgs = append(msgs, "- "+err.Error())
 		}
-		return fmt.Errorf("Blacklist errors:\n%s", strings.Join(msgs, "\n"))
+		return fmt.Errorf("Disallowed labels errors:\n%s", strings.Join(msgs, "\n"))
 	}
 
 	return nil
