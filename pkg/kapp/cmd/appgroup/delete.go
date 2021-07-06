@@ -40,7 +40,7 @@ func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.L
 func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete",
-		Short: "Deploy app group",
+		Short: "Delete app group",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	o.AppGroupFlags.Set(cmd, flagsFactory)

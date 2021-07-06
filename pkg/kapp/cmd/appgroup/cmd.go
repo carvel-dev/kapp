@@ -12,7 +12,8 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "app-group",
 		Aliases: []string{"ag", "appgroup"},
-		Short:   "App group",
+		Short:   "app-group will deploy/delete an application for each subdirectory within a directory",
+		Example: "$ ls my-repo\n.    ..    app1/    app2/    app3/\n\n$ kapp app-group deploy -g my-env --directory my-repo",
 		Annotations: map[string]string{
 			cmdcore.AppSupportHelpGroup.Key: cmdcore.AppSupportHelpGroup.Value,
 		},
