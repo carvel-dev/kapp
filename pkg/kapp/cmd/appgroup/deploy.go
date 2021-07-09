@@ -74,10 +74,10 @@ func (o *DeployOptions) Run() error {
 		err := o.deployApp(appGroupApp)
 		if err != nil {
             if deployErr, ok := err.(cmdapp.DeployDiffExitStatus); ok {
-				exitCode = math.Max(exitCode, float64(deployErr.ExitStatus()))
-			} else {
-				return err
-			}
+                exitCode = math.Max(exitCode, float64(deployErr.ExitStatus()))
+            } else {
+                return err
+            }
 		}
 	}
 
