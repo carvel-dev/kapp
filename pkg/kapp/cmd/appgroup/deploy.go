@@ -73,11 +73,11 @@ func (o *DeployOptions) Run() error {
 	for _, appGroupApp := range updatedApps {
 		err := o.deployApp(appGroupApp)
 		if err != nil {
-            if deployErr, ok := err.(cmdapp.DeployDiffExitStatus); ok {
-                exitCode = math.Max(exitCode, float64(deployErr.ExitStatus()))
-            } else {
-                return err
-            }
+			if deployErr, ok := err.(cmdapp.DeployDiffExitStatus); ok {
+				exitCode = math.Max(exitCode, float64(deployErr.ExitStatus()))
+			} else {
+				return err
+			}
 		}
 	}
 
