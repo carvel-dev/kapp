@@ -38,7 +38,12 @@ func (f *DepsFactoryImpl) DynamicClient() (dynamic.Interface, error) {
 		return nil, err
 	}
 
-	clientset, err := dynamic.NewForConfig(config)
+	// copy to avoid mutating the passed-in config
+	cpConfig := rest.CopyConfig(config)
+	// set the warning handler for this client to ignore warnings
+	cpConfig.WarningHandler = rest.NoWarnings{}
+
+	clientset, err := dynamic.NewForConfig(cpConfig)
 	if err != nil {
 		return nil, fmt.Errorf("Building Dynamic clientset: %s", err)
 	}
