@@ -6,8 +6,8 @@ package appgroup
 import (
 	"fmt"
 	"io/ioutil"
+	"math"
 	"path/filepath"
-
 	"github.com/cppforlife/go-cli-ui/ui"
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
@@ -68,11 +68,16 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
+	var exitCode float64 = 0
 	// TODO is there some order between apps?
 	for _, appGroupApp := range updatedApps {
 		err := o.deployApp(appGroupApp)
 		if err != nil {
-			return err
+			if deployErr, ok := err.(cmdapp.DeployDiffExitStatus); ok {
+				exitCode = math.Max(exitCode, float64(deployErr.ExitStatus()))
+			} else {
+				return err
+			}
 		}
 	}
 
@@ -94,6 +99,11 @@ func (o *DeployOptions) Run() error {
 				return err
 			}
 		}
+	}
+
+	if o.AppFlags.DiffFlags.Run && o.AppFlags.DiffFlags.ExitStatus {
+		var hasNoChanges = exitCode == 2
+		return cmdapp.DeployDiffExitStatus{HasNoChanges: hasNoChanges}
 	}
 
 	return nil
