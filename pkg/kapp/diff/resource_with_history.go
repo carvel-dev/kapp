@@ -41,6 +41,10 @@ func (r ResourceWithHistory) HistorylessResource() (ctlres.Resource, error) {
 	return resourceWithoutHistory{r.resource}.Resource()
 }
 
+func (r ResourceWithHistory) ResourceWithoutManagedFields() (ctlres.Resource, error) {
+	return resourceWithoutHistory{r.resource}.ResourceRemoveManagedFields()
+}
+
 // LastAppliedResource will return "last applied" resource that was saved
 // iff it still matches actually saved resource on the cluster (noted at the time of saving).
 func (r ResourceWithHistory) LastAppliedResource() ctlres.Resource {
@@ -194,6 +198,19 @@ func (r resourceWithoutHistory) Resource() (ctlres.Resource, error) {
 	return res, nil
 }
 
+func (r resourceWithoutHistory) ResourceRemoveManagedFields() (ctlres.Resource, error) {
+	res := r.res.DeepCopy()
+
+	for _, t := range r.removeManagedFieldsResMods() {
+		err := t.Apply(res)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return res, nil
+}
+
 func (resourceWithoutHistory) removeAppliedResAnnKeysMods() []ctlres.ResourceMod {
 	return []ctlres.ResourceMod{
 		ctlres.FieldRemoveMod{
@@ -211,6 +228,15 @@ func (resourceWithoutHistory) removeAppliedResAnnKeysMods() []ctlres.ResourceMod
 		ctlres.FieldRemoveMod{
 			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", debugAppliedResDiffFullAnnKey}),
+		},
+	}
+}
+
+func (resourceWithoutHistory) removeManagedFieldsResMods() []ctlres.ResourceMod {
+	return []ctlres.ResourceMod{
+		ctlres.FieldRemoveMod{
+			ResourceMatcher: ctlres.AllMatcher{},
+			Path:            ctlres.NewPathFromStrings([]string{"metadata", "managedFields"}),
 		},
 	}
 }
