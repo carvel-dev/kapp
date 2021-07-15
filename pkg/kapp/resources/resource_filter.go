@@ -38,7 +38,7 @@ func (f ResourceFilter) Apply(resources []Resource) []Resource {
 }
 
 func (f LocalResourceFilter) Matches(resource Resource) bool {
-	if f.LabelSelector != ""{
+	if f.LabelSelector != "" {
 		requirementsList, err := labels.ParseToRequirements(f.LabelSelector)
 
 		if err != nil {
@@ -59,7 +59,7 @@ func (f LocalResourceFilter) Matches(resource Resource) bool {
 }
 
 func (f ClusterResourceFilter) Matches(resource Resource) bool {
-	if f.LabelSelector != ""{
+	if f.LabelSelector != "" {
 		requirementsList, err := labels.ParseToRequirements(f.LabelSelector)
 
 		if err != nil {

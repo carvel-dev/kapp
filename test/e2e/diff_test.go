@@ -65,6 +65,38 @@ data:
   key: value
 `
 
+	yaml3 := `
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: label-diff
+  labels:
+    change-me: yeah
+data:
+  key: value
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: label-diff1
+  labels:
+    change-me: not
+data:
+  key: value
+`
+
+	yaml4 := `
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: label-diff
+  labels:
+    change-me: yeah
+data:
+  key: value2
+`
 	name := "test-diff"
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
@@ -244,6 +276,64 @@ data:
 		if resp.Tables[0].Notes[1] != "Wait to: 0 reconcile, 3 delete, 0 noop" {
 			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
 		}
+	})
+
+	logger.Section("deploy resources using diff-filter", func() {
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-filter", `{"localResource": {"labelSelector": "change-me!=not"}}`,  "--json"},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml3)})
+
+		resp := uitest.JSONUIFromBytes(t, []byte(out))
+
+		expected := []map[string]string{{
+			"age":             "",
+			"op":              "create",
+			"op_strategy":     "",
+			"wait_to":         "reconcile",
+			"conditions":      "",
+			"kind":            "ConfigMap",
+			"name":            "label-diff",
+			"namespace":       "kapp-test",
+			"reconcile_info":  "",
+			"reconcile_state": "",
+		}}
+
+		if !reflect.DeepEqual(resp.Tables[0].Rows, expected) {
+			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
+		}
+		if resp.Tables[0].Notes[0] != "Op:      1 create, 0 delete, 0 update, 0 noop" {
+			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
+		}
+		if resp.Tables[0].Notes[1] != "Wait to: 1 reconcile, 0 delete, 0 noop" {
+			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
+		}
+
+		out, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-filter", `{"not": {"clusterResource": {"labelSelector": "change-me=not"}}}`, "--json"},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml4)})
+
+		resp = uitest.JSONUIFromBytes(t, []byte(out))
+
+		expected = []map[string]string{{
+			"age":             "0s",
+			"op":              "update",
+			"op_strategy":     "",
+			"wait_to":         "reconcile",
+			"conditions":      "",
+			"kind":            "ConfigMap",
+			"name":            "label-diff",
+			"namespace":       "kapp-test",
+			"reconcile_info":  "",
+			"reconcile_state": "ok",
+		}}
+		if !reflect.DeepEqual(resp.Tables[0].Rows, expected) {
+			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
+		}
+		if resp.Tables[0].Notes[0] != "Op:      0 create, 0 delete, 1 update, 0 noop" {
+			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
+		}
+		if resp.Tables[0].Notes[1] != "Wait to: 1 reconcile, 0 delete, 0 noop" {
+			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
+		}
+
 	})
 }
 
