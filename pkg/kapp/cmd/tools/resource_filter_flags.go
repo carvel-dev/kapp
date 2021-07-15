@@ -28,6 +28,7 @@ func (s *ResourceFilterFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().StringSliceVar(&s.rf.KindNsNames, "filter-kind-ns-name", nil, "Set kind-namespace-name filter (example: Deployment/knative-serving/controller) (can repeat)")
 
 	cmd.Flags().StringVar(&s.bf, "filter", "", `Set filter (example: {"and":[{"not":{"resource":{"kinds":["foo%"]}}},{"resource":{"kinds":["!foo"]}}]})`)
+	cmd.Flags().StringVar(&s.bf, "diff-filter", "", `Set diff-filter (example: {"not": {"clusterResource": {"labelSelector": "change-me=no"}})`)
 }
 
 func (s *ResourceFilterFlags) ResourceFilter() (ctlres.ResourceFilter, error) {

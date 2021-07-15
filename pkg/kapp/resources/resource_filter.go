@@ -5,6 +5,7 @@ package resources
 
 import (
 	"encoding/json"
+	"k8s.io/apimachinery/pkg/labels"
 	"time"
 
 	"github.com/k14s/kapp/pkg/kapp/matcher" // TODO inject
@@ -34,6 +35,45 @@ func (f ResourceFilter) Apply(resources []Resource) []Resource {
 	}
 
 	return result
+}
+
+func (f LocalResourceFilter) Matches(resource Resource) bool {
+	if f.LabelSelector != ""{
+		requirementsList, err := labels.ParseToRequirements(f.LabelSelector)
+
+		if err != nil {
+			panic(err)
+		}
+
+		// if selector will only be string not []string then requirementsList can be sliced as requirementsList[:1]
+		for _, requirement := range requirementsList {
+			if requirement.Matches(labels.Set(resource.Labels())) {
+				return true
+			}
+		}
+		//k8sLabelSel, err := v1.ParseToLabelSelector(f.LabelSelector)
+		//labelSelector, err := v1.LabelSelectorAsSelector(k8sLabelSel)
+		//return labelSelector.Matches(labels.Set(resource.Labels()))
+	}
+	return false
+}
+
+func (f ClusterResourceFilter) Matches(resource Resource) bool {
+	if f.LabelSelector != ""{
+		requirementsList, err := labels.ParseToRequirements(f.LabelSelector)
+
+		if err != nil {
+			panic(err)
+		}
+
+		// if selector will only be string not []string then requirementsList can be sliced as requirementsList[:1]
+		for _, requirement := range requirementsList {
+			if requirement.Matches(labels.Set(resource.Labels())) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (f ResourceFilter) Matches(resource Resource) bool {
@@ -137,11 +177,21 @@ func (f ResourceFilter) Matches(resource Resource) bool {
 	return true
 }
 
+type ClusterResourceFilter struct {
+	LabelSelector string
+}
+
+type LocalResourceFilter struct {
+	LabelSelector string
+}
+
 type BoolFilter struct {
-	And      []BoolFilter
-	Or       []BoolFilter
-	Not      *BoolFilter
-	Resource *ResourceFilter
+	And             []BoolFilter
+	Or              []BoolFilter
+	Not             *BoolFilter
+	Resource        *ResourceFilter
+	ClusterResource *ClusterResourceFilter
+	LocalResource   *LocalResourceFilter
 }
 
 func NewBoolFilterFromString(data string) (*BoolFilter, error) {
@@ -180,6 +230,14 @@ func (m BoolFilter) Matches(res Resource) bool {
 
 	if m.Resource != nil {
 		return m.Resource.Matches(res)
+	}
+
+	if m.LocalResource != nil {
+		return m.LocalResource.Matches(res)
+	}
+
+	if m.ClusterResource != nil {
+		return m.ClusterResource.Matches(res)
 	}
 
 	return false
