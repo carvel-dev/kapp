@@ -5,6 +5,7 @@ package logs
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"sync/atomic"
@@ -112,7 +113,7 @@ func (l PodContainerLog) obtainStream(ui ui.UI, linePrefix string, cancelCh chan
 				// TODO other options
 			})
 
-			stream, err := logs.Stream()
+			stream, err := logs.Stream(context.TODO())
 			if err == nil {
 				return stream, nil
 			}
@@ -135,7 +136,7 @@ func (l PodContainerLog) obtainStream(ui ui.UI, linePrefix string, cancelCh chan
 }
 
 func (l PodContainerLog) readyToGetLogs() bool {
-	pod, err := l.podsClient.Get(l.pod.Name, metav1.GetOptions{})
+	pod, err := l.podsClient.Get(context.TODO(), l.pod.Name, metav1.GetOptions{})
 	if err != nil {
 		return false
 	}

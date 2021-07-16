@@ -4,6 +4,7 @@
 package resources
 
 import (
+	"context"
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
@@ -25,7 +26,7 @@ func NewPodWatcher(
 }
 
 func (w PodWatcher) Watch(podsToWatchCh chan corev1.Pod, cancelCh chan struct{}) error {
-	podsList, err := w.podsClient.List(w.listOpts)
+	podsList, err := w.podsClient.List(context.TODO(), w.listOpts)
 	if err != nil {
 		return err
 	}
@@ -53,7 +54,7 @@ func (w PodWatcher) Watch(podsToWatchCh chan corev1.Pod, cancelCh chan struct{})
 }
 
 func (w PodWatcher) watch(podsToWatchCh chan corev1.Pod, cancelCh chan struct{}) (bool, error) {
-	watcher, err := w.podsClient.Watch(w.listOpts)
+	watcher, err := w.podsClient.Watch(context.TODO(), w.listOpts)
 	if err != nil {
 		return false, fmt.Errorf("Creating Pod watcher: %s", err)
 	}

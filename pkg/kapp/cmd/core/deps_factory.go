@@ -4,6 +4,7 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -79,7 +80,7 @@ func (f *DepsFactoryImpl) summarizeNodes(config *rest.Config) string {
 		return ""
 	}
 
-	nodes, err := clientset.CoreV1().Nodes().List(metav1.ListOptions{})
+	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return ""
 	}

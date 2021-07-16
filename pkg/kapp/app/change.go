@@ -4,6 +4,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -45,7 +46,7 @@ func (c *ChangeImpl) Succeed() error {
 }
 
 func (c *ChangeImpl) Delete() error {
-	err := c.coreClient.CoreV1().ConfigMaps(c.nsName).Delete(c.name, &metav1.DeleteOptions{})
+	err := c.coreClient.CoreV1().ConfigMaps(c.nsName).Delete(context.TODO(), c.name, metav1.DeleteOptions{})
 	if err != nil {
 		return fmt.Errorf("Deleting app change: %s", err)
 	}
@@ -54,7 +55,7 @@ func (c *ChangeImpl) Delete() error {
 }
 
 func (c *ChangeImpl) update(doFunc func(*ChangeMeta)) error {
-	change, err := c.coreClient.CoreV1().ConfigMaps(c.nsName).Get(c.name, metav1.GetOptions{})
+	change, err := c.coreClient.CoreV1().ConfigMaps(c.nsName).Get(context.TODO(), c.name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("Getting app change: %s", err)
 	}
@@ -65,7 +66,7 @@ func (c *ChangeImpl) update(doFunc func(*ChangeMeta)) error {
 	c.meta = meta
 	change.Data = meta.AsData()
 
-	_, err = c.coreClient.CoreV1().ConfigMaps(c.nsName).Update(change)
+	_, err = c.coreClient.CoreV1().ConfigMaps(c.nsName).Update(context.TODO(), change, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("Updating app change: %s", err)
 	}

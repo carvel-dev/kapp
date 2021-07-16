@@ -4,6 +4,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"time"
@@ -41,7 +42,7 @@ func (a RecordedAppChanges) List() ([]Change, error) {
 		}).String(),
 	}
 
-	changes, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).List(listOpts)
+	changes, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).List(context.TODO(), listOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -73,13 +74,13 @@ func (a RecordedAppChanges) DeleteAll() error {
 		}).String(),
 	}
 
-	changes, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).List(listOpts)
+	changes, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).List(context.TODO(), listOpts)
 	if err != nil {
 		return err
 	}
 
 	for _, change := range changes.Items {
-		err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(change.Name, &metav1.DeleteOptions{})
+		err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(context.TODO(), change.Name, metav1.DeleteOptions{})
 		if err != nil {
 			return err
 		}
@@ -107,7 +108,7 @@ func (a RecordedAppChanges) Begin(meta ChangeMeta) (*ChangeImpl, error) {
 		Data: newMeta.AsData(),
 	}
 
-	createdChange, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(configMap)
+	createdChange, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, metav1.CreateOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("Creating app change: %s", err)
 	}

@@ -4,6 +4,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -75,7 +76,7 @@ func (a Apps) list(additionalLabels map[string]string, nsName string) ([]App, er
 		LabelSelector: labels.Set(filterLabels).String(),
 	}
 
-	apps, err := a.coreClient.CoreV1().ConfigMaps(nsName).List(listOpts)
+	apps, err := a.coreClient.CoreV1().ConfigMaps(nsName).List(context.TODO(), listOpts)
 	if err != nil {
 		return nil, err
 	}
