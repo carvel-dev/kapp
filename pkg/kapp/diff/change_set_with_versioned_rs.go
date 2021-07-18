@@ -15,6 +15,7 @@ import (
 const (
 	versionedResAnnKey        = "kapp.k14s.io/versioned" // Value is ignored
 	versionedResNumVersAnnKey = "kapp.k14s.io/num-versions"
+	versionedKeepOriginalResAnnKey = "kapp.k14s.io/versioned-keep-original"
 )
 
 type ChangeSetWithVersionedRs struct {
@@ -79,7 +80,10 @@ func (d ChangeSetWithVersionedRs) groupResources(rs []ctlres.Resource) map[strin
 	result := map[string][]ctlres.Resource{}
 
 	groupByFunc := func(res ctlres.Resource) string {
-		if _, found := res.Annotations()[versionedResAnnKey]; found {
+		_, foundVersioned := res.Annotations()[versionedResAnnKey]
+		_, foundVersionedKeepOriginal := res.Annotations()[versionedKeepOriginalResAnnKey]
+
+		if  foundVersioned || foundVersionedKeepOriginal {
 			return VersionedResource{res, nil}.UniqVersionedKey().String()
 		}
 		panic("Expected to find versioned annotation on resource")
@@ -268,7 +272,8 @@ func newVersionedResources(rs []ctlres.Resource) versionedResources {
 		// (Annotations may have been copied from versioned resources
 		// onto transient resources for non-versioning related purposes).
 		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
-		if hasVersionedAnn && !res.Transient() {
+		_, hasVersionedKeepOriginalAnn := res.Annotations()[versionedKeepOriginalResAnnKey]
+		if (hasVersionedAnn || hasVersionedKeepOriginalAnn) && !res.Transient() {
 			result.Versioned = append(result.Versioned, res)
 		} else {
 			result.NonVersioned = append(result.NonVersioned, res)
