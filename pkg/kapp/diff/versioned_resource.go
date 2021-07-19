@@ -39,12 +39,14 @@ func (d VersionedResource) BaseNameAndVersion() (string, string) {
 
 func (d VersionedResource) Version() int {
 	_, ver := d.BaseNameAndVersion()
-	if len(ver) == 0 {
+	_, originalAnnFound := d.res.Annotations()[versionedKeepOriginalResAnnKey]
+
+	if len(ver) == 0 && !originalAnnFound {
 		panic(fmt.Sprintf("Missing version in versioned resource '%s'", d.res.Description()))
 	}
 
 	verInt, err1 := strconv.Atoi(ver)
-	if err1 != nil {
+	if err1 != nil && !originalAnnFound {
 		panic(fmt.Sprintf("Invalid version in versioned resource '%s'", d.res.Description()))
 	}
 
@@ -154,17 +156,4 @@ func (d VersionedResource) matchingRules() ([]ctlconf.TemplateRule, error) {
 	}
 
 	return result, nil
-}
-
-func (d VersionedResource) DeepCopy() VersionedResource {
-	return VersionedResource{
-		res:      d.res.DeepCopy(),
-		allRules: copyAllRules(d.allRules),
-	}
-}
-
-func copyAllRules(allRules []ctlconf.TemplateRule) []ctlconf.TemplateRule {
-	templateRule := make([]ctlconf.TemplateRule, len(allRules))
-	copy(templateRule, allRules)
-	return templateRule
 }
