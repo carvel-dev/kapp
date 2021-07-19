@@ -23,9 +23,10 @@ type InspectOptions struct {
 	ResourceFilterFlags cmdtools.ResourceFilterFlags
 	ResourceTypesFlags  ResourceTypesFlags
 
-	Raw    bool
-	Status bool
-	Tree   bool
+	Raw           bool
+	Status        bool
+	Tree          bool
+	ManagedFields bool
 }
 
 func NewInspectOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *InspectOptions {
@@ -48,6 +49,7 @@ func NewInspectCmd(o *InspectOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 	cmd.Flags().BoolVar(&o.Raw, "raw", false, "Output raw YAML resource content")
 	cmd.Flags().BoolVar(&o.Status, "status", false, "Output status content")
 	cmd.Flags().BoolVarP(&o.Tree, "tree", "t", false, "Tree view")
+	cmd.Flags().BoolVar(&o.ManagedFields, "managed-fields", false, "Keep the metadata.managedFields when printing objects")
 	return cmd
 }
 
@@ -91,8 +93,12 @@ func (o *InspectOptions) Run() error {
 			if err != nil {
 				return err
 			}
+			resManagedFields, err := NewResourceWithManagedFields(historylessRes, o.ManagedFields).Resource()
+			if err != nil {
+				return err
+			}
 
-			resBs, err := historylessRes.AsYAMLBytes()
+			resBs, err := resManagedFields.AsYAMLBytes()
 			if err != nil {
 				return err
 			}
