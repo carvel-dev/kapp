@@ -155,3 +155,16 @@ func (d VersionedResource) matchingRules() ([]ctlconf.TemplateRule, error) {
 
 	return result, nil
 }
+
+func (d VersionedResource) DeepCopy() VersionedResource {
+	return VersionedResource{
+		res:      d.res.DeepCopy(),
+		allRules: copyAllRules(d.allRules),
+	}
+}
+
+func copyAllRules(allRules []ctlconf.TemplateRule) []ctlconf.TemplateRule {
+	templateRule := make([]ctlconf.TemplateRule, len(allRules))
+	copy(templateRule, allRules)
+	return templateRule
+}

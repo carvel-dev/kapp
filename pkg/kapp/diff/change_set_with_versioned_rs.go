@@ -38,7 +38,7 @@ func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 	newRs := newVersionedResources(d.newRs)
 	allChanges := []Change{}
 
-	d.assignNewNames(newRs, existingRsGrouped)
+	d.assignNewNames(&newRs, existingRsGrouped)
 
 	// First try to calculate changes will update references on all resources
 	// (which includes versioned and non-versioned resources)
@@ -80,10 +80,11 @@ func (d ChangeSetWithVersionedRs) groupResources(rs []ctlres.Resource) map[strin
 	result := map[string][]ctlres.Resource{}
 
 	groupByFunc := func(res ctlres.Resource) string {
-		_, foundVersioned := res.Annotations()[versionedResAnnKey]
-		_, foundVersionedKeepOriginal := res.Annotations()[versionedKeepOriginalResAnnKey]
 
-		if  foundVersioned || foundVersionedKeepOriginal {
+		_, versionedResFound := res.Annotations()[versionedResAnnKey]
+		_, versionedResOriginalFound := res.Annotations()[versionedKeepOriginalResAnnKey]
+
+		if versionedResFound || versionedResOriginalFound {
 			return VersionedResource{res, nil}.UniqVersionedKey().String()
 		}
 		panic("Expected to find versioned annotation on resource")
@@ -100,8 +101,8 @@ func (d ChangeSetWithVersionedRs) groupResources(rs []ctlres.Resource) map[strin
 }
 
 func (d ChangeSetWithVersionedRs) assignNewNames(
-	newRs versionedResources, existingRsGrouped map[string][]ctlres.Resource) {
-
+	newRs *versionedResources, existingRsGrouped map[string][]ctlres.Resource) {
+	newRsToAdd := make([]ctlres.Resource, 0)
 	// TODO name isnt used during diffing, should it?
 	for _, newRes := range newRs.Versioned {
 		newVerRes := VersionedResource{newRes, nil}
@@ -111,9 +112,12 @@ func (d ChangeSetWithVersionedRs) assignNewNames(
 			existingRes := existingRs[len(existingRs)-1]
 			newVerRes.SetBaseName(VersionedResource{existingRes, nil}.Version() + 1)
 		} else {
+			resourceCopy := newRes.DeepCopy()
+			newRsToAdd = append(newRsToAdd, resourceCopy)
 			newVerRes.SetBaseName(1)
 		}
 	}
+	newRs.Versioned = append(newRs.Versioned, newRsToAdd...)
 }
 
 func (d ChangeSetWithVersionedRs) addChanges(
@@ -272,8 +276,8 @@ func newVersionedResources(rs []ctlres.Resource) versionedResources {
 		// (Annotations may have been copied from versioned resources
 		// onto transient resources for non-versioning related purposes).
 		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
-		_, hasVersionedKeepOriginalAnn := res.Annotations()[versionedKeepOriginalResAnnKey]
-		if (hasVersionedAnn || hasVersionedKeepOriginalAnn) && !res.Transient() {
+		_, hasOriginalVersionedAnn := res.Annotations()[versionedKeepOriginalResAnnKey]
+		if (hasVersionedAnn || hasOriginalVersionedAnn) && !res.Transient() {
 			result.Versioned = append(result.Versioned, res)
 		} else {
 			result.NonVersioned = append(result.NonVersioned, res)
