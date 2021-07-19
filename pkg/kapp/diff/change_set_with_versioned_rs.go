@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	versionedResAnnKey        = "kapp.k14s.io/versioned" // Value is ignored
-	versionedResNumVersAnnKey = "kapp.k14s.io/num-versions"
+	versionedResAnnKey             = "kapp.k14s.io/versioned" // Value is ignored
+	versionedResNumVersAnnKey      = "kapp.k14s.io/num-versions"
 	versionedKeepOriginalResAnnKey = "kapp.k14s.io/versioned-keep-original"
 )
 
@@ -117,7 +117,7 @@ func (d ChangeSetWithVersionedRs) assignNewNames(
 			newVerRes.SetBaseName(1)
 		}
 	}
-	newRs.Versioned = append(newRs.Versioned, newRsToAdd...)
+	newRs.NonVersioned = append(newRs.NonVersioned, newRsToAdd...)
 }
 
 func (d ChangeSetWithVersionedRs) addChanges(
