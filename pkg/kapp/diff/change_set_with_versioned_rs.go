@@ -108,12 +108,21 @@ func (d ChangeSetWithVersionedRs) assignNewNames(
 		newVerRes := VersionedResource{newRes, nil}
 		newResKey := newVerRes.UniqVersionedKey().String()
 
+		if _, exists := newRes.Annotations()[versionedKeepOriginalResAnnKey]; exists {
+			resourceCopy := newRes.DeepCopy()
+			//_, exists := resourceCopy.Annotations()[versionedKeepOriginalResAnnKey]
+			//if exists {
+			//	delete(resourceCopy.Annotations(), versionedKeepOriginalResAnnKey)
+			//}
+			// TODO should able to delete versionedKeepOriginalResAnnKey key from Ann
+			resourceCopy.SetAnnotations(make(map[string]string))
+			newRsToAdd = append(newRsToAdd, resourceCopy)
+		}
+
 		if existingRs, found := existingRsGrouped[newResKey]; found {
 			existingRes := existingRs[len(existingRs)-1]
 			newVerRes.SetBaseName(VersionedResource{existingRes, nil}.Version() + 1)
 		} else {
-			resourceCopy := newRes.DeepCopy()
-			newRsToAdd = append(newRsToAdd, resourceCopy)
 			newVerRes.SetBaseName(1)
 		}
 	}

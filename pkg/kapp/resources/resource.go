@@ -30,6 +30,7 @@ type Resource interface {
 
 	Name() string
 	SetName(name string)
+	SetAnnotations(m map[string]string)
 	Description() string
 
 	Annotations() map[string]string
@@ -175,6 +176,8 @@ func (r *ResourceImpl) Name() string {
 }
 
 func (r *ResourceImpl) SetName(name string) { r.un.SetName(name) }
+
+func (r *ResourceImpl) SetAnnotations(m map[string]string) { r.un.SetAnnotations(m) }
 
 func (r *ResourceImpl) Description() string {
 	// TODO proper kind to resource conversion
