@@ -7,13 +7,15 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
 const (
-	versionedResAnnKey        = "kapp.k14s.io/versioned" // Value is ignored
+	versionedResAnnKey        = "kapp.k14s.io/versioned"      // Value is ignored
+	versionedResOrigAnnKey    = "kapp.k14s.io/versioned-orig" // Value is ignored
 	versionedResNumVersAnnKey = "kapp.k14s.io/num-versions"
 )
 
@@ -31,10 +33,10 @@ func NewChangeSetWithVersionedRs(existingRs, newRs []ctlres.Resource,
 }
 
 func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
-	existingRs := newVersionedResources(d.existingRs)
+	existingRs := newExistingVersionedResources(d.existingRs)
 	existingRsGrouped := d.groupResources(existingRs.Versioned)
 
-	newRs := newVersionedResources(d.newRs)
+	newRs := newNewVersionedResources(d.newRs)
 	allChanges := []Change{}
 
 	d.assignNewNames(newRs, existingRsGrouped)
@@ -261,15 +263,43 @@ type versionedResources struct {
 	NonVersioned []ctlres.Resource
 }
 
-func newVersionedResources(rs []ctlres.Resource) versionedResources {
+func newNewVersionedResources(rs []ctlres.Resource) versionedResources {
 	var result versionedResources
 	for _, res := range rs {
 		// Expect that versioned resources should not be transient
 		// (Annotations may have been copied from versioned resources
 		// onto transient resources for non-versioning related purposes).
 		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
-		if hasVersionedAnn && !res.Transient() {
+		_, hasVersionedOrigAnn := res.Annotations()[versionedResOrigAnnKey]
+
+		if hasVersionedAnn {
 			result.Versioned = append(result.Versioned, res)
+			if hasVersionedOrigAnn {
+				result.NonVersioned = append(result.NonVersioned, res.DeepCopy())
+			}
+		} else {
+			result.NonVersioned = append(result.NonVersioned, res)
+		}
+	}
+	return result
+}
+
+func newExistingVersionedResources(rs []ctlres.Resource) versionedResources {
+	var result versionedResources
+	for _, res := range rs {
+		// Expect that versioned resources should not be transient
+		// (Annotations may have been copied from versioned resources
+		// onto transient resources for non-versioning related purposes).
+		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
+		_, hasVersionedOrigAnn := res.Annotations()[versionedResOrigAnnKey]
+		containsVerSep := strings.Contains(res.Name(), nameSuffixSep)
+
+		if hasVersionedAnn && !res.Transient() {
+			if hasVersionedOrigAnn && !containsVerSep {
+				result.NonVersioned = append(result.NonVersioned, res)
+			} else {
+				result.Versioned = append(result.Versioned, res)
+			}
 		} else {
 			result.NonVersioned = append(result.NonVersioned, res)
 		}
