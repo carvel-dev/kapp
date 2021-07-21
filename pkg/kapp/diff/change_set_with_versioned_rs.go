@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	versionedResAnnKey        = "kapp.k14s.io/versioned" // Value is ignored
-	versionedResNumVersAnnKey = "kapp.k14s.io/num-versions"
+	versionedResAnnKey             = "kapp.k14s.io/versioned" // Value is ignored
+	versionedResNumVersAnnKey      = "kapp.k14s.io/num-versions"
+	versionedKeepOriginalResAnnKey = "kapp.k14s.io/versioned-keep-original"
 )
 
 type ChangeSetWithVersionedRs struct {
@@ -31,7 +32,7 @@ func NewChangeSetWithVersionedRs(existingRs, newRs []ctlres.Resource,
 }
 
 func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
-	existingRs := newVersionedResources(d.existingRs)
+	existingRs := existingVersionedResources(d.existingRs)
 	existingRsGrouped := d.groupResources(existingRs.Versioned)
 
 	newRs := newVersionedResources(d.newRs)
@@ -268,8 +269,38 @@ func newVersionedResources(rs []ctlres.Resource) versionedResources {
 		// (Annotations may have been copied from versioned resources
 		// onto transient resources for non-versioning related purposes).
 		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
-		if hasVersionedAnn && !res.Transient() {
+		_, hasOriginalVersionedAnn := res.Annotations()[versionedKeepOriginalResAnnKey]
+
+		if hasVersionedAnn {
 			result.Versioned = append(result.Versioned, res)
+			if hasOriginalVersionedAnn {
+				result.NonVersioned = append(result.NonVersioned, res.DeepCopy())
+			}
+		} else {
+			result.NonVersioned = append(result.NonVersioned, res)
+		}
+	}
+	return result
+}
+
+func existingVersionedResources(rs []ctlres.Resource) versionedResources {
+	var result versionedResources
+	for _, res := range rs {
+		// Expect that versioned resources should not be transient
+		// (Annotations may have been copied from versioned resources
+		// onto transient resources for non-versioning related purposes).
+		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
+		_, hasOriginalVersionedAnn := res.Annotations()[versionedKeepOriginalResAnnKey]
+
+		versionedRs := VersionedResource{res: res, allRules: nil}
+		_, versionExists := versionedRs.BaseNameAndVersion()
+
+		if hasVersionedAnn && !res.Transient() {
+			if hasOriginalVersionedAnn && versionExists == "" {
+				result.NonVersioned = append(result.NonVersioned, res)
+			} else {
+				result.Versioned = append(result.Versioned, res)
+			}
 		} else {
 			result.NonVersioned = append(result.NonVersioned, res)
 		}
