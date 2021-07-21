@@ -7,15 +7,14 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
-	"strings"
 
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
 const (
-	versionedResAnnKey        = "kapp.k14s.io/versioned"      // Value is ignored
-	versionedResOrigAnnKey    = "kapp.k14s.io/versioned-orig" // Value is ignored
+	versionedResAnnKey        = "kapp.k14s.io/versioned"               // Value is ignored
+	versionedResOrigAnnKey    = "kapp.k14s.io/versioned-keep-original" // Value is ignored
 	versionedResNumVersAnnKey = "kapp.k14s.io/num-versions"
 )
 
@@ -33,10 +32,10 @@ func NewChangeSetWithVersionedRs(existingRs, newRs []ctlres.Resource,
 }
 
 func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
-	existingRs := newExistingVersionedResources(d.existingRs)
+	existingRs := existingVersionedResources(d.existingRs)
 	existingRsGrouped := d.groupResources(existingRs.Versioned)
 
-	newRs := newNewVersionedResources(d.newRs)
+	newRs := newVersionedResources(d.newRs)
 	allChanges := []Change{}
 
 	d.assignNewNames(newRs, existingRsGrouped)
@@ -263,7 +262,7 @@ type versionedResources struct {
 	NonVersioned []ctlres.Resource
 }
 
-func newNewVersionedResources(rs []ctlres.Resource) versionedResources {
+func newVersionedResources(rs []ctlres.Resource) versionedResources {
 	var result versionedResources
 	for _, res := range rs {
 		// Expect that versioned resources should not be transient
@@ -284,7 +283,7 @@ func newNewVersionedResources(rs []ctlres.Resource) versionedResources {
 	return result
 }
 
-func newExistingVersionedResources(rs []ctlres.Resource) versionedResources {
+func existingVersionedResources(rs []ctlres.Resource) versionedResources {
 	var result versionedResources
 	for _, res := range rs {
 		// Expect that versioned resources should not be transient
@@ -292,10 +291,12 @@ func newExistingVersionedResources(rs []ctlres.Resource) versionedResources {
 		// onto transient resources for non-versioning related purposes).
 		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
 		_, hasVersionedOrigAnn := res.Annotations()[versionedResOrigAnnKey]
-		containsVerSep := strings.Contains(res.Name(), nameSuffixSep)
+
+		versionedRs := VersionedResource{res: res, allRules: nil}
+		_, versionExists := versionedRs.BaseNameAndVersion()
 
 		if hasVersionedAnn && !res.Transient() {
-			if hasVersionedOrigAnn && !containsVerSep {
+			if hasVersionedOrigAnn && versionExists == "" {
 				result.NonVersioned = append(result.NonVersioned, res)
 			} else {
 				result.Versioned = append(result.Versioned, res)
