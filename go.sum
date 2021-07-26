@@ -727,8 +727,8 @@ github.com/vdemeester/k8s-pkg-credentialprovider v1.17.4/go.mod h1:inCTmtUdr5KJb
 github.com/vektah/gqlparser v1.1.2/go.mod h1:1ycwN7Ij5njmMkPPAOaRFY4rET2Enx7IkVv3vaXspKw=
 github.com/vito/go-interact v0.0.0-20171111012221-fa338ed9e9ec h1:Klu98tQ9Z1t23gvC7p7sCmvxkZxLhBHLNyrUPsWsYFg=
 github.com/vito/go-interact v0.0.0-20171111012221-fa338ed9e9ec/go.mod h1:wPlfmglZmRWMYv/qJy3P+fK/UnoQB5ISk4txfNd9tDo=
-github.com/vmware-tanzu/carvel-kapp-controller v0.20.0 h1:wB0+BqufzNnB+JLiPnrpEYnRwLudA2+oUCh6VY1RDo8=
-github.com/vmware-tanzu/carvel-kapp-controller v0.20.0/go.mod h1:0k+uS/A/igA0N2Eaji89isLeG+26J/vJRFoxqaNEI4k=
+github.com/vmware-tanzu/carvel-kapp-controller v0.21.0 h1:0wSjgMnA/VFOp9Vs78ckAJMD8J6Z85qlp8+2WPmC+TQ=
+github.com/vmware-tanzu/carvel-kapp-controller v0.21.0/go.mod h1:0k+uS/A/igA0N2Eaji89isLeG+26J/vJRFoxqaNEI4k=
 github.com/vmware-tanzu/carvel-vendir v0.21.1 h1:9Vxd80ehSguJ2r52RwqHJXyxJpbExQSlCJ09qdJlDwI=
 github.com/vmware-tanzu/carvel-vendir v0.21.1/go.mod h1:mziJq0YD0HDXJLFjT4kQFTtL5KXNYI4E0sQpqjIawKw=
 github.com/vmware/govmomi v0.20.3/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59bHWk6aFU=
