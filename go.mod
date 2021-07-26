@@ -19,7 +19,7 @@ require (
 	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.19.2 // kubernetes-1.11.0
-	k8s.io/apimachinery v0.19.2 // kubernetes-1.11.0
+	k8s.io/apimachinery v0.21.3 // kubernetes-1.11.0
 	k8s.io/client-go v0.19.2 // kubernetes-1.11.0
 )
 
