@@ -4,6 +4,8 @@
 package resources
 
 import (
+	"context"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -12,7 +14,7 @@ import (
 func (r IdentifiedResources) ConfigMapResources(labelSelector labels.Selector) ([]corev1.ConfigMap, error) {
 	listOpts := metav1.ListOptions{LabelSelector: labelSelector.String()}
 
-	mapList, err := r.coreClient.CoreV1().ConfigMaps("").List(listOpts)
+	mapList, err := r.coreClient.CoreV1().ConfigMaps("").List(context.TODO(), listOpts)
 	if err != nil {
 		return nil, err
 	}

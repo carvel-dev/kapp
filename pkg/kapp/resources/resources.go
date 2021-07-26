@@ -4,6 +4,7 @@
 package resources
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -104,9 +105,9 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 
 			err = util.Retry2(time.Second, 5*time.Second, c.isServerRescaleErr, func() error {
 				if resType.Namespaced() {
-					list, err = client.Namespace("").List(*opts.ListOpts)
+					list, err = client.Namespace("").List(context.TODO(), *opts.ListOpts)
 				} else {
-					list, err = client.List(*opts.ListOpts)
+					list, err = client.List(context.TODO(), *opts.ListOpts)
 				}
 				return err
 			})
@@ -183,7 +184,7 @@ func (c *ResourcesImpl) allForNamespaces(client dynamic.NamespaceableResourceInt
 		go func() {
 			defer itemsDone.Done()
 
-			resList, err := client.Namespace(ns).List(*listOpts)
+			resList, err := client.Namespace(ns).List(context.TODO(), *listOpts)
 			if err != nil {
 				if !errors.IsForbidden(err) {
 					fatalErrsCh <- err
@@ -229,7 +230,7 @@ func (c *ResourcesImpl) Create(resource Resource) (Resource, error) {
 	var createdUn *unstructured.Unstructured
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
-		createdUn, err = resClient.Create(resource.unstructuredPtr())
+		createdUn, err = resClient.Create(context.TODO(), resource.unstructuredPtr(), metav1.CreateOptions{})
 		return err
 	})
 	if err != nil {
@@ -256,7 +257,7 @@ func (c *ResourcesImpl) Update(resource Resource) (Resource, error) {
 	var updatedUn *unstructured.Unstructured
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
-		updatedUn, err = resClient.Update(resource.unstructuredPtr())
+		updatedUn, err = resClient.Update(context.TODO(), resource.unstructuredPtr(), metav1.UpdateOptions{})
 		return err
 	})
 	if err != nil {
@@ -280,7 +281,7 @@ func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data
 	var patchedUn *unstructured.Unstructured
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
-		patchedUn, err = resClient.Patch(resource.Name(), patchType, data)
+		patchedUn, err = resClient.Patch(context.TODO(), resource.Name(), patchType, data, metav1.PatchOptions{})
 		return err
 	})
 	if err != nil {
@@ -310,7 +311,7 @@ func (c *ResourcesImpl) Delete(resource Resource) error {
 		// TODO is setting deletion policy a correct thing to do?
 		// https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/#setting-the-cascading-deletion-policy
 		delPol := metav1.DeletePropagationBackground
-		delOpts := &metav1.DeleteOptions{PropagationPolicy: &delPol}
+		delOpts := metav1.DeleteOptions{PropagationPolicy: &delPol}
 
 		// Some resources may not have UID (example: PodMetrics.metrics.k8s.io)
 		resUID := types.UID(resource.UID())
@@ -318,7 +319,7 @@ func (c *ResourcesImpl) Delete(resource Resource) error {
 			delOpts.Preconditions = &metav1.Preconditions{UID: &resUID}
 		}
 
-		err = resClient.Delete(resource.Name(), delOpts)
+		err = resClient.Delete(context.TODO(), resource.Name(), delOpts)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				c.logger.Info("TODO resource '%s' is already gone", resource.Description())
@@ -351,7 +352,7 @@ func (c *ResourcesImpl) Get(resource Resource) (Resource, error) {
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isServerRescaleErr, func() error {
 		var err error
-		item, err = resClient.Get(resource.Name(), metav1.GetOptions{})
+		item, err = resClient.Get(context.TODO(), resource.Name(), metav1.GetOptions{})
 		return err
 	})
 	if err != nil {
@@ -380,7 +381,7 @@ func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 	var found bool
 
 	err = util.Retry(time.Second, time.Minute, func() (bool, error) {
-		_, err = resClient.Get(resource.Name(), metav1.GetOptions{})
+		_, err = resClient.Get(context.TODO(), resource.Name(), metav1.GetOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				found = false
@@ -476,7 +477,7 @@ func (c *ResourcesImpl) assumedAllowedNamespaces() ([]string, error) {
 		return *c.assumedAllowedNamespacesMemo, nil
 	}
 
-	nsList, err := c.coreClient.CoreV1().Namespaces().List(metav1.ListOptions{})
+	nsList, err := c.coreClient.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		if errors.IsForbidden(err) {
 			if len(c.fallbackAllowedNamespaces) > 0 {

@@ -4,6 +4,7 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -37,7 +38,12 @@ func (f *DepsFactoryImpl) DynamicClient() (dynamic.Interface, error) {
 		return nil, err
 	}
 
-	clientset, err := dynamic.NewForConfig(config)
+	// copy to avoid mutating the passed-in config
+	cpConfig := rest.CopyConfig(config)
+	// set the warning handler for this client to ignore warnings
+	cpConfig.WarningHandler = rest.NoWarnings{}
+
+	clientset, err := dynamic.NewForConfig(cpConfig)
 	if err != nil {
 		return nil, fmt.Errorf("Building Dynamic clientset: %s", err)
 	}
@@ -79,7 +85,7 @@ func (f *DepsFactoryImpl) summarizeNodes(config *rest.Config) string {
 		return ""
 	}
 
-	nodes, err := clientset.CoreV1().Nodes().List(metav1.ListOptions{})
+	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return ""
 	}
