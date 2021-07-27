@@ -10,14 +10,14 @@ import (
 )
 
 func TestChangeSet_ExistingVersioned_NewNonVersioned_Resource(t *testing.T) {
-	newRs, _ := ctlres.NewResourcesFromBytes([]byte(`
+	newRs := ctlres.MustNewResourceFromBytes([]byte(`
 apiVersion: v1
 kind: Secret
 metadata:
   name: secret
 `))
 
-	existingRes, _ := ctlres.NewResourcesFromBytes([]byte(`
+	existingRes := ctlres.MustNewResourceFromBytes([]byte(`
 apiVersion: v1
 kind: Secret
 metadata:
@@ -26,12 +26,16 @@ metadata:
     kapp.k14s.io/versioned: ""
 `))
 
-	changeSetWithVerRes := NewChangeSetWithVersionedRs(existingRes, newRs, nil, ChangeSetOpts{}, ChangeFactory{})
+	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRes}, []ctlres.Resource{newRs}, nil,
+		ChangeSetOpts{}, ChangeFactory{})
 
 	changes, err := changeSetWithVerRes.Calculate()
-
 	if err != nil {
 		t.Fatalf("Expected non-error")
+	}
+
+	if len(changes) != 2 {
+		t.Fatalf("Expected length of changes list is 2")
 	}
 
 	if changes[0].Op() != ChangeOpDelete {
@@ -42,8 +46,6 @@ metadata:
 		t.Fatalf("Expected to get added: actual >>>%s<<< vs expected >>>%s<<<", changes[1].Op(), ChangeOpAdd)
 	}
 
-	actualDiff1 := changes[0].ConfigurableTextDiff().Full().FullString()
-
 	expectedDiff1 := `  0,  0 - apiVersion: v1
   1,  0 - kind: Secret
   2,  0 - metadata:
@@ -52,11 +54,7 @@ metadata:
   5,  0 -   name: secret-ver-1
   6,  0 - 
 `
-	if actualDiff1 != expectedDiff1 {
-		t.Fatalf("Expected diff to match: actual >>>%s<<< vs expected >>>%s<<< %d %d", actualDiff1, expectedDiff1, len(actualDiff1), len(expectedDiff1))
-	}
-
-	actualDiff2 := changes[1].ConfigurableTextDiff().Full().FullString()
+	checkChangeDiff(t, changes[0], expectedDiff1)
 
 	expectedDiff2 := `  0,  0 + apiVersion: v1
   0,  1 + kind: Secret
@@ -64,13 +62,11 @@ metadata:
   0,  3 +   name: secret
   0,  4 + 
 `
-	if actualDiff2 != expectedDiff2 {
-		t.Fatalf("Expected diff to match: actual >>>%s<<< vs expected >>>%s<<< %d %d", actualDiff2, expectedDiff2, len(actualDiff2), len(expectedDiff2))
-	}
+	checkChangeDiff(t, changes[1], expectedDiff2)
 }
 
 func TestChangeSet_ExistingNonVersioned_NewVersioned_Resource(t *testing.T) {
-	newRs, _ := ctlres.NewResourcesFromBytes([]byte(`
+	newRs := ctlres.MustNewResourceFromBytes([]byte(`
 apiVersion: v1
 kind: Secret
 metadata:
@@ -79,19 +75,23 @@ metadata:
     kapp.k14s.io/versioned: ""
 `))
 
-	existingRes, _ := ctlres.NewResourcesFromBytes([]byte(`
+	existingRes := ctlres.MustNewResourceFromBytes([]byte(`
 apiVersion: v1
 kind: Secret
 metadata:
   name: secret
 `))
 
-	changeSetWithVerRes := NewChangeSetWithVersionedRs(existingRes, newRs, nil, ChangeSetOpts{}, ChangeFactory{})
+	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRes}, []ctlres.Resource{newRs}, nil,
+		ChangeSetOpts{}, ChangeFactory{})
 
 	changes, err := changeSetWithVerRes.Calculate()
-
 	if err != nil {
 		t.Fatalf("Expected non-error")
+	}
+
+	if len(changes) != 2 {
+		t.Fatalf("Expected length of changes list is 2")
 	}
 
 	if changes[0].Op() != ChangeOpAdd {
@@ -102,8 +102,6 @@ metadata:
 		t.Fatalf("Expected to get deleted: actual >>>%s<<< vs expected >>>%s<<<", changes[1].Op(), ChangeOpDelete)
 	}
 
-	actualDiff1 := changes[0].ConfigurableTextDiff().Full().FullString()
-
 	expectedDiff1 := `  0,  0 + apiVersion: v1
   0,  1 + kind: Secret
   0,  2 + metadata:
@@ -112,11 +110,7 @@ metadata:
   0,  5 +   name: secret-ver-1
   0,  6 + 
 `
-	if actualDiff1 != expectedDiff1 {
-		t.Fatalf("Expected diff to match: actual >>>%s<<< vs expected >>>%s<<< %d %d", actualDiff1, expectedDiff1, len(actualDiff1), len(expectedDiff1))
-	}
-
-	actualDiff2 := changes[1].ConfigurableTextDiff().Full().FullString()
+	checkChangeDiff(t, changes[0], expectedDiff1)
 
 	expectedDiff2 := `  0,  0 - apiVersion: v1
   1,  0 - kind: Secret
@@ -124,13 +118,11 @@ metadata:
   3,  0 -   name: secret
   4,  0 - 
 `
-	if actualDiff2 != expectedDiff2 {
-		t.Fatalf("Expected diff to match: actual >>>%s<<< vs expected >>>%s<<< %d %d", actualDiff2, expectedDiff2, len(actualDiff2), len(expectedDiff2))
-	}
+	checkChangeDiff(t, changes[1], expectedDiff2)
 }
 
 func TestChangeSet_ExistingNonVersioned_NewVersioneKeepOrg_Resource(t *testing.T) {
-	newRs, _ := ctlres.NewResourcesFromBytes([]byte(`
+	newRs := ctlres.MustNewResourceFromBytes([]byte(`
 apiVersion: v1
 kind: Secret
 metadata:
@@ -140,19 +132,23 @@ metadata:
     kapp.k14s.io/versioned-keep-original: ""
 `))
 
-	existingRes, _ := ctlres.NewResourcesFromBytes([]byte(`
+	existingRes := ctlres.MustNewResourceFromBytes([]byte(`
 apiVersion: v1
 kind: Secret
 metadata:
   name: secret
 `))
 
-	changeSetWithVerRes := NewChangeSetWithVersionedRs(existingRes, newRs, nil, ChangeSetOpts{}, ChangeFactory{})
+	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRes}, []ctlres.Resource{newRs}, nil,
+		ChangeSetOpts{}, ChangeFactory{})
 
 	changes, err := changeSetWithVerRes.Calculate()
-
 	if err != nil {
 		t.Fatalf("Expected non-error")
+	}
+
+	if len(changes) != 2 {
+		t.Fatalf("Expected length of changes list is 2")
 	}
 
 	if changes[0].Op() != ChangeOpAdd {
@@ -163,8 +159,6 @@ metadata:
 		t.Fatalf("Expected to get updated: actual >>>%s<<< vs expected >>>%s<<<", changes[1].Op(), ChangeOpUpdate)
 	}
 
-	actualDiff1 := changes[0].ConfigurableTextDiff().Full().FullString()
-
 	expectedDiff1 := `  0,  0 + apiVersion: v1
   0,  1 + kind: Secret
   0,  2 + metadata:
@@ -174,11 +168,7 @@ metadata:
   0,  6 +   name: secret-ver-1
   0,  7 + 
 `
-	if actualDiff1 != expectedDiff1 {
-		t.Fatalf("Expected diff to match: actual >>>%s<<< vs expected >>>%s<<< %d %d", actualDiff1, expectedDiff1, len(actualDiff1), len(expectedDiff1))
-	}
-
-	actualDiff2 := changes[1].ConfigurableTextDiff().Full().FullString()
+	checkChangeDiff(t, changes[0], expectedDiff1)
 
 	expectedDiff2 := `  0,  0   apiVersion: v1
   1,  1   kind: Secret
@@ -189,7 +179,15 @@ metadata:
   3,  6     name: secret
   4,  7   
 `
-	if actualDiff2 != expectedDiff2 {
-		t.Fatalf("Expected diff to match: actual >>>%s<<< vs expected >>>%s<<< %d %d", actualDiff2, expectedDiff2, len(actualDiff2), len(expectedDiff2))
+	checkChangeDiff(t, changes[1], expectedDiff2)
+}
+
+func checkChangeDiff(t *testing.T, change Change, expectedDiffString string) {
+
+	actualDiffString := change.ConfigurableTextDiff().Full().FullString()
+
+	if actualDiffString != expectedDiffString {
+		t.Fatalf("Expected diff to match: actual >>>%s<<< vs expected >>>%s<<< %d %d",
+			actualDiffString, expectedDiffString, len(actualDiffString), len(expectedDiffString))
 	}
 }

@@ -12,7 +12,7 @@ import (
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 )
 
-func TestAnnotationsDiff(t *testing.T) {
+func TestVersionedAnnotations(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -168,8 +168,6 @@ metadata:
 		verKeepOrgOut, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml3)})
 
-		//log.Println("\n" + verKeepOrgOut + "\n")
-
 		respVerKeepOrg := uitest.JSONUIFromBytes(t, []byte(verKeepOrgOut))
 
 		expectedVerKeepOrg := []map[string]string{
@@ -223,11 +221,8 @@ metadata:
 	cleanUp()
 
 	logger.Section("Scenario-2 [Versioned-keep-original->Versioned]", func() {
-
 		verKeepOrgOut, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml3)})
-
-		//log.Println("\n" + verKeepOrgOut + "\n")
 
 		respVerKeepOrg := uitest.JSONUIFromBytes(t, []byte(verKeepOrgOut))
 
@@ -332,11 +327,8 @@ metadata:
 	cleanUp()
 
 	logger.Section("Scenario-3 [Versioned-keep-original->Non Versioned]", func() {
-
 		verKeepOrgOut, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml3)})
-
-		//log.Println("\n" + verKeepOrgOut + "\n")
 
 		respVerKeepOrg := uitest.JSONUIFromBytes(t, []byte(verKeepOrgOut))
 
@@ -437,7 +429,6 @@ metadata:
 		validateChanges(t, respNonVer.Tables, expectedVer, "Op:      0 create, 2 delete, 2 update, 0 noop",
 			"Wait to: 2 reconcile, 2 delete, 0 noop", nonVerOut)
 	})
-
 }
 
 func validateChanges(t *testing.T, respTable []ui.JSONUITableResp, expected []map[string]string, notesOp string,

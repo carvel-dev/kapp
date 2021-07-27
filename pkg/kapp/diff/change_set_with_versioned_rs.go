@@ -265,9 +265,6 @@ type versionedResources struct {
 func newVersionedResources(rs []ctlres.Resource) versionedResources {
 	var result versionedResources
 	for _, res := range rs {
-		// Expect that versioned resources should not be transient
-		// (Annotations may have been copied from versioned resources
-		// onto transient resources for non-versioning related purposes).
 		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
 		_, hasVersionedOrigAnn := res.Annotations()[versionedResOrigAnnKey]
 
@@ -292,11 +289,11 @@ func existingVersionedResources(rs []ctlres.Resource) versionedResources {
 		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
 		_, hasVersionedOrigAnn := res.Annotations()[versionedResOrigAnnKey]
 
-		versionedRs := VersionedResource{res: res, allRules: nil}
-		_, versionExists := versionedRs.BaseNameAndVersion()
+		versionedRs := VersionedResource{res: res}
+		_, version := versionedRs.BaseNameAndVersion()
 
 		if hasVersionedAnn && !res.Transient() {
-			if hasVersionedOrigAnn && versionExists == "" {
+			if hasVersionedOrigAnn && version == "" {
 				result.NonVersioned = append(result.NonVersioned, res)
 			} else {
 				result.Versioned = append(result.Versioned, res)
