@@ -76,7 +76,7 @@ metadata:
   name: secret
 `
 
-	name := "test-annotations-diff"
+	name := "test-versioned-annotations"
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
 	}

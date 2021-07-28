@@ -182,12 +182,11 @@ metadata:
 	checkChangeDiff(t, changes[1], expectedDiff2)
 }
 
-func checkChangeDiff(t *testing.T, change Change, expectedDiffString string) {
-
+func checkChangeDiff(t *testing.T, change Change, expectedDiff string) {
 	actualDiffString := change.ConfigurableTextDiff().Full().FullString()
 
-	if actualDiffString != expectedDiffString {
+	if actualDiffString != expectedDiff {
 		t.Fatalf("Expected diff to match: actual >>>%s<<< vs expected >>>%s<<< %d %d",
-			actualDiffString, expectedDiffString, len(actualDiffString), len(expectedDiffString))
+			actualDiffString, expectedDiff, len(actualDiffString), len(expectedDiff))
 	}
 }
