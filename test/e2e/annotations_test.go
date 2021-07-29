@@ -4,12 +4,14 @@
 package e2e
 
 import (
+	"encoding/json"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
+	kcv1alpha1 "github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
 
 func TestVersionedAnnotations(t *testing.T) {
@@ -428,6 +430,79 @@ metadata:
 
 		validateChanges(t, respNonVer.Tables, expectedVer, "Op:      0 create, 2 delete, 2 update, 0 noop",
 			"Wait to: 2 reconcile, 2 delete, 0 noop", nonVerOut)
+	})
+}
+
+func TestAdoptionOfResourcesWithVersionedAnn(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kubectl := Kubectl{t, env.Namespace, logger}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+
+	yaml := `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config
+  annotations:
+    kapp.k14s.io/versioned: ""
+data:
+  key1: val1
+`
+
+	name := "test-adoption-of-res-with-ver-ann"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("Kapp should adopt already deployed versioned resource through kubectl", func() {
+		out, _ := kubectl.RunWithOpts([]string{"apply", "-f", "-", "-o", "json"},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml)})
+
+		respKubectl := kcv1alpha1.App{}
+
+		err := json.Unmarshal([]byte(out), &respKubectl)
+		if err != nil {
+			t.Fatalf("Expected to successfully unmarshal: %s", err)
+		}
+
+		_, versionedAnnExists := respKubectl.Annotations["kapp.k14s.io/versioned"]
+		if respKubectl.Kind != "ConfigMap" || respKubectl.Name != "config" || !versionedAnnExists {
+			t.Fatalf("Expected to have versioned ConfigMap resource")
+		}
+
+		kappOut, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml)})
+
+		respKapp := uitest.JSONUIFromBytes(t, []byte(kappOut))
+
+		expectedKapp := []map[string]string{{
+			"conditions":      "",
+			"kind":            "ConfigMap",
+			"name":            "config",
+			"namespace":       "kapp-test",
+			"op":              "delete",
+			"op_strategy":     "",
+			"reconcile_info":  "",
+			"reconcile_state": "ok",
+			"wait_to":         "delete",
+		}, {
+			"conditions":      "",
+			"kind":            "ConfigMap",
+			"name":            "config-ver-1",
+			"namespace":       "kapp-test",
+			"op":              "create",
+			"op_strategy":     "",
+			"reconcile_info":  "",
+			"reconcile_state": "",
+			"wait_to":         "reconcile",
+		}}
+
+		validateChanges(t, respKapp.Tables, expectedKapp, "Op:      1 create, 1 delete, 0 update, 0 noop",
+			"Wait to: 1 reconcile, 1 delete, 0 noop", kappOut)
 	})
 }
 
