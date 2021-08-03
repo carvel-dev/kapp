@@ -67,11 +67,13 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
     -f https://github.com/...download/v0.6.0/crds.yaml \
     -f https://github.com/...download/v0.6.0/release.yaml`,
 	}
+	requiredFileFlag := []string{"file"}
 
 	setDeployCmdFlags(cmd)
 
 	o.AppFlags.Set(cmd, flagsFactory)
 	o.FileFlags.Set(cmd)
+	o.FileFlags.MarkRequired(cmd, requiredFileFlag)
 	o.DiffFlags.SetWithPrefix("diff", cmd)
 	o.ResourceFilterFlags.Set(cmd)
 	o.ApplyFlags.SetWithDefaults("", ApplyFlagsDeployDefaults, cmd)
