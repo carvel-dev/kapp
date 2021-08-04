@@ -17,12 +17,6 @@ func (s *FileFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&s.Sort, "sort", true, "Sort by namespace, name, etc.")
 }
 
-func (s *FileFlags) MarkRequired(cmd *cobra.Command, flags []string) {
-	for _, flag := range flags {
-		cmd.MarkFlagRequired(flag)
-	}
-}
-
 type FileFlags2 struct {
 	Files []string
 }

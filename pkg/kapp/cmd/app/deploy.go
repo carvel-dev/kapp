@@ -67,13 +67,11 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
     -f https://github.com/...download/v0.6.0/crds.yaml \
     -f https://github.com/...download/v0.6.0/release.yaml`,
 	}
-	requiredFileFlag := []string{"file"}
 
 	setDeployCmdFlags(cmd)
 
 	o.AppFlags.Set(cmd, flagsFactory)
 	o.FileFlags.Set(cmd)
-	o.FileFlags.MarkRequired(cmd, requiredFileFlag)
 	o.DiffFlags.SetWithPrefix("diff", cmd)
 	o.ResourceFilterFlags.Set(cmd)
 	o.ApplyFlags.SetWithDefaults("", ApplyFlagsDeployDefaults, cmd)
@@ -251,6 +249,9 @@ func (o *DeployOptions) newResources(
 func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
 	var allResources []ctlres.Resource
 
+	if len(o.FileFlags.Files) == 0 {
+		return nil, fmt.Errorf("Expected at least one --file (-f) specified with a file or directory path")
+	}
 	for _, file := range o.FileFlags.Files {
 		fileRs, err := ctlres.NewFileResources(file)
 		if err != nil {
@@ -266,7 +267,6 @@ func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
 			allResources = append(allResources, resources...)
 		}
 	}
-
 	return allResources, nil
 }
 
