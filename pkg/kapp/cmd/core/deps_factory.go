@@ -18,18 +18,24 @@ import (
 type DepsFactory interface {
 	DynamicClient() (dynamic.Interface, error)
 	CoreClient() (kubernetes.Interface, error)
+	ConfigureDeprecationWarning(noDeprecationWarnings bool)
 }
 
 type DepsFactoryImpl struct {
 	configFactory   ConfigFactory
 	ui              ui.UI
 	printTargetOnce *sync.Once
+
+	NoDeprecationWarnings bool
 }
 
 var _ DepsFactory = &DepsFactoryImpl{}
 
 func NewDepsFactoryImpl(configFactory ConfigFactory, ui ui.UI) *DepsFactoryImpl {
-	return &DepsFactoryImpl{configFactory, ui, &sync.Once{}}
+	return &DepsFactoryImpl{
+		configFactory:   configFactory,
+		ui:              ui,
+		printTargetOnce: &sync.Once{}}
 }
 
 func (f *DepsFactoryImpl) DynamicClient() (dynamic.Interface, error) {
@@ -40,8 +46,9 @@ func (f *DepsFactoryImpl) DynamicClient() (dynamic.Interface, error) {
 
 	// copy to avoid mutating the passed-in config
 	cpConfig := rest.CopyConfig(config)
-	// set the warning handler for this client to ignore warnings
-	cpConfig.WarningHandler = rest.NoWarnings{}
+	if f.NoDeprecationWarnings {
+		cpConfig.WarningHandler = rest.NoWarnings{}
+	}
 
 	clientset, err := dynamic.NewForConfig(cpConfig)
 	if err != nil {
@@ -67,6 +74,10 @@ func (f *DepsFactoryImpl) CoreClient() (kubernetes.Interface, error) {
 	f.printTarget(config)
 
 	return clientset, nil
+}
+
+func (f *DepsFactoryImpl) ConfigureDeprecationWarning(noDeprecationWarnings bool) {
+	f.NoDeprecationWarnings = noDeprecationWarnings
 }
 
 func (f *DepsFactoryImpl) printTarget(config *rest.Config) {
