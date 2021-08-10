@@ -12,9 +12,10 @@ import (
 )
 
 type ApplyingChangesOpts struct {
-	Timeout       time.Duration
-	CheckInterval time.Duration
-	Concurrency   int
+	Timeout         time.Duration
+	ResourceTimeout time.Duration
+	CheckInterval   time.Duration
+	Concurrency     int
 }
 
 type ApplyingChanges struct {
@@ -30,11 +31,12 @@ func NewApplyingChanges(numTotal int, opts ApplyingChangesOpts, clusterChangeFac
 }
 
 type applyResult struct {
-	Change        *ctldgraph.Change
-	ClusterChange *ClusterChange
-	DescMsgs      []string
-	Retryable     bool
-	Err           error
+	Change            *ctldgraph.Change
+	ClusterChange     *ClusterChange
+	DescMsgs          []string
+	Retryable         bool
+	IsResourceTimeout bool
+	Err               error
 }
 
 func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange, error) {
@@ -66,14 +68,16 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 				defer applyThrottle.Done()
 
 				clusterChange := change.Change.(wrappedClusterChange).ClusterChange
-				retryable, descMsgs, err := clusterChange.Apply()
+				clusterChange.resourceTimeout = c.opts.ResourceTimeout
+				retryable, isResourceTimeout, descMsgs, err := clusterChange.Apply()
 
 				applyCh <- applyResult{
-					Change:        change,
-					ClusterChange: clusterChange,
-					DescMsgs:      descMsgs,
-					Retryable:     retryable,
-					Err:           err,
+					Change:            change,
+					ClusterChange:     clusterChange,
+					DescMsgs:          descMsgs,
+					Retryable:         retryable,
+					IsResourceTimeout: isResourceTimeout,
+					Err:               err,
 				}
 			}()
 		}
@@ -90,6 +94,9 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 				lastErr = result.Err
 				if result.Retryable {
 					continue
+				}
+				if result.IsResourceTimeout {
+					return nil, fmt.Errorf("Timed out waiting for resource after %s: Last error: %s", c.opts.ResourceTimeout, result.Err)
 				}
 				return nil, result.Err
 			}

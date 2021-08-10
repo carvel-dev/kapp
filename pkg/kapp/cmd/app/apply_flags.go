@@ -43,6 +43,8 @@ func (s *ApplyFlags) SetWithDefaults(prefix string, defaults ApplyFlags, cmd *co
 	cmd.Flags().BoolVar(&s.ApplyIgnored, prefix+"apply-ignored", defaults.ApplyIgnored, "Set to apply ignored changes")
 	cmd.Flags().DurationVar(&s.ApplyingChangesOpts.Timeout, prefix+"apply-timeout",
 		mustParseDuration("15m"), "Maximum amount of time to wait in apply phase")
+	cmd.Flags().DurationVar(&s.ApplyingChangesOpts.ResourceTimeout, prefix+"apply-resource-timeout",
+		mustParseDuration("15m"), "Maximum amount of time to wait for each resource in apply phase")
 	cmd.Flags().DurationVar(&s.ApplyingChangesOpts.CheckInterval, prefix+"apply-check-interval",
 		mustParseDuration("1s"), "Amount of time to sleep between applies")
 	cmd.Flags().IntVar(&s.ApplyingChangesOpts.Concurrency, prefix+"apply-concurrency", 5, "Maximum number of concurrent apply operations")

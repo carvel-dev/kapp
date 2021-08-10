@@ -6,6 +6,7 @@ package clusterapply
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	uierrs "github.com/cppforlife/go-cli-ui/errors"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
@@ -64,6 +65,7 @@ type ClusterChange struct {
 	ui                  UI
 
 	markedNeedsWaiting bool
+	resourceTimeout    time.Duration
 }
 
 var _ ChangeView = &ClusterChange{}
@@ -72,10 +74,10 @@ func NewClusterChange(change ctldiff.Change, opts ClusterChangeOpts,
 	identifiedResources ctlres.IdentifiedResources,
 	changeFactory ctldiff.ChangeFactory,
 	changeSetFactory ctldiff.ChangeSetFactory,
-	convergedResFactory ConvergedResourceFactory, ui UI) *ClusterChange {
+	convergedResFactory ConvergedResourceFactory, ui UI, resourceTimeout time.Duration) *ClusterChange {
 
 	return &ClusterChange{change, opts, identifiedResources,
-		changeFactory, changeSetFactory, convergedResFactory, ui, false}
+		changeFactory, changeSetFactory, convergedResFactory, ui, false, resourceTimeout}
 }
 
 func (c *ClusterChange) ApplyOp() ClusterChangeApplyOp {
@@ -158,12 +160,14 @@ func (c *ClusterChange) ApplyStrategyOp() (ClusterChangeApplyStrategyOp, error) 
 	return strategy.Op(), nil
 }
 
-func (c *ClusterChange) Apply() (bool, []string, error) {
+func (c *ClusterChange) Apply() (bool, bool, []string, error) {
+	startTime := time.Now()
+
 	descMsgs := []string{c.ApplyDescription()}
 
 	strategy, err := c.applyStrategy()
 	if err != nil {
-		return false, descMsgs, err
+		return false, false, descMsgs, err
 	}
 
 	err = strategy.Apply()
@@ -173,7 +177,12 @@ func (c *ClusterChange) Apply() (bool, []string, error) {
 		descMsgs = append(descMsgs, uiWaitMsgPrefix+"Retryable error: "+err.Error())
 	}
 
-	return retryable, descMsgs, c.applyErr(err)
+	fmt.Println("Resource Time -", time.Now().Sub(startTime))
+	if time.Now().Sub(startTime) > c.resourceTimeout {
+		return false, true, descMsgs, fmt.Errorf("Timed out waiting after %s: Last error: %s", c.resourceTimeout, nil)
+	}
+
+	return retryable, false, descMsgs, c.applyErr(err)
 }
 
 func (c *ClusterChange) applyStrategy() (ApplyStrategy, error) {

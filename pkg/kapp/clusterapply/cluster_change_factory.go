@@ -4,6 +4,8 @@
 package clusterapply
 
 import (
+	"time"
+
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
@@ -15,6 +17,7 @@ type ClusterChangeFactory struct {
 	changeSetFactory    ctldiff.ChangeSetFactory
 	convergedResFactory ConvergedResourceFactory
 	ui                  UI
+	resourceTimeout     time.Duration
 }
 
 func NewClusterChangeFactory(
@@ -22,13 +25,13 @@ func NewClusterChangeFactory(
 	identifiedResources ctlres.IdentifiedResources,
 	changeFactory ctldiff.ChangeFactory,
 	changeSetFactory ctldiff.ChangeSetFactory,
-	convergedResFactory ConvergedResourceFactory, ui UI,
+	convergedResFactory ConvergedResourceFactory, ui UI, resourceTimeout time.Duration,
 ) ClusterChangeFactory {
 	return ClusterChangeFactory{opts, identifiedResources,
-		changeFactory, changeSetFactory, convergedResFactory, ui}
+		changeFactory, changeSetFactory, convergedResFactory, ui, resourceTimeout}
 }
 
 func (f ClusterChangeFactory) NewClusterChange(change ctldiff.Change) *ClusterChange {
 	return NewClusterChange(change, f.opts, f.identifiedResources,
-		f.changeFactory, f.changeSetFactory, f.convergedResFactory, f.ui)
+		f.changeFactory, f.changeSetFactory, f.convergedResFactory, f.ui, f.resourceTimeout)
 }
