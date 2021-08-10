@@ -46,6 +46,7 @@ spec:
 	logger.Section("inspect shows transient resource", func() {
 		out, _ := kapp.RunWithOpts([]string{"inspect", "-a", name, "--json"}, RunOpts{})
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
+		respRows := resp.Tables[0].Rows
 
 		expected := []map[string]string{{
 			"age":             "<replaced>",
@@ -66,7 +67,22 @@ spec:
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}}
-		if !reflect.DeepEqual(replaceAge(resp.Tables[0].Rows), expected) {
+
+		if hasEndpointSlice(respRows) {
+			respRows = removeEndpointSliceNameSuffix(respRows)
+			expected = append(expected, map[string]string{
+				"age":             "<replaced>",
+				"conditions":      "",
+				"kind":            "EndpointSlice",
+				"name":            "redis-svc",
+				"namespace":       "kapp-test",
+				"owner":           "cluster",
+				"reconcile_info":  "",
+				"reconcile_state": "ok",
+			})
+		}
+
+		if !reflect.DeepEqual(replaceAge(respRows), expected) {
 			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
 		}
 	})
@@ -74,6 +90,7 @@ spec:
 	logger.Section("delete includes transient resource", func() {
 		out, _ := kapp.RunWithOpts([]string{"delete", "-a", name, "--json"}, RunOpts{})
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
+		respRows := resp.Tables[0].Rows
 
 		expected := []map[string]string{{
 			"age":             "<replaced>",
@@ -98,7 +115,24 @@ spec:
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}}
-		if !reflect.DeepEqual(replaceAge(resp.Tables[0].Rows), expected) {
+
+		if hasEndpointSlice(respRows) {
+			respRows = removeEndpointSliceNameSuffix(respRows)
+			expected = append(expected, map[string]string{
+				"age":             "<replaced>",
+				"op":              "",
+				"op_strategy":     "",
+				"wait_to":         "delete",
+				"conditions":      "",
+				"kind":            "EndpointSlice",
+				"name":            "redis-svc",
+				"namespace":       "kapp-test",
+				"reconcile_info":  "",
+				"reconcile_state": "ok",
+			})
+		}
+
+		if !reflect.DeepEqual(replaceAge(respRows), expected) {
 			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
 		}
 	})
@@ -149,6 +183,7 @@ metadata:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
+		respRows := resp.Tables[0].Rows
 
 		expected := []map[string]string{{
 			"age":             "<replaced>",
@@ -162,7 +197,7 @@ metadata:
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}}
-		if !reflect.DeepEqual(replaceAge(resp.Tables[0].Rows), expected) {
+		if !reflect.DeepEqual(replaceAge(respRows), expected) {
 			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
 		}
 	})
@@ -170,6 +205,7 @@ metadata:
 	logger.Section("delete with previously transient resource (now non-transient)", func() {
 		out, _ := kapp.RunWithOpts([]string{"delete", "-a", name, "--json"}, RunOpts{})
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
+		respRows := resp.Tables[0].Rows
 
 		expected := []map[string]string{{
 			"age":             "<replaced>",
@@ -194,8 +230,45 @@ metadata:
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}}
-		if !reflect.DeepEqual(replaceAge(resp.Tables[0].Rows), expected) {
+
+		if hasEndpointSlice(respRows) {
+			respRows = removeEndpointSliceNameSuffix(respRows)
+			expected = append(expected, map[string]string{
+				"age":             "<replaced>",
+				"op":              "",
+				"op_strategy":     "",
+				"wait_to":         "delete",
+				"conditions":      "",
+				"kind":            "EndpointSlice",
+				"name":            "redis-svc",
+				"namespace":       "kapp-test",
+				"reconcile_info":  "",
+				"reconcile_state": "ok",
+			})
+		}
+
+		if !reflect.DeepEqual(replaceAge(respRows), expected) {
 			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
 		}
 	})
+}
+
+func removeEndpointSliceNameSuffix(result []map[string]string) []map[string]string {
+	for i, row := range result {
+		if row["kind"] == "EndpointSlice" && len(row["name"]) > 0 {
+			lastIndexOfDash := strings.LastIndex(row["name"], "-")
+			row["name"] = row["name"][:lastIndexOfDash]
+		}
+		result[i] = row
+	}
+	return result
+}
+
+func hasEndpointSlice(result []map[string]string) bool {
+	for _, row := range result {
+		if row["kind"] == "EndpointSlice" {
+			return true
+		}
+	}
+	return false
 }
