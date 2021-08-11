@@ -11,7 +11,7 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
-	kcv1alpha1 "github.com/k14s/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	appv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 )
 
 func TestVersionedAnnotations(t *testing.T) {
@@ -462,7 +462,7 @@ data:
 		out, _ := kubectl.RunWithOpts([]string{"apply", "-f", "-", "-o", "json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml)})
 
-		respKubectl := kcv1alpha1.App{}
+		respKubectl := appv1alpha1.App{}
 
 		err := json.Unmarshal([]byte(out), &respKubectl)
 		if err != nil {

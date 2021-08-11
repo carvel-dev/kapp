@@ -291,7 +291,7 @@ func existingVersionedResources(rs []ctlres.Resource) versionedResources {
 		versionedRs := VersionedResource{res: res}
 		_, version := versionedRs.BaseNameAndVersion()
 
-		if hasVersionedAnn && !res.Transient() && version != ""{
+		if hasVersionedAnn && !res.Transient() && version != "" {
 			result.Versioned = append(result.Versioned, res)
 		} else {
 			result.NonVersioned = append(result.NonVersioned, res)
