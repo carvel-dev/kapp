@@ -500,7 +500,6 @@ data:
 			"reconcile_state": "",
 			"wait_to":         "reconcile",
 		}}
-
 		validateChanges(t, respKapp.Tables, expectedKapp, "Op:      1 create, 1 delete, 0 update, 0 noop",
 			"Wait to: 1 reconcile, 1 delete, 0 noop", kappOut)
 	})
@@ -508,7 +507,6 @@ data:
 
 func validateChanges(t *testing.T, respTable []ui.JSONUITableResp, expected []map[string]string, notesOp string,
 	notesWaitTo string, output string) {
-
 	//deleting age from response table rows as it is varying from 0s to 1s making test case fail
 	for _, row := range respTable[0].Rows {
 		delete(row, "age")
