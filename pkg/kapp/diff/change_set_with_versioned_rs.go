@@ -287,17 +287,12 @@ func existingVersionedResources(rs []ctlres.Resource) versionedResources {
 		// (Annotations may have been copied from versioned resources
 		// onto transient resources for non-versioning related purposes).
 		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
-		_, hasVersionedOrigAnn := res.Annotations()[versionedResOrigAnnKey]
 
 		versionedRs := VersionedResource{res: res}
 		_, version := versionedRs.BaseNameAndVersion()
 
-		if hasVersionedAnn && !res.Transient() {
-			if hasVersionedOrigAnn && version == "" {
-				result.NonVersioned = append(result.NonVersioned, res)
-			} else {
-				result.Versioned = append(result.Versioned, res)
-			}
+		if hasVersionedAnn && !res.Transient() && version != "" {
+			result.Versioned = append(result.Versioned, res)
 		} else {
 			result.NonVersioned = append(result.NonVersioned, res)
 		}
