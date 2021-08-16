@@ -126,6 +126,9 @@ spec:
 				"reconcile_info":  "",
 				"reconcile_state": "ok",
 			})
+
+			sortByKind(expected)
+			sortByKind(respRows)
 		}
 
 		if !reflect.DeepEqual(replaceAge(respRows), expected) {
