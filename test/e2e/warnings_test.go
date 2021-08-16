@@ -5,55 +5,122 @@ package e2e
 
 import (
 	"bytes"
+	"strconv"
 	"strings"
 	"testing"
+
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
-func TestNoDeprecationWarnings(t *testing.T) {
+func TestWarningsFlag(t *testing.T) {
+	minorVersion, err := getServerMinorVersion()
+	if err != nil {
+		t.Fatalf("Error getting k8s server minor version, %v", err)
+	}
+	if minorVersion < 19 {
+		t.Skip("Skipping test as warnings weren't introduced before v1.19")
+	}
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, Logger{}}
-
-	name := "test-no-warnings"
+	crdName := "test-no-warnings-crd"
+	crName := "test-no-warnings-cr"
 	cleanUp := func() {
-		kapp.Run([]string{"delete", "-a", name})
+		kapp.Run([]string{"delete", "-a", crName})
+		kapp.Run([]string{"delete", "-a", crdName})
 	}
 
 	cleanUp()
 	defer cleanUp()
+	customWarning := "example.com/v1alpha1 CronTab is deprecated; use example.com/v1 CronTab"
 
-	yaml1 := `
----
-apiVersion: extensions/v1beta1
-kind: Ingress
+	crdYaml := `
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
 metadata:
-  name: itachi
+  name: crontabs.stable.example.com
 spec:
-  rules:
-  - host: localhost
-    http:
-      paths:
-      - backend:
-          serviceName: itachi
-          servicePort: 80
-          path: /
-          pathType: ImplementationSpecific
+  group: stable.example.com
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: false
+    deprecated: true
+    deprecationWarning: "<customWarning>"
+    schema:
+      openAPIV3Schema:
+        type: object
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+  scope: Namespaced
+  names:
+    plural: crontabs
+    singular: crontab
+    kind: CronTab
 `
-	logger.Section("deploying without --no-deprecation-warning flag", func() {
+	crYaml := `
+apiVersion: "stable.example.com/v1alpha1"
+kind: CronTab
+metadata:
+  name: <cr-name>
+spec:
+  cronSpec: "* * * * */5"
+  image: my-awesome-cron-image
+`
+
+	logger.Section("deploying crd with deprecated version", func() {
+		yaml := strings.Replace(crdYaml, "<customWarning>", customWarning, 1)
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", crdName},
+			RunOpts{StdinReader: strings.NewReader(yaml)})
+	})
+	logger.Section("deploying without --warnings flag", func() {
+		yaml := strings.Replace(crYaml, "<cr-name>", "cr-1", 1)
 		out := new(bytes.Buffer)
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			RunOpts{StdinReader: strings.NewReader(yaml1), StderrWriter: out})
-		if !strings.Contains(out.String(), "extensions/v1beta1 Ingress is deprecated in v1.14+, unavailable in v1.22+; use networking.k8s.io/v1 Ingress") {
-			t.Fatalf("Expected deprecation warnings, but didn't get")
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", crName},
+			RunOpts{StdinReader: strings.NewReader(yaml), StderrWriter: out})
+		if !strings.Contains(out.String(), customWarning) {
+			t.Fatalf("Expected warning %s, but didn't get", customWarning)
 		}
 	})
-	cleanUp()
-	logger.Section("deploying with --no-deprecation-warning flag", func() {
+	logger.Section("deploying with --warnings flag", func() {
+		yaml := strings.Replace(crYaml, "<cr-name>", "cr-2", 1)
 		out := new(bytes.Buffer)
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--no-deprecation-warnings"},
-			RunOpts{StdinReader: strings.NewReader(yaml1), StderrWriter: out})
-		if strings.Contains(out.String(), "extensions/v1beta1 Ingress is deprecated in v1.14+, unavailable in v1.22+; use networking.k8s.io/v1 Ingress") {
-			t.Fatalf("Expected no deprecation warnings, but got")
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", crName, "--warnings=false"},
+			RunOpts{StdinReader: strings.NewReader(yaml), StderrWriter: out})
+		if strings.Contains(out.String(), customWarning) {
+			t.Fatalf("Expected no warning, but got %s", customWarning)
 		}
 	})
+}
+
+func getServerMinorVersion() (minorVersion int, err error) {
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	configOverrides := &clientcmd.ConfigOverrides{}
+	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+
+	config, err := kubeConfig.ClientConfig()
+	if err != nil {
+		return minorVersion, err
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return minorVersion, err
+	}
+
+	sv, err := clientset.Discovery().ServerVersion()
+	if err != nil {
+		return minorVersion, err
+	}
+	minorVersion, err = strconv.Atoi(sv.Minor)
+	if err != nil {
+		return minorVersion, err
+	}
+
+	return minorVersion, err
 }

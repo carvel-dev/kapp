@@ -9,13 +9,13 @@ import (
 )
 
 type WarningFlags struct {
-	NoDeprecationWarnings bool
+	Warnings bool
 }
 
 func (f *WarningFlags) Set(cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
-	cmd.PersistentFlags().BoolVar(&f.NoDeprecationWarnings, "no-deprecation-warnings", false, "Silence deprecation warnings")
+	cmd.PersistentFlags().BoolVar(&f.Warnings, "warnings", true, "Show warnings")
 }
 
 func (f *WarningFlags) Configure(depsFactory cmdcore.DepsFactory) {
-	depsFactory.ConfigureDeprecationWarning(f.NoDeprecationWarnings)
+	depsFactory.ConfigureWarnings(f.Warnings)
 }
