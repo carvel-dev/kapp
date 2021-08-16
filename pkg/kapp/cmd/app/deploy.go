@@ -333,6 +333,7 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 
 		convergedResFactory := ctlcap.NewConvergedResourceFactory(conf.WaitRules(), ctlcap.ConvergedResourceFactoryOpts{
 			IgnoreFailingAPIServices: o.ResourceTypesFlags.IgnoreFailingAPIServices,
+			ResourceWaitTimeout:      o.ApplyFlags.ResourceWaitTimeout,
 		})
 
 		clusterChangeFactory := ctlcap.NewClusterChangeFactory(

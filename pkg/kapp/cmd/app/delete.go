@@ -187,6 +187,7 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 
 			convergedResFactory := ctlcap.NewConvergedResourceFactory(conf.WaitRules(), ctlcap.ConvergedResourceFactoryOpts{
 				IgnoreFailingAPIServices: o.ResourceTypesFlags.IgnoreFailingAPIServices,
+				ResourceWaitTimeout:      o.ApplyFlags.ResourceWaitTimeout,
 			})
 
 			clusterChangeFactory := ctlcap.NewClusterChangeFactory(

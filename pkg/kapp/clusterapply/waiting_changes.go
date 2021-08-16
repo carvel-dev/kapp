@@ -13,9 +13,10 @@ import (
 )
 
 type WaitingChangesOpts struct {
-	Timeout       time.Duration
-	CheckInterval time.Duration
-	Concurrency   int
+	Timeout             time.Duration
+	CheckInterval       time.Duration
+	ResourceWaitTimeout time.Duration
+	Concurrency         int
 }
 
 type WaitingChanges struct {
@@ -44,10 +45,11 @@ func (c *WaitingChanges) IsEmpty() bool {
 }
 
 type waitResult struct {
-	Change   WaitingChange
-	State    ctlresm.DoneApplyState
-	DescMsgs []string
-	Err      error
+	Change            WaitingChange
+	State             ctlresm.DoneApplyState
+	DescMsgs          []string
+	IsResourceTimeout bool
+	Err               error
 }
 
 func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
@@ -66,8 +68,9 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 				waitThrottle.Take()
 				defer waitThrottle.Done()
 
-				state, descMsgs, err := change.Cluster.IsDoneApplying()
-				waitCh <- waitResult{Change: change, State: state, DescMsgs: descMsgs, Err: err}
+				change.Cluster.opts.ResourceWaitTimeout = c.opts.ResourceWaitTimeout
+				state, descMsgs, isResourceTimeout, err := change.Cluster.IsDoneApplying()
+				waitCh <- waitResult{Change: change, State: state, DescMsgs: descMsgs, IsResourceTimeout: isResourceTimeout, Err: err}
 			}()
 		}
 
@@ -76,10 +79,14 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 
 		for i := 0; i < len(c.trackedChanges); i++ {
 			result := <-waitCh
-			change, state, descMsgs, err := result.Change, result.State, result.DescMsgs, result.Err
+			change, state, descMsgs, isResourceTimeout, err := result.Change, result.State, result.DescMsgs, result.IsResourceTimeout, result.Err
 
 			desc := fmt.Sprintf("waiting on %s", change.Cluster.WaitDescription())
 			c.ui.Notify(descMsgs)
+
+			if isResourceTimeout {
+				return nil, fmt.Errorf("Timed out for resource waiting after %s", c.opts.ResourceWaitTimeout)
+			}
 
 			if err != nil {
 				return nil, fmt.Errorf("%s: Errored: %s", desc, err)

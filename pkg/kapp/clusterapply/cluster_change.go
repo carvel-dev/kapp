@@ -6,6 +6,7 @@ package clusterapply
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	uierrs "github.com/cppforlife/go-cli-ui/errors"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
@@ -47,10 +48,10 @@ type ApplyStrategy interface {
 }
 
 type ClusterChangeOpts struct {
-	ApplyIgnored bool
-	Wait         bool
-	WaitIgnored  bool
-
+	ApplyIgnored        bool
+	Wait                bool
+	WaitIgnored         bool
+	ResourceWaitTimeout time.Duration
 	AddOrUpdateChangeOpts
 }
 
@@ -137,7 +138,7 @@ func (c *ClusterChange) WaitOp() ClusterChangeWaitOp {
 		// TODO associated resources
 		// If existing resource is not in a "done successful" state,
 		// indicate that this will be something we need to wait for
-		existingResState, _, existingErr := c.convergedResFactory.New(c.change.ExistingResource(), nil).IsDoneApplying()
+		existingResState, _, _, existingErr := c.convergedResFactory.New(c.change.ExistingResource(), nil).IsDoneApplying()
 		if existingErr != nil || !(existingResState.Done && existingResState.Successful) {
 			return ClusterChangeWaitOpOK
 		}
@@ -186,7 +187,7 @@ func (c *ClusterChange) applyStrategy() (ApplyStrategy, error) {
 			c.changeSetFactory, c.opts.AddOrUpdateChangeOpts}.ApplyStrategy()
 
 	case ClusterChangeApplyOpDelete:
-		return DeleteChange{c.change, c.identifiedResources}.ApplyStrategy()
+		return DeleteChange{c.change, c.identifiedResources, c.opts.ResourceWaitTimeout}.ApplyStrategy()
 
 	case ClusterChangeApplyOpNoop:
 		return NoopStrategy{}, nil
@@ -196,27 +197,27 @@ func (c *ClusterChange) applyStrategy() (ApplyStrategy, error) {
 	}
 }
 
-func (c *ClusterChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
-	state, descMsgs, err := c.isDoneApplying()
+func (c *ClusterChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, bool, error) {
+	state, descMsgs, isResourceTimeout, err := c.isDoneApplying()
 	primaryDescMsg := fmt.Sprintf("%s: %s", NewDoneApplyStateUI(state, err).State, c.WaitDescription())
-	return state, append([]string{primaryDescMsg}, descMsgs...), err
+	return state, append([]string{primaryDescMsg}, descMsgs...), isResourceTimeout, err
 }
 
-func (c *ClusterChange) isDoneApplying() (ctlresm.DoneApplyState, []string, error) {
+func (c *ClusterChange) isDoneApplying() (ctlresm.DoneApplyState, []string, bool, error) {
 	op := c.WaitOp()
 
 	switch op {
 	case ClusterChangeWaitOpOK:
-		return ReconcilingChange{c.change, c.identifiedResources, c.convergedResFactory}.IsDoneApplying()
+		return ReconcilingChange{c.change, c.identifiedResources, c.convergedResFactory, c.opts.ResourceWaitTimeout}.IsDoneApplying()
 
 	case ClusterChangeWaitOpDelete:
-		return DeleteChange{c.change, c.identifiedResources}.IsDoneApplying()
+		return DeleteChange{c.change, c.identifiedResources, c.opts.ResourceWaitTimeout}.IsDoneApplying()
 
 	case ClusterChangeWaitOpNoop:
-		return ctlresm.DoneApplyState{Done: true, Successful: true}, nil, nil
+		return ctlresm.DoneApplyState{Done: true, Successful: true}, nil, false, nil
 
 	default:
-		return ctlresm.DoneApplyState{}, nil, fmt.Errorf("Unknown change wait operation: %s", op)
+		return ctlresm.DoneApplyState{}, nil, false, fmt.Errorf("Unknown change wait operation: %s", op)
 	}
 }
 

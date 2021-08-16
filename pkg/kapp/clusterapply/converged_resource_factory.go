@@ -4,6 +4,8 @@
 package clusterapply
 
 import (
+	"time"
+
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
@@ -12,6 +14,7 @@ import (
 
 type ConvergedResourceFactoryOpts struct {
 	IgnoreFailingAPIServices bool
+	ResourceWaitTimeout      time.Duration
 }
 
 type ConvergedResourceFactory struct {
@@ -91,5 +94,5 @@ func (f ConvergedResourceFactory) New(res ctlres.Resource,
 		},
 	}
 
-	return NewConvergedResource(res, associatedRsFunc, specificResFactories)
+	return NewConvergedResource(res, associatedRsFunc, specificResFactories, f.opts.ResourceWaitTimeout)
 }

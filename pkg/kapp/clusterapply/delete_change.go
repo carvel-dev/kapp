@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
@@ -30,6 +31,7 @@ var (
 type DeleteChange struct {
 	change              ctldiff.Change
 	identifiedResources ctlres.IdentifiedResources
+	ResourceWaitTimeout time.Duration
 }
 
 func (c DeleteChange) ApplyStrategy() (ApplyStrategy, error) {
@@ -48,22 +50,27 @@ func (c DeleteChange) ApplyStrategy() (ApplyStrategy, error) {
 	}
 }
 
-func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
+func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, bool, error) {
+	startTime := time.Now()
 	res := c.change.ExistingResource()
 
 	switch ClusterChangeApplyStrategyOp(res.Annotations()[deleteStrategyAnnKey]) {
 	case deleteStrategyOrphanAnnValue:
-		return ctlresm.DoneApplyState{Done: true, Successful: true, Message: "Resource orphaned"}, nil, nil
+		return ctlresm.DoneApplyState{Done: true, Successful: true, Message: "Resource orphaned"}, nil, false, nil
 	}
 
 	// it should not matter if change is ignored or not
 	// because it should be deleted eventually anyway (thru GC)
 	exists, err := c.identifiedResources.Exists(res)
 	if err != nil {
-		return ctlresm.DoneApplyState{}, nil, err
+		return ctlresm.DoneApplyState{}, nil, false, err
 	}
 
-	return ctlresm.DoneApplyState{Done: !exists, Successful: true}, nil, nil
+	if time.Now().Sub(startTime) > c.ResourceWaitTimeout {
+		return ctlresm.DoneApplyState{}, nil, true, fmt.Errorf("resource wait timed out waiting after %s", c.ResourceWaitTimeout)
+	}
+
+	return ctlresm.DoneApplyState{Done: !exists, Successful: true}, nil, false, nil
 }
 
 type DeletePlainStrategy struct {

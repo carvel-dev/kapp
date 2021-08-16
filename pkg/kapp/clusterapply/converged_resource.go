@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"time"
 
 	"github.com/cppforlife/color"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
@@ -21,27 +22,29 @@ type ConvergedResource struct {
 	res                  ctlres.Resource
 	associatedRsFunc     func(ctlres.Resource, []ctlres.ResourceRef) ([]ctlres.Resource, error)
 	specificResFactories []SpecificResFactory
+	resourceWaitTimeout  time.Duration
 }
 
 type SpecificResFactory func(ctlres.Resource, []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef)
 
 func NewConvergedResource(res ctlres.Resource,
 	associatedRsFunc func(ctlres.Resource, []ctlres.ResourceRef) ([]ctlres.Resource, error),
-	specificResFactories []SpecificResFactory) ConvergedResource {
-	return ConvergedResource{res, associatedRsFunc, specificResFactories}
+	specificResFactories []SpecificResFactory, resourceWaitTimeout time.Duration) ConvergedResource {
+	return ConvergedResource{res, associatedRsFunc, specificResFactories, resourceWaitTimeout}
 }
 
-func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
+func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, bool, error) {
+	startTime := time.Now()
 	var descMsgs []string
 
 	associatedRs, err := c.associatedRs()
 	if err != nil {
-		return ctlresm.DoneApplyState{}, nil, err
+		return ctlresm.DoneApplyState{}, nil, false, err
 	}
 
 	convergedResState, err := c.isResourceDoneApplying(c.res, associatedRs)
 	if err != nil {
-		return ctlresm.DoneApplyState{Done: true}, descMsgs, err
+		return ctlresm.DoneApplyState{Done: true}, descMsgs, false, err
 	}
 
 	if convergedResState != nil {
@@ -49,7 +52,7 @@ func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 		descMsgs = append(descMsgs, c.buildParentDescMsg(c.res, *convergedResState)...)
 		// If the parent is done, remaining state calculations are waste; exit now.
 		if convergedResState.Done {
-			return *convergedResState, descMsgs, nil
+			return *convergedResState, descMsgs, false, nil
 		}
 	}
 
@@ -60,14 +63,14 @@ func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 	disableARWVal, disableARWFound := c.res.Annotations()[disableAssociatedResourcesWaitingAnnKey]
 	if disableARWFound {
 		if disableARWVal != "" {
-			return ctlresm.DoneApplyState{Done: true}, descMsgs,
+			return ctlresm.DoneApplyState{Done: true}, descMsgs, false,
 				fmt.Errorf("Expected annotation '%s' on resource '%s' to have value ''",
 					disableAssociatedResourcesWaitingAnnKey, c.res.Description())
 		}
 		if convergedResState != nil {
-			return *convergedResState, descMsgs, nil
+			return *convergedResState, descMsgs, false, nil
 		}
-		return ctlresm.DoneApplyState{Done: true, Successful: true}, descMsgs, nil
+		return ctlresm.DoneApplyState{Done: true, Successful: true}, descMsgs, false, nil
 	}
 
 	associatedRsStates := []ctlresm.DoneApplyState{}
@@ -80,7 +83,7 @@ func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 			state = &ctlresm.DoneApplyState{Done: true, Successful: true}
 		}
 		if err != nil {
-			return *state, descMsgs, err
+			return *state, descMsgs, false, err
 		}
 
 		associatedRsStates = append(associatedRsStates, *state)
@@ -89,22 +92,25 @@ func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 
 	// If parent state is present, ignore all associated resource states
 	if convergedResState != nil {
-		return *convergedResState, descMsgs, nil
+		return *convergedResState, descMsgs, false, nil
+	}
+
+	if time.Now().Sub(startTime) > c.resourceWaitTimeout {
+		return ctlresm.DoneApplyState{}, nil, true, fmt.Errorf("Resource wait timed out waiting after %s", c.resourceWaitTimeout)
 	}
 
 	for _, state := range associatedRsStates {
 		if state.TerminallyFailed() {
-			return state, descMsgs, nil
+			return state, descMsgs, false, nil
 		}
 	}
 
 	for _, state := range associatedRsStates {
 		if !state.Done {
-			return state, descMsgs, nil
+			return state, descMsgs, false, nil
 		}
 	}
-
-	return ctlresm.DoneApplyState{Done: true, Successful: true}, descMsgs, nil
+	return ctlresm.DoneApplyState{Done: true, Successful: true}, descMsgs, false, nil
 }
 
 func (c ConvergedResource) associatedRs() ([]ctlres.Resource, error) {
