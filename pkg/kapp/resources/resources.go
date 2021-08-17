@@ -430,7 +430,7 @@ func (c *ResourcesImpl) isPodMetrics(resource Resource, err error) bool {
 
 func (c *ResourcesImpl) isGeneralRetryableErr(err error) bool {
 	return IsResourceChangeBlockedErr(err) || c.isServerRescaleErr(err) ||
-		c.isResourceQuotaConflict(err) || c.isInternalNetworkFailure(err) || errors.IsTooManyRequests(err)
+		c.isResourceQuotaConflict(err) || c.isInternalFailure(err) || errors.IsTooManyRequests(err)
 }
 
 // Fixes issues I observed with GKE:
@@ -453,12 +453,12 @@ func (c *ResourcesImpl) isServerRescaleErr(err error) bool {
 	return false
 }
 
-//Handles case pointed out in : https://github.com/vmware-tanzu/carvel-kapp/issues/258 .
-//An internal network error which might succeed on retrying.
-func (c *ResourcesImpl) isInternalNetworkFailure(err error) bool {
+// Handles case pointed out in : https://github.com/vmware-tanzu/carvel-kapp/issues/258.
+// An internal network error which might succeed on retrying.
+func (c *ResourcesImpl) isInternalFailure(err error) bool {
 	switch err := err.(type) {
 	case *errors.StatusError:
-		if errors.IsInternalError(err) && strings.Contains(err.ErrStatus.Message, "connect: connection refused") {
+		if errors.IsInternalError(err) {
 			return true
 		}
 	}
