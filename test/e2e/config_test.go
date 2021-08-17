@@ -146,19 +146,43 @@ func TestYttRebaseRule_ServiceAccountRebaseTokenSecret(t *testing.T) {
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: test-sa
+  name: test-sa-with-secrets
 secrets:
-- name: some-secret`
+- name: some-secret
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-sa-without-secrets`
 
 	yaml2 := `
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: test-sa
+  name: test-sa-with-secrets
 secrets:
 - name: some-secret
-- name: new-some-secret`
+- name: new-some-secret
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-sa-without-secrets`
+
+	yaml3 := `
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-sa-with-secrets
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-sa-without-secrets
+secrets:
+- name: some-secret`
 
 	name := "test-config-ytt-rebase-sa-rebase"
 	cleanUp := func() {
@@ -174,7 +198,7 @@ secrets:
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-		secrets := NewPresentClusterResource("serviceaccount", "test-sa", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
+		secrets := NewPresentClusterResource("serviceaccount", "test-sa-with-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
 		if len(secrets) != 2 {
 			t.Fatalf("Expected one set and one generated secret")
 		}
@@ -182,31 +206,45 @@ secrets:
 			t.Fatalf("Expected provided secret at idx0: %#v", secrets[0])
 		}
 		generatedSecretName = secrets[1].(map[string]interface{})["name"].(string)
-		if !strings.HasPrefix(generatedSecretName, "test-sa-token-") {
+		if !strings.HasPrefix(generatedSecretName, "test-sa-with-secrets-token-") {
 			t.Fatalf("Expected generated secret at idx1: %#v", secrets[1])
 		}
-	})
 
-	logger.Section("deploy no change as rebase rule should retain generated secret", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
-
-		resp := uitest.JSONUIFromBytes(t, []byte(out))
-		expected := []map[string]string{}
-
-		if !reflect.DeepEqual(resp.Tables[0].Rows, expected) {
-			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
+		secrets = NewPresentClusterResource("serviceaccount", "test-sa-without-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
+		if len(secrets) != 1 {
+			t.Fatalf("Expected one set and one generated secret")
 		}
-		if resp.Tables[0].Notes[0] != "Op:      0 create, 0 delete, 0 update, 0 noop" {
-			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
+		if !strings.HasPrefix(secrets[0].(map[string]interface{})["name"].(string), "test-sa-without-secrets-token-") {
+			t.Fatalf("Expected generated secret at idx0: %#v", secrets[0])
 		}
 	})
+
+	ensureDeploysWithNoChanges := func(yamlContent string) {
+		for i := 0; i < 3; i++ { // Try doing it a few times
+			logger.Section("deploy with no changes as rebase rule should retain generated secrets", func() {
+				out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json", "-c"},
+					RunOpts{IntoNs: true, StdinReader: strings.NewReader(yamlContent)})
+
+				resp := uitest.JSONUIFromBytes(t, []byte(out))
+				expected := []map[string]string{}
+
+				if !reflect.DeepEqual(resp.Tables[0].Rows, expected) {
+					t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
+				}
+				if resp.Tables[0].Notes[0] != "Op:      0 create, 0 delete, 0 update, 0 noop" {
+					t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
+				}
+			})
+		}
+	}
+
+	ensureDeploysWithNoChanges(yaml1)
 
 	logger.Section("deploy with additional secret, but retain existing generated secret", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
-		secrets := NewPresentClusterResource("serviceaccount", "test-sa", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
+		secrets := NewPresentClusterResource("serviceaccount", "test-sa-with-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
 		if len(secrets) != 3 {
 			t.Fatalf("Expected one set and one generated secret")
 		}
@@ -220,6 +258,34 @@ secrets:
 			t.Fatalf("Expected previous generated secret at idx2: %#v", secrets[1])
 		}
 	})
+
+	ensureDeploysWithNoChanges(yaml2)
+
+	logger.Section("deploy with flipped secrets", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "-c"},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml3)})
+
+		secrets := NewPresentClusterResource("serviceaccount", "test-sa-with-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
+		if len(secrets) != 1 {
+			t.Fatalf("Expected one set and one generated secret")
+		}
+		if !reflect.DeepEqual(secrets[0], map[string]interface{}{"name": generatedSecretName}) {
+			t.Fatalf("Expected previous generated secret at idx0: %#v", secrets[0])
+		}
+
+		secrets = NewPresentClusterResource("serviceaccount", "test-sa-without-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
+		if len(secrets) != 2 {
+			t.Fatalf("Expected one set and one generated secret")
+		}
+		if !reflect.DeepEqual(secrets[0], map[string]interface{}{"name": "some-secret"}) {
+			t.Fatalf("Expected provided secret at idx0: %#v", secrets[0])
+		}
+		if !strings.HasPrefix(secrets[1].(map[string]interface{})["name"].(string), "test-sa-without-secrets-token-") {
+			t.Fatalf("Expected generated secret at idx1: %#v", secrets[1])
+		}
+	})
+
+	ensureDeploysWithNoChanges(yaml3)
 }
 
 func TestYttRebaseRule_OverlayContractV1(t *testing.T) {
