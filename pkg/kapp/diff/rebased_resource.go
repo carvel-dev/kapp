@@ -4,6 +4,8 @@
 package diff
 
 import (
+	"fmt"
+
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
@@ -33,6 +35,7 @@ func (r RebasedResource) Resource() (ctlres.Resource, error) {
 	}
 
 	result := r.newRes.DeepCopy()
+	resultDesc := result.Description() // capture since resource could change
 
 	if r.existingRes == nil {
 		return result, nil // all done rebasing
@@ -49,7 +52,7 @@ func (r RebasedResource) Resource() (ctlres.Resource, error) {
 
 		err := t.ApplyFromMultiple(result, resSources)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Applying rebase rule to %s: %s", resultDesc, err)
 		}
 	}
 
