@@ -6,6 +6,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -46,9 +47,7 @@ func (f *DepsFactoryImpl) DynamicClient() (dynamic.Interface, error) {
 
 	// copy to avoid mutating the passed-in config
 	cpConfig := rest.CopyConfig(config)
-	if !f.Warnings {
-		cpConfig.WarningHandler = rest.NoWarnings{}
-	}
+	cpConfig.WarningHandler = f.newWarningHandler()
 
 	clientset, err := dynamic.NewForConfig(cpConfig)
 	if err != nil {
@@ -117,4 +116,15 @@ func (f *DepsFactoryImpl) summarizeNodes(config *rest.Config) string {
 		}
 		return fmt.Sprintf("%s, %d+", oldestNode.Name, len(nodes.Items)-1)
 	}
+}
+
+func (f *DepsFactoryImpl) newWarningHandler() rest.WarningHandler {
+	if !f.Warnings {
+		return rest.NoWarnings{}
+	}
+	options := rest.WarningWriterOptions{
+		Deduplicate: true,
+	}
+	warningWriter := rest.NewWarningWriter(os.Stderr, options)
+	return warningWriter
 }
