@@ -90,7 +90,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 			desc := fmt.Sprintf("waiting on %s", change.Cluster.WaitDescription())
 			c.ui.Notify(descMsgs)
 
-			if err != nil && err.Error() == "resource wait timeout"{
+			if err != nil && err.Error() == "resource wait timeout" {
 				return nil, fmt.Errorf("Resource timed out waiting after %s", c.opts.ResourceWaitTimeout)
 			}
 
