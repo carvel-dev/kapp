@@ -7,7 +7,7 @@ import (
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 )
 
-func TestWaitResourceTimeout(t *testing.T) {
+func TestWaitTimeout(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -92,7 +92,7 @@ spec:
               value: stranger
 `
 
-	name := "test-resource-wait-timeout"
+	name := "test-wait-timeout"
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
 	}
