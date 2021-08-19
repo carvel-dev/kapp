@@ -4,7 +4,6 @@
 package clusterapply
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -14,10 +13,10 @@ import (
 )
 
 type WaitingChangesOpts struct {
-	Timeout             time.Duration
-	ResourceWaitTimeout time.Duration
-	CheckInterval       time.Duration
-	Concurrency         int
+	Timeout         time.Duration
+	ResourceTimeout time.Duration
+	CheckInterval   time.Duration
+	Concurrency     int
 }
 
 type WaitingChanges struct {
@@ -65,19 +64,17 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 		for _, change := range c.trackedChanges {
 			change := change // copy
 
-			go func(timeout time.Duration) {
-				//To start tracking the time for the new resource
-				if change.startTime.IsZero() {
-					change.startTime = time.Now()
-				}
-
+			go func() {
 				waitThrottle.Take()
 				defer waitThrottle.Done()
 
 				state, descMsgs, err := change.Cluster.IsDoneApplying()
-				err = checkForTimeout(change, timeout, err)
+				// check for resource timeout
+				if err == nil && time.Now().Sub(change.startTime) > c.opts.ResourceTimeout {
+					err = fmt.Errorf("Resource timed out waiting after %s", c.opts.ResourceTimeout)
+				}
 				waitCh <- waitResult{Change: change, State: state, DescMsgs: descMsgs, Err: err}
-			}(c.opts.ResourceWaitTimeout)
+			}()
 		}
 
 		var newInProgressChanges []WaitingChange
@@ -89,10 +86,6 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 
 			desc := fmt.Sprintf("waiting on %s", change.Cluster.WaitDescription())
 			c.ui.Notify(descMsgs)
-
-			if err != nil && err.Error() == "resource wait timeout" {
-				return nil, fmt.Errorf("Resource timed out waiting after %s", c.opts.ResourceWaitTimeout)
-			}
 
 			if err != nil {
 				return nil, fmt.Errorf("%s: Errored: %s", desc, err)
@@ -138,13 +131,4 @@ func (c *WaitingChanges) Complete() error {
 
 func (c *WaitingChanges) stats() string {
 	return fmt.Sprintf("[%d/%d done]", c.numWaited, c.numTotal)
-}
-
-func checkForTimeout(change WaitingChange, timeout time.Duration, err error) error {
-	if time.Now().Sub(change.startTime) > timeout {
-		return errors.New("resource wait timeout")
-	} else if err != nil {
-		return err
-	}
-	return nil
 }

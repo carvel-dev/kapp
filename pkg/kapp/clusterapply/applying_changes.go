@@ -95,7 +95,7 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 			}
 
 			c.markApplied(result.Change)
-			appliedChanges = append(appliedChanges, WaitingChange{result.Change, result.ClusterChange, time.Time{}})
+			appliedChanges = append(appliedChanges, WaitingChange{result.Change, result.ClusterChange, time.Now()})
 		}
 
 		if len(appliedChanges) > 0 {
