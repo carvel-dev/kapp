@@ -175,7 +175,7 @@ spec:
 		validateChanges(t, resp.Tables, expected, "Op:      6 create, 0 delete, 0 update, 0 noop",
 			"Wait to: 6 reconcile, 0 delete, 0 noop", out)
 
-		if len(resp.Lines) > 0 && resp.Lines[len(resp.Lines)-1] != "kapp: Error: waiting on reconcile namespace/ns3 (v1) cluster:\n  Errored:\n    Resource timed out waiting after 2ms" {
+		if len(resp.Lines) > 0 && !strings.Contains(resp.Lines[len(resp.Lines)-1] ,"Resource timed out waiting after 2ms") {
 			t.Fatalf("Expected to see timed out, but did not: '%s'", resp.Lines[len(resp.Lines)-1])
 		}
 	})
@@ -184,7 +184,7 @@ spec:
 
 	logger.Section("Global wait timeout", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--wait-timeout",
-			"2s", "--wait-resource-timeout", "2m", "--json"},
+			"2ms", "--wait-resource-timeout", "2m", "--json"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
 		expected := []map[string]string{{
@@ -254,7 +254,7 @@ spec:
 		validateChanges(t, resp.Tables, expected, "Op:      6 create, 0 delete, 0 update, 0 noop",
 			"Wait to: 6 reconcile, 0 delete, 0 noop", out)
 
-		if len(resp.Lines) > 0 && resp.Lines[len(resp.Lines)-1] != "kapp: Error: Timed out waiting after 2s" {
+		if len(resp.Lines) > 0 && resp.Lines[len(resp.Lines)-1] != "kapp: Error: Timed out waiting after 2ms" {
 			t.Fatalf("Expected to see timed out, but did not: '%s'", resp.Lines[len(resp.Lines)-1])
 		}
 	})
