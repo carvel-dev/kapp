@@ -6,7 +6,6 @@ package core
 import (
 	"context"
 	"fmt"
-	"os"
 	"sync"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -124,7 +123,17 @@ func (f *DepsFactoryImpl) newWarningHandler() rest.WarningHandler {
 	}
 	options := rest.WarningWriterOptions{
 		Deduplicate: true,
+		Color:       true,
 	}
-	warningWriter := rest.NewWarningWriter(os.Stderr, options)
+	warningWriter := rest.NewWarningWriter(uiWriter{ui: f.ui}, options)
 	return warningWriter
+}
+
+type uiWriter struct {
+	ui ui.UI
+}
+
+func (w uiWriter) Write(data []byte) (int, error) {
+	w.ui.BeginLinef("%s", data)
+	return len(data), nil
 }
