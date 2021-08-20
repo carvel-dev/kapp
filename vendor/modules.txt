@@ -44,8 +44,9 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
-# github.com/google/gofuzz v1.1.0
+# github.com/google/gofuzz v1.2.0
 github.com/google/gofuzz
+github.com/google/gofuzz/bytesource
 # github.com/googleapis/gnostic v0.5.1
 github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
@@ -60,11 +61,38 @@ github.com/imdario/mergo
 github.com/inconshreveable/mousetrap
 # github.com/json-iterator/go v1.1.10
 github.com/json-iterator/go
-# github.com/k14s/difflib v0.0.0-20200108171459-b101e55e0592
+# github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57
 ## explicit
 github.com/k14s/difflib
 # github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115
 github.com/k14s/semver/v4
+# github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368
+github.com/k14s/starlark-go/internal/compile
+github.com/k14s/starlark-go/internal/spell
+github.com/k14s/starlark-go/resolve
+github.com/k14s/starlark-go/starlark
+github.com/k14s/starlark-go/starlarkstruct
+github.com/k14s/starlark-go/syntax
+# github.com/k14s/ytt v0.34.0
+## explicit
+github.com/k14s/ytt/pkg/cmd/template
+github.com/k14s/ytt/pkg/cmd/ui
+github.com/k14s/ytt/pkg/filepos
+github.com/k14s/ytt/pkg/files
+github.com/k14s/ytt/pkg/orderedmap
+github.com/k14s/ytt/pkg/schema
+github.com/k14s/ytt/pkg/structmeta
+github.com/k14s/ytt/pkg/template
+github.com/k14s/ytt/pkg/template/core
+github.com/k14s/ytt/pkg/texttemplate
+github.com/k14s/ytt/pkg/version
+github.com/k14s/ytt/pkg/workspace
+github.com/k14s/ytt/pkg/workspace/ref
+github.com/k14s/ytt/pkg/yamlmeta
+github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2
+github.com/k14s/ytt/pkg/yamltemplate
+github.com/k14s/ytt/pkg/yttlibrary
+github.com/k14s/ytt/pkg/yttlibrary/overlay
 # github.com/mattn/go-colorable v0.1.6
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.12
