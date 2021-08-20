@@ -153,6 +153,23 @@ rebaseRules:
   resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: v1, kind: ServiceAccount}
 
+# Secretgen populates secret data for annotated secrets
+- paths:
+  - [data, .dockerconfigjson]
+  - [metadata, annotations, secretgen.carvel.dev/status]
+  type: copy
+  sources: [existing, new]
+  resourceMatchers:
+  - andMatcher:
+      matchers:
+      - apiVersionKindMatcher: {apiVersion: v1, kind: Secret}
+      - hasAnnotationMatcher:
+          keys: [secretgen.carvel.dev/image-pull-secret]
+      - notMatcher:
+          matcher:
+            hasAnnotationMatcher:
+              keys: [kapp.k14s.io/disable-default-secretgen-rebase-rules]
+
 diffAgainstLastAppliedFieldExclusionRules:
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
   resourceMatchers: *appsV1DeploymentWithRevAnnKey
