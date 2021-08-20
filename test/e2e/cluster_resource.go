@@ -6,9 +6,15 @@ package e2e
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+)
+
+var (
+	hasShowManagedFieldsFlag       bool
+	determineShowManagedFieldsFlag sync.Once
 )
 
 type ClusterResource struct {
@@ -16,7 +22,20 @@ type ClusterResource struct {
 }
 
 func NewPresentClusterResource(kind, name, ns string, kubectl Kubectl) ClusterResource {
-	out, _ := kubectl.RunWithOpts([]string{"get", kind, name, "-n", ns, "-o", "yaml"}, RunOpts{})
+	// Since -oyaml output is different between different kubectl versions
+	// due to inclusion/exclusion of managed fields, lets try to
+	// always include it via a flag. Older versions did not have it.
+	determineShowManagedFieldsFlag.Do(func() {
+		_, err := kubectl.RunWithOpts([]string{"get", "node", "--show-managed-fields"}, RunOpts{AllowError: true})
+		hasShowManagedFieldsFlag = (err == nil)
+	})
+
+	args := []string{"get", kind, name, "-n", ns, "-o", "yaml"}
+	if hasShowManagedFieldsFlag {
+		args = append(args, "--show-managed-fields")
+	}
+
+	out, _ := kubectl.RunWithOpts(args, RunOpts{})
 	return ClusterResource{ctlres.MustNewResourceFromBytes([]byte(out))}
 }
 
