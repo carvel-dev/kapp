@@ -17,10 +17,10 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.20.0
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
-	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
+	golang.org/x/net v0.0.0-20210520170846-37e1c6afe023
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.19.2 // kubernetes-1.11.0
-	k8s.io/apimachinery v0.19.2 // kubernetes-1.11.0
+	k8s.io/apimachinery v0.22.1 // kubernetes-1.11.0
 	k8s.io/client-go v0.19.2 // kubernetes-1.11.0
 )
 
