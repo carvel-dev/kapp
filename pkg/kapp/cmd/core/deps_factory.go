@@ -18,18 +18,24 @@ import (
 type DepsFactory interface {
 	DynamicClient() (dynamic.Interface, error)
 	CoreClient() (kubernetes.Interface, error)
+	ConfigureWarnings(warnings bool)
 }
 
 type DepsFactoryImpl struct {
 	configFactory   ConfigFactory
 	ui              ui.UI
 	printTargetOnce *sync.Once
+
+	Warnings bool
 }
 
 var _ DepsFactory = &DepsFactoryImpl{}
 
 func NewDepsFactoryImpl(configFactory ConfigFactory, ui ui.UI) *DepsFactoryImpl {
-	return &DepsFactoryImpl{configFactory, ui, &sync.Once{}}
+	return &DepsFactoryImpl{
+		configFactory:   configFactory,
+		ui:              ui,
+		printTargetOnce: &sync.Once{}}
 }
 
 func (f *DepsFactoryImpl) DynamicClient() (dynamic.Interface, error) {
@@ -40,8 +46,7 @@ func (f *DepsFactoryImpl) DynamicClient() (dynamic.Interface, error) {
 
 	// copy to avoid mutating the passed-in config
 	cpConfig := rest.CopyConfig(config)
-	// set the warning handler for this client to ignore warnings
-	cpConfig.WarningHandler = rest.NoWarnings{}
+	cpConfig.WarningHandler = f.newWarningHandler()
 
 	clientset, err := dynamic.NewForConfig(cpConfig)
 	if err != nil {
@@ -67,6 +72,10 @@ func (f *DepsFactoryImpl) CoreClient() (kubernetes.Interface, error) {
 	f.printTarget(config)
 
 	return clientset, nil
+}
+
+func (f *DepsFactoryImpl) ConfigureWarnings(warnings bool) {
+	f.Warnings = warnings
 }
 
 func (f *DepsFactoryImpl) printTarget(config *rest.Config) {
@@ -106,4 +115,25 @@ func (f *DepsFactoryImpl) summarizeNodes(config *rest.Config) string {
 		}
 		return fmt.Sprintf("%s, %d+", oldestNode.Name, len(nodes.Items)-1)
 	}
+}
+
+func (f *DepsFactoryImpl) newWarningHandler() rest.WarningHandler {
+	if !f.Warnings {
+		return rest.NoWarnings{}
+	}
+	options := rest.WarningWriterOptions{
+		Deduplicate: true,
+		Color:       true,
+	}
+	warningWriter := rest.NewWarningWriter(uiWriter{ui: f.ui}, options)
+	return warningWriter
+}
+
+type uiWriter struct {
+	ui ui.UI
+}
+
+func (w uiWriter) Write(data []byte) (int, error) {
+	w.ui.BeginLinef("%s", data)
+	return len(data), nil
 }
