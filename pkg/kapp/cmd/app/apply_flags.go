@@ -56,7 +56,7 @@ func (s *ApplyFlags) SetWithDefaults(prefix string, defaults ApplyFlags, cmd *co
 	cmd.Flags().DurationVar(&s.WaitingChangesOpts.Timeout, prefix+"wait-timeout",
 		mustParseDuration("15m"), "Maximum amount of time to wait in wait phase")
 	cmd.Flags().DurationVar(&s.WaitingChangesOpts.ResourceTimeout, prefix+"wait-resource-timeout",
-		mustParseDuration("15m"), "Maximum amount of time to wait for a resource in wait phase")
+		mustParseDuration("0"), "Maximum amount of time to wait for a resource in wait phase. 0s is the default value which indicates no timeout")
 	cmd.Flags().DurationVar(&s.WaitingChangesOpts.CheckInterval, prefix+"wait-check-interval",
 		mustParseDuration("1s"), "Amount of time to sleep between checks while waiting")
 	cmd.Flags().IntVar(&s.WaitingChangesOpts.Concurrency, prefix+"wait-concurrency",

@@ -6,8 +6,6 @@ package e2e
 import (
 	"strings"
 	"testing"
-
-	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 )
 
 func TestWaitTimeout(t *testing.T) {
@@ -104,158 +102,24 @@ spec:
 	defer cleanUp()
 
 	logger.Section("Resource wait timeout", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--wait-timeout",
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--wait-timeout",
 			"2m", "--wait-resource-timeout", "2ms", "--json"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
-		expected := []map[string]string{{
-			"conditions":      "",
-			"kind":            "Namespace",
-			"name":            "ns1",
-			"namespace":       "(cluster)",
-			"op":              "create",
-			"op_strategy":     "",
-			"reconcile_info":  "",
-			"reconcile_state": "",
-			"wait_to":         "reconcile",
-		}, {
-			"conditions":      "",
-			"kind":            "Namespace",
-			"name":            "ns2",
-			"namespace":       "(cluster)",
-			"op":              "create",
-			"op_strategy":     "",
-			"reconcile_info":  "",
-			"reconcile_state": "",
-			"wait_to":         "reconcile",
-		}, {
-			"conditions":      "",
-			"kind":            "Namespace",
-			"name":            "ns3",
-			"namespace":       "(cluster)",
-			"op":              "create",
-			"op_strategy":     "",
-			"reconcile_info":  "",
-			"reconcile_state": "",
-			"wait_to":         "reconcile",
-		}, {
-			"conditions":      "",
-			"kind":            "Deployment",
-			"name":            "simple-app",
-			"namespace":       "kapp-test",
-			"op":              "create",
-			"op_strategy":     "",
-			"reconcile_info":  "",
-			"reconcile_state": "",
-			"wait_to":         "reconcile",
-		}, {
-			"conditions":      "",
-			"kind":            "Deployment",
-			"name":            "simple-app2",
-			"namespace":       "kapp-test",
-			"op":              "create",
-			"op_strategy":     "",
-			"reconcile_info":  "",
-			"reconcile_state": "",
-			"wait_to":         "reconcile",
-		}, {
-			"conditions":      "",
-			"kind":            "Deployment",
-			"name":            "simple-app3",
-			"namespace":       "kapp-test",
-			"op":              "create",
-			"op_strategy":     "",
-			"reconcile_info":  "",
-			"reconcile_state": "",
-			"wait_to":         "reconcile",
-		}}
-
-		resp := uitest.JSONUIFromBytes(t, []byte(out))
-
-		validateChanges(t, resp.Tables, expected, "Op:      6 create, 0 delete, 0 update, 0 noop",
-			"Wait to: 6 reconcile, 0 delete, 0 noop", out)
-
-		if len(resp.Lines) > 0 && !strings.Contains(resp.Lines[len(resp.Lines)-1] ,"Resource timed out waiting after 2ms") {
-			t.Fatalf("Expected to see timed out, but did not: '%s'", resp.Lines[len(resp.Lines)-1])
+		if !strings.Contains(err.Error(), "Resource timed out waiting after 2ms") {
+			t.Fatalf("Expected to see timed out, but did not: '%s'", err.Error())
 		}
 	})
 
 	cleanUp()
 
 	logger.Section("Global wait timeout", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--wait-timeout",
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--wait-timeout",
 			"2ms", "--wait-resource-timeout", "2m", "--json"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
-		expected := []map[string]string{{
-			"conditions":      "",
-			"kind":            "Namespace",
-			"name":            "ns1",
-			"namespace":       "(cluster)",
-			"op":              "create",
-			"op_strategy":     "",
-			"reconcile_info":  "",
-			"reconcile_state": "",
-			"wait_to":         "reconcile",
-		}, {
-			"conditions":      "",
-			"kind":            "Namespace",
-			"name":            "ns2",
-			"namespace":       "(cluster)",
-			"op":              "create",
-			"op_strategy":     "",
-			"reconcile_info":  "",
-			"reconcile_state": "",
-			"wait_to":         "reconcile",
-		}, {
-			"conditions":      "",
-			"kind":            "Namespace",
-			"name":            "ns3",
-			"namespace":       "(cluster)",
-			"op":              "create",
-			"op_strategy":     "",
-			"reconcile_info":  "",
-			"reconcile_state": "",
-			"wait_to":         "reconcile",
-		}, {
-			"conditions":      "",
-			"kind":            "Deployment",
-			"name":            "simple-app",
-			"namespace":       "kapp-test",
-			"op":              "create",
-			"op_strategy":     "",
-			"reconcile_info":  "",
-			"reconcile_state": "",
-			"wait_to":         "reconcile",
-		}, {
-			"conditions":      "",
-			"kind":            "Deployment",
-			"name":            "simple-app2",
-			"namespace":       "kapp-test",
-			"op":              "create",
-			"op_strategy":     "",
-			"reconcile_info":  "",
-			"reconcile_state": "",
-			"wait_to":         "reconcile",
-		}, {
-			"conditions":      "",
-			"kind":            "Deployment",
-			"name":            "simple-app3",
-			"namespace":       "kapp-test",
-			"op":              "create",
-			"op_strategy":     "",
-			"reconcile_info":  "",
-			"reconcile_state": "",
-			"wait_to":         "reconcile",
-		}}
-
-		resp := uitest.JSONUIFromBytes(t, []byte(out))
-
-		validateChanges(t, resp.Tables, expected, "Op:      6 create, 0 delete, 0 update, 0 noop",
-			"Wait to: 6 reconcile, 0 delete, 0 noop", out)
-
-		if len(resp.Lines) > 0 && resp.Lines[len(resp.Lines)-1] != "kapp: Error: Timed out waiting after 2ms" {
-			t.Fatalf("Expected to see timed out, but did not: '%s'", resp.Lines[len(resp.Lines)-1])
+		if !strings.Contains(err.Error(), "kapp: Error: Timed out waiting after 2ms") {
+			t.Fatalf("Expected to see timed out, but did not: '%s'", err.Error())
 		}
 	})
 }
