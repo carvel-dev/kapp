@@ -13,7 +13,7 @@ type WarningFlags struct {
 }
 
 func (f *WarningFlags) Set(cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
-	cmd.PersistentFlags().BoolVar(&f.Warnings, "warnings", true, "Show warnings")
+	cmd.PersistentFlags().BoolVar(&f.Warnings, "warnings", false, "Show warnings")
 }
 
 func (f *WarningFlags) Configure(depsFactory cmdcore.DepsFactory) {
