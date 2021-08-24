@@ -12,9 +12,6 @@ import (
 	"github.com/k14s/kapp/pkg/kapp/util"
 )
 
-// DefaultResourceTimeout to skip timeout if not mentioned
-const DefaultResourceTimeout = 0
-
 type WaitingChangesOpts struct {
 	Timeout         time.Duration
 	ResourceTimeout time.Duration
@@ -73,8 +70,10 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 
 				state, descMsgs, err := change.Cluster.IsDoneApplying()
 				// check for resource timeout
-				if err == nil && c.opts.ResourceTimeout != DefaultResourceTimeout && time.Now().Sub(change.startTime) > c.opts.ResourceTimeout {
-					err = fmt.Errorf("Resource timed out waiting after %s", c.opts.ResourceTimeout)
+				if err == nil {
+					if c.opts.ResourceTimeout != 0 && time.Now().Sub(change.startTime) > c.opts.ResourceTimeout {
+						err = fmt.Errorf("Resource timed out waiting after %s", c.opts.ResourceTimeout)
+					}
 				}
 				waitCh <- waitResult{Change: change, State: state, DescMsgs: descMsgs, Err: err}
 			}()

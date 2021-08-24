@@ -14,15 +14,9 @@ func TestWaitTimeout(t *testing.T) {
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
 
 	yaml1 := `
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ns1
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: ns1
   name: simple-app
 spec:
   selector:
@@ -40,20 +34,9 @@ spec:
             - name: HELLO_MSG
               value: stranger
 ---
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ns2
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ns3
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: ns2
   name: simple-app2
 spec:
   selector:
@@ -74,7 +57,6 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: ns3
   name: simple-app3
 spec:
   selector:
