@@ -95,14 +95,13 @@ func (f ResourceFilter) Matches(resource Resource) bool {
 	}
 
 	if len(f.Labels) > 0 {
-		var matched bool = false
+		var matched bool
 		for _, label := range f.Labels {
 			labelSelector, err := labels.Parse(label)
 			if err != nil {
 				return false
 			}
-			labelsSet := labels.Set(resource.Labels())
-			if labelSelector.Matches(labelsSet) {
+			if labelSelector.Matches(labels.Set(resource.Labels())) {
 				matched = true
 				break
 			}
