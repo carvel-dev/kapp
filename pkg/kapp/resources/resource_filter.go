@@ -101,7 +101,7 @@ func (f ResourceFilter) Matches(resource Resource) bool {
 			if err != nil {
 				return false
 			}
-			var labelsSet labels.Set = labels.Set(resource.Labels())
+			labelsSet := labels.Set(resource.Labels())
 			if labelSelector.Matches(labelsSet) {
 				matched = true
 				break
