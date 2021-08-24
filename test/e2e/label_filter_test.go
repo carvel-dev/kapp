@@ -86,5 +86,4 @@ data:
 		NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
 		NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
 	})
-
 }
