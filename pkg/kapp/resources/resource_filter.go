@@ -5,10 +5,10 @@ package resources
 
 import (
 	"encoding/json"
-	"k8s.io/apimachinery/pkg/labels"
 	"time"
 
 	"github.com/k14s/kapp/pkg/kapp/matcher" // TODO inject
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 type ResourceFilter struct {
@@ -95,18 +95,16 @@ func (f ResourceFilter) Matches(resource Resource) bool {
 	}
 
 	if len(f.Labels) > 0 {
-		var matched bool
+		var matched bool = false
 		for _, label := range f.Labels {
 			labelSelector, err := labels.Parse(label)
-			expectedLabelKey, expectedLabelVal, err := NewSimpleLabel(labelSelector).KV()
 			if err != nil {
 				return false
 			}
-			if val, found := resource.Labels()[expectedLabelKey]; found {
-				if val == expectedLabelVal {
-					matched = true
-					break
-				}
+			var labelsSet labels.Set = labels.Set(resource.Labels())
+			if labelSelector.Matches(labelsSet) {
+				matched = true
+				break
 			}
 		}
 		if !matched {
