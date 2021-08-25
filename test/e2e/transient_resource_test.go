@@ -5,7 +5,6 @@ package e2e
 
 import (
 	"reflect"
-	"sort"
 	"strings"
 	"testing"
 
@@ -272,8 +271,4 @@ func hasEndpointSlice(result []map[string]string) bool {
 		}
 	}
 	return false
-}
-
-func sortByKind(rows []map[string]string) {
-	sort.SliceStable(rows, func(i, j int) bool { return rows[i]["kind"] < rows[j]["kind"] })
 }

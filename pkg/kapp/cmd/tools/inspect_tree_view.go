@@ -167,7 +167,7 @@ func (a *assocSortingValue) labelAssocStr() string {
 }
 
 func (a *assocSortingValue) uidOwnersStr() string {
-	uids := []string{a.resource.UID()}
+	identifiers := []string{a.resIdentifier(a.resource)}
 	nextRes := &a.resource
 
 	for nextRes != nil {
@@ -178,14 +178,18 @@ func (a *assocSortingValue) uidOwnersStr() string {
 			foundRes, found := a.rsByUID[string(ref.UID)]
 			if found {
 				// only nest into first object that we find
-				uids = append([]string{string(ref.UID)}, uids...)
+				identifiers = append([]string{a.resIdentifier(foundRes)}, identifiers...)
 				nextRes = &foundRes
 				break
 			}
 		}
 	}
 
-	return "ref-" + strings.Join(uids, "/")
+	return "ref-" + strings.Join(identifiers, "/")
+}
+
+func (a *assocSortingValue) resIdentifier(resource ctlres.Resource) string {
+	return fmt.Sprintf("%s-%s", resource.Kind(), resource.Name())
 }
 
 func (a *assocSortingValue) Depth() int {
