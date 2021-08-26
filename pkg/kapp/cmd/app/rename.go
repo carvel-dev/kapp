@@ -17,8 +17,9 @@ type RenameOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	AppFlags Flags
-	NewName  string
+	AppFlags     Flags
+	NewName      string
+	NewNamespace string
 }
 
 func NewRenameOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *RenameOptions {
@@ -36,6 +37,7 @@ func NewRenameCmd(o *RenameOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	}
 	o.AppFlags.Set(cmd, flagsFactory)
 	cmd.Flags().StringVar(&o.NewName, "new-name", "", "Set new name (format: new-name)")
+	cmd.Flags().StringVar(&o.NewNamespace, "new-namespace", "", "Set new namespace (format: new-namespace)")
 	return cmd
 }
 
@@ -53,14 +55,27 @@ func (o *RenameOptions) Run() error {
 	if !exists {
 		return fmt.Errorf("%s", notExistsMsg)
 	}
+	newName := o.NewName
+	newNamespace := o.NewNamespace
+	if newName == "" && newNamespace == "" {
+		return fmt.Errorf("expected either new-name or/and new-namespace to be supplied")
+	}
 
-	o.ui.PrintLinef("Renaming '%s' (namespace: %s) to '%s' (app changes will not be renamed)",
-		app.Name(), o.AppFlags.NamespaceFlags.Name, o.NewName)
+	if newName == "" {
+		newName = app.Name()
+	}
+
+	if newNamespace == "" {
+		newNamespace = o.AppFlags.NamespaceFlags.Name
+	}
+
+	o.ui.PrintLinef("Renaming '%s' (namespace: %s) to '%s (namespace: %s)' (app changes will not be renamed)",
+		app.Name(), o.AppFlags.NamespaceFlags.Name, o.NewName, newNamespace)
 
 	err = o.ui.AskForConfirmation()
 	if err != nil {
 		return err
 	}
 
-	return app.Rename(o.NewName)
+	return app.Rename(o.NewName, o.NewNamespace)
 }

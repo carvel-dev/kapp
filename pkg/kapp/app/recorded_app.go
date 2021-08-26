@@ -177,7 +177,7 @@ func (a *RecordedApp) Delete() error {
 	return nil
 }
 
-func (a *RecordedApp) Rename(newName string) error {
+func (a *RecordedApp) Rename(newName string, newNamespace string) error {
 	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -190,12 +190,12 @@ func (a *RecordedApp) Rename(newName string) error {
 	// Clear out all existing meta fields
 	app.ObjectMeta = metav1.ObjectMeta{
 		Name:        newName,
-		Namespace:   a.nsName,
+		Namespace:   newNamespace,
 		Labels:      app.ObjectMeta.Labels,
 		Annotations: app.ObjectMeta.Annotations,
 	}
 
-	_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), app, metav1.CreateOptions{})
+	_, err = a.coreClient.CoreV1().ConfigMaps(newNamespace).Create(context.TODO(), app, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("Creating app: %s", err)
 	}
