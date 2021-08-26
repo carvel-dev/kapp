@@ -77,5 +77,5 @@ func (o *RenameOptions) Run() error {
 		return err
 	}
 
-	return app.Rename(o.NewName, o.NewNamespace)
+	return app.Rename(newName, newNamespace)
 }
