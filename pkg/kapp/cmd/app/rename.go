@@ -70,7 +70,7 @@ func (o *RenameOptions) Run() error {
 	}
 
 	o.ui.PrintLinef("Renaming '%s' (namespace: %s) to '%s (namespace: %s)' (app changes will not be renamed)",
-		app.Name(), o.AppFlags.NamespaceFlags.Name, o.NewName, newNamespace)
+		app.Name(), o.AppFlags.NamespaceFlags.Name, newName, newNamespace)
 
 	err = o.ui.AskForConfirmation()
 	if err != nil {
