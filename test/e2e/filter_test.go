@@ -12,36 +12,6 @@ func TestFilter(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
-	expectedOutput1 := `
-Namespace  Name           Kind       Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
-kapp-test  redis-config   ConfigMap  -       -    create  -       reconcile  -   -  
-^          redis-primary  Service    -       -    create  -       reconcile  -   -  
-
-Op:      2 create, 0 delete, 0 update, 0 noop
-Wait to: 2 reconcile, 0 delete, 0 noop
-`
-	expectedOutput2 := `
-Namespace  Name           Kind       Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
-kapp-test  redis-config   ConfigMap  -       -    create  -       reconcile  -   -  
-^          redis-config2  ConfigMap  -       -    create  -       reconcile  -   -  
-
-Op:      2 create, 0 delete, 0 update, 0 noop
-Wait to: 2 reconcile, 0 delete, 0 noop
-`
-	expectedOutput3 := `
-Namespace  Name           Kind     Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
-kapp-test  redis-primary  Service  -       -    create  -       reconcile  -   -  
-
-Op:      1 create, 0 delete, 0 update, 0 noop
-Wait to: 1 reconcile, 0 delete, 0 noop
-`
-	expectedOutput4 := `
-Namespace  Name           Kind       Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
-kapp-test  redis-config2  ConfigMap  -       -    create  -       reconcile  -   -  
-
-Op:      1 create, 0 delete, 0 update, 0 noop
-Wait to: 1 reconcile, 0 delete, 0 noop
-`
 	yaml1 := `
 ---
 apiVersion: v1
@@ -88,7 +58,14 @@ data:
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run",
 			"--filter-labels", "x=y,x=z"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+		expectedOutput1 := `
+Namespace  Name           Kind       Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
+kapp-test  redis-config   ConfigMap  -       -    create  -       reconcile  -   -  
+^          redis-primary  Service    -       -    create  -       reconcile  -   -  
 
+Op:      2 create, 0 delete, 0 update, 0 noop
+Wait to: 2 reconcile, 0 delete, 0 noop
+`
 		if !strings.Contains(out, expectedOutput1) {
 			t.Fatalf("Did not find expected diff output >>%s<< in >>%s<<", out, expectedOutput1)
 		}
@@ -98,7 +75,14 @@ data:
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run",
 			"--filter-labels", "x!=y"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+		expectedOutput2 := `
+Namespace  Name           Kind       Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
+kapp-test  redis-config   ConfigMap  -       -    create  -       reconcile  -   -  
+^          redis-config2  ConfigMap  -       -    create  -       reconcile  -   -  
 
+Op:      2 create, 0 delete, 0 update, 0 noop
+Wait to: 2 reconcile, 0 delete, 0 noop
+`
 		if !strings.Contains(out, expectedOutput2) {
 			t.Fatalf("Did not find expected diff output >>%s<< in >>%s<<", out, expectedOutput2)
 		}
@@ -106,9 +90,15 @@ data:
 
 	logger.Section("test filter flag", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run",
-			"--filter", "{\"resource\":{\"kinds\":[\"Service\"]}}"},
+			"--filter", `{"resource":{"kinds":["Service"]}}`},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+		expectedOutput3 := `
+Namespace  Name           Kind     Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
+kapp-test  redis-primary  Service  -       -    create  -       reconcile  -   -  
 
+Op:      1 create, 0 delete, 0 update, 0 noop
+Wait to: 1 reconcile, 0 delete, 0 noop
+`
 		if !strings.Contains(out, expectedOutput3) {
 			t.Fatalf("Did not find expected diff output >>%s<< in >>%s<<", out, expectedOutput3)
 		}
@@ -120,6 +110,13 @@ data:
 			"--filter-labels", "x=a"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
+		expectedOutput4 := `
+Namespace  Name           Kind       Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
+kapp-test  redis-config2  ConfigMap  -       -    create  -       reconcile  -   -  
+
+Op:      1 create, 0 delete, 0 update, 0 noop
+Wait to: 1 reconcile, 0 delete, 0 noop
+`
 		if !strings.Contains(out, expectedOutput4) {
 			t.Fatalf("Did not find expected diff output >>%s<< in >>%s<<", out, expectedOutput4)
 		}
