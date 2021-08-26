@@ -5,6 +5,7 @@ package resources
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/k14s/kapp/pkg/kapp/matcher" // TODO inject
@@ -99,7 +100,7 @@ func (f ResourceFilter) Matches(resource Resource) bool {
 		for _, label := range f.Labels {
 			labelSelector, err := labels.Parse(label)
 			if err != nil {
-				return false
+				panic(fmt.Sprintf("Parsing label selector failed: %s", err))
 			}
 			if labelSelector.Matches(labels.Set(resource.Labels())) {
 				matched = true
