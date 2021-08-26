@@ -77,18 +77,18 @@ spec:
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", crdName},
 			RunOpts{StdinReader: strings.NewReader(yaml)})
 	})
-	logger.Section("deploying without --warnings flag", func() {
+	logger.Section("deploying with --warnings flag", func() {
 		yaml := strings.Replace(crYaml, "<cr-name>", "cr-1", 1)
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", crName},
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", crName, "--warnings=true"},
 			RunOpts{StdinReader: strings.NewReader(yaml)})
 
 		if !strings.Contains(out, customWarning) {
 			t.Fatalf("Expected warning %s, but didn't get", customWarning)
 		}
 	})
-	logger.Section("deploying with --warnings flag", func() {
+	logger.Section("deploying without --warnings flag", func() {
 		yaml := strings.Replace(crYaml, "<cr-name>", "cr-2", 1)
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", crName, "--warnings=false"},
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", crName},
 			RunOpts{StdinReader: strings.NewReader(yaml)})
 
 		if strings.Contains(out, customWarning) {
