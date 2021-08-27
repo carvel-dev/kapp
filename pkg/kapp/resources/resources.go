@@ -381,7 +381,7 @@ func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 	var found bool
 
 	err = util.Retry(time.Second, time.Minute, func() (bool, error) {
-		_, err = resClient.Get(context.TODO(), resource.Name(), metav1.GetOptions{})
+		item, err := resClient.Get(context.TODO(), resource.Name(), metav1.GetOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				found = false
@@ -399,6 +399,14 @@ func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 			// TODO sometimes metav1.StatusReasonUnknown is returned (empty string)
 			// might be related to deletion of mutating webhook
 			return isDone, c.resourceErr(err, "Checking existance of", resource)
+		}
+
+		// If item(i.e. resource from K8s) is not null and its UID didn't match with the
+		// UID of resource we are trying to delete, then it means resource has been deleted
+		// successfully.
+		if item != nil && string(item.GetUID()) != resource.UID() {
+			found = false
+			return true, nil
 		}
 
 		found = true
