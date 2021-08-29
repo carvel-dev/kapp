@@ -404,9 +404,11 @@ func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 		// If item(i.e. resource from K8s) is not null and its UID didn't match with the
 		// UID of resource we are trying to delete, then it means resource has been deleted
 		// successfully.
-		if item != nil && string(item.GetUID()) != resource.UID() {
-			found = false
-			return true, nil
+		if item != nil && resource.UID() != "" {
+			if string(item.GetUID()) != resource.UID() {
+				found = false
+				return true, nil
+			}
 		}
 
 		found = true
