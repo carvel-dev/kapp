@@ -17,11 +17,7 @@ func TestWaitTimeout(t *testing.T) {
  apiVersion: batch/v1 
  kind: Job 
  metadata: 
-   name: successful-job 
-   namespace: __ns__ 
-   annotations: 
-     kapp.k14s.io/update-strategy: always-replace 
-     kapp.k14s.io/change-group: job
+   name: successful-job
  spec: 
    template: 
      metadata: 
@@ -32,26 +28,6 @@ func TestWaitTimeout(t *testing.T) {
          image: busybox 
          command: ["/bin/sh", "-c", "sleep 5"] 
        restartPolicy: Never
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: simple-app
-spec:
-  selector:
-    matchLabels:
-      simple-app: ""
-  template:
-    metadata:
-      labels:
-        simple-app: ""
-    spec:
-      containers:
-        - name: simple-app
-          image: docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0
-          env:
-            - name: HELLO_MSG
-              value: stranger
 `
 
 	name := "test-wait-timeout"
