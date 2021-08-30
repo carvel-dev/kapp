@@ -55,10 +55,11 @@ func (o *RenameOptions) Run() error {
 	if !exists {
 		return fmt.Errorf("%s", notExistsMsg)
 	}
+
 	newName := o.NewName
 	newNamespace := o.NewNamespace
 	if newName == "" && newNamespace == "" {
-		return fmt.Errorf("expected either new-name or/and new-namespace to be supplied")
+		return fmt.Errorf("Expected either new-name or/and new-namespace to be supplied")
 	}
 
 	if newName == "" {
@@ -69,7 +70,7 @@ func (o *RenameOptions) Run() error {
 		newNamespace = o.AppFlags.NamespaceFlags.Name
 	}
 
-	o.ui.PrintLinef("Renaming '%s' (namespace: %s) to '%s (namespace: %s)' (app changes will not be renamed)",
+	o.ui.PrintLinef("Renaming '%s' (namespace: %s) to '%s' (namespace: %s) (app changes will not be renamed)",
 		app.Name(), o.AppFlags.NamespaceFlags.Name, newName, newNamespace)
 
 	err = o.ui.AskForConfirmation()
