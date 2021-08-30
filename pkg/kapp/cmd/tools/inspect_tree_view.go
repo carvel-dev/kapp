@@ -189,7 +189,7 @@ func (a *assocSortingValue) uidOwnersStr() string {
 }
 
 func (a *assocSortingValue) resIdentifier(resource ctlres.Resource) string {
-	return fmt.Sprintf("%s-%s", resource.Kind(), resource.Name())
+	return fmt.Sprintf("%s$%s$%s$%s", resource.Namespace(), resource.APIGroup(), resource.Kind(), resource.Name())
 }
 
 func (a *assocSortingValue) Depth() int {
