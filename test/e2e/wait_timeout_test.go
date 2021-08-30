@@ -26,7 +26,7 @@ func TestWaitTimeout(t *testing.T) {
        containers: 
        - name: successful-job 
          image: busybox 
-         command: ["/bin/sh", "-c", "sleep 5"] 
+         command: ["/bin/sh", "-c", "sleep 10"] 
        restartPolicy: Never
 `
 
@@ -40,10 +40,10 @@ func TestWaitTimeout(t *testing.T) {
 
 	logger.Section("Resource timed out waiting", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--wait-timeout",
-			"2m", "--wait-resource-timeout", "3s", "--json"},
+			"100s", "--wait-resource-timeout", "1s", "--json"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
-		if !strings.Contains(err.Error(), "Resource timed out waiting after 3s") {
+		if !strings.Contains(err.Error(), "Resource timed out waiting after 1s") {
 			t.Fatalf("Expected to see timed out, but did not: '%s'", err.Error())
 		}
 	})
@@ -52,7 +52,7 @@ func TestWaitTimeout(t *testing.T) {
 
 	logger.Section("Resource reconciled successfully before timeout", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--wait-timeout",
-			"2m", "--wait-resource-timeout", "15s", "--json"},
+			"10000s", "--wait-resource-timeout", "10000s", "--json"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
 		if err != nil {
@@ -64,10 +64,10 @@ func TestWaitTimeout(t *testing.T) {
 
 	logger.Section("Global timeout waiting", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--wait-timeout",
-			"2s", "--wait-resource-timeout", "10s", "--json"},
+			"1s", "--wait-resource-timeout", "100s", "--json"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
-		if !strings.Contains(err.Error(), "kapp: Error: Timed out waiting after 2s") {
+		if !strings.Contains(err.Error(), "kapp: Error: Timed out waiting after 1s") {
 			t.Fatalf("Expected to see timed out, but did not: '%s'", err.Error())
 		}
 	})
@@ -76,7 +76,7 @@ func TestWaitTimeout(t *testing.T) {
 
 	logger.Section("Resource reconciled successfully before timeout", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--wait-timeout",
-			"1m", "--wait-resource-timeout", "15s", "--json"},
+			"10000s", "--wait-resource-timeout", "10000s", "--json"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
 		if err != nil {
