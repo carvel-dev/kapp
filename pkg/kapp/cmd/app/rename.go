@@ -59,7 +59,7 @@ func (o *RenameOptions) Run() error {
 	newName := o.NewName
 	newNamespace := o.NewNamespace
 	if newName == "" && newNamespace == "" {
-		return fmt.Errorf("Expected either new-name or/and new-namespace to be supplied")
+		return fmt.Errorf("Expected either --new-name or/and --new-namespace to be supplied")
 	}
 
 	if newName == "" {
