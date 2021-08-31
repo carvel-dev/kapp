@@ -50,18 +50,6 @@ func TestWaitTimeout(t *testing.T) {
 
 	cleanUp()
 
-	logger.Section("Resource reconciled successfully before timeout", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--wait-timeout",
-			"10000s", "--wait-resource-timeout", "10000s", "--json"},
-			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
-
-		if err != nil {
-			t.Fatalf("Expected to be successful without resource timeout: '%s'", err)
-		}
-	})
-
-	cleanUp()
-
 	logger.Section("Global timeout waiting", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--wait-timeout",
 			"1s", "--wait-resource-timeout", "100s", "--json"},
@@ -80,7 +68,7 @@ func TestWaitTimeout(t *testing.T) {
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
 		if err != nil {
-			t.Fatalf("Expected to be successful without global timeout: '%s'", err)
+			t.Fatalf("Expected to be successful without resource timeout: '%s'", err)
 		}
 	})
 }
