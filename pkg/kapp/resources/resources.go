@@ -52,6 +52,7 @@ type ResourcesImpl struct {
 	resourceTypes             ResourceTypes
 	coreClient                kubernetes.Interface
 	dynamicClient             dynamic.Interface
+	mutedDynamicClient        dynamic.Interface
 	fallbackAllowedNamespaces []string
 
 	assumedAllowedNamespacesMemoLock sync.Mutex
@@ -61,12 +62,14 @@ type ResourcesImpl struct {
 }
 
 func NewResourcesImpl(resourceTypes ResourceTypes, coreClient kubernetes.Interface,
-	dynamicClient dynamic.Interface, fallbackAllowedNamespaces []string, logger logger.Logger) *ResourcesImpl {
+	dynamicClient dynamic.Interface, mutedDynamicClient dynamic.Interface,
+	fallbackAllowedNamespaces []string, logger logger.Logger) *ResourcesImpl {
 
 	return &ResourcesImpl{
 		resourceTypes:             resourceTypes,
 		coreClient:                coreClient,
 		dynamicClient:             dynamicClient,
+		mutedDynamicClient:        mutedDynamicClient,
 		fallbackAllowedNamespaces: fallbackAllowedNamespaces,
 		logger:                    logger.NewPrefixed("Resources"),
 	}
@@ -101,7 +104,7 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 			var list *unstructured.UnstructuredList
 			var err error
 
-			client := c.dynamicClient.Resource(resType.GroupVersionResource)
+			client := c.mutedDynamicClient.Resource(resType.GroupVersionResource)
 
 			err = util.Retry2(time.Second, 5*time.Second, c.isServerRescaleErr, func() error {
 				if resType.Namespaced() {

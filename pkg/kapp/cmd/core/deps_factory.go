@@ -17,6 +17,7 @@ import (
 
 type DepsFactory interface {
 	DynamicClient() (dynamic.Interface, error)
+	MutedDynamicClient() (dynamic.Interface, error)
 	CoreClient() (kubernetes.Interface, error)
 	ConfigureWarnings(warnings bool)
 }
@@ -47,6 +48,26 @@ func (f *DepsFactoryImpl) DynamicClient() (dynamic.Interface, error) {
 	// copy to avoid mutating the passed-in config
 	cpConfig := rest.CopyConfig(config)
 	cpConfig.WarningHandler = f.newWarningHandler()
+
+	clientset, err := dynamic.NewForConfig(cpConfig)
+	if err != nil {
+		return nil, fmt.Errorf("Building Dynamic clientset: %s", err)
+	}
+
+	f.printTarget(config)
+
+	return clientset, nil
+}
+
+func (f *DepsFactoryImpl) MutedDynamicClient() (dynamic.Interface, error) {
+	config, err := f.configFactory.RESTConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	// copy to avoid mutating the passed-in config
+	cpConfig := rest.CopyConfig(config)
+	cpConfig.WarningHandler = rest.NoWarnings{}
 
 	clientset, err := dynamic.NewForConfig(cpConfig)
 	if err != nil {

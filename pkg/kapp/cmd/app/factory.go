@@ -31,6 +31,11 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 		return FactorySupportObjs{}, err
 	}
 
+	mutedDynamicClient, err := depsFactory.MutedDynamicClient()
+	if err != nil {
+		return FactorySupportObjs{}, err
+	}
+
 	fallbackAllowedNss := []string{nsFlags.Name}
 
 	resTypes := ctlres.NewResourceTypesImpl(coreClient, ctlres.ResourceTypesImplOpts{
@@ -38,7 +43,7 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 		CanIgnoreFailingAPIService: resTypesFlags.CanIgnoreFailingAPIService,
 	})
 
-	resources := ctlres.NewResourcesImpl(resTypes, coreClient, dynamicClient, fallbackAllowedNss, logger)
+	resources := ctlres.NewResourcesImpl(resTypes, coreClient, dynamicClient, mutedDynamicClient, fallbackAllowedNss, logger)
 
 	identifiedResources := ctlres.NewIdentifiedResources(
 		coreClient, resTypes, resources, fallbackAllowedNss, logger)
