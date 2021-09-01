@@ -26,12 +26,12 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 		return FactorySupportObjs{}, err
 	}
 
-	dynamicClient, err := depsFactory.DynamicClient()
+	dynamicClient, err := depsFactory.DynamicClient(true)
 	if err != nil {
 		return FactorySupportObjs{}, err
 	}
 
-	mutedDynamicClient, err := depsFactory.MutedDynamicClient()
+	mutedDynamicClient, err := depsFactory.DynamicClient(false)
 	if err != nil {
 		return FactorySupportObjs{}, err
 	}

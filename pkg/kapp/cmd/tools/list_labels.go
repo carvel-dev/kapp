@@ -122,12 +122,12 @@ func (o *ListLabelsOptions) listResources() ([]ctlres.Resource, error) {
 		return nil, err
 	}
 
-	dynamicClient, err := o.depsFactory.DynamicClient()
+	dynamicClient, err := o.depsFactory.DynamicClient(true)
 	if err != nil {
 		return nil, err
 	}
 
-	mutedDynamicClient, err := o.depsFactory.DynamicClient()
+	mutedDynamicClient, err := o.depsFactory.DynamicClient(false)
 	if err != nil {
 		return nil, err
 	}
