@@ -58,7 +58,9 @@ func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error)
 
 	// it should not matter if change is ignored or not
 	// because it should be deleted eventually anyway (thru GC)
-	exists, err := c.identifiedResources.Exists(res)
+	// We should check for the UID check because of the following bug:
+	// https://github.com/vmware-tanzu/carvel-kapp/issues/229
+	exists, err := c.identifiedResources.Exists(res, "SameUID")
 	if err != nil {
 		return ctlresm.DoneApplyState{}, nil, err
 	}

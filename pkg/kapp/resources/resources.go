@@ -41,7 +41,7 @@ const (
 type Resources interface {
 	All([]ResourceType, AllOpts) ([]Resource, error)
 	Delete(Resource) error
-	Exists(Resource) (bool, error)
+	Exists(Resource, ...string) (bool, error)
 	Get(Resource) (Resource, error)
 	Patch(Resource, types.PatchType, []byte) (Resource, error)
 	Update(Resource) (Resource, error)
@@ -362,7 +362,7 @@ func (c *ResourcesImpl) Get(resource Resource) (Resource, error) {
 	return NewResourceUnstructured(*item, resType), nil
 }
 
-func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
+func (c *ResourcesImpl) Exists(resource Resource, existsOpts ...string) (bool, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { c.logger.Debug("exists %s", time.Now().UTC().Sub(t1)) }()
@@ -381,7 +381,7 @@ func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 	var found bool
 
 	err = util.Retry(time.Second, time.Minute, func() (bool, error) {
-		item, err := resClient.Get(context.TODO(), resource.Name(), metav1.GetOptions{})
+		fetchedRes, err := resClient.Get(context.TODO(), resource.Name(), metav1.GetOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				found = false
@@ -401,13 +401,21 @@ func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 			return isDone, c.resourceErr(err, "Checking existence of", resource)
 		}
 
-		// If item(i.e. resource from K8s) is not null and its UID didn't match with the
-		// UID of resource we are trying to delete, then it means resource has been deleted
-		// successfully.
-		if item != nil && resource.UID() != "" {
-			if string(item.GetUID()) != resource.UID() {
-				found = false
-				return true, nil
+		if len(existsOpts) != 0 {
+			for _, existsOpt := range existsOpts {
+				switch existsOpt {
+				case "SameUID":
+					// If fetchedRes(i.e. resource from K8s) is not null and its UID didn't match with the
+					// UID of resource we are trying to delete, then it means resource has been deleted
+					// successfully.
+					if fetchedRes != nil && resource.UID() != "" {
+						if string(fetchedRes.GetUID()) != resource.UID() {
+							found = false
+							return true, nil
+						}
+					}
+				}
+
 			}
 		}
 
