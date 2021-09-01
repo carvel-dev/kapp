@@ -429,7 +429,7 @@ func (c *ResourcesImpl) isPodMetrics(resource Resource, err error) bool {
 }
 
 func (c *ResourcesImpl) isGeneralRetryableErr(err error) bool {
-	return IsResourceChangeBlockedErr(err) || c.isServerRescaleErr(err) ||
+	return IsResourceChangeBlockedErr(err) || c.isServerRescaleErr(err) || c.isEtcdRetryableError(err) ||
 		c.isResourceQuotaConflict(err) || c.isInternalFailure(err) || errors.IsTooManyRequests(err)
 }
 
@@ -451,6 +451,14 @@ func (c *ResourcesImpl) isServerRescaleErr(err error) bool {
 		}
 	}
 	return false
+}
+
+// Retries retryable errors thrown by etcd server.
+// Comprehensive list of errors at : https://github.com/etcd-io/etcd/blob/main/server/etcdserver/errors.go
+// Addresses : https://github.com/vmware-tanzu/carvel-kapp/issues/106
+func (c *ResourcesImpl) isEtcdRetryableError(err error) bool {
+	return strings.Contains(err.Error(), "etcdserver:") &&
+		(strings.Contains(err.Error(), "timed out") || strings.Contains(err.Error(), "leader changed"))
 }
 
 // Handles case pointed out in : https://github.com/vmware-tanzu/carvel-kapp/issues/258.
