@@ -398,7 +398,7 @@ func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 			isDone := errors.IsForbidden(err)
 			// TODO sometimes metav1.StatusReasonUnknown is returned (empty string)
 			// might be related to deletion of mutating webhook
-			return isDone, c.resourceErr(err, "Checking existance of", resource)
+			return isDone, c.resourceErr(err, "Checking existence of", resource)
 		}
 
 		// If item(i.e. resource from K8s) is not null and its UID didn't match with the
@@ -419,7 +419,7 @@ func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 }
 
 var (
-	// Error example: Checking existance of resource podmetrics/knative-ingressgateway-646d475cbb-c82qb (metrics.k8s.io/v1beta1)
+	// Error example: Checking existence of resource podmetrics/knative-ingressgateway-646d475cbb-c82qb (metrics.k8s.io/v1beta1)
 	//   namespace: istio-system: Error while getting pod knative-ingressgateway-646d475cbb-c82qb:
 	//   pod "knative-ingressgateway-646d475cbb-c82qb" not found (reason: )
 	// Note that it says pod is not found even though we were checking on podmetrics.
@@ -429,7 +429,7 @@ var (
 
 func (c *ResourcesImpl) isPodMetrics(resource Resource, err error) bool {
 	// Abnormal error case. Get/Delete on PodMetrics may fail
-	// without NotFound reason due to its dependence on Pod existance
+	// without NotFound reason due to its dependence on Pod existence
 	if resource.Kind() == "PodMetrics" && resource.APIGroup() == "metrics.k8s.io" {
 		if podMetricsNotFoundErrCheck.MatchString(err.Error()) {
 			return true

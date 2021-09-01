@@ -5,9 +5,11 @@ package resources
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/k14s/kapp/pkg/kapp/matcher" // TODO inject
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 type ResourceFilter struct {
@@ -20,6 +22,7 @@ type ResourceFilter struct {
 	KindNames      []string
 	KindNamespaces []string
 	KindNsNames    []string
+	Labels         []string
 
 	BoolFilter *BoolFilter
 }
@@ -83,6 +86,23 @@ func (f ResourceFilter) Matches(resource Resource) bool {
 		var matched bool
 		for _, name := range f.Names {
 			if matcher.NewStringMatcher(name).Matches(resource.Name()) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	if len(f.Labels) > 0 {
+		var matched bool
+		for _, label := range f.Labels {
+			labelSelector, err := labels.Parse(label)
+			if err != nil {
+				panic(fmt.Sprintf("Parsing label selector failed: %s", err))
+			}
+			if labelSelector.Matches(labels.Set(resource.Labels())) {
 				matched = true
 				break
 			}

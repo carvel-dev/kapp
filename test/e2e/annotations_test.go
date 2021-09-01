@@ -5,11 +5,9 @@ package e2e
 
 import (
 	"encoding/json"
-	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/cppforlife/go-cli-ui/ui"
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -503,22 +501,4 @@ data:
 		validateChanges(t, respKapp.Tables, expectedKapp, "Op:      1 create, 1 delete, 0 update, 0 noop",
 			"Wait to: 1 reconcile, 1 delete, 0 noop", kappOut)
 	})
-}
-
-func validateChanges(t *testing.T, respTable []ui.JSONUITableResp, expected []map[string]string, notesOp string,
-	notesWaitTo string, output string) {
-	//deleting age from response table rows as it is varying from 0s to 1s making test case fail
-	for _, row := range respTable[0].Rows {
-		delete(row, "age")
-	}
-
-	if !reflect.DeepEqual(respTable[0].Rows, expected) {
-		t.Fatalf("Expected to see correct changes, but did not: '%s'", output)
-	}
-	if respTable[0].Notes[0] != notesOp {
-		t.Fatalf("Expected to see correct summary, but did not: '%s'", output)
-	}
-	if respTable[0].Notes[1] != notesWaitTo {
-		t.Fatalf("Expected to see correct summary, but did not: '%s'", output)
-	}
 }
