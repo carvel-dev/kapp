@@ -11,7 +11,6 @@ import (
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	"github.com/k14s/kapp/pkg/kapp/logger"
-	"github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
 )
 
@@ -87,8 +86,6 @@ func (o *InspectOptions) Run() error {
 	resources = resourceFilter.Apply(resources)
 	source := fmt.Sprintf("app '%s'", app.Name())
 
-	o.checkDeprecation(resources, supportObjs)
-
 	switch {
 	case o.Raw:
 		for _, res := range resources {
@@ -121,10 +118,4 @@ func (o *InspectOptions) Run() error {
 	}
 
 	return nil
-}
-
-func (o *InspectOptions) checkDeprecation(resources []resources.Resource, supportingObjs FactorySupportObjs) {
-	for _, r := range resources {
-		supportingObjs.IdentifiedResources.Get(r)
-	}
 }

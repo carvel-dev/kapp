@@ -225,7 +225,7 @@ func (c *ResourcesImpl) Create(resource Resource) (Resource, error) {
 		c.logger.Debug("create resource %s\n%s\n", resource.Description(), bs)
 	}
 
-	resClient, resType, err := c.resourceClient(resource)
+	resClient, resType, err := c.resourceClient(resource, false)
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +252,7 @@ func (c *ResourcesImpl) Update(resource Resource) (Resource, error) {
 		c.logger.Debug("update resource %s\n%s\n", resource.Description(), bs)
 	}
 
-	resClient, resType, err := c.resourceClient(resource)
+	resClient, resType, err := c.resourceClient(resource, false)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +276,7 @@ func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data
 		defer func() { c.logger.Debug("patch %s", time.Now().UTC().Sub(t1)) }()
 	}
 
-	resClient, resType, err := c.resourceClient(resource)
+	resClient, resType, err := c.resourceClient(resource, false)
 	if err != nil {
 		return nil, err
 	}
@@ -305,7 +305,7 @@ func (c *ResourcesImpl) Delete(resource Resource) error {
 		return nil
 	}
 
-	resClient, resType, err := c.resourceClient(resource)
+	resClient, resType, err := c.resourceClient(resource, false)
 	if err != nil {
 		return err
 	}
@@ -346,7 +346,7 @@ func (c *ResourcesImpl) Get(resource Resource) (Resource, error) {
 		defer func() { c.logger.Debug("get %s", time.Now().UTC().Sub(t1)) }()
 	}
 
-	resClient, resType, err := c.resourceClient(resource)
+	resClient, resType, err := c.resourceClient(resource, true)
 	if err != nil {
 		return nil, err
 	}
@@ -371,7 +371,7 @@ func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 		defer func() { c.logger.Debug("exists %s", time.Now().UTC().Sub(t1)) }()
 	}
 
-	resClient, _, err := c.resourceClient(resource)
+	resClient, _, err := c.resourceClient(resource, false)
 	if err != nil {
 		// Assume if type is not known to the API server
 		// then such resource cannot exist on the server
@@ -475,10 +475,14 @@ func (c *ResourcesImpl) resourceErr(err error, action string, resource Resource)
 	return resourcePlainErr{err, action, resource}
 }
 
-func (c *ResourcesImpl) resourceClient(resource Resource) (dynamic.ResourceInterface, ResourceType, error) {
+func (c *ResourcesImpl) resourceClient(resource Resource, muted bool) (dynamic.ResourceInterface, ResourceType, error) {
 	resType, err := c.resourceTypes.Find(resource)
 	if err != nil {
 		return nil, ResourceType{}, err
+	}
+
+	if muted {
+		return c.mutedDynamicClient.Resource(resType.GroupVersionResource).Namespace(resource.Namespace()), resType, nil
 	}
 
 	return c.dynamicClient.Resource(resType.GroupVersionResource).Namespace(resource.Namespace()), resType, nil
