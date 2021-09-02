@@ -16,7 +16,7 @@ import (
 )
 
 type DepsFactory interface {
-	DynamicClient(warnings bool) (dynamic.Interface, error)
+	DynamicClient(opts DynamicClientOpts) (dynamic.Interface, error)
 	CoreClient() (kubernetes.Interface, error)
 	ConfigureWarnings(warnings bool)
 }
@@ -38,7 +38,11 @@ func NewDepsFactoryImpl(configFactory ConfigFactory, ui ui.UI) *DepsFactoryImpl 
 		printTargetOnce: &sync.Once{}}
 }
 
-func (f *DepsFactoryImpl) DynamicClient(warnings bool) (dynamic.Interface, error) {
+type DynamicClientOpts struct {
+	Warnings bool
+}
+
+func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts) (dynamic.Interface, error) {
 	config, err := f.configFactory.RESTConfig()
 	if err != nil {
 		return nil, err
@@ -47,7 +51,7 @@ func (f *DepsFactoryImpl) DynamicClient(warnings bool) (dynamic.Interface, error
 	// copy to avoid mutating the passed-in config
 	cpConfig := rest.CopyConfig(config)
 
-	if warnings {
+	if opts.Warnings {
 		cpConfig.WarningHandler = f.newWarningHandler()
 	} else {
 		cpConfig.WarningHandler = rest.NoWarnings{}
