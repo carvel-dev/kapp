@@ -98,7 +98,7 @@ func (r IdentifiedResources) Get(resource Resource) (Resource, error) {
 	return resource, nil
 }
 
-func (r IdentifiedResources) Exists(resource Resource, existsOpts ...string) (bool, error) {
+func (r IdentifiedResources) Exists(resource Resource, existsOpts ExistsOpts) (bool, error) {
 	defer r.logger.DebugFunc(fmt.Sprintf("Exists(%s)", resource.Description())).Finish()
-	return r.resources.Exists(resource, existsOpts...)
+	return r.resources.Exists(resource, existsOpts)
 }

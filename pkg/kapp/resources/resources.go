@@ -41,7 +41,7 @@ const (
 type Resources interface {
 	All([]ResourceType, AllOpts) ([]Resource, error)
 	Delete(Resource) error
-	Exists(Resource, ...string) (bool, error)
+	Exists(Resource, ExistsOpts) (bool, error)
 	Get(Resource) (Resource, error)
 	Patch(Resource, types.PatchType, []byte) (Resource, error)
 	Update(Resource) (Resource, error)
@@ -362,7 +362,7 @@ func (c *ResourcesImpl) Get(resource Resource) (Resource, error) {
 	return NewResourceUnstructured(*item, resType), nil
 }
 
-func (c *ResourcesImpl) Exists(resource Resource, existsOpts ...string) (bool, error) {
+func (c *ResourcesImpl) Exists(resource Resource, existsOpts ExistsOpts) (bool, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { c.logger.Debug("exists %s", time.Now().UTC().Sub(t1)) }()
@@ -401,22 +401,16 @@ func (c *ResourcesImpl) Exists(resource Resource, existsOpts ...string) (bool, e
 			return isDone, c.resourceErr(err, "Checking existence of", resource)
 		}
 
-		if len(existsOpts) != 0 {
-			for _, existsOpt := range existsOpts {
-				switch existsOpt {
-				case "SameUID":
-					// If fetchedRes(i.e. resource from K8s) is not null and its UID didn't match with the
-					// UID of resource we are trying to delete, then it means resource has been deleted
-					// successfully.
-					if fetchedRes != nil && resource.UID() != "" {
-						if string(fetchedRes.GetUID()) != resource.UID() {
-							found = false
-							return true, nil
-						}
+		if existsOpts.checkForSameUID() {
+				// If fetchedRes(i.e. resource from K8s) is not null and its UID didn't match with the
+				// UID of resource we are trying to delete, then it means resource has been deleted
+				// successfully.
+				if fetchedRes != nil {
+					if string(fetchedRes.GetUID()) != resource.UID() {
+						found = false
+						return true, nil
 					}
 				}
-
-			}
 		}
 
 		found = true
