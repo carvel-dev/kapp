@@ -429,7 +429,7 @@ func (c *ResourcesImpl) isPodMetrics(resource Resource, err error) bool {
 }
 
 func (c *ResourcesImpl) isGeneralRetryableErr(err error) bool {
-	return IsResourceChangeBlockedErr(err) || c.isServerRescaleErr(err) ||
+	return IsResourceChangeBlockedErr(err) || c.isServerRescaleErr(err) || c.isEtcdRetryableError(err) ||
 		c.isResourceQuotaConflict(err) || c.isInternalFailure(err) || errors.IsTooManyRequests(err)
 }
 
@@ -515,6 +515,10 @@ var (
 	//   Post https://cert-manager-webhook.cert-manager.svc:443/convert?timeout=30s:
 	//   x509: certificate signed by unknown authority (reason: )
 	conversionWebhookErrCheck = regexp.MustCompile("conversion webhook for (.+) failed:")
+
+	// Matches retryable etcdserver errors
+	// Comprehensive list of errors at : https://github.com/etcd-io/etcd/blob/main/server/etcdserver/errors.go
+	etcdserverRetryableErrCheck = regexp.MustCompile("etcdserver:(.+)(leader changed|timed out)")
 )
 
 func IsResourceChangeBlockedErr(err error) bool {
@@ -530,6 +534,12 @@ func IsResourceChangeBlockedErr(err error) bool {
 	default:
 		return false
 	}
+}
+
+// Retries retryable errors thrown by etcd server.
+// Addresses : https://github.com/vmware-tanzu/carvel-kapp/issues/106
+func (c *ResourcesImpl) isEtcdRetryableError(err error) bool {
+	return etcdserverRetryableErrCheck.MatchString(err.Error())
 }
 
 type AllOpts struct {
