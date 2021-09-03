@@ -401,16 +401,14 @@ func (c *ResourcesImpl) Exists(resource Resource, existsOpts ExistsOpts) (bool, 
 			return isDone, c.resourceErr(err, "Checking existence of", resource)
 		}
 
-		if existsOpts.checkForSameUID() {
-				// If fetchedRes(i.e. resource from K8s) is not null and its UID didn't match with the
-				// UID of resource we are trying to delete, then it means resource has been deleted
-				// successfully.
-				if fetchedRes != nil {
-					if string(fetchedRes.GetUID()) != resource.UID() {
-						found = false
-						return true, nil
-					}
+		// Check if we have to compare the UID's also to confirm if it is same resource.
+		if existsOpts.SameUID {
+			if fetchedRes != nil {
+				if string(fetchedRes.GetUID()) != resource.UID() {
+					found = false
+					return true, nil
 				}
+			}
 		}
 
 		found = true
