@@ -371,7 +371,7 @@ func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 		defer func() { c.logger.Debug("exists %s", time.Now().UTC().Sub(t1)) }()
 	}
 
-	resClient, _, err := c.resourceClient(resource, resourceClientOpts{Warnings: true})
+	resClient, _, err := c.resourceClient(resource, resourceClientOpts{Warnings: false})
 	if err != nil {
 		// Assume if type is not known to the API server
 		// then such resource cannot exist on the server
