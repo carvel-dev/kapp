@@ -48,6 +48,10 @@ type Resources interface {
 	Create(resource Resource) (Resource, error)
 }
 
+type ExistsOpts struct {
+	SameUID bool
+}
+
 type ResourcesImpl struct {
 	resourceTypes             ResourceTypes
 	coreClient                kubernetes.Interface
