@@ -35,7 +35,7 @@ spec:
   version: v1
   versionPriority: 100
 ---
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   name: foo.dummykapptest.com
@@ -48,6 +48,18 @@ spec:
   - name: v1
     served: true
     storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          apiVersion:
+            type: string
+          kind:
+            type: string
+          metadata:
+            type: object
+          spec:
+            type: object
   scope: Namespaced
   names:
     plural: foo
@@ -155,7 +167,7 @@ func TestIgnoreFailingGroupVersion(t *testing.T) {
 
 	yaml1 := `
 ---
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   name: foo.dummykapptest.com
@@ -166,10 +178,34 @@ spec:
   - name: v1
     served: true
     storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          apiVersion:
+            type: string
+          kind:
+            type: string
+          metadata:
+            type: object
+          spec:
+            type: object
   # v2 is available but gets converted from v1 on the fly
   - name: v2
     served: true
     storage: false
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          apiVersion:
+            type: string
+          kind:
+            type: string
+          metadata:
+            type: object
+          spec:
+            type: object
   scope: Namespaced
   names:
     plural: foo
@@ -178,24 +214,13 @@ spec:
   preserveUnknownFields: false
   conversion:
     strategy: Webhook
-    webhookClientConfig:
-      service:
-        namespace: kapp-test
-        name: failing-group-version-webhook
-        path: /convert
-  validation:
-    openAPIV3Schema:
-      type: object
-      properties:
-        apiVersion:
-          type: string
-        kind:
-          type: string
-        metadata:
-          type: object
-        spec:
-          type: object
-
+    webhook:
+      conversionReviewVersions: ["v1","v1beta1"]
+      clientConfig:
+        service:
+          namespace: kapp-test
+          name: failing-group-version-webhook
+          path: /convert
 `
 
 	yaml2 := `
