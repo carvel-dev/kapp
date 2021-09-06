@@ -89,6 +89,8 @@ func (c ClusterChangeSet) markChangesToWait(change *ctldgraph.Change) bool {
 }
 
 func (c ClusterChangeSet) Apply(changesGraph *ctldgraph.ChangeGraph) error {
+	defer c.logger.DebugFunc("Apply").Finish()
+
 	expectedNumChanges := len(changesGraph.All())
 
 	blockedChanges := ctldgraph.NewBlockedChanges(changesGraph)

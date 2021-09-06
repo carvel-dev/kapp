@@ -215,7 +215,7 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 	// not by other controllers)
 	applyChange, err := savedResWithHistory.CalculateChange(c.change.AppliedResource())
 	if err != nil {
-		return err
+		return fmt.Errorf("Calculating change after the save: %s", err)
 	}
 
 	// first time, try using memory copy

@@ -4,6 +4,7 @@
 package resources
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -104,9 +105,9 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 
 			err = util.Retry2(time.Second, 5*time.Second, c.isServerRescaleErr, func() error {
 				if resType.Namespaced() {
-					list, err = client.Namespace("").List(*opts.ListOpts)
+					list, err = client.Namespace("").List(context.TODO(), *opts.ListOpts)
 				} else {
-					list, err = client.List(*opts.ListOpts)
+					list, err = client.List(context.TODO(), *opts.ListOpts)
 				}
 				return err
 			})
@@ -183,7 +184,7 @@ func (c *ResourcesImpl) allForNamespaces(client dynamic.NamespaceableResourceInt
 		go func() {
 			defer itemsDone.Done()
 
-			resList, err := client.Namespace(ns).List(*listOpts)
+			resList, err := client.Namespace(ns).List(context.TODO(), *listOpts)
 			if err != nil {
 				if !errors.IsForbidden(err) {
 					fatalErrsCh <- err
@@ -229,7 +230,7 @@ func (c *ResourcesImpl) Create(resource Resource) (Resource, error) {
 	var createdUn *unstructured.Unstructured
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
-		createdUn, err = resClient.Create(resource.unstructuredPtr())
+		createdUn, err = resClient.Create(context.TODO(), resource.unstructuredPtr(), metav1.CreateOptions{})
 		return err
 	})
 	if err != nil {
@@ -256,7 +257,7 @@ func (c *ResourcesImpl) Update(resource Resource) (Resource, error) {
 	var updatedUn *unstructured.Unstructured
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
-		updatedUn, err = resClient.Update(resource.unstructuredPtr())
+		updatedUn, err = resClient.Update(context.TODO(), resource.unstructuredPtr(), metav1.UpdateOptions{})
 		return err
 	})
 	if err != nil {
@@ -280,7 +281,7 @@ func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data
 	var patchedUn *unstructured.Unstructured
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
-		patchedUn, err = resClient.Patch(resource.Name(), patchType, data)
+		patchedUn, err = resClient.Patch(context.TODO(), resource.Name(), patchType, data, metav1.PatchOptions{})
 		return err
 	})
 	if err != nil {
@@ -310,7 +311,7 @@ func (c *ResourcesImpl) Delete(resource Resource) error {
 		// TODO is setting deletion policy a correct thing to do?
 		// https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/#setting-the-cascading-deletion-policy
 		delPol := metav1.DeletePropagationBackground
-		delOpts := &metav1.DeleteOptions{PropagationPolicy: &delPol}
+		delOpts := metav1.DeleteOptions{PropagationPolicy: &delPol}
 
 		// Some resources may not have UID (example: PodMetrics.metrics.k8s.io)
 		resUID := types.UID(resource.UID())
@@ -318,7 +319,7 @@ func (c *ResourcesImpl) Delete(resource Resource) error {
 			delOpts.Preconditions = &metav1.Preconditions{UID: &resUID}
 		}
 
-		err = resClient.Delete(resource.Name(), delOpts)
+		err = resClient.Delete(context.TODO(), resource.Name(), delOpts)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				c.logger.Info("TODO resource '%s' is already gone", resource.Description())
@@ -351,7 +352,7 @@ func (c *ResourcesImpl) Get(resource Resource) (Resource, error) {
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isServerRescaleErr, func() error {
 		var err error
-		item, err = resClient.Get(resource.Name(), metav1.GetOptions{})
+		item, err = resClient.Get(context.TODO(), resource.Name(), metav1.GetOptions{})
 		return err
 	})
 	if err != nil {
@@ -380,7 +381,7 @@ func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 	var found bool
 
 	err = util.Retry(time.Second, time.Minute, func() (bool, error) {
-		_, err = resClient.Get(resource.Name(), metav1.GetOptions{})
+		_, err = resClient.Get(context.TODO(), resource.Name(), metav1.GetOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				found = false
@@ -397,7 +398,7 @@ func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 			isDone := errors.IsForbidden(err)
 			// TODO sometimes metav1.StatusReasonUnknown is returned (empty string)
 			// might be related to deletion of mutating webhook
-			return isDone, c.resourceErr(err, "Checking existance of", resource)
+			return isDone, c.resourceErr(err, "Checking existence of", resource)
 		}
 
 		found = true
@@ -408,7 +409,7 @@ func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 }
 
 var (
-	// Error example: Checking existance of resource podmetrics/knative-ingressgateway-646d475cbb-c82qb (metrics.k8s.io/v1beta1)
+	// Error example: Checking existence of resource podmetrics/knative-ingressgateway-646d475cbb-c82qb (metrics.k8s.io/v1beta1)
 	//   namespace: istio-system: Error while getting pod knative-ingressgateway-646d475cbb-c82qb:
 	//   pod "knative-ingressgateway-646d475cbb-c82qb" not found (reason: )
 	// Note that it says pod is not found even though we were checking on podmetrics.
@@ -418,7 +419,7 @@ var (
 
 func (c *ResourcesImpl) isPodMetrics(resource Resource, err error) bool {
 	// Abnormal error case. Get/Delete on PodMetrics may fail
-	// without NotFound reason due to its dependence on Pod existance
+	// without NotFound reason due to its dependence on Pod existence
 	if resource.Kind() == "PodMetrics" && resource.APIGroup() == "metrics.k8s.io" {
 		if podMetricsNotFoundErrCheck.MatchString(err.Error()) {
 			return true
@@ -428,8 +429,8 @@ func (c *ResourcesImpl) isPodMetrics(resource Resource, err error) bool {
 }
 
 func (c *ResourcesImpl) isGeneralRetryableErr(err error) bool {
-	return IsResourceChangeBlockedErr(err) || c.isServerRescaleErr(err) ||
-		c.isResourceQuotaConflict(err) || errors.IsTooManyRequests(err)
+	return IsResourceChangeBlockedErr(err) || c.isServerRescaleErr(err) || c.isEtcdRetryableError(err) ||
+		c.isResourceQuotaConflict(err) || c.isInternalFailure(err) || errors.IsTooManyRequests(err)
 }
 
 // Fixes issues I observed with GKE:
@@ -446,6 +447,18 @@ func (c *ResourcesImpl) isServerRescaleErr(err error) bool {
 		return true
 	case *errors.StatusError:
 		if err.ErrStatus.Reason == metav1.StatusReasonServiceUnavailable {
+			return true
+		}
+	}
+	return false
+}
+
+// Handles case pointed out in : https://github.com/vmware-tanzu/carvel-kapp/issues/258.
+// An internal network error which might succeed on retrying.
+func (c *ResourcesImpl) isInternalFailure(err error) bool {
+	switch err := err.(type) {
+	case *errors.StatusError:
+		if errors.IsInternalError(err) {
 			return true
 		}
 	}
@@ -476,7 +489,7 @@ func (c *ResourcesImpl) assumedAllowedNamespaces() ([]string, error) {
 		return *c.assumedAllowedNamespacesMemo, nil
 	}
 
-	nsList, err := c.coreClient.CoreV1().Namespaces().List(metav1.ListOptions{})
+	nsList, err := c.coreClient.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		if errors.IsForbidden(err) {
 			if len(c.fallbackAllowedNamespaces) > 0 {
@@ -502,6 +515,10 @@ var (
 	//   Post https://cert-manager-webhook.cert-manager.svc:443/convert?timeout=30s:
 	//   x509: certificate signed by unknown authority (reason: )
 	conversionWebhookErrCheck = regexp.MustCompile("conversion webhook for (.+) failed:")
+
+	// Matches retryable etcdserver errors
+	// Comprehensive list of errors at : https://github.com/etcd-io/etcd/blob/main/server/etcdserver/errors.go
+	etcdserverRetryableErrCheck = regexp.MustCompile("etcdserver:(.+)(leader changed|timed out)")
 )
 
 func IsResourceChangeBlockedErr(err error) bool {
@@ -517,6 +534,12 @@ func IsResourceChangeBlockedErr(err error) bool {
 	default:
 		return false
 	}
+}
+
+// Retries retryable errors thrown by etcd server.
+// Addresses : https://github.com/vmware-tanzu/carvel-kapp/issues/106
+func (c *ResourcesImpl) isEtcdRetryableError(err error) bool {
+	return etcdserverRetryableErrCheck.MatchString(err.Error())
 }
 
 type AllOpts struct {

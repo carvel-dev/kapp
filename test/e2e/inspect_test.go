@@ -47,6 +47,7 @@ spec:
 		out, _ := kapp.RunWithOpts([]string{"inspect", "-a", name, "--json"}, RunOpts{})
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
+		respRows := resp.Tables[0].Rows
 
 		expected := []map[string]string{{
 			"age":             "<replaced>",
@@ -68,7 +69,21 @@ spec:
 			"reconcile_state": "ok",
 		}}
 
-		if !reflect.DeepEqual(replaceAge(resp.Tables[0].Rows), expected) {
+		if hasEndpointSlice(respRows) {
+			respRows = removeEndpointSliceNameSuffix(respRows)
+			expected = append(expected, map[string]string{
+				"age":             "<replaced>",
+				"conditions":      "",
+				"kind":            "EndpointSlice",
+				"name":            "redis-primary",
+				"namespace":       "kapp-test",
+				"owner":           "cluster",
+				"reconcile_info":  "",
+				"reconcile_state": "ok",
+			})
+		}
+
+		if !reflect.DeepEqual(replaceAge(respRows), expected) {
 			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
 		}
 	})
@@ -77,6 +92,7 @@ spec:
 		out, _ := kapp.RunWithOpts([]string{"inspect", "-a", name, "-t", "--json"}, RunOpts{})
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
+		respRows := resp.Tables[0].Rows
 
 		expected := []map[string]string{{
 			"age":             "<replaced>",
@@ -98,7 +114,21 @@ spec:
 			"reconcile_state": "ok",
 		}}
 
-		if !reflect.DeepEqual(replaceAge(resp.Tables[0].Rows), expected) {
+		if hasEndpointSlice(respRows) {
+			respRows = removeEndpointSliceNameSuffix(respRows)
+			expected = append(expected, map[string]string{
+				"age":             "<replaced>",
+				"conditions":      "",
+				"kind":            "EndpointSlice",
+				"name":            " L redis-primary",
+				"namespace":       "kapp-test",
+				"owner":           "cluster",
+				"reconcile_info":  "",
+				"reconcile_state": "ok",
+			})
+		}
+
+		if !reflect.DeepEqual(replaceAge(respRows), expected) {
 			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
 		}
 	})

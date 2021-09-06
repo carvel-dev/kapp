@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	versionedResAnnKey        = "kapp.k14s.io/versioned" // Value is ignored
+	versionedResAnnKey        = "kapp.k14s.io/versioned"               // Value is ignored
+	versionedResOrigAnnKey    = "kapp.k14s.io/versioned-keep-original" // Value is ignored
 	versionedResNumVersAnnKey = "kapp.k14s.io/num-versions"
 )
 
@@ -31,7 +32,7 @@ func NewChangeSetWithVersionedRs(existingRs, newRs []ctlres.Resource,
 }
 
 func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
-	existingRs := newVersionedResources(d.existingRs)
+	existingRs := existingVersionedResources(d.existingRs)
 	existingRsGrouped := d.groupResources(existingRs.Versioned)
 
 	newRs := newVersionedResources(d.newRs)
@@ -264,11 +265,33 @@ type versionedResources struct {
 func newVersionedResources(rs []ctlres.Resource) versionedResources {
 	var result versionedResources
 	for _, res := range rs {
+		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
+		_, hasVersionedOrigAnn := res.Annotations()[versionedResOrigAnnKey]
+
+		if hasVersionedAnn {
+			result.Versioned = append(result.Versioned, res)
+			if hasVersionedOrigAnn {
+				result.NonVersioned = append(result.NonVersioned, res.DeepCopy())
+			}
+		} else {
+			result.NonVersioned = append(result.NonVersioned, res)
+		}
+	}
+	return result
+}
+
+func existingVersionedResources(rs []ctlres.Resource) versionedResources {
+	var result versionedResources
+	for _, res := range rs {
 		// Expect that versioned resources should not be transient
 		// (Annotations may have been copied from versioned resources
 		// onto transient resources for non-versioning related purposes).
 		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
-		if hasVersionedAnn && !res.Transient() {
+
+		versionedRs := VersionedResource{res: res}
+		_, version := versionedRs.BaseNameAndVersion()
+
+		if hasVersionedAnn && !res.Transient() && version != "" {
 			result.Versioned = append(result.Versioned, res)
 		} else {
 			result.NonVersioned = append(result.NonVersioned, res)

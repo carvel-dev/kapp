@@ -32,6 +32,12 @@ func (f ConvergedResourceFactory) New(res ctlres.Resource,
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			return ctlresm.NewKappctrlK14sIoV1alpha1App(res), nil
 		},
+		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
+			return ctlresm.NewPackagingCarvelDevV1alpha1PackageInstall(res), nil
+		},
+		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
+			return ctlresm.NewPackagingCarvelDevV1alpha1PackageRepo(res), nil
+		},
 		// Deal with deletion generically since below resource waiters do not not know about that
 		// TODO shoud we make all of them deal with deletion internally?
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {

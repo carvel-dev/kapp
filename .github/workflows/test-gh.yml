@@ -32,8 +32,8 @@ jobs:
 
         wget -O- https://carvel.dev/install.sh | K14SIO_INSTALL_BIN_DIR=/tmp/bin bash
 
-        wget -O- https://github.com/kubernetes/minikube/releases/download/v1.10.0/minikube-linux-amd64 > /tmp/bin/minikube
-        chmod +x /tmp/bin/minikube
+        curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        install minikube-linux-amd64 /usr/local/bin/minikube
         minikube start --driver=docker
         eval $(minikube docker-env --shell=bash)
 

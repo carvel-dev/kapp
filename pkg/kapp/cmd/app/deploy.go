@@ -249,6 +249,9 @@ func (o *DeployOptions) newResources(
 func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
 	var allResources []ctlres.Resource
 
+	if len(o.FileFlags.Files) == 0 {
+		return nil, fmt.Errorf("Expected at least one --file (-f) specified with a file or directory path")
+	}
 	for _, file := range o.FileFlags.Files {
 		fileRs, err := ctlres.NewFileResources(file)
 		if err != nil {
@@ -264,7 +267,6 @@ func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
 			allResources = append(allResources, resources...)
 		}
 	}
-
 	return allResources, nil
 }
 
@@ -286,8 +288,8 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 	matchingOpts := ctlres.AllAndMatchingOpts{
 		SkipResourceOwnershipCheck: o.DeployFlags.OverrideOwnershipOfExistingResources,
 		// Prevent accidently overriding kapp state records
-		BlacklistedResourcesByLabelKeys: []string{ctlapp.KappIsAppLabelKey},
-		LabelErrorResolutionFunc:        labelErrorResolutionFunc,
+		DisallowedResourcesByLabelKeys: []string{ctlapp.KappIsAppLabelKey},
+		LabelErrorResolutionFunc:       labelErrorResolutionFunc,
 	}
 
 	existingResources, err := labeledResources.AllAndMatching(newResources, matchingOpts)

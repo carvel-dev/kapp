@@ -13,9 +13,10 @@ import (
 )
 
 type WaitingChangesOpts struct {
-	Timeout       time.Duration
-	CheckInterval time.Duration
-	Concurrency   int
+	Timeout         time.Duration
+	ResourceTimeout time.Duration
+	CheckInterval   time.Duration
+	Concurrency     int
 }
 
 type WaitingChanges struct {
@@ -27,8 +28,9 @@ type WaitingChanges struct {
 }
 
 type WaitingChange struct {
-	Graph   *ctldgraph.Change
-	Cluster *ClusterChange
+	Graph     *ctldgraph.Change
+	Cluster   *ClusterChange
+	startTime time.Time
 }
 
 func NewWaitingChanges(numTotal int, opts WaitingChangesOpts, ui UI) *WaitingChanges {
@@ -67,6 +69,12 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 				defer waitThrottle.Done()
 
 				state, descMsgs, err := change.Cluster.IsDoneApplying()
+				// check for resource timeout
+				if err == nil {
+					if c.opts.ResourceTimeout != 0 && time.Now().Sub(change.startTime) > c.opts.ResourceTimeout {
+						err = fmt.Errorf("Resource timed out waiting after %s", c.opts.ResourceTimeout)
+					}
+				}
 				waitCh <- waitResult{Change: change, State: state, DescMsgs: descMsgs, Err: err}
 			}()
 		}

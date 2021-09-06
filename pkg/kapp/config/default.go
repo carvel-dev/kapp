@@ -64,13 +64,6 @@ rebaseRules:
   resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: v1, kind: Namespace}
 
-# Prefer user provided, but allow cluster set
-- path: [secrets]
-  type: copy
-  sources: [new, existing]
-  resourceMatchers:
-  - apiVersionKindMatcher: {apiVersion: v1, kind: ServiceAccount}
-
 # PVC
 - paths:
   - [metadata, annotations, pv.kubernetes.io/bind-completed]
@@ -126,6 +119,56 @@ rebaseRules:
   sources: [new, existing]
   resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
+
+# ServiceAccount controller appends secret named '${metadata.name}-token-${rand}' after the save
+- ytt:
+    overlayContractV1:
+      overlay.yml: |
+        #@ load("@ytt:data", "data")
+        #@ load("@ytt:overlay", "overlay")
+
+        #@ res_name = data.values.existing.metadata.name
+
+        #! service account may be created with empty secrets
+        #@ secrets = []
+        #@ if hasattr(data.values.existing, "secrets"):
+        #@   secrets = data.values.existing.secrets
+        #@ end
+
+        #@ token_secret_name = None
+        #@ for k in secrets:
+        #@   if k.name.startswith(res_name+"-token-"):
+        #@     token_secret_name = k.name
+        #@   end
+        #@ end
+
+        #! in case token secret name is not included, do not modify anything
+        #@ if/end token_secret_name:
+        #@overlay/match by=overlay.all
+        ---
+        #@overlay/match missing_ok=True
+        secrets:
+        #@overlay/match by=overlay.subset({"name": token_secret_name}),when=0
+        - name: #@ token_secret_name
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: v1, kind: ServiceAccount}
+
+# Secretgen populates secret data for annotated secrets
+- paths:
+  - [data, .dockerconfigjson]
+  - [metadata, annotations, secretgen.carvel.dev/status]
+  type: copy
+  sources: [existing, new]
+  resourceMatchers:
+  - andMatcher:
+      matchers:
+      - apiVersionKindMatcher: {apiVersion: v1, kind: Secret}
+      - hasAnnotationMatcher:
+          keys: [secretgen.carvel.dev/image-pull-secret]
+      - notMatcher:
+          matcher:
+            hasAnnotationMatcher:
+              keys: [kapp.k14s.io/disable-default-secretgen-rebase-rules]
 
 diffAgainstLastAppliedFieldExclusionRules:
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]

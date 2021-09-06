@@ -21,7 +21,7 @@ type App interface {
 	CreateOrUpdate(map[string]string) error
 	Exists() (bool, string, error)
 	Delete() error
-	Rename(string) error
+	Rename(string, string) error
 
 	// Sorted as first is oldest
 	Changes() ([]Change, error)
