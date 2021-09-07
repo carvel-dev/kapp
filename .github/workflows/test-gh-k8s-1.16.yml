@@ -1,4 +1,4 @@
-name: test-gh-k8s-1.15
+name: test-gh-k8s-1.16
 on:
   push:
     branches:
