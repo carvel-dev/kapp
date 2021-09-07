@@ -1,4 +1,4 @@
-# cloud.google.com/go v0.81.0
+# cloud.google.com/go v0.57.0
 cloud.google.com/go/compute/metadata
 # github.com/Azure/go-autorest v14.2.0+incompatible
 github.com/Azure/go-autorest
@@ -72,6 +72,8 @@ github.com/json-iterator/go
 # github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57
 ## explicit
 github.com/k14s/difflib
+# github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115
+github.com/k14s/semver/v4
 # github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368
 github.com/k14s/starlark-go/internal/compile
 github.com/k14s/starlark-go/internal/spell
@@ -79,7 +81,7 @@ github.com/k14s/starlark-go/resolve
 github.com/k14s/starlark-go/starlark
 github.com/k14s/starlark-go/starlarkstruct
 github.com/k14s/starlark-go/syntax
-# github.com/k14s/ytt v0.36.0
+# github.com/k14s/ytt v0.34.0
 ## explicit
 github.com/k14s/ytt/pkg/cmd/template
 github.com/k14s/ytt/pkg/cmd/ui
@@ -87,6 +89,7 @@ github.com/k14s/ytt/pkg/filepos
 github.com/k14s/ytt/pkg/files
 github.com/k14s/ytt/pkg/orderedmap
 github.com/k14s/ytt/pkg/schema
+github.com/k14s/ytt/pkg/structmeta
 github.com/k14s/ytt/pkg/template
 github.com/k14s/ytt/pkg/template/core
 github.com/k14s/ytt/pkg/texttemplate
@@ -98,7 +101,7 @@ github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2
 github.com/k14s/ytt/pkg/yamltemplate
 github.com/k14s/ytt/pkg/yttlibrary
 github.com/k14s/ytt/pkg/yttlibrary/overlay
-# github.com/mattn/go-colorable v0.1.8
+# github.com/mattn/go-colorable v0.1.6
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.12
 github.com/mattn/go-isatty
@@ -111,7 +114,7 @@ github.com/modern-go/concurrent
 github.com/modern-go/reflect2
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/spf13/cobra v1.2.1 => github.com/spf13/cobra v1.2.1
+# github.com/spf13/cobra v1.1.3 => github.com/spf13/cobra v1.1.1
 ## explicit
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
@@ -124,11 +127,11 @@ github.com/stretchr/testify/require
 # github.com/vito/go-interact v0.0.0-20171111012221-fa338ed9e9ec
 github.com/vito/go-interact/interact
 github.com/vito/go-interact/interact/terminal
-# github.com/vmware-tanzu/carvel-kapp-controller v0.24.0
+# github.com/vmware-tanzu/carvel-kapp-controller v0.20.0
 ## explicit
 github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1
 github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1
-# github.com/vmware-tanzu/carvel-vendir v0.22.1-0.20210822004142-43142f6b60cd
+# github.com/vmware-tanzu/carvel-vendir v0.21.1
 github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1
 # golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 ## explicit
@@ -143,11 +146,9 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
+# golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 golang.org/x/oauth2
-golang.org/x/oauth2/authhandler
 golang.org/x/oauth2/google
-golang.org/x/oauth2/google/internal/externalaccount
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
@@ -165,7 +166,7 @@ golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
 golang.org/x/time/rate
-# google.golang.org/appengine v1.6.7
+# google.golang.org/appengine v1.6.6
 google.golang.org/appengine
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/app_identity
@@ -429,4 +430,4 @@ sigs.k8s.io/structured-merge-diff/v4/typed
 sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
 sigs.k8s.io/yaml
-# github.com/spf13/cobra => github.com/spf13/cobra v1.2.1
+# github.com/spf13/cobra => github.com/spf13/cobra v1.1.1

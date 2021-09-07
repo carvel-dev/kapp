@@ -6,26 +6,27 @@ package overlay
 import (
 	"fmt"
 
+	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
 const (
-	AnnotationNs template.AnnotationNs = "overlay"
+	AnnotationNs structmeta.AnnotationNs = "overlay"
 
-	AnnotationMerge   template.AnnotationName = "overlay/merge" // default
-	AnnotationRemove  template.AnnotationName = "overlay/remove"
-	AnnotationReplace template.AnnotationName = "overlay/replace"
-	AnnotationInsert  template.AnnotationName = "overlay/insert" // array only
-	AnnotationAppend  template.AnnotationName = "overlay/append" // array only
-	AnnotationAssert  template.AnnotationName = "overlay/assert"
+	AnnotationMerge   structmeta.AnnotationName = "overlay/merge" // default
+	AnnotationRemove  structmeta.AnnotationName = "overlay/remove"
+	AnnotationReplace structmeta.AnnotationName = "overlay/replace"
+	AnnotationInsert  structmeta.AnnotationName = "overlay/insert" // array only
+	AnnotationAppend  structmeta.AnnotationName = "overlay/append" // array only
+	AnnotationAssert  structmeta.AnnotationName = "overlay/assert"
 
-	AnnotationMatch              template.AnnotationName = "overlay/match"
-	AnnotationMatchChildDefaults template.AnnotationName = "overlay/match-child-defaults"
+	AnnotationMatch              structmeta.AnnotationName = "overlay/match"
+	AnnotationMatchChildDefaults structmeta.AnnotationName = "overlay/match-child-defaults"
 )
 
 var (
-	allOps = []template.AnnotationName{
+	allOps = []structmeta.AnnotationName{
 		AnnotationMerge,
 		AnnotationRemove,
 		AnnotationReplace,
@@ -35,8 +36,8 @@ var (
 	}
 )
 
-func whichOp(node yamlmeta.Node) (template.AnnotationName, error) {
-	var foundOp template.AnnotationName
+func whichOp(node yamlmeta.Node) (structmeta.AnnotationName, error) {
+	var foundOp structmeta.AnnotationName
 
 	for _, op := range allOps {
 		if template.NewAnnotations(node).Has(op) {

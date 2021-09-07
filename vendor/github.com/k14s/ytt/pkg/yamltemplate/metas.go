@@ -8,6 +8,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
@@ -23,51 +24,51 @@ var (
 )
 
 type Metas struct {
-	Block       []*yamlmeta.Comment // meant to execute some code
-	Values      []*yamlmeta.Comment // meant to return interpolated value
-	Annotations []CommentAndAnnotation
+	Block       []*yamlmeta.Meta // meant to execute some code
+	Values      []*yamlmeta.Meta // meant to return interpolated value
+	Annotations []MetaAndAnnotation
 	needsEnds   int
 }
 
-type CommentAndAnnotation struct {
-	Comment    *yamlmeta.Comment
-	Annotation *template.Annotation
+type MetaAndAnnotation struct {
+	Meta       *yamlmeta.Meta
+	Annotation *structmeta.Annotation
 }
 
 type MetasOpts struct {
 	IgnoreUnknown bool
 }
 
-func NewTemplateMetaFromYAMLComment(comment *yamlmeta.Comment, opts MetasOpts) (template.Meta, error) {
-	meta, err := template.NewMetaFromString(comment.Data, template.MetaOpts{IgnoreUnknown: opts.IgnoreUnknown})
+func NewStructMetaFromMeta(meta *yamlmeta.Meta, opts MetasOpts) (structmeta.Meta, error) {
+	structMeta, err := structmeta.NewMetaFromString(meta.Data, structmeta.MetaOpts{IgnoreUnknown: opts.IgnoreUnknown})
 	if err != nil {
-		return template.Meta{}, fmt.Errorf(
+		return structmeta.Meta{}, fmt.Errorf(
 			"Non-ytt comment at %s: '#%s': %s. (hint: if this is plain YAML — not a template — consider `--file-mark '<filename>:type=yaml-plain'`)",
-			comment.Position.AsString(), comment.Data, err)
+			meta.Position.AsString(), meta.Data, err)
 	}
-	return meta, nil
+	return structMeta, nil
 }
 
 func NewMetas(node yamlmeta.Node, opts MetasOpts) (Metas, error) {
 	metas := Metas{}
 
-	for _, comment := range node.GetComments() {
-		meta, err := NewTemplateMetaFromYAMLComment(comment, opts)
+	for _, meta := range node.GetMetas() {
+		structMeta, err := NewStructMetaFromMeta(meta, opts)
 		if err != nil {
 			return metas, err
 		}
 
-		for _, ann := range meta.Annotations {
+		for _, ann := range structMeta.Annotations {
 			if len(ann.Name) == 0 {
 				// Default code and value annotations to make templates less verbose
 				ann.Name = template.AnnotationCode
 
 				if node.GetPosition().IsKnown() {
-					if comment.Position.LineNum() == node.GetPosition().LineNum() {
+					if meta.Position.LineNum() == node.GetPosition().LineNum() {
 						if len(node.GetValues()) > 0 && node.GetValues()[0] != nil {
 							return metas, fmt.Errorf(
 								"Expected YAML node at %s to have either computed or YAML value, but found both",
-								comment.Position.AsString())
+								meta.Position.AsString())
 						}
 
 						ann.Name = template.AnnotationValue
@@ -77,8 +78,8 @@ func NewMetas(node yamlmeta.Node, opts MetasOpts) (Metas, error) {
 
 			switch ann.Name {
 			case template.AnnotationValue:
-				metas.Values = append(metas.Values, &yamlmeta.Comment{
-					Position: comment.Position,
+				metas.Values = append(metas.Values, &yamlmeta.Meta{
+					Position: meta.Position,
 					Data:     ann.Content,
 				})
 
@@ -86,7 +87,7 @@ func NewMetas(node yamlmeta.Node, opts MetasOpts) (Metas, error) {
 				if metas.needsEnds > 0 {
 					return metas, fmt.Errorf(
 						"Unexpected code at %s after use of '*/end', expected YAML node",
-						comment.Position.AsString())
+						meta.Position.AsString())
 				}
 
 				code := ann.Content
@@ -99,8 +100,8 @@ func NewMetas(node yamlmeta.Node, opts MetasOpts) (Metas, error) {
 					}
 				}
 
-				metas.Block = append(metas.Block, &yamlmeta.Comment{
-					Position: comment.Position,
+				metas.Block = append(metas.Block, &yamlmeta.Meta{
+					Position: meta.Position,
 					Data:     code,
 				})
 
@@ -108,7 +109,7 @@ func NewMetas(node yamlmeta.Node, opts MetasOpts) (Metas, error) {
 				// ignore
 
 			default:
-				metas.Annotations = append(metas.Annotations, CommentAndAnnotation{comment, ann})
+				metas.Annotations = append(metas.Annotations, MetaAndAnnotation{meta, ann})
 			}
 		}
 	}

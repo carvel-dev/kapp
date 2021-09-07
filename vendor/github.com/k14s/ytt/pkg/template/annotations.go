@@ -7,15 +7,16 @@ import (
 	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
+	"github.com/k14s/ytt/pkg/structmeta"
 )
 
 const (
-	AnnotationComment AnnotationName = "comment"
-	AnnotationCode    AnnotationName = "template/code"
-	AnnotationValue   AnnotationName = "template/value"
+	AnnotationComment structmeta.AnnotationName = "comment"
+	AnnotationCode    structmeta.AnnotationName = "template/code"
+	AnnotationValue   structmeta.AnnotationName = "template/value"
 )
 
-type NodeAnnotations map[AnnotationName]NodeAnnotation
+type NodeAnnotations map[structmeta.AnnotationName]NodeAnnotation
 
 type NodeAnnotation struct {
 	Args   starlark.Tuple
@@ -42,12 +43,12 @@ func (as NodeAnnotations) DeepCopy() NodeAnnotations {
 	return result
 }
 
-func (as NodeAnnotations) Has(name AnnotationName) bool {
+func (as NodeAnnotations) Has(name structmeta.AnnotationName) bool {
 	_, found := as[name]
 	return found
 }
 
-func (as NodeAnnotations) Args(name AnnotationName) starlark.Tuple {
+func (as NodeAnnotations) Args(name structmeta.AnnotationName) starlark.Tuple {
 	na, found := as[name]
 	if !found {
 		return starlark.Tuple{}
@@ -55,7 +56,7 @@ func (as NodeAnnotations) Args(name AnnotationName) starlark.Tuple {
 	return na.Args
 }
 
-func (as NodeAnnotations) Kwargs(name AnnotationName) []starlark.Tuple {
+func (as NodeAnnotations) Kwargs(name structmeta.AnnotationName) []starlark.Tuple {
 	na, found := as[name]
 	if !found {
 		return []starlark.Tuple{}
@@ -63,7 +64,7 @@ func (as NodeAnnotations) Kwargs(name AnnotationName) []starlark.Tuple {
 	return na.Kwargs
 }
 
-func (as NodeAnnotations) DeleteNs(ns AnnotationNs) {
+func (as NodeAnnotations) DeleteNs(ns structmeta.AnnotationNs) {
 	prefix := string(ns) + "/"
 	for k := range as {
 		if strings.HasPrefix(string(k), prefix) {

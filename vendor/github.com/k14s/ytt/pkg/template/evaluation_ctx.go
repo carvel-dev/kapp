@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/k14s/starlark-go/starlark"
+	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/template/core"
 	// Should not import template specific packages here (like yamlmeta)
 )
@@ -157,7 +158,7 @@ func (e *EvaluationCtx) TplStartNodeAnnotation(
 		return starlark.None, err
 	}
 
-	annName := AnnotationName(annNameStr)
+	annName := structmeta.AnnotationName(annNameStr)
 	annVals := args.Index(2).(starlark.Tuple)
 
 	kwargs = []starlark.Tuple{}

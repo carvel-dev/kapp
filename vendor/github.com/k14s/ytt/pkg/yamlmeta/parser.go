@@ -26,8 +26,8 @@ var (
 )
 
 type ParserOpts struct {
-	WithoutComments bool
-	Strict          bool
+	WithoutMeta bool
+	Strict      bool
 }
 
 type Parser struct {
@@ -76,7 +76,7 @@ func (p *Parser) ParseBytes(data []byte, associatedName string) (*DocumentSet, e
 func (p *Parser) parseBytes(data []byte, lineCorrection int) (*DocumentSet, error) {
 	docSet := &DocumentSet{Position: filepos.NewUnknownPosition()}
 
-	var lastUnassignedComments []*Comment
+	var lastUnassignedMetas []*Meta
 
 	dec := yaml.NewDecoder(bytes.NewReader(data))
 	dec.SetForceMapSlice(true)
@@ -98,21 +98,21 @@ func (p *Parser) parseBytes(data []byte, lineCorrection int) (*DocumentSet, erro
 			return nil, err
 		}
 		doc := &Document{
-			Comments: lastUnassignedComments,
+			Metas:    lastUnassignedMetas,
 			Value:    p.parse(rawVal, lineCorrection, lines),
 			Position: p.newDocPosition(dec.DocumentStartLine(), lineCorrection, len(docSet.Items) == 0, lines),
 		}
 
-		allComments, unassignedComments := p.assignComments(doc, dec.Comments(), lineCorrection)
-		docSet.AllComments = append(docSet.AllComments, allComments...)
-		lastUnassignedComments = unassignedComments
+		allMetas, unassignedMetas := p.assignMetas(doc, dec.Comments(), lineCorrection)
+		docSet.AllMetas = append(docSet.AllMetas, allMetas...)
+		lastUnassignedMetas = unassignedMetas
 
 		docSet.Items = append(docSet.Items, doc)
 	}
 
-	if len(lastUnassignedComments) > 0 {
+	if len(lastUnassignedMetas) > 0 {
 		endDoc := &Document{
-			Comments: lastUnassignedComments,
+			Metas:    lastUnassignedMetas,
 			Value:    nil,
 			Position: filepos.NewUnknownPosition(),
 			injected: true,
@@ -184,8 +184,8 @@ func (p *Parser) parse(val interface{}, lineCorrection int, lines []string) inte
 	}
 }
 
-func (p *Parser) assignComments(val interface{}, comments []yaml.Comment, lineCorrection int) ([]*Comment, []*Comment) {
-	if p.opts.WithoutComments {
+func (p *Parser) assignMetas(val interface{}, comments []yaml.Comment, lineCorrection int) ([]*Meta, []*Meta) {
+	if p.opts.WithoutMeta {
 		return nil, nil
 	}
 
@@ -193,32 +193,32 @@ func (p *Parser) assignComments(val interface{}, comments []yaml.Comment, lineCo
 	p.buildLineLocs(val, nodesAtLines)
 
 	lineNums := p.buildLineNums(nodesAtLines)
-	allComments := []*Comment{}
-	unassignedComments := []*Comment{}
+	allMetas := []*Meta{}
+	unassignedMetas := []*Meta{}
 
 	for _, comment := range comments {
-		comment := &Comment{
+		meta := &Meta{
 			Data:     comment.Data,
 			Position: p.newPosition(comment.Line, lineCorrection, comment.Data),
 		}
-		allComments = append(allComments, comment)
+		allMetas = append(allMetas, meta)
 
 		var foundOwner bool
 
 		for _, lineNum := range lineNums {
 			// Always looking at the same line or "above" (greater line number)
-			if comment.Position.LineNum() > lineNum {
+			if meta.Position.LineNum() > lineNum {
 				continue
 			}
 			nodes, ok := nodesAtLines[lineNum]
 			if ok {
-				// Last node on the line is the one that owns inline comment
+				// Last node on the line is the one that owns inline meta
 				// otherwise it's the first one (outermost one)
 				// TODO any other better way to determine?
-				if comment.Position.LineNum() == lineNum {
-					nodes[len(nodes)-1].addComments(comment)
+				if meta.Position.LineNum() == lineNum {
+					nodes[len(nodes)-1].addMeta(meta)
 				} else {
-					nodes[0].addComments(comment)
+					nodes[0].addMeta(meta)
 				}
 				foundOwner = true
 				break
@@ -226,11 +226,11 @@ func (p *Parser) assignComments(val interface{}, comments []yaml.Comment, lineCo
 		}
 
 		if !foundOwner {
-			unassignedComments = append(unassignedComments, comment)
+			unassignedMetas = append(unassignedMetas, meta)
 		}
 	}
 
-	return allComments, unassignedComments
+	return allMetas, unassignedMetas
 }
 
 func (p *Parser) buildLineLocs(val interface{}, nodeAtLines map[int][]Node) {

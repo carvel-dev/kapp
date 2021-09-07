@@ -24,8 +24,8 @@ func (ds *DocumentSet) DeepCopy() *DocumentSet {
 	}
 
 	return &DocumentSet{
-		Comments:    []*Comment(CommentSlice(ds.Comments).DeepCopy()),
-		AllComments: []*Comment(CommentSlice(ds.AllComments).DeepCopy()),
+		Metas:    []*Meta(MetaSlice(ds.Metas).DeepCopy()),
+		AllMetas: []*Meta(MetaSlice(ds.AllMetas).DeepCopy()),
 
 		Items:    newItems,
 		Position: ds.Position,
@@ -36,7 +36,7 @@ func (ds *DocumentSet) DeepCopy() *DocumentSet {
 
 func (d *Document) DeepCopy() *Document {
 	return &Document{
-		Comments: []*Comment(CommentSlice(d.Comments).DeepCopy()),
+		Metas:    []*Meta(MetaSlice(d.Metas).DeepCopy()),
 		Value:    nodeDeepCopy(d.Value),
 		Position: d.Position,
 
@@ -52,7 +52,7 @@ func (m *Map) DeepCopy() *Map {
 	}
 
 	return &Map{
-		Comments: []*Comment(CommentSlice(m.Comments).DeepCopy()),
+		Metas:    []*Meta(MetaSlice(m.Metas).DeepCopy()),
 		Items:    newItems,
 		Position: m.Position,
 
@@ -62,7 +62,7 @@ func (m *Map) DeepCopy() *Map {
 
 func (mi *MapItem) DeepCopy() *MapItem {
 	return &MapItem{
-		Comments: []*Comment(CommentSlice(mi.Comments).DeepCopy()),
+		Metas:    []*Meta(MetaSlice(mi.Metas).DeepCopy()),
 		Key:      mi.Key,
 		Value:    nodeDeepCopy(mi.Value),
 		Position: mi.Position,
@@ -78,7 +78,7 @@ func (a *Array) DeepCopy() *Array {
 	}
 
 	return &Array{
-		Comments: []*Comment(CommentSlice(a.Comments).DeepCopy()),
+		Metas:    []*Meta(MetaSlice(a.Metas).DeepCopy()),
 		Items:    newItems,
 		Position: a.Position,
 
@@ -88,7 +88,7 @@ func (a *Array) DeepCopy() *Array {
 
 func (ai *ArrayItem) DeepCopy() *ArrayItem {
 	return &ArrayItem{
-		Comments: []*Comment(CommentSlice(ai.Comments).DeepCopy()),
+		Metas:    []*Meta(MetaSlice(ai.Metas).DeepCopy()),
 		Value:    nodeDeepCopy(ai.Value),
 		Position: ai.Position,
 
@@ -96,14 +96,14 @@ func (ai *ArrayItem) DeepCopy() *ArrayItem {
 	}
 }
 
-func (n *Comment) DeepCopy() *Comment { return &(*n) }
+func (n *Meta) DeepCopy() *Meta { return &(*n) }
 
-type CommentSlice []*Comment
+type MetaSlice []*Meta
 
-func (s CommentSlice) DeepCopy() CommentSlice {
-	var result []*Comment
-	for _, comment := range s {
-		result = append(result, comment.DeepCopy())
+func (s MetaSlice) DeepCopy() MetaSlice {
+	var result []*Meta
+	for _, meta := range s {
+		result = append(result, meta.DeepCopy())
 	}
 	return result
 }

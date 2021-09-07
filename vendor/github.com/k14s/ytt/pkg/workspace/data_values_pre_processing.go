@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
+	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
@@ -52,6 +53,11 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 		}
 
 		if resultDVsDoc == nil {
+			err := o.schema.ValidateWithValues(1)
+			if err != nil {
+				return nil, nil, err
+			}
+
 			resultDVsDoc = dv.Doc
 		} else {
 			resultDVsDoc, err = o.overlay(resultDVsDoc, dv.Doc)
@@ -61,12 +67,12 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 		}
 		typeCheck := o.typeAndCheck(resultDVsDoc)
 		if len(typeCheck.Violations) > 0 {
-			return nil, nil, schema.NewSchemaError("One or more data values were invalid", typeCheck.Violations...)
+			return nil, nil, typeCheck
 		}
 	}
 
 	if resultDVsDoc == nil {
-		resultDVsDoc = newEmptyDataValuesDocument()
+		resultDVsDoc = o.newEmptyDataValuesDocument()
 	}
 	dataValues, err := NewDataValues(resultDVsDoc)
 	if err != nil {
@@ -88,7 +94,7 @@ func (o DataValuesPreProcessing) collectDataValuesDocs(files []*FileInLibrary) (
 		allDvs = append(allDvs, dv)
 	}
 	for _, fileInLib := range files {
-		docs, err := o.extractDataValueDocs(fileInLib)
+		docs, err := o.templateFile(fileInLib)
 		if err != nil {
 			return nil, fmt.Errorf("Templating file '%s': %s", fileInLib.File.RelativePath(), err)
 		}
@@ -126,7 +132,7 @@ func (o DataValuesPreProcessing) allFileDescs(files []*FileInLibrary) string {
 	return strings.Join(result, ", ")
 }
 
-func (o DataValuesPreProcessing) extractDataValueDocs(fileInLib *FileInLibrary) ([]*yamlmeta.Document, error) {
+func (o DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yamlmeta.Document, error) {
 	libraryCtx := LibraryExecutionContext{Current: fileInLib.Library, Root: NewRootLibrary(nil)}
 
 	_, resultDocSet, err := o.loader.EvalYAML(libraryCtx, fileInLib.File)
@@ -151,6 +157,13 @@ func (o DataValuesPreProcessing) extractDataValueDocs(fileInLib *FileInLibrary) 
 	}
 
 	return valuesDocs, nil
+}
+
+func (o DataValuesPreProcessing) newEmptyDataValuesDocument() *yamlmeta.Document {
+	return &yamlmeta.Document{
+		Value:    nil,
+		Position: filepos.NewUnknownPosition(),
+	}
 }
 
 func (o DataValuesPreProcessing) overlay(dataValues, overlay *yamlmeta.Document) (*yamlmeta.Document, error) {

@@ -8,11 +8,10 @@ import (
 )
 
 type Position struct {
-	lineNum    *int // 1 based
-	file       string
-	line       string
-	known      bool
-	fromMemory bool
+	lineNum *int // 1 based
+	file    string
+	line    string
+	known   bool
 }
 
 func NewPosition(lineNum int) *Position {
@@ -27,17 +26,11 @@ func NewUnknownPosition() *Position {
 	return &Position{}
 }
 
-func NewUnknownPositionWithKeyVal(k, v interface{}, separator string) *Position {
-	return &Position{line: fmt.Sprintf("%v%v %#v", k, separator, v), fromMemory: true}
-}
-
 func (p *Position) SetFile(file string) { p.file = file }
 
 func (p *Position) SetLine(line string) { p.line = line }
 
 func (p *Position) IsKnown() bool { return p != nil && p.known }
-
-func (p *Position) FromMemory() bool { return p.fromMemory }
 
 func (p *Position) LineNum() int {
 	if !p.IsKnown() {
@@ -55,10 +48,6 @@ func (p *Position) GetLine() string {
 
 func (p *Position) AsString() string {
 	return "line " + p.AsCompactString()
-}
-
-func (p *Position) GetFile() string {
-	return p.file
 }
 
 func (p *Position) AsCompactString() string {
@@ -90,7 +79,7 @@ func (p *Position) DeepCopy() *Position {
 	if p == nil {
 		return nil
 	}
-	newPos := &Position{file: p.file, known: p.known, line: p.line}
+	newPos := &Position{file: p.file, known: p.known}
 	if p.lineNum != nil {
 		lineVal := *p.lineNum
 		newPos.lineNum = &lineVal

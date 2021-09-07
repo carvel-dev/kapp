@@ -17,9 +17,10 @@ type Options struct {
 	IgnoreUnknownComments   bool
 	ImplicitMapKeyOverrides bool
 
-	StrictYAML   bool
-	Debug        bool
-	InspectFiles bool
+	StrictYAML    bool
+	Debug         bool
+	InspectFiles  bool
+	SchemaEnabled bool
 
 	BulkFilesSourceOpts    BulkFilesSourceOpts
 	RegularFilesSourceOpts RegularFilesSourceOpts
@@ -64,6 +65,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().BoolVarP(&o.StrictYAML, "strict", "s", false, "Configure to use _strict_ YAML subset")
 	cmd.Flags().BoolVar(&o.Debug, "debug", false, "Enable debug output")
 	cmd.Flags().BoolVar(&o.InspectFiles, "files-inspect", false, "Inspect files")
+	cmd.Flags().BoolVar(&o.SchemaEnabled, "enable-experiment-schema", false, "Enable experimental schema features")
 
 	o.BulkFilesSourceOpts.Set(cmd)
 	o.RegularFilesSourceOpts.Set(cmd)
@@ -118,17 +120,18 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 		IgnoreUnknownComments:   o.IgnoreUnknownComments,
 		ImplicitMapKeyOverrides: o.ImplicitMapKeyOverrides,
 		StrictYAML:              o.StrictYAML,
+		SchemaEnabled:           o.SchemaEnabled,
 	})
 
 	libraryCtx := workspace.LibraryExecutionContext{Current: rootLibrary, Root: rootLibrary}
-	rootLibraryExecution := libraryExecutionFactory.New(libraryCtx)
+	rootLibraryLoader := libraryExecutionFactory.New(libraryCtx)
 
-	schema, librarySchemas, err := rootLibraryExecution.Schemas(nil)
+	schema, librarySchemas, err := rootLibraryLoader.Schemas(nil)
 	if err != nil {
 		return Output{Err: err}
 	}
 
-	values, libraryValues, err := rootLibraryExecution.Values(valuesOverlays, schema)
+	values, libraryValues, err := rootLibraryLoader.Values(valuesOverlays, schema)
 	if err != nil {
 		return Output{Err: err}
 	}
@@ -143,7 +146,7 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 		}
 	}
 
-	result, err := rootLibraryExecution.Eval(values, libraryValues, librarySchemas)
+	result, err := rootLibraryLoader.Eval(values, libraryValues, librarySchemas)
 	if err != nil {
 		return Output{Err: err}
 	}
