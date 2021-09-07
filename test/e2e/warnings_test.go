@@ -41,7 +41,7 @@ func TestWarningsFlag(t *testing.T) {
 	cleanUp()
 	defer cleanUp()
 	customWarning := "example.com/v1alpha1 CronTab is deprecated; use example.com/v1 CronTab"
-	outputWarning := fmt.Sprintf("\n%sWarning:%s %s", yellowColor, resetColor, customWarning)
+	outputWarning := fmt.Sprintf("%sWarning:%s %s", yellowColor, resetColor, customWarning)
 
 	crdYaml := `
 apiVersion: apiextensions.k8s.io/v1
@@ -81,26 +81,6 @@ spec:
   image: my-awesome-cron-image
 `
 
-	expectedOutputTemplate := `
-Target cluster 'https://127.0.0.1:60817' (nodes: minikube)
-
-Changes
-
-Namespace  Name  Kind     Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
-kapp-test  <cr-name>  CronTab  -       -    create  -       reconcile  -   -  
-
-Op:      1 create, 0 delete, 0 update, 0 noop
-Wait to: 1 reconcile, 0 delete, 0 noop
-
-<replaced>: ---- applying 1 changes [0/1 done] ----<output-warning>
-<replaced>: create crontab/<cr-name> (stable.example.com/v1alpha1) namespace: kapp-test
-<replaced>: ---- waiting on 1 changes [0/1 done] ----
-<replaced>: ok: reconcile crontab/<cr-name> (stable.example.com/v1alpha1) namespace: kapp-test
-<replaced>: ---- applying complete [1/1 done] ----
-<replaced>: ---- waiting complete [1/1 done] ----
-
-Succeeded`
-
 	logger.Section("deploying crd with deprecated version", func() {
 		yaml := strings.Replace(crdYaml, "<customWarning>", customWarning, 1)
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", crdName},
@@ -109,15 +89,31 @@ Succeeded`
 
 	logger.Section("deploying without --warnings flag", func() {
 		yaml := strings.Replace(crYaml, "<cr-name>", "cr-1", 1)
-
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", crName1},
 			RunOpts{StdinReader: strings.NewReader(yaml)})
 
-		expectedOutput := strings.Replace(expectedOutputTemplate, "<cr-name>", "cr-1", 3)
+		expectedOutput := `
+Changes
+
+Namespace  Name  Kind     Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
+kapp-test  cr-1  CronTab  -       -    create  -       reconcile  -   -  
+
+Op:      1 create, 0 delete, 0 update, 0 noop
+Wait to: 1 reconcile, 0 delete, 0 noop
+
+<replaced>: ---- applying 1 changes [0/1 done] ----
+<outputWarning>
+<replaced>: create crontab/cr-1 (stable.example.com/v1alpha1) namespace: kapp-test
+<replaced>: ---- waiting on 1 changes [0/1 done] ----
+<replaced>: ok: reconcile crontab/cr-1 (stable.example.com/v1alpha1) namespace: kapp-test
+<replaced>: ---- applying complete [1/1 done] ----
+<replaced>: ---- waiting complete [1/1 done] ----
+
+Succeeded`
 
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
-		expectedOutput = strings.Replace(expectedOutput, "<output-warning>", outputWarning, 1)
-		expectedOutput = strings.TrimSpace(replaceTarget(replaceSpaces(expectedOutput)))
+		expectedOutput = strings.Replace(expectedOutput, "<outputWarning>", outputWarning, 1)
+		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
 
 		if expectedOutput != out {
 			t.Fatalf("Expected output with warning >>%s<<, but got >>%s<<\n", expectedOutput, out)
@@ -130,11 +126,26 @@ Succeeded`
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", crName2, "--warnings=false"},
 			RunOpts{StdinReader: strings.NewReader(yaml)})
 
-		expectedOutput := strings.Replace(expectedOutputTemplate, "<cr-name>", "cr-2", 3)
+		expectedOutput := `
+Changes
+
+Namespace  Name  Kind     Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
+kapp-test  cr-2  CronTab  -       -    create  -       reconcile  -   -  
+
+Op:      1 create, 0 delete, 0 update, 0 noop
+Wait to: 1 reconcile, 0 delete, 0 noop
+
+<replaced>: ---- applying 1 changes [0/1 done] ----
+<replaced>: create crontab/cr-2 (stable.example.com/v1alpha1) namespace: kapp-test
+<replaced>: ---- waiting on 1 changes [0/1 done] ----
+<replaced>: ok: reconcile crontab/cr-2 (stable.example.com/v1alpha1) namespace: kapp-test
+<replaced>: ---- applying complete [1/1 done] ----
+<replaced>: ---- waiting complete [1/1 done] ----
+
+Succeeded`
 
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
-		expectedOutput = strings.Replace(expectedOutput, "<output-warning>", "", 1)
-		expectedOutput = strings.TrimSpace(replaceTarget(replaceSpaces(expectedOutput)))
+		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
 		if expectedOutput != out {
 			t.Fatalf("Expected output without warning >>%s<< but got >>%s<<\n", expectedOutput, out)
 		}
