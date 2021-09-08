@@ -41,11 +41,15 @@ const (
 type Resources interface {
 	All([]ResourceType, AllOpts) ([]Resource, error)
 	Delete(Resource) error
-	Exists(Resource) (bool, error)
+	Exists(Resource, ExistsOpts) (bool, error)
 	Get(Resource) (Resource, error)
 	Patch(Resource, types.PatchType, []byte) (Resource, error)
 	Update(Resource) (Resource, error)
 	Create(resource Resource) (Resource, error)
+}
+
+type ExistsOpts struct {
+	SameUID bool
 }
 
 type ResourcesImpl struct {
@@ -362,7 +366,7 @@ func (c *ResourcesImpl) Get(resource Resource) (Resource, error) {
 	return NewResourceUnstructured(*item, resType), nil
 }
 
-func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
+func (c *ResourcesImpl) Exists(resource Resource, existsOpts ExistsOpts) (bool, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { c.logger.Debug("exists %s", time.Now().UTC().Sub(t1)) }()
@@ -381,7 +385,7 @@ func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 	var found bool
 
 	err = util.Retry(time.Second, time.Minute, func() (bool, error) {
-		_, err = resClient.Get(context.TODO(), resource.Name(), metav1.GetOptions{})
+		fetchedRes, err := resClient.Get(context.TODO(), resource.Name(), metav1.GetOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				found = false
@@ -399,6 +403,16 @@ func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 			// TODO sometimes metav1.StatusReasonUnknown is returned (empty string)
 			// might be related to deletion of mutating webhook
 			return isDone, c.resourceErr(err, "Checking existence of", resource)
+		}
+
+		// Check if we have to compare the UID's also to confirm if it is same resource.
+		if existsOpts.SameUID {
+			if fetchedRes != nil {
+				if string(fetchedRes.GetUID()) != resource.UID() {
+					found = false
+					return true, nil
+				}
+			}
 		}
 
 		found = true

@@ -204,7 +204,7 @@ func (a *LabeledResources) findNonLabeledResources(labeledResources, newResource
 			go func() {
 				defer func() { wg.Done() }()
 
-				exists, err := a.identifiedResources.Exists(res)
+				exists, err := a.identifiedResources.Exists(res, ExistsOpts{})
 				if err != nil {
 					errCh <- err
 					return
