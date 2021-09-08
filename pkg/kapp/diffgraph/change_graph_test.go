@@ -95,6 +95,10 @@ kind: CustomResourceDefinition
 apiVersion: apiextensions.k8s.io/v1
 metadata:
   name: app-config
+spec:
+  group: app-group
+  names:
+    kind: app-kind
 ---
 kind: Namespace
 apiVersion: v1

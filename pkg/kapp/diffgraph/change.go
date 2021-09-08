@@ -9,6 +9,7 @@ import (
 
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlcrd "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 )
 
 const (
@@ -116,7 +117,11 @@ func (c *Change) Groups() ([]ChangeGroup, error) {
 		rms := ctlconf.ResourceMatchers(groupConfig.ResourceMatchers).AsResourceMatchers()
 
 		if (ctlres.AnyMatcher{rms}).Matches(res) {
-			groupKey, err := NewChangeGroupFromAnnString(groupConfig.Name)
+			name, err := parseChangeGroupPlaceholders(c.Change.Resource(), groupConfig.Name)
+			if err != nil {
+				return nil, err
+			}
+			groupKey, err := NewChangeGroupFromAnnString(name)
 			if err != nil {
 				return nil, err
 			}
@@ -152,6 +157,10 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 
 		if (ctlres.AnyMatcher{rms}).Matches(res) {
 			for _, ruleStr := range ruleConfig.Rules {
+				ruleStr, err := parseChangeGroupPlaceholders(c.Change.Resource(), ruleStr)
+				if err != nil {
+					return nil, err
+				}
 				rule, err := NewChangeRuleFromAnnString(ruleStr)
 				if err != nil {
 					return nil, err
@@ -231,4 +240,28 @@ func (cs Changes) MatchesRule(rule ChangeRule, exceptChange *Change) ([]*Change,
 	}
 
 	return result, nil
+}
+
+func parseChangeGroupPlaceholders(resource ctlres.Resource, changeGroup string) (parsed string, err error) {
+	var name, crdGroup string
+	crd := ctlcrd.NewAPIExtensionsVxCRD(resource)
+	if crd != nil {
+		name, err = crd.Name()
+		if err != nil {
+			return parsed, err
+		}
+		crdGroup, err = crd.Group()
+		if err != nil {
+			return parsed, err
+		}
+	} else {
+		name = resource.Name()
+	}
+	parsed = strings.Replace(changeGroup, "{name}", name, 1)
+	parsed = strings.Replace(parsed, "{crd-group}", crdGroup, 1)
+	parsed = strings.Replace(parsed, "{namespace}", resource.Namespace(), 1)
+	parsed = strings.Replace(parsed, "{group}", resource.APIGroup(), 1)
+	parsed = strings.Replace(parsed, "{kind}", resource.Kind(), 1)
+	parsed = strings.ToLower(parsed)
+	return parsed, err
 }
