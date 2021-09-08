@@ -132,7 +132,7 @@ func (f *DepsFactoryImpl) newWarningHandler() rest.WarningHandler {
 	}
 	options := rest.WarningWriterOptions{
 		Deduplicate: true,
-		Color:       true,
+		Color:       false,
 	}
 	warningWriter := rest.NewWarningWriter(uiWriter{ui: f.ui}, options)
 	return warningWriter

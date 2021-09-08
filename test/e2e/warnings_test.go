@@ -4,18 +4,12 @@
 package e2e
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"testing"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-)
-
-const (
-	yellowColor = "\u001b[33;1m"
-	resetColor  = "\u001b[0m"
 )
 
 func TestWarningsFlag(t *testing.T) {
@@ -41,7 +35,6 @@ func TestWarningsFlag(t *testing.T) {
 	cleanUp()
 	defer cleanUp()
 	customWarning := "example.com/v1alpha1 CronTab is deprecated; use example.com/v1 CronTab"
-	outputWarning := fmt.Sprintf("%sWarning:%s %s", yellowColor, resetColor, customWarning)
 
 	crdYaml := `
 apiVersion: apiextensions.k8s.io/v1
@@ -102,7 +95,7 @@ Op:      1 create, 0 delete, 0 update, 0 noop
 Wait to: 1 reconcile, 0 delete, 0 noop
 
 <replaced>: ---- applying 1 changes [0/1 done] ----
-<outputWarning>
+Warning: <custom-warning>
 <replaced>: create crontab/cr-1 (stable.example.com/v1alpha1) namespace: kapp-test
 <replaced>: ---- waiting on 1 changes [0/1 done] ----
 <replaced>: ok: reconcile crontab/cr-1 (stable.example.com/v1alpha1) namespace: kapp-test
@@ -112,7 +105,7 @@ Wait to: 1 reconcile, 0 delete, 0 noop
 Succeeded`
 
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
-		expectedOutput = strings.Replace(expectedOutput, "<outputWarning>", outputWarning, 1)
+		expectedOutput = strings.Replace(expectedOutput, "<custom-warning>", customWarning, 1)
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
 
 		if expectedOutput != out {
