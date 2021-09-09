@@ -9,16 +9,15 @@ import (
 
 	"github.com/k14s/ytt/pkg/filepos"
 
-	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
 const (
-	AnnotationNullable     structmeta.AnnotationName = "schema/nullable"
-	AnnotationType         structmeta.AnnotationName = "schema/type"
-	TypeAnnotationKwargAny string                    = "any"
+	AnnotationNullable     template.AnnotationName = "schema/nullable"
+	AnnotationType         template.AnnotationName = "schema/type"
+	TypeAnnotationKwargAny string                  = "any"
 )
 
 type Annotation interface {
@@ -27,6 +26,7 @@ type Annotation interface {
 
 type TypeAnnotation struct {
 	any          bool
+	inferredType yamlmeta.Type
 	itemPosition *filepos.Position
 }
 
@@ -35,11 +35,17 @@ type NullableAnnotation struct {
 	itemPosition      *filepos.Position
 }
 
-func NewTypeAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*TypeAnnotation, error) {
+func NewTypeAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Type, pos *filepos.Position) (*TypeAnnotation, error) {
 	if len(ann.Kwargs) == 0 {
-		return nil, fmt.Errorf("expected @%v annotation to have keyword argument and value. Supported key-value pairs are '%v=True', '%v=False'", AnnotationType, TypeAnnotationKwargAny, TypeAnnotationKwargAny)
+		return nil, schemaAssertionError{
+			position:    pos,
+			description: fmt.Sprintf("expected @%v annotation to have keyword argument and value", AnnotationType),
+			expected:    "valid keyword argument and value",
+			found:       "missing keyword argument and value",
+			hints:       []string{fmt.Sprintf("Supported key-value pairs are '%v=True', '%v=False'", TypeAnnotationKwargAny, TypeAnnotationKwargAny)},
+		}
 	}
-	typeAnn := &TypeAnnotation{itemPosition: pos}
+	typeAnn := &TypeAnnotation{inferredType: inferredType, itemPosition: pos}
 	for _, kwarg := range ann.Kwargs {
 		argName, err := core.NewStarlarkValue(kwarg[0]).AsString()
 		if err != nil {
@@ -50,13 +56,24 @@ func NewTypeAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*Typ
 		case TypeAnnotationKwargAny:
 			isAnyType, err := core.NewStarlarkValue(kwarg[1]).AsBool()
 			if err != nil {
-				return nil,
-					fmt.Errorf("processing @%v '%v' argument: %s", AnnotationType, TypeAnnotationKwargAny, err)
+				return nil, schemaAssertionError{
+					position:    pos,
+					description: "unknown @schema/type annotation keyword argument",
+					expected:    "starlark.Bool",
+					found:       fmt.Sprintf("%T", kwarg[1]),
+					hints:       []string{fmt.Sprintf("Supported kwargs are '%v'", TypeAnnotationKwargAny)},
+				}
 			}
 			typeAnn.any = isAnyType
 
 		default:
-			return nil, fmt.Errorf("unknown @%v annotation keyword argument '%v'. Supported kwargs are '%v'", AnnotationType, argName, TypeAnnotationKwargAny)
+			return nil, schemaAssertionError{
+				position:    pos,
+				description: "unknown @schema/type annotation keyword argument",
+				expected:    "A valid kwarg",
+				found:       argName,
+				hints:       []string{fmt.Sprintf("Supported kwargs are '%v'", TypeAnnotationKwargAny)},
+			}
 		}
 	}
 	return typeAnn, nil
@@ -72,7 +89,7 @@ func NewNullableAnnotation(ann template.NodeAnnotation, valueType yamlmeta.Type,
 
 func (t *TypeAnnotation) NewTypeFromAnn() yamlmeta.Type {
 	if t.any {
-		return &AnyType{Position: t.itemPosition}
+		return &AnyType{ValueType: t.inferredType, Position: t.itemPosition}
 	}
 	return nil
 }
@@ -88,7 +105,7 @@ func (n *NullableAnnotation) NewTypeFromAnn() yamlmeta.Type {
 func collectAnnotations(item yamlmeta.Node) ([]Annotation, error) {
 	var anns []Annotation
 
-	for _, annotation := range []structmeta.AnnotationName{AnnotationType, AnnotationNullable} {
+	for _, annotation := range []template.AnnotationName{AnnotationType, AnnotationNullable} {
 		ann, err := processOptionalAnnotation(item, annotation)
 		if err != nil {
 			return nil, err
@@ -100,27 +117,28 @@ func collectAnnotations(item yamlmeta.Node) ([]Annotation, error) {
 	return anns, nil
 }
 
-func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation structmeta.AnnotationName) (Annotation, error) {
+func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.AnnotationName) (Annotation, error) {
 	nodeAnnotations := template.NewAnnotations(node)
 
 	if nodeAnnotations.Has(optionalAnnotation) {
 		ann, _ := nodeAnnotations[optionalAnnotation]
 
+		wrappedValueType, err := inferTypeFromValue(node.GetValues()[0], node.GetPosition())
+		if err != nil {
+			return nil, err
+		}
+
 		switch optionalAnnotation {
 		case AnnotationNullable:
-			wrappedValueType, err := newCollectionItemValueType(node.GetValues()[0], node.GetPosition())
+			nullAnn, err := NewNullableAnnotation(ann, wrappedValueType, node.GetPosition())
 			if err != nil {
 				return nil, err
 			}
-			nullAnn, err := NewNullableAnnotation(ann, wrappedValueType, node.GetPosition())
-			if err != nil {
-				return nil, NewInvalidSchemaError(node, err.Error(), "")
-			}
 			return nullAnn, nil
 		case AnnotationType:
-			typeAnn, err := NewTypeAnnotation(ann, node.GetPosition())
+			typeAnn, err := NewTypeAnnotation(ann, wrappedValueType, node.GetPosition())
 			if err != nil {
-				return nil, NewInvalidSchemaError(node, err.Error(), "")
+				return nil, err
 			}
 			return typeAnn, nil
 		}
@@ -129,7 +147,7 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation structmeta
 	return nil, nil
 }
 
-func convertAnnotationsToSingleType(anns []Annotation) yamlmeta.Type {
+func getTypeFromAnnotations(anns []Annotation) yamlmeta.Type {
 	annsCopy := append([]Annotation{}, anns...)
 
 	if len(annsCopy) == 0 {
