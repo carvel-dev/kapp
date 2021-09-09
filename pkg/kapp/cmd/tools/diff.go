@@ -4,6 +4,8 @@
 package tools
 
 import (
+	"fmt"
+
 	"github.com/cppforlife/go-cli-ui/ui"
 	ctlcap "github.com/k14s/kapp/pkg/kapp/clusterapply"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
@@ -16,9 +18,10 @@ type DiffOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
 
-	FileFlags  FileFlags
-	FileFlags2 FileFlags2
-	DiffFlags  DiffFlags
+	FileFlags   FileFlags
+	FileFlags2  FileFlags2
+	DiffFlags   DiffFlags
+	FilterFlags ctldiff.ChangeSetFilter
 }
 
 func NewDiffOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *DiffOptions {
@@ -49,6 +52,13 @@ func (o *DiffOptions) Run() error {
 	}
 
 	changeFactory := ctldiff.NewChangeFactory(nil, nil)
+
+	resourceFilter, err := o.FilterFlags.DiffFilter()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(resourceFilter)
 
 	changes, err := ctldiff.NewChangeSet(existingResources, newResources, o.DiffFlags.ChangeSetOpts, changeFactory).Calculate()
 	if err != nil {

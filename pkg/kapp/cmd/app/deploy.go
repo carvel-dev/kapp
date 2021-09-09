@@ -139,8 +139,17 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
+	diffFilter, err := o.DiffFlags.DiffFilter()
+	if err != nil {
+		return err
+	}
+
+	diffFilteredExistingResource := diffFilter.Apply(existingResources)
+
+	diffFilteredNewResource := diffFilter.Apply(newResources)
+
 	clusterChangeSet, clusterChangesGraph, hasNoChanges, changeSummary, err :=
-		o.calculateAndPresentChanges(existingResources, newResources, conf, supportObjs)
+		o.calculateAndPresentChanges(diffFilteredExistingResource, diffFilteredNewResource, conf, supportObjs)
 	if err != nil {
 		if o.DiffFlags.UI && clusterChangesGraph != nil {
 			return o.presentDiffUI(clusterChangesGraph)
@@ -349,6 +358,8 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 		// Return graph for inspection
 		return clusterChangeSet, clusterChangesGraph, false, "", err
 	}
+
+	// changes to apply label filter
 
 	var changesSummary string
 
