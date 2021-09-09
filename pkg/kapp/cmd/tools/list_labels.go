@@ -122,13 +122,18 @@ func (o *ListLabelsOptions) listResources() ([]ctlres.Resource, error) {
 		return nil, err
 	}
 
-	dynamicClient, err := o.depsFactory.DynamicClient()
+	dynamicClient, err := o.depsFactory.DynamicClient(cmdcore.DynamicClientOpts{Warnings: true})
+	if err != nil {
+		return nil, err
+	}
+
+	mutedDynamicClient, err := o.depsFactory.DynamicClient(cmdcore.DynamicClientOpts{Warnings: false})
 	if err != nil {
 		return nil, err
 	}
 
 	resTypes := ctlres.NewResourceTypesImpl(coreClient, ctlres.ResourceTypesImplOpts{})
-	resources := ctlres.NewResourcesImpl(resTypes, coreClient, dynamicClient, nil, o.logger)
+	resources := ctlres.NewResourcesImpl(resTypes, coreClient, dynamicClient, mutedDynamicClient, nil, o.logger)
 	identifiedResources := ctlres.NewIdentifiedResources(coreClient, resTypes, resources, nil, o.logger)
 
 	labelSelector, err := labels.Parse("!kapp")

@@ -26,7 +26,12 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 		return FactorySupportObjs{}, err
 	}
 
-	dynamicClient, err := depsFactory.DynamicClient()
+	dynamicClient, err := depsFactory.DynamicClient(cmdcore.DynamicClientOpts{Warnings: true})
+	if err != nil {
+		return FactorySupportObjs{}, err
+	}
+
+	mutedDynamicClient, err := depsFactory.DynamicClient(cmdcore.DynamicClientOpts{Warnings: false})
 	if err != nil {
 		return FactorySupportObjs{}, err
 	}
@@ -38,7 +43,7 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 		CanIgnoreFailingAPIService: resTypesFlags.CanIgnoreFailingAPIService,
 	})
 
-	resources := ctlres.NewResourcesImpl(resTypes, coreClient, dynamicClient, fallbackAllowedNss, logger)
+	resources := ctlres.NewResourcesImpl(resTypes, coreClient, dynamicClient, mutedDynamicClient, fallbackAllowedNss, logger)
 
 	identifiedResources := ctlres.NewIdentifiedResources(
 		coreClient, resTypes, resources, fallbackAllowedNss, logger)
