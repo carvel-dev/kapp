@@ -182,6 +182,14 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 			return ctlcap.ClusterChangeSet{}, nil, false, err
 		}
 
+		// Apply diff-filter on the changes
+		diffFilter, err := o.DiffFlags.DiffFilter()
+		if err != nil {
+			return ctlcap.ClusterChangeSet{}, nil, false, err
+		}
+
+		filteredChanges := diffFilter.Apply(changes)
+
 		{ // Build cluster changes based on diff changes
 			msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
 
@@ -194,7 +202,7 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 				changeFactory, changeSetFactory, convergedResFactory, msgsUI)
 
 			clusterChangeSet = ctlcap.NewClusterChangeSet(
-				changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory,
+				filteredChanges, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory,
 				conf.ChangeGroupBindings(), conf.ChangeRuleBindings(), msgsUI, o.logger)
 		}
 	}

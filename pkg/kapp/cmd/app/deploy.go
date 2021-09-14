@@ -332,7 +332,7 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 		// Apply diff-filter on the changes
 		diffFilter, err := o.DiffFlags.DiffFilter()
 		if err != nil {
-			fmt.Errorf("Error parsing --diff-filter: %s", err)
+			return clusterChangeSet, nil, false, "", err
 		}
 
 		filteredChanges := diffFilter.Apply(changes)
@@ -357,8 +357,6 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 		// Return graph for inspection
 		return clusterChangeSet, clusterChangesGraph, false, "", err
 	}
-
-	// changes to apply label filter
 
 	var changesSummary string
 

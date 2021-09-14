@@ -54,7 +54,6 @@ func NewBoolFilterFromString(data string) (*BoolFilter, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return &filter, nil
 }
 
