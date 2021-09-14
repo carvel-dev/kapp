@@ -153,10 +153,6 @@ func (m BoolFilter) Matches(newResource res.Resource, existingResource res.Resou
 		return !m.Not.Matches(newResource, existingResource)
 	}
 
-	//if (m.NewResource != nil && newResource != nil) && (m.ExistingResource != nil && existingResource != nil) {
-	//	return m.NewResource.MatchesNewResource(newResource) && m.ExistingResource.MatchesExistingResource(existingResource)
-	//}
-
 	if m.NewResource != nil && newResource != nil {
 		return m.NewResource.MatchesNewResource(newResource)
 	}
