@@ -12,13 +12,19 @@ import (
 )
 
 type ChangeSetFilter struct {
-	lf     DiffFilter
+	df     DiffFilter
 	Filter string
 }
 
 type DiffFilter struct {
-	LabelSelector []string
-	BoolFilter    *BoolFilter
+	Kinds          []string
+	Namespaces     []string
+	Names          []string
+	KindNames      []string
+	KindNamespaces []string
+	KindNsNames    []string
+	LabelSelector  []string
+	BoolFilter     *BoolFilter
 }
 
 type BoolFilter struct {
@@ -30,16 +36,15 @@ type BoolFilter struct {
 }
 
 func (s *ChangeSetFilter) DiffFilter() (DiffFilter, error) {
-	lf := s.lf
+	df := s.df
 	if len(s.Filter) > 0 {
 		boolFilter, err := NewBoolFilterFromString(s.Filter)
 		if err != nil {
 			return DiffFilter{}, err
 		}
-
-		lf.BoolFilter = boolFilter
+		df.BoolFilter = boolFilter
 	}
-	return lf, nil
+	return df, nil
 }
 
 func NewBoolFilterFromString(data string) (*BoolFilter, error) {
@@ -53,22 +58,31 @@ func NewBoolFilterFromString(data string) (*BoolFilter, error) {
 	return &filter, nil
 }
 
-func (f DiffFilter) Apply(existingResources []res.Resource) []res.Resource {
-	var result []res.Resource
-
-	for _, resource := range existingResources {
-
-		if f.Matches(resource) {
-			result = append(result, resource)
-		}
+func (f DiffFilter) Apply(changes []Change) []Change {
+	if f.BoolFilter == nil || f.BoolFilter.IsEmpty() {
+		return changes
 	}
 
+	var result []Change
+
+	for _, change := range changes {
+		if f.Matches(change.NewResource(), change.ExistingResource()) {
+			result = append(result, change)
+		}
+	}
 	return result
 }
 
-func (f DiffFilter) Matches(resource res.Resource) bool {
+func (f DiffFilter) Matches(newResource res.Resource, existingResource res.Resource) bool {
 	if f.BoolFilter != nil {
-		return f.BoolFilter.Matches(resource)
+		return f.BoolFilter.Matches(newResource, existingResource)
+	}
+	return false
+}
+
+func (f DiffFilter) MatchesNewResource(resource res.Resource) bool {
+	if f.BoolFilter != nil {
+		return f.BoolFilter.Matches(resource, nil)
 	}
 
 	if len(f.LabelSelector) > 0 {
@@ -91,10 +105,36 @@ func (f DiffFilter) Matches(resource res.Resource) bool {
 	return true
 }
 
-func (m BoolFilter) Matches(res res.Resource) bool {
+func (f DiffFilter) MatchesExistingResource(resource res.Resource) bool {
+
+	if f.BoolFilter != nil {
+		return f.BoolFilter.Matches(nil, resource)
+	}
+
+	if len(f.LabelSelector) > 0 {
+		var matched bool
+		for _, label := range f.LabelSelector {
+			labelSelector, err := labels.Parse(label)
+			if err != nil {
+				panic(fmt.Sprintf("Parsing label selector failed: %s", err))
+			}
+			if labelSelector.Matches(labels.Set(resource.Labels())) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (m BoolFilter) Matches(newResource res.Resource, existingResource res.Resource) bool {
 	if len(m.And) > 0 {
 		for _, m2 := range m.And {
-			if !m2.Matches(res) {
+			if !m2.Matches(newResource, existingResource) {
 				return false
 			}
 		}
@@ -103,7 +143,7 @@ func (m BoolFilter) Matches(res res.Resource) bool {
 
 	if len(m.Or) > 0 {
 		for _, m2 := range m.Or {
-			if m2.Matches(res) {
+			if m2.Matches(newResource, existingResource) {
 				return true
 			}
 		}
@@ -111,16 +151,24 @@ func (m BoolFilter) Matches(res res.Resource) bool {
 	}
 
 	if m.Not != nil {
-		return !m.Not.Matches(res)
+		return !m.Not.Matches(newResource, existingResource)
 	}
 
-	if m.NewResource != nil {
-		return m.NewResource.Matches(res)
+	//if (m.NewResource != nil && newResource != nil) && (m.ExistingResource != nil && existingResource != nil) {
+	//	return m.NewResource.MatchesNewResource(newResource) && m.ExistingResource.MatchesExistingResource(existingResource)
+	//}
+
+	if m.NewResource != nil && newResource != nil {
+		return m.NewResource.MatchesNewResource(newResource)
 	}
 
-	if m.ExistingResource != nil {
-		return m.ExistingResource.Matches(res)
+	if m.ExistingResource != nil && existingResource != nil {
+		return m.ExistingResource.MatchesExistingResource(existingResource)
 	}
 
 	return false
+}
+
+func (m BoolFilter) IsEmpty() bool {
+	return m.And == nil && m.Or == nil && m.Not == nil && m.NewResource == nil && m.ExistingResource == nil
 }

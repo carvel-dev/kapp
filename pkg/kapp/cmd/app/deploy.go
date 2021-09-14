@@ -139,17 +139,8 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	diffFilter, err := o.DiffFlags.DiffFilter()
-	if err != nil {
-		return err
-	}
-
-	diffFilteredExistingResource := diffFilter.Apply(existingResources)
-
-	diffFilteredNewResource := diffFilter.Apply(newResources)
-
 	clusterChangeSet, clusterChangesGraph, hasNoChanges, changeSummary, err :=
-		o.calculateAndPresentChanges(diffFilteredExistingResource, diffFilteredNewResource, conf, supportObjs)
+		o.calculateAndPresentChanges(existingResources, newResources, conf, supportObjs)
 	if err != nil {
 		if o.DiffFlags.UI && clusterChangesGraph != nil {
 			return o.presentDiffUI(clusterChangesGraph)
@@ -338,6 +329,14 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 			return clusterChangeSet, nil, false, "", err
 		}
 
+		// Apply diff-filter on the changes
+		diffFilter, err := o.DiffFlags.DiffFilter()
+		if err != nil {
+			fmt.Errorf("Error parsing --diff-filter: %s", err)
+		}
+
+		filteredChanges := diffFilter.Apply(changes)
+
 		msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
 
 		convergedResFactory := ctlcap.NewConvergedResourceFactory(conf.WaitRules(), ctlcap.ConvergedResourceFactoryOpts{
@@ -349,7 +348,7 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 			changeFactory, changeSetFactory, convergedResFactory, msgsUI)
 
 		clusterChangeSet = ctlcap.NewClusterChangeSet(
-			changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory,
+			filteredChanges, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory,
 			conf.ChangeGroupBindings(), conf.ChangeRuleBindings(), msgsUI, o.logger)
 	}
 
