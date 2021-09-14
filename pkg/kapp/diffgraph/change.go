@@ -141,7 +141,7 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 		if k == changeRuleAnnKey || strings.HasPrefix(k, changeRuleAnnPrefixKey) {
 			rule, err := NewChangeRuleFromAnnString(v)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("Resource %s: %s", res.Description(), err)
 			}
 			rules = append(rules, rule)
 		}
@@ -154,7 +154,7 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 			for _, ruleStr := range ruleConfig.Rules {
 				rule, err := NewChangeRuleFromAnnString(ruleStr)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("Resource %s: %s", res.Description(), err)
 				}
 				rule.IgnoreIfCyclical = ruleConfig.IgnoreIfCyclical
 				rule.weight = 100 + i // start at 100

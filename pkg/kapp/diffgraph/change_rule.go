@@ -38,7 +38,7 @@ func NewChangeRuleFromAnnString(ann string) (ChangeRule, error) {
 	pieces := strings.Split(ann, " ")
 	if len(pieces) != 4 {
 		return ChangeRule{}, fmt.Errorf(
-			"Expected change rule annotation value to have 4 pieces but was %d", len(pieces))
+			"Expected change rule annotation value to have format '(upsert|delete) (before|after) (upserting|deleting) (change-group)', but was '%s'", ann)
 	}
 
 	rule := ChangeRule{
