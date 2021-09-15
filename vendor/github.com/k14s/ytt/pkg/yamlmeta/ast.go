@@ -16,8 +16,8 @@ type Node interface {
 	AddValue(interface{}) error
 	ResetValue()
 
-	GetMetas() []*Meta
-	addMeta(*Meta)
+	GetComments() []*Comment
+	addComments(*Comment)
 
 	GetAnnotations() interface{}
 	SetAnnotations(interface{})
@@ -30,12 +30,17 @@ type Node interface {
 	sealed() // limit the concrete types of Node to map directly only to types allowed in YAML spec.
 }
 
-// Ensure: all types are — in fact — assignable to Node
-var _ = []Node{&DocumentSet{}, &Document{}, &Map{}, &MapItem{}, &Array{}, &ArrayItem{}}
+type ValueHoldingNode interface {
+	Node
+	Val() interface{}
+}
+
+var _ = []Node{&DocumentSet{}, &Map{}, &Array{}}
+var _ = []ValueHoldingNode{&Document{}, &MapItem{}, &ArrayItem{}}
 
 type DocumentSet struct {
-	Metas    []*Meta
-	AllMetas []*Meta
+	Comments    []*Comment
+	AllComments []*Comment
 
 	Items    []*Document
 	Position *filepos.Position
@@ -46,7 +51,7 @@ type DocumentSet struct {
 
 type Document struct {
 	Type     Type
-	Metas    []*Meta
+	Comments []*Comment
 	Value    interface{}
 	Position *filepos.Position
 
@@ -56,7 +61,7 @@ type Document struct {
 
 type Map struct {
 	Type     Type
-	Metas    []*Meta
+	Comments []*Comment
 	Items    []*MapItem
 	Position *filepos.Position
 
@@ -65,7 +70,7 @@ type Map struct {
 
 type MapItem struct {
 	Type     Type
-	Metas    []*Meta
+	Comments []*Comment
 	Key      interface{}
 	Value    interface{}
 	Position *filepos.Position
@@ -75,7 +80,7 @@ type MapItem struct {
 
 type Array struct {
 	Type     Type
-	Metas    []*Meta
+	Comments []*Comment
 	Items    []*ArrayItem
 	Position *filepos.Position
 
@@ -84,7 +89,7 @@ type Array struct {
 
 type ArrayItem struct {
 	Type     Type
-	Metas    []*Meta
+	Comments []*Comment
 	Value    interface{}
 	Position *filepos.Position
 
@@ -96,7 +101,7 @@ type Scalar struct {
 	Value    interface{}
 }
 
-type Meta struct {
+type Comment struct {
 	Data     string
 	Position *filepos.Position
 }

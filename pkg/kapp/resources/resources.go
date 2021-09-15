@@ -41,17 +41,22 @@ const (
 type Resources interface {
 	All([]ResourceType, AllOpts) ([]Resource, error)
 	Delete(Resource) error
-	Exists(Resource) (bool, error)
+	Exists(Resource, ExistsOpts) (bool, error)
 	Get(Resource) (Resource, error)
 	Patch(Resource, types.PatchType, []byte) (Resource, error)
 	Update(Resource) (Resource, error)
 	Create(resource Resource) (Resource, error)
 }
 
+type ExistsOpts struct {
+	SameUID bool
+}
+
 type ResourcesImpl struct {
 	resourceTypes             ResourceTypes
 	coreClient                kubernetes.Interface
 	dynamicClient             dynamic.Interface
+	mutedDynamicClient        dynamic.Interface
 	fallbackAllowedNamespaces []string
 
 	assumedAllowedNamespacesMemoLock sync.Mutex
@@ -61,12 +66,14 @@ type ResourcesImpl struct {
 }
 
 func NewResourcesImpl(resourceTypes ResourceTypes, coreClient kubernetes.Interface,
-	dynamicClient dynamic.Interface, fallbackAllowedNamespaces []string, logger logger.Logger) *ResourcesImpl {
+	dynamicClient dynamic.Interface, mutedDynamicClient dynamic.Interface,
+	fallbackAllowedNamespaces []string, logger logger.Logger) *ResourcesImpl {
 
 	return &ResourcesImpl{
 		resourceTypes:             resourceTypes,
 		coreClient:                coreClient,
 		dynamicClient:             dynamicClient,
+		mutedDynamicClient:        mutedDynamicClient,
 		fallbackAllowedNamespaces: fallbackAllowedNamespaces,
 		logger:                    logger.NewPrefixed("Resources"),
 	}
@@ -101,7 +108,7 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 			var list *unstructured.UnstructuredList
 			var err error
 
-			client := c.dynamicClient.Resource(resType.GroupVersionResource)
+			client := c.mutedDynamicClient.Resource(resType.GroupVersionResource)
 
 			err = util.Retry2(time.Second, 5*time.Second, c.isServerRescaleErr, func() error {
 				if resType.Namespaced() {
@@ -222,7 +229,7 @@ func (c *ResourcesImpl) Create(resource Resource) (Resource, error) {
 		c.logger.Debug("create resource %s\n%s\n", resource.Description(), bs)
 	}
 
-	resClient, resType, err := c.resourceClient(resource)
+	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: true})
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +256,7 @@ func (c *ResourcesImpl) Update(resource Resource) (Resource, error) {
 		c.logger.Debug("update resource %s\n%s\n", resource.Description(), bs)
 	}
 
-	resClient, resType, err := c.resourceClient(resource)
+	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: true})
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +280,7 @@ func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data
 		defer func() { c.logger.Debug("patch %s", time.Now().UTC().Sub(t1)) }()
 	}
 
-	resClient, resType, err := c.resourceClient(resource)
+	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: true})
 	if err != nil {
 		return nil, err
 	}
@@ -302,7 +309,7 @@ func (c *ResourcesImpl) Delete(resource Resource) error {
 		return nil
 	}
 
-	resClient, resType, err := c.resourceClient(resource)
+	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: true})
 	if err != nil {
 		return err
 	}
@@ -343,7 +350,7 @@ func (c *ResourcesImpl) Get(resource Resource) (Resource, error) {
 		defer func() { c.logger.Debug("get %s", time.Now().UTC().Sub(t1)) }()
 	}
 
-	resClient, resType, err := c.resourceClient(resource)
+	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: false})
 	if err != nil {
 		return nil, err
 	}
@@ -362,13 +369,13 @@ func (c *ResourcesImpl) Get(resource Resource) (Resource, error) {
 	return NewResourceUnstructured(*item, resType), nil
 }
 
-func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
+func (c *ResourcesImpl) Exists(resource Resource, existsOpts ExistsOpts) (bool, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { c.logger.Debug("exists %s", time.Now().UTC().Sub(t1)) }()
 	}
 
-	resClient, _, err := c.resourceClient(resource)
+	resClient, _, err := c.resourceClient(resource, resourceClientOpts{Warnings: false})
 	if err != nil {
 		// Assume if type is not known to the API server
 		// then such resource cannot exist on the server
@@ -381,7 +388,7 @@ func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 	var found bool
 
 	err = util.Retry(time.Second, time.Minute, func() (bool, error) {
-		_, err = resClient.Get(context.TODO(), resource.Name(), metav1.GetOptions{})
+		fetchedRes, err := resClient.Get(context.TODO(), resource.Name(), metav1.GetOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				found = false
@@ -399,6 +406,16 @@ func (c *ResourcesImpl) Exists(resource Resource) (bool, error) {
 			// TODO sometimes metav1.StatusReasonUnknown is returned (empty string)
 			// might be related to deletion of mutating webhook
 			return isDone, c.resourceErr(err, "Checking existence of", resource)
+		}
+
+		// Check if we have to compare the UID's also to confirm if it is same resource.
+		if existsOpts.SameUID {
+			if fetchedRes != nil {
+				if string(fetchedRes.GetUID()) != resource.UID() {
+					found = false
+					return true, nil
+				}
+			}
 		}
 
 		found = true
@@ -472,13 +489,24 @@ func (c *ResourcesImpl) resourceErr(err error, action string, resource Resource)
 	return resourcePlainErr{err, action, resource}
 }
 
-func (c *ResourcesImpl) resourceClient(resource Resource) (dynamic.ResourceInterface, ResourceType, error) {
+type resourceClientOpts struct {
+	Warnings bool
+}
+
+func (c *ResourcesImpl) resourceClient(resource Resource, opts resourceClientOpts) (dynamic.ResourceInterface, ResourceType, error) {
 	resType, err := c.resourceTypes.Find(resource)
 	if err != nil {
 		return nil, ResourceType{}, err
 	}
 
-	return c.dynamicClient.Resource(resType.GroupVersionResource).Namespace(resource.Namespace()), resType, nil
+	var dynamicClient dynamic.Interface
+	if opts.Warnings {
+		dynamicClient = c.dynamicClient
+	} else {
+		dynamicClient = c.mutedDynamicClient
+	}
+
+	return dynamicClient.Resource(resType.GroupVersionResource).Namespace(resource.Namespace()), resType, nil
 }
 
 func (c *ResourcesImpl) assumedAllowedNamespaces() ([]string, error) {

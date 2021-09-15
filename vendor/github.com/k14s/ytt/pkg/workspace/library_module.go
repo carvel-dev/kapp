@@ -144,11 +144,11 @@ func (l *libraryValue) AsStarlarkValue() starlark.Value {
 	return &starlarkstruct.Module{
 		Name: "library",
 		Members: starlark.StringDict{
-			"with_data_values": starlark.NewBuiltin("library.with_data_values", core.ErrWrapper(l.WithDataValues)),
-			"with_schema":      starlark.NewBuiltin("library.with_schema", core.ErrWrapper(l.WithSchema)),
-			"eval":             starlark.NewBuiltin("library.eval", core.ErrWrapper(core.ErrDescWrapper(evalErrMsg, l.Eval))),
-			"export":           starlark.NewBuiltin("library.export", core.ErrWrapper(core.ErrDescWrapper(exportErrMsg, l.Export))),
-			"data_values":      starlark.NewBuiltin("library.data_values", core.ErrWrapper(core.ErrDescWrapper(exportErrMsg, l.DataValues))),
+			"with_data_values":        starlark.NewBuiltin("library.with_data_values", core.ErrWrapper(l.WithDataValues)),
+			"with_data_values_schema": starlark.NewBuiltin("library.with_data_values_schema", core.ErrWrapper(l.WithDataValuesSchema)),
+			"eval":                    starlark.NewBuiltin("library.eval", core.ErrWrapper(core.ErrDescWrapper(evalErrMsg, l.Eval))),
+			"export":                  starlark.NewBuiltin("library.export", core.ErrWrapper(core.ErrDescWrapper(exportErrMsg, l.Export))),
+			"data_values":             starlark.NewBuiltin("library.data_values", core.ErrWrapper(core.ErrDescWrapper(exportErrMsg, l.DataValues))),
 		},
 	}
 }
@@ -166,7 +166,7 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 	}
 
 	valsYAML, err := NewDataValues(&yamlmeta.Document{
-		Value:    yamlmeta.NewASTFromInterface(dataValues),
+		Value:    yamlmeta.NewASTFromInterfaceWithNoPosition(dataValues),
 		Position: filepos.NewUnknownPosition(),
 	})
 	if err != nil {
@@ -182,7 +182,7 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 	return libVal.AsStarlarkValue(), nil
 }
 
-func (l *libraryValue) WithSchema(thread *starlark.Thread, f *starlark.Builtin,
+func (l *libraryValue) WithDataValuesSchema(thread *starlark.Thread, f *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
 	if args.Len() != 1 {
@@ -217,18 +217,18 @@ func (l *libraryValue) Eval(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, fmt.Errorf("expected no arguments")
 	}
 
-	libraryLoader := l.libraryExecutionFactory.New(l.libraryCtx)
+	libraryExecution := l.libraryExecutionFactory.New(l.libraryCtx)
 
-	schema, librarySchemas, err := l.librarySchemas(libraryLoader)
+	schema, librarySchemas, err := l.librarySchemas(libraryExecution)
 	if err != nil {
 		return starlark.None, err
 	}
-	astValues, libValues, err := l.libraryValues(libraryLoader, schema)
+	astValues, libValues, err := l.libraryValues(libraryExecution, schema)
 	if err != nil {
 		return starlark.None, err
 	}
 
-	result, err := libraryLoader.Eval(astValues, libValues, librarySchemas)
+	result, err := libraryExecution.Eval(astValues, libValues, librarySchemas)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -243,13 +243,13 @@ func (l *libraryValue) DataValues(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, fmt.Errorf("expected no arguments")
 	}
 
-	libraryLoader := l.libraryExecutionFactory.New(l.libraryCtx)
+	libraryExecution := l.libraryExecutionFactory.New(l.libraryCtx)
 
-	schema, _, err := l.librarySchemas(libraryLoader)
+	schema, _, err := l.librarySchemas(libraryExecution)
 	if err != nil {
 		return starlark.None, err
 	}
-	astValues, _, err := l.libraryValues(libraryLoader, schema)
+	astValues, _, err := l.libraryValues(libraryExecution, schema)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -271,18 +271,18 @@ func (l *libraryValue) Export(thread *starlark.Thread, f *starlark.Builtin,
 			"Symbols starting with '_' are private, and cannot be exported")
 	}
 
-	libraryLoader := l.libraryExecutionFactory.New(l.libraryCtx)
+	libraryExecution := l.libraryExecutionFactory.New(l.libraryCtx)
 
-	schema, librarySchemas, err := l.librarySchemas(libraryLoader)
+	schema, librarySchemas, err := l.librarySchemas(libraryExecution)
 	if err != nil {
 		return starlark.None, err
 	}
-	astValues, libValues, err := l.libraryValues(libraryLoader, schema)
+	astValues, libValues, err := l.libraryValues(libraryExecution, schema)
 	if err != nil {
 		return starlark.None, err
 	}
 
-	result, err := libraryLoader.Eval(astValues, libValues, librarySchemas)
+	result, err := libraryExecution.Eval(astValues, libValues, librarySchemas)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -348,7 +348,7 @@ func (l *libraryValue) exportArgs(args starlark.Tuple, kwargs []starlark.Tuple) 
 	return symbolName, locationPath, nil
 }
 
-func (l *libraryValue) librarySchemas(ll *LibraryLoader) (Schema, []*schema.DocumentSchemaEnvelope, error) {
+func (l *libraryValue) librarySchemas(ll *LibraryExecution) (Schema, []*schema.DocumentSchemaEnvelope, error) {
 	var schemasForCurrentLib, schemasForChildLib []*schema.DocumentSchemaEnvelope
 
 	for _, docSchema := range l.schemas {
@@ -369,7 +369,7 @@ func (l *libraryValue) librarySchemas(ll *LibraryLoader) (Schema, []*schema.Docu
 	return schema, foundChildSchemas, nil
 }
 
-func (l *libraryValue) libraryValues(ll *LibraryLoader, schema Schema) (*DataValues, []*DataValues, error) {
+func (l *libraryValue) libraryValues(ll *LibraryExecution, schema Schema) (*DataValues, []*DataValues, error) {
 	var dvss, afterLibModDVss, childDVss []*DataValues
 	for _, dv := range l.dataValuess {
 		matchingDVs := dv.UsedInLibrary(ref.LibraryRef{Path: l.path, Alias: l.alias})

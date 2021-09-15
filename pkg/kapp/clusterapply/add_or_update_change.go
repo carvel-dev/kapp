@@ -99,7 +99,7 @@ func (c AddOrUpdateChange) replace() error {
 
 	// Wait for the resource to be fully deleted
 	for {
-		exists, err := c.identifiedResources.Exists(c.change.ExistingResource())
+		exists, err := c.identifiedResources.Exists(c.change.ExistingResource(), ctlres.ExistsOpts{})
 		if err != nil {
 			return err
 		}
