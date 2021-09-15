@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/k14s/kapp/pkg/kapp/matcher"
 	res "github.com/k14s/kapp/pkg/kapp/resources"
 	"k8s.io/apimachinery/pkg/labels"
 )
@@ -58,10 +59,6 @@ func NewBoolFilterFromString(data string) (*BoolFilter, error) {
 }
 
 func (f DiffFilter) Apply(changes []Change) []Change {
-	if f.BoolFilter == nil || f.BoolFilter.IsEmpty() {
-		return changes
-	}
-
 	var result []Change
 
 	for _, change := range changes {
@@ -73,35 +70,19 @@ func (f DiffFilter) Apply(changes []Change) []Change {
 }
 
 func (f DiffFilter) Matches(newResource res.Resource, existingResource res.Resource) bool {
-	if f.BoolFilter != nil {
+	if f.BoolFilter != nil && !f.BoolFilter.IsEmpty() {
 		return f.BoolFilter.Matches(newResource, existingResource)
 	}
-	return false
+	return true
 }
 
 func (f DiffFilter) MatchesNewResource(resource res.Resource) bool {
+
 	if f.BoolFilter != nil {
 		return f.BoolFilter.Matches(resource, nil)
 	}
 
-	if len(f.LabelSelector) > 0 {
-		var matched bool
-		for _, label := range f.LabelSelector {
-			labelSelector, err := labels.Parse(label)
-			if err != nil {
-				panic(fmt.Sprintf("Parsing label selector failed: %s", err))
-			}
-			if labelSelector.Matches(labels.Set(resource.Labels())) {
-				matched = true
-				break
-			}
-		}
-		if !matched {
-			return false
-		}
-	}
-
-	return true
+	return f.MatchesCommon(resource)
 }
 
 func (f DiffFilter) MatchesExistingResource(resource res.Resource) bool {
@@ -110,6 +91,49 @@ func (f DiffFilter) MatchesExistingResource(resource res.Resource) bool {
 		return f.BoolFilter.Matches(nil, resource)
 	}
 
+	return f.MatchesCommon(resource)
+}
+
+func (f DiffFilter) MatchesCommon(resource res.Resource) bool {
+	if len(f.Kinds) > 0 {
+		var matched bool
+		for _, kind := range f.Kinds {
+			if matcher.NewStringMatcher(kind).Matches(resource.Kind()) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	if len(f.Namespaces) > 0 {
+		var matched bool
+		for _, ns := range f.Namespaces {
+			if matcher.NewStringMatcher(ns).Matches(resource.Namespace()) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	if len(f.Names) > 0 {
+		var matched bool
+		for _, name := range f.Names {
+			if matcher.NewStringMatcher(name).Matches(resource.Name()) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
 	if len(f.LabelSelector) > 0 {
 		var matched bool
 		for _, label := range f.LabelSelector {
@@ -127,6 +151,47 @@ func (f DiffFilter) MatchesExistingResource(resource res.Resource) bool {
 		}
 	}
 
+	if len(f.KindNames) > 0 {
+		key := resource.Kind() + "/" + resource.Name()
+		var matched bool
+		for _, k := range f.KindNames {
+			if key == k {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	if len(f.KindNamespaces) > 0 {
+		key := resource.Kind() + "/" + resource.Namespace()
+		var matched bool
+		for _, k := range f.KindNamespaces {
+			if key == k {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	if len(f.KindNsNames) > 0 {
+		key := resource.Kind() + "/" + resource.Namespace() + "/" + resource.Name()
+		var matched bool
+		for _, k := range f.KindNsNames {
+			if key == k {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
 	return true
 }
 
@@ -160,7 +225,6 @@ func (m BoolFilter) Matches(newResource res.Resource, existingResource res.Resou
 	if m.ExistingResource != nil && existingResource != nil {
 		return m.ExistingResource.MatchesExistingResource(existingResource)
 	}
-
 	return false
 }
 
