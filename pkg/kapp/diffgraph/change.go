@@ -9,7 +9,6 @@ import (
 
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	ctlcrd "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 )
 
 const (
@@ -242,26 +241,10 @@ func (cs Changes) MatchesRule(rule ChangeRule, exceptChange *Change) ([]*Change,
 	return result, nil
 }
 
-func parseChangeGroupPlaceholders(resource ctlres.Resource, changeGroup string) (parsed string, err error) {
-	var name, crdGroup string
-	crd := ctlcrd.NewAPIExtensionsVxCRD(resource)
-	if crd != nil {
-		name, err = crd.Name()
-		if err != nil {
-			return parsed, err
-		}
-		crdGroup, err = crd.Group()
-		if err != nil {
-			return parsed, err
-		}
-	} else {
-		name = resource.Name()
+func parseChangeGroupPlaceholders(resource ctlres.Resource, changeGroup string) (string, error) {
+	parser, err := NewPlaceholderParserWithResource(resource)
+	if err != nil {
+		return changeGroup, err
 	}
-	parsed = strings.Replace(changeGroup, "{name}", name, 1)
-	parsed = strings.Replace(parsed, "{crd-group}", crdGroup, 1)
-	parsed = strings.Replace(parsed, "{namespace}", resource.Namespace(), 1)
-	parsed = strings.Replace(parsed, "{group}", resource.APIGroup(), 1)
-	parsed = strings.Replace(parsed, "{kind}", resource.Kind(), 1)
-	parsed = strings.ToLower(parsed)
-	return parsed, err
+	return parser.Parse(changeGroup)
 }

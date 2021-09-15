@@ -386,7 +386,7 @@ changeGroupBindings:
   resourceMatchers: &crdMatchers
   - apiGroupKindMatcher: {kind: CustomResourceDefinition, apiGroup: apiextensions.k8s.io}
 
-- name: change-groups.kapp.k14s.io/crds-{crd-group}-{name}
+- name: change-groups.kapp.k14s.io/crds-{crd-group}-{crd-kind}
   resourceMatchers: *crdMatchers
 
 - name: change-groups.kapp.k14s.io/namespaces
