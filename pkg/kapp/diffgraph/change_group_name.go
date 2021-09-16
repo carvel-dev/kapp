@@ -6,7 +6,6 @@ package diffgraph
 import (
 	"fmt"
 	"regexp"
-	"strings"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlcrd "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
@@ -28,11 +27,6 @@ var (
 // Placeholders have the format {placeholder-name}
 // Other patterns like ${placeholder-name} are commonly used by other operators/tools
 func (c ChangeGroupName) AsString() (string, error) {
-	placeholders := placeholderMatcher.FindAllString(c.name, -1)
-	if len(placeholders) < 1 {
-		return c.name, nil
-	}
-
 	var crdKind, crdGroup string
 	var err error
 	crd := ctlcrd.NewAPIExtensionsVxCRD(c.resource)
@@ -56,18 +50,18 @@ func (c ChangeGroupName) AsString() (string, error) {
 		"{crd-group}": crdGroup,
 	}
 
-	for _, placeholder := range placeholders {
+	replaced := placeholderMatcher.ReplaceAllStringFunc(c.name, func(placeholder string) string {
 		value, found := values[placeholder]
 		if !found {
-			return c.name, fmt.Errorf("Expected placeholder to be one of these: %s but was %s", c.placeholders(values), placeholder)
+			err = fmt.Errorf("Expected placeholder to be one of these: %s but was %s", c.placeholders(values), placeholder)
 		}
 		if value == "" {
-			return c.name, fmt.Errorf("Placeholder %s does not have a value for target resource (hint: placeholders with the 'crd-' prefix can only be used with CRDs)", placeholder)
+			err = fmt.Errorf("Placeholder %s does not have a value for target resource (hint: placeholders with the 'crd-' prefix can only be used with CRDs)", placeholder)
 		}
-		c.name = strings.Replace(c.name, placeholder, value, 1)
-	}
+		return value
+	})
 
-	return c.name, nil
+	return replaced, err
 }
 
 func (c ChangeGroupName) placeholders(values map[string]string) (placeholders []string) {
