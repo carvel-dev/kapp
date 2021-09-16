@@ -104,7 +104,7 @@ func (c *Change) Groups() ([]ChangeGroup, error) {
 
 	for k, v := range res.Annotations() {
 		if k == changeGroupAnnKey || strings.HasPrefix(k, changeGroupAnnPrefixKey) {
-			name, err := parseChangeGroupPlaceholders(c.Change.Resource(), v)
+			name, err := NewChangeGroupNameForResource(v, c.Change.Resource()).AsString()
 			if err != nil {
 				return nil, err
 			}
@@ -120,7 +120,7 @@ func (c *Change) Groups() ([]ChangeGroup, error) {
 		rms := ctlconf.ResourceMatchers(groupConfig.ResourceMatchers).AsResourceMatchers()
 
 		if (ctlres.AnyMatcher{rms}).Matches(res) {
-			name, err := parseChangeGroupPlaceholders(c.Change.Resource(), groupConfig.Name)
+			name, err := NewChangeGroupNameForResource(groupConfig.Name, c.Change.Resource()).AsString()
 			if err != nil {
 				return nil, err
 			}
@@ -147,7 +147,7 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 
 	for k, v := range res.Annotations() {
 		if k == changeRuleAnnKey || strings.HasPrefix(k, changeRuleAnnPrefixKey) {
-			ruleStr, err := parseChangeGroupPlaceholders(c.Change.Resource(), v)
+			ruleStr, err := NewChangeGroupNameForResource(v, c.Change.Resource()).AsString()
 			if err != nil {
 				return nil, err
 			}
@@ -164,7 +164,7 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 
 		if (ctlres.AnyMatcher{rms}).Matches(res) {
 			for _, ruleStr := range ruleConfig.Rules {
-				ruleStr, err := parseChangeGroupPlaceholders(c.Change.Resource(), ruleStr)
+				ruleStr, err := NewChangeGroupNameForResource(ruleStr, c.Change.Resource()).AsString()
 				if err != nil {
 					return nil, err
 				}
@@ -247,12 +247,4 @@ func (cs Changes) MatchesRule(rule ChangeRule, exceptChange *Change) ([]*Change,
 	}
 
 	return result, nil
-}
-
-func parseChangeGroupPlaceholders(resource ctlres.Resource, changeGroup string) (string, error) {
-	parser, err := NewPlaceholderParserWithResource(resource)
-	if err != nil {
-		return changeGroup, err
-	}
-	return parser.Parse(changeGroup)
 }
