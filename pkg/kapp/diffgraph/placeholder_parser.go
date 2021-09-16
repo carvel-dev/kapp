@@ -40,6 +40,9 @@ func (p PlaceholderParser) Parse(val string) (string, error) {
 		if !found {
 			return val, fmt.Errorf(`Expected placeholder to be one of these: %s but was %s`, p.placeholders(), placeholder)
 		}
+		if value == "" {
+			return val, fmt.Errorf("Placeholder %s does not have a value for target resource, placeholders with the 'crd-' prefix can only be used with CRDs", placeholder)
+		}
 		val = strings.Replace(val, placeholder, value, 1)
 	}
 
@@ -54,10 +57,10 @@ func (p PlaceholderParser) placeholders() (placeholders []string) {
 }
 
 func valueMapFromResource(resource ctlres.Resource) (values map[string]string, err error) {
-	var name, crdGroup string
+	var crdKind, crdGroup string
 	crd := ctlcrd.NewAPIExtensionsVxCRD(resource)
 	if crd != nil {
-		name, err = crd.Name()
+		crdKind, err = crd.Kind()
 		if err != nil {
 			return values, err
 		}
@@ -65,15 +68,14 @@ func valueMapFromResource(resource ctlres.Resource) (values map[string]string, e
 		if err != nil {
 			return values, err
 		}
-	} else {
-		name = resource.Name()
 	}
 
 	values = map[string]string{
-		"{name}":      name,
+		"{name}":      resource.Name(),
+		"{crd-kind}":  crdKind,
 		"{crd-group}": crdGroup,
 		"{namespace}": resource.Namespace(),
-		"{group}":     resource.APIGroup(),
+		"{api-group}": resource.APIGroup(),
 		"{kind}":      resource.Kind(),
 	}
 

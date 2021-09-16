@@ -104,7 +104,11 @@ func (c *Change) Groups() ([]ChangeGroup, error) {
 
 	for k, v := range res.Annotations() {
 		if k == changeGroupAnnKey || strings.HasPrefix(k, changeGroupAnnPrefixKey) {
-			groupKey, err := NewChangeGroupFromAnnString(v)
+			name, err := parseChangeGroupPlaceholders(c.Change.Resource(), v)
+			if err != nil {
+				return nil, err
+			}
+			groupKey, err := NewChangeGroupFromAnnString(name)
 			if err != nil {
 				return nil, err
 			}
@@ -143,7 +147,11 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 
 	for k, v := range res.Annotations() {
 		if k == changeRuleAnnKey || strings.HasPrefix(k, changeRuleAnnPrefixKey) {
-			rule, err := NewChangeRuleFromAnnString(v)
+			ruleStr, err := parseChangeGroupPlaceholders(c.Change.Resource(), v)
+			if err != nil {
+				return nil, err
+			}
+			rule, err := NewChangeRuleFromAnnString(ruleStr)
 			if err != nil {
 				return nil, err
 			}

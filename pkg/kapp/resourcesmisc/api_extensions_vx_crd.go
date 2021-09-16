@@ -89,7 +89,7 @@ func (s APIExtensionsVxCRD) Group() (crdGroup string, err error) {
 	return crdObj.Spec.Group, err
 }
 
-func (s APIExtensionsVxCRD) Name() (crdName string, err error) {
+func (s APIExtensionsVxCRD) Kind() (crdName string, err error) {
 	crdObj, err := s.contents()
 	if err != nil {
 		return crdName, err
