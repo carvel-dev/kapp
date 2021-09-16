@@ -329,13 +329,12 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 			return clusterChangeSet, nil, false, "", err
 		}
 
-		// Apply diff-filter on the changes
 		diffFilter, err := o.DiffFlags.DiffFilter()
 		if err != nil {
 			return clusterChangeSet, nil, false, "", err
 		}
 
-		filteredChanges := diffFilter.Apply(changes)
+		changes = diffFilter.Apply(changes)
 
 		msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
 
@@ -348,7 +347,7 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 			changeFactory, changeSetFactory, convergedResFactory, msgsUI)
 
 		clusterChangeSet = ctlcap.NewClusterChangeSet(
-			filteredChanges, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory,
+			changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory,
 			conf.ChangeGroupBindings(), conf.ChangeRuleBindings(), msgsUI, o.logger)
 	}
 

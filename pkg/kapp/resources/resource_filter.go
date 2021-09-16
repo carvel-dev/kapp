@@ -24,7 +24,7 @@ type ResourceFilter struct {
 	KindNsNames    []string
 	Labels         []string
 
-	BoolFilter *BoolFilter
+	BoolFilter *BoolFilter `json:"-"`
 }
 
 func (f ResourceFilter) Apply(resources []Resource) []Resource {

@@ -5,51 +5,39 @@ package diff
 
 import (
 	"encoding/json"
-	"fmt"
 
-	"github.com/k14s/kapp/pkg/kapp/matcher"
-	res "github.com/k14s/kapp/pkg/kapp/resources"
-	"k8s.io/apimachinery/pkg/labels"
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
 type ChangeSetFilter struct {
-	df     DiffFilter
 	Filter string
 }
 
-type DiffFilter struct {
-	Kinds          []string
-	Namespaces     []string
-	Names          []string
-	KindNames      []string
-	KindNamespaces []string
-	KindNsNames    []string
-	LabelSelector  []string
-	BoolFilter     *BoolFilter
+type OpsFilter []ChangeOp
+
+type ChangeSetFilterRoot struct {
+	And              []ChangeSetFilterRoot
+	Or               []ChangeSetFilterRoot
+	Not              *ChangeSetFilterRoot
+	Ops              OpsFilter
+	NewResource      *ctlres.ResourceFilter
+	ExistingResource *ctlres.ResourceFilter
 }
 
-type BoolFilter struct {
-	And              []BoolFilter
-	Or               []BoolFilter
-	Not              *BoolFilter
-	NewResource      *DiffFilter
-	ExistingResource *DiffFilter
-}
-
-func (s *ChangeSetFilter) DiffFilter() (DiffFilter, error) {
-	df := s.df
+func (s *ChangeSetFilter) DiffFilter() (ChangeSetFilterRoot, error) {
+	var filter ChangeSetFilterRoot
 	if len(s.Filter) > 0 {
-		boolFilter, err := NewBoolFilterFromString(s.Filter)
+		changeSetFilter, err := NewChangeSetFilterFromString(s.Filter)
 		if err != nil {
-			return DiffFilter{}, err
+			return ChangeSetFilterRoot{}, err
 		}
-		df.BoolFilter = boolFilter
+		filter = *changeSetFilter
 	}
-	return df, nil
+	return filter, nil
 }
 
-func NewBoolFilterFromString(data string) (*BoolFilter, error) {
-	var filter BoolFilter
+func NewChangeSetFilterFromString(data string) (*ChangeSetFilterRoot, error) {
+	var filter ChangeSetFilterRoot
 
 	err := json.Unmarshal([]byte(data), &filter)
 	if err != nil {
@@ -58,147 +46,33 @@ func NewBoolFilterFromString(data string) (*BoolFilter, error) {
 	return &filter, nil
 }
 
-func (f DiffFilter) Apply(changes []Change) []Change {
+func (f ChangeSetFilterRoot) Apply(changes []Change) []Change {
+	if f.IsEmpty() {
+		return changes
+	}
 	var result []Change
 
 	for _, change := range changes {
-		if f.Matches(change.NewResource(), change.ExistingResource()) {
+		if f.Matches(change) {
 			result = append(result, change)
 		}
 	}
 	return result
 }
 
-func (f DiffFilter) Matches(newResource res.Resource, existingResource res.Resource) bool {
-	if f.BoolFilter != nil && !f.BoolFilter.IsEmpty() {
-		return f.BoolFilter.Matches(newResource, existingResource)
-	}
-	return true
-}
-
-func (f DiffFilter) MatchesNewResource(resource res.Resource) bool {
-
-	if f.BoolFilter != nil {
-		return f.BoolFilter.Matches(resource, nil)
-	}
-
-	return f.MatchesCommon(resource)
-}
-
-func (f DiffFilter) MatchesExistingResource(resource res.Resource) bool {
-
-	if f.BoolFilter != nil {
-		return f.BoolFilter.Matches(nil, resource)
-	}
-
-	return f.MatchesCommon(resource)
-}
-
-func (f DiffFilter) MatchesCommon(resource res.Resource) bool {
-	if len(f.Kinds) > 0 {
-		var matched bool
-		for _, kind := range f.Kinds {
-			if matcher.NewStringMatcher(kind).Matches(resource.Kind()) {
-				matched = true
-				break
-			}
-		}
-		if !matched {
-			return false
-		}
-	}
-
-	if len(f.Namespaces) > 0 {
-		var matched bool
-		for _, ns := range f.Namespaces {
-			if matcher.NewStringMatcher(ns).Matches(resource.Namespace()) {
-				matched = true
-				break
-			}
-		}
-		if !matched {
-			return false
-		}
-	}
-
-	if len(f.Names) > 0 {
-		var matched bool
-		for _, name := range f.Names {
-			if matcher.NewStringMatcher(name).Matches(resource.Name()) {
-				matched = true
-				break
-			}
-		}
-		if !matched {
-			return false
-		}
-	}
-
-	if len(f.LabelSelector) > 0 {
-		var matched bool
-		for _, label := range f.LabelSelector {
-			labelSelector, err := labels.Parse(label)
-			if err != nil {
-				panic(fmt.Sprintf("Parsing label selector failed: %s", err))
-			}
-			if labelSelector.Matches(labels.Set(resource.Labels())) {
-				matched = true
-				break
-			}
-		}
-		if !matched {
-			return false
-		}
-	}
-
-	if len(f.KindNames) > 0 {
-		key := resource.Kind() + "/" + resource.Name()
-		var matched bool
-		for _, k := range f.KindNames {
-			if key == k {
-				matched = true
-				break
-			}
-		}
-		if !matched {
-			return false
-		}
-	}
-
-	if len(f.KindNamespaces) > 0 {
-		key := resource.Kind() + "/" + resource.Namespace()
-		var matched bool
-		for _, k := range f.KindNamespaces {
-			if key == k {
-				matched = true
-				break
-			}
-		}
-		if !matched {
-			return false
-		}
-	}
-
-	if len(f.KindNsNames) > 0 {
-		key := resource.Kind() + "/" + resource.Namespace() + "/" + resource.Name()
-		var matched bool
-		for _, k := range f.KindNsNames {
-			if key == k {
-				matched = true
-				break
-			}
-		}
-		if !matched {
+func (ops OpsFilter) Matches(change Change) bool {
+	for _, op := range ops {
+		if op != change.Op() {
 			return false
 		}
 	}
 	return true
 }
 
-func (m BoolFilter) Matches(newResource res.Resource, existingResource res.Resource) bool {
+func (m ChangeSetFilterRoot) Matches(change Change) bool {
 	if len(m.And) > 0 {
 		for _, m2 := range m.And {
-			if !m2.Matches(newResource, existingResource) {
+			if !m2.Matches(change) {
 				return false
 			}
 		}
@@ -207,7 +81,7 @@ func (m BoolFilter) Matches(newResource res.Resource, existingResource res.Resou
 
 	if len(m.Or) > 0 {
 		for _, m2 := range m.Or {
-			if m2.Matches(newResource, existingResource) {
+			if m2.Matches(change) {
 				return true
 			}
 		}
@@ -215,19 +89,23 @@ func (m BoolFilter) Matches(newResource res.Resource, existingResource res.Resou
 	}
 
 	if m.Not != nil {
-		return !m.Not.Matches(newResource, existingResource)
+		return !m.Not.Matches(change)
 	}
 
-	if m.NewResource != nil && newResource != nil {
-		return m.NewResource.MatchesNewResource(newResource)
+	if m.NewResource != nil && change.NewResource() != nil {
+		return m.NewResource.Matches(change.NewResource())
 	}
 
-	if m.ExistingResource != nil && existingResource != nil {
-		return m.ExistingResource.MatchesExistingResource(existingResource)
+	if m.ExistingResource != nil && change.ExistingResource() != nil {
+		return m.ExistingResource.Matches(change.ExistingResource())
+	}
+
+	if len(m.Ops) > 0 && change.Op() != "" {
+		return m.Ops.Matches(change)
 	}
 	return false
 }
 
-func (m BoolFilter) IsEmpty() bool {
-	return m.And == nil && m.Or == nil && m.Not == nil && m.NewResource == nil && m.ExistingResource == nil
+func (m ChangeSetFilterRoot) IsEmpty() bool {
+	return m.And == nil && m.Or == nil && m.Not == nil && m.NewResource == nil && m.ExistingResource == nil && m.Ops == nil
 }
