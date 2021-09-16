@@ -69,9 +69,9 @@ func (ops OpsFilter) Matches(change Change) bool {
 	return true
 }
 
-func (m ChangeSetFilterRoot) Matches(change Change) bool {
-	if len(m.And) > 0 {
-		for _, m2 := range m.And {
+func (f ChangeSetFilterRoot) Matches(change Change) bool {
+	if len(f.And) > 0 {
+		for _, m2 := range f.And {
 			if !m2.Matches(change) {
 				return false
 			}
@@ -79,8 +79,8 @@ func (m ChangeSetFilterRoot) Matches(change Change) bool {
 		return true
 	}
 
-	if len(m.Or) > 0 {
-		for _, m2 := range m.Or {
+	if len(f.Or) > 0 {
+		for _, m2 := range f.Or {
 			if m2.Matches(change) {
 				return true
 			}
@@ -88,24 +88,24 @@ func (m ChangeSetFilterRoot) Matches(change Change) bool {
 		return false
 	}
 
-	if m.Not != nil {
-		return !m.Not.Matches(change)
+	if f.Not != nil {
+		return !f.Not.Matches(change)
 	}
 
-	if m.NewResource != nil && change.NewResource() != nil {
-		return m.NewResource.Matches(change.NewResource())
+	if f.NewResource != nil && change.NewResource() != nil {
+		return f.NewResource.Matches(change.NewResource())
 	}
 
-	if m.ExistingResource != nil && change.ExistingResource() != nil {
-		return m.ExistingResource.Matches(change.ExistingResource())
+	if f.ExistingResource != nil && change.ExistingResource() != nil {
+		return f.ExistingResource.Matches(change.ExistingResource())
 	}
 
-	if len(m.Ops) > 0 && change.Op() != "" {
-		return m.Ops.Matches(change)
+	if len(f.Ops) > 0 && change.Op() != "" {
+		return f.Ops.Matches(change)
 	}
 	return false
 }
 
-func (m ChangeSetFilterRoot) IsEmpty() bool {
-	return m.And == nil && m.Or == nil && m.Not == nil && m.NewResource == nil && m.ExistingResource == nil && m.Ops == nil
+func (f ChangeSetFilterRoot) IsEmpty() bool {
+	return f.And == nil && f.Or == nil && f.Not == nil && f.NewResource == nil && f.ExistingResource == nil && f.Ops == nil
 }
