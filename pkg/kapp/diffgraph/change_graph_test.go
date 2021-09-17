@@ -469,6 +469,89 @@ metadata:
 	}
 }
 
+func TestChangeGraphWithNamespaceAndCRDs(t *testing.T) {
+	configYAML := `
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kapp-test
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kapp-secret-1
+  namespace: kapp-test
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kapp-secret-2
+  namespace: default
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+  name: kapp-crd
+spec:
+  group: appGroup
+  names:
+    kind: KappCRD
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+  name: not-used
+spec:
+  group: appGroup
+  names:
+    kind: NotUsed
+---
+kind: KappCRD
+apiVersion: appGroup/v1
+metadata:
+  name: app-cr
+`
+
+	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
+	if err != nil {
+		t.Fatalf("Error parsing conf defaults")
+	}
+
+	opts := buildGraphOpts{
+		resourcesBs:         configYAML,
+		op:                  ctldgraph.ActualChangeOpUpsert,
+		changeGroupBindings: conf.ChangeGroupBindings(),
+		changeRuleBindings:  conf.ChangeRuleBindings(),
+	}
+
+	graph, err := buildChangeGraphWithOpts(opts, t)
+	if err != nil {
+		t.Fatalf("Expected graph to build")
+	}
+
+	output := strings.TrimSpace(graph.PrintStr())
+	expectedOutput := strings.TrimSpace(`
+(upsert) namespace/kapp-test (v1) cluster
+(upsert) namespace/app (v1) cluster
+(upsert) secret/kapp-secret-1 (v1) namespace: kapp-test
+  (upsert) namespace/kapp-test (v1) cluster
+(upsert) secret/kapp-secret-2 (v1) namespace: default
+(upsert) customresourcedefinition/kapp-crd (apiextensions.k8s.io/v1) cluster
+(upsert) customresourcedefinition/not-used (apiextensions.k8s.io/v1) cluster
+(upsert) kappcrd/app-cr (appGroup/v1) cluster
+  (upsert) customresourcedefinition/kapp-crd (apiextensions.k8s.io/v1) cluster
+`)
+
+	if output != expectedOutput {
+		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
+	}
+}
+
 func buildChangeGraph(resourcesBs string, op ctldgraph.ActualChangeOp, t *testing.T) (*ctldgraph.ChangeGraph, error) {
 	return buildChangeGraphWithOpts(buildGraphOpts{resourcesBs: resourcesBs, op: op}, t)
 }
