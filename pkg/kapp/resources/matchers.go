@@ -124,10 +124,13 @@ func (m HasNamespaceMatcher) Matches(res Resource) bool {
 }
 
 var (
+	// TODO should we just generically match *.k8s.io?
+	// Based on https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/#-strong-api-groups-strong-
 	builtinAPIGroups = map[string]struct{}{
 		"":                             struct{}{},
 		"admissionregistration.k8s.io": struct{}{},
 		"apiextensions.k8s.io":         struct{}{},
+		"apiregistration.k8s.io":       struct{}{},
 		"apps":                         struct{}{},
 		"authentication.k8s.io":        struct{}{},
 		"authorization.k8s.io":         struct{}{},
@@ -135,7 +138,11 @@ var (
 		"batch":                        struct{}{},
 		"certificates.k8s.io":          struct{}{},
 		"coordination.k8s.io":          struct{}{},
+		"discovery.k8s.io":             struct{}{},
+		"events.k8s.io":                struct{}{},
 		"extensions":                   struct{}{},
+		"flowcontrol.apiserver.k8s.io": struct{}{},
+		"internal.apiserver.k8s.io":    struct{}{},
 		"metrics.k8s.io":               struct{}{},
 		"migration.k8s.io":             struct{}{},
 		"networking.k8s.io":            struct{}{},
