@@ -97,12 +97,12 @@ func (d VersionedResource) updateAffected(rule ctlconf.TemplateRule, rs []ctlres
 					return fmt.Errorf("Error unmarshalling explicit references : %s", err)
 				}
 
-				isTarget, err := NewExplicitVersionedRef(d, annotation).IsReferenced()
+				isReferenced, err := NewExplicitVersionedRef(d, annotation).IsReferenced()
 				if err != nil {
 					return err
 				}
 
-				if isTarget {
+				if isReferenced {
 					if annotation.VersionedNames == nil {
 						annotation.VersionedNames = map[string]string{}
 					}

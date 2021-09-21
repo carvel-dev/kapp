@@ -32,14 +32,14 @@ func NewExplicitVersionedRef(res VersionedResource, annotation ExplicitVersioned
 	return &ExplicitVersionedRef{res, annotation}
 }
 
-// Returns true if the
+// Returns true if the resource is referenced by the annotation
 func (e *ExplicitVersionedRef) IsReferenced() (bool, error) {
-	references, err := e.refStringList()
+	references, err := e.references()
 	if err != nil {
 		return false, err
 	}
 
-	referenceKey := e.resourceRefString()
+	referenceKey := e.referenceKey()
 
 	for _, v := range references {
 		if v == referenceKey {
@@ -50,7 +50,7 @@ func (e *ExplicitVersionedRef) IsReferenced() (bool, error) {
 	return false, nil
 }
 
-func (e *ExplicitVersionedRef) refStringList() ([]string, error) {
+func (e *ExplicitVersionedRef) references() ([]string, error) {
 	list := []string{}
 	for _, v := range e.Annotation.References {
 		v, err := e.validateAndReplaceCoreGroup(v)
@@ -76,7 +76,7 @@ func (e *ExplicitVersionedRef) validateAndReplaceCoreGroup(resourceDescription V
 	return resourceDescription, nil
 }
 
-func (e *ExplicitVersionedRef) resourceRefString() string {
+func (e *ExplicitVersionedRef) referenceKey() string {
 	return e.Resource.UniqVersionedKey().String()
 }
 
