@@ -474,7 +474,12 @@ func TestChangeGraphWithNamespaceAndCRDs(t *testing.T) {
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: kapp-test
+  name: kapp-namespace-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kapp-namespace-2
 ---
 apiVersion: v1
 kind: Namespace
@@ -485,36 +490,56 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: kapp-secret-1
-  namespace: kapp-test
+  namespace: kapp-namespace-2
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: kapp-secret-2
+  namespace: kapp-namespace-2
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kapp-secret-3
   namespace: default
 ---
 kind: CustomResourceDefinition
 apiVersion: apiextensions.k8s.io/v1
 metadata:
-  name: kapp-crd
+  name: kapp-crd-1
 spec:
   group: appGroup
   names:
-    kind: KappCRD
+    kind: KappCRD1
 ---
 kind: CustomResourceDefinition
 apiVersion: apiextensions.k8s.io/v1
 metadata:
-  name: not-used
+  name: kapp-crd-2
 spec:
   group: appGroup
   names:
-    kind: NotUsed
+    kind: KappCRD2
 ---
-kind: KappCRD
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+  name: kapp-crd-3
+spec:
+  group: appGroup
+  names:
+    kind: KappCRD3
+---
+kind: KappCRD1
 apiVersion: appGroup/v1
 metadata:
-  name: app-cr
+  name: kapp-cr-1
+---
+kind: KappCRD2
+apiVersion: appGroup/v1
+metadata:
+  name: kapp-cr-2
 `
 
 	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
@@ -536,15 +561,21 @@ metadata:
 
 	output := strings.TrimSpace(graph.PrintStr())
 	expectedOutput := strings.TrimSpace(`
-(upsert) namespace/kapp-test (v1) cluster
+(upsert) namespace/kapp-namespace-1 (v1) cluster
+(upsert) namespace/kapp-namespace-2 (v1) cluster
 (upsert) namespace/app (v1) cluster
-(upsert) secret/kapp-secret-1 (v1) namespace: kapp-test
-  (upsert) namespace/kapp-test (v1) cluster
-(upsert) secret/kapp-secret-2 (v1) namespace: default
-(upsert) customresourcedefinition/kapp-crd (apiextensions.k8s.io/v1) cluster
-(upsert) customresourcedefinition/not-used (apiextensions.k8s.io/v1) cluster
-(upsert) kappcrd/app-cr (appGroup/v1) cluster
-  (upsert) customresourcedefinition/kapp-crd (apiextensions.k8s.io/v1) cluster
+(upsert) secret/kapp-secret-1 (v1) namespace: kapp-namespace-2
+  (upsert) namespace/kapp-namespace-2 (v1) cluster
+(upsert) secret/kapp-secret-2 (v1) namespace: kapp-namespace-2
+  (upsert) namespace/kapp-namespace-2 (v1) cluster
+(upsert) secret/kapp-secret-3 (v1) namespace: default
+(upsert) customresourcedefinition/kapp-crd-1 (apiextensions.k8s.io/v1) cluster
+(upsert) customresourcedefinition/kapp-crd-2 (apiextensions.k8s.io/v1) cluster
+(upsert) customresourcedefinition/kapp-crd-3 (apiextensions.k8s.io/v1) cluster
+(upsert) kappcrd1/kapp-cr-1 (appGroup/v1) cluster
+  (upsert) customresourcedefinition/kapp-crd-1 (apiextensions.k8s.io/v1) cluster
+(upsert) kappcrd2/kapp-cr-2 (appGroup/v1) cluster
+  (upsert) customresourcedefinition/kapp-crd-2 (apiextensions.k8s.io/v1) cluster
 `)
 
 	if output != expectedOutput {
