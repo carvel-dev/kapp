@@ -42,19 +42,16 @@ func (c ClusterChangeSet) Calculate() ([]*ClusterChange, *ctldgraph.ChangeGraph,
 		clusterChange := c.clusterChangeFactory.NewClusterChange(change)
 		wrappedClusterChanges = append(wrappedClusterChanges, wrappedClusterChange{clusterChange})
 	}
-
 	changesGraph, err := ctldgraph.NewChangeGraph(wrappedClusterChanges,
 		c.changeGroupBindings, c.changeRuleBindings, c.logger)
 	if err != nil {
 		// Return graph for inspection
 		return nil, changesGraph, err
 	}
-
 	changesGraph.AllMatching(func(change *ctldgraph.Change) bool {
 		c.markChangesToWait(change)
 		return false
 	})
-
 	// Prune out changes that are not involved with anything
 	changesGraph.RemoveMatching(func(change *ctldgraph.Change) bool {
 		clusterChange := change.Change.(wrappedClusterChange).ClusterChange
@@ -141,7 +138,6 @@ type wrappedClusterChange struct {
 
 func (c wrappedClusterChange) Op() ctldgraph.ActualChangeOp {
 	op := c.ApplyOp()
-
 	switch op {
 	case ClusterChangeApplyOpAdd, ClusterChangeApplyOpUpdate:
 		return ctldgraph.ActualChangeOpUpsert
@@ -151,6 +147,9 @@ func (c wrappedClusterChange) Op() ctldgraph.ActualChangeOp {
 
 	case ClusterChangeApplyOpNoop:
 		return ctldgraph.ActualChangeOpNoop
+
+	case ClusterChangeApplyOpExists:
+		return ctldgraph.ActualChangeOpExists
 
 	default:
 		panic(fmt.Sprintf("Unknown change apply operation: %s", op))

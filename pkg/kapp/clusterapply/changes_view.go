@@ -139,6 +139,7 @@ var (
 		ClusterChangeApplyOpDelete: "delete",
 		ClusterChangeApplyOpUpdate: "update",
 		ClusterChangeApplyOpNoop:   "noop",
+		ClusterChangeApplyOpExists: "exists",
 	}
 
 	applyStrategyCodeUI = map[ClusterChangeApplyOp]map[ClusterChangeApplyStrategyOp]string{
@@ -162,6 +163,10 @@ var (
 		ClusterChangeApplyOpNoop: {
 			noopStrategyOp: "",
 		},
+
+		ClusterChangeApplyOpExists: {
+			noopStrategyOp: "",
+		},
 	}
 
 	waitOpCodeUI = map[ClusterChangeWaitOp]string{
@@ -181,6 +186,8 @@ func (v *ChangesView) applyOpCode(op ClusterChangeApplyOp) uitable.Value {
 		return uitable.ValueFmt{V: uitable.NewValueString(applyOpCodeUI[op]), Error: false}
 	case ClusterChangeApplyOpNoop:
 		return uitable.NewValueString("")
+	case ClusterChangeApplyOpExists:
+		return uitable.ValueFmt{V: uitable.NewValueString(applyOpCodeUI[op]), Error: false}
 	default:
 		return uitable.NewValueString("???")
 	}

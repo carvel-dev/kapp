@@ -34,7 +34,6 @@ func NewChangeGraph(changes []ActualChange,
 			changeRuleBindings:  changeRuleBindings,
 		})
 	}
-
 	graph := &ChangeGraph{graphChanges, logger}
 
 	err := graph.buildEdges(

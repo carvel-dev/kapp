@@ -580,6 +580,8 @@ func IsResourceChangeBlockedErr(err error) bool {
 		return true
 	case strings.Contains(errMsg, "Internal error occurred: failed calling webhook"):
 		return true
+	case strings.Contains(errMsg, "Resource doesn't exists"):
+		return true
 	case conversionWebhookErrCheck.MatchString(errMsg):
 		return true
 	default:

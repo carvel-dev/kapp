@@ -24,6 +24,7 @@ const (
 	ClusterChangeApplyOpDelete ClusterChangeApplyOp = "delete"
 	ClusterChangeApplyOpUpdate ClusterChangeApplyOp = "update"
 	ClusterChangeApplyOpNoop   ClusterChangeApplyOp = "noop"
+	ClusterChangeApplyOpExists ClusterChangeApplyOp = "exists"
 )
 
 type ClusterChangeWaitOp string
@@ -84,7 +85,6 @@ func (c *ClusterChange) ApplyOp() ClusterChangeApplyOp {
 			return ClusterChangeApplyOpNoop
 		}
 	}
-
 	switch c.change.Op() {
 	case ctldiff.ChangeOpAdd:
 		return ClusterChangeApplyOpAdd
@@ -94,6 +94,8 @@ func (c *ClusterChange) ApplyOp() ClusterChangeApplyOp {
 		return ClusterChangeApplyOpUpdate
 	case ctldiff.ChangeOpKeep:
 		return ClusterChangeApplyOpNoop
+	case ctldiff.ChangeOpExists:
+		return ClusterChangeApplyOpExists
 	default:
 		panic("Unknown change apply op")
 	}
@@ -143,6 +145,9 @@ func (c *ClusterChange) WaitOp() ClusterChangeWaitOp {
 		}
 		return ClusterChangeWaitOpNoop
 
+	case ctldiff.ChangeOpExists:
+		return ClusterChangeWaitOpNoop
+
 	default:
 		panic("Unknown change wait op")
 	}
@@ -178,7 +183,6 @@ func (c *ClusterChange) Apply() (bool, []string, error) {
 
 func (c *ClusterChange) applyStrategy() (ApplyStrategy, error) {
 	op := c.ApplyOp()
-
 	switch op {
 	case ClusterChangeApplyOpAdd, ClusterChangeApplyOpUpdate:
 		return AddOrUpdateChange{
@@ -190,6 +194,9 @@ func (c *ClusterChange) applyStrategy() (ApplyStrategy, error) {
 
 	case ClusterChangeApplyOpNoop:
 		return NoopStrategy{}, nil
+
+	case ClusterChangeApplyOpExists:
+		return ExistsChange{c.change, c.identifiedResources}.ApplyStrategy()
 
 	default:
 		return nil, fmt.Errorf("Unknown change apply operation: %s", op)
