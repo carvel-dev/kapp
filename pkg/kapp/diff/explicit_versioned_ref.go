@@ -5,79 +5,69 @@ package diff
 
 import (
 	"fmt"
+	"reflect"
+
+	"gopkg.in/yaml.v2"
 )
 
 type VersionedRefDesc struct {
-	Namespace string `json:"namespace"`
-	APIGroup  string `json:"apiGroup"`
-	Kind      string `json:"kind"`
-	Name      string `json:"name"`
-}
-
-type ExplicitVersionedRefAnn struct {
-	References     []VersionedRefDesc `json:"references"`
-	VersionedNames map[string]string
+	Namespace  string `yaml:"namespace"`
+	APIVersion string `yaml:"apiVersion"`
+	Kind       string `yaml:"kind"`
+	Name       string `yaml:"name"`
 }
 
 type ExplicitVersionedRef struct {
 	Resource   VersionedResource
-	Annotation ExplicitVersionedRefAnn
+	Annotation string
 }
 
 const (
-	explicitReferenceKey = "kapp.k14s.io/versioned-explicit-ref"
+	explicitReferenceKey       = "kapp.k14s.io/versioned-explicit-ref"
+	explicitReferenceKeyPrefix = "kapp.k14s.io/versioned-explicit-ref."
 )
 
-func NewExplicitVersionedRef(res VersionedResource, annotation ExplicitVersionedRefAnn) *ExplicitVersionedRef {
+func NewExplicitVersionedRef(res VersionedResource, annotation string) *ExplicitVersionedRef {
 	return &ExplicitVersionedRef{res, annotation}
 }
 
 // Returns true if the resource is referenced by the annotation
 func (e *ExplicitVersionedRef) IsReferenced() (bool, error) {
-	references, err := e.references()
+	reference := VersionedRefDesc{}
+	err := yaml.Unmarshal([]byte(e.Annotation), &reference)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("Error unmarshalling versioned reference: %s", err)
 	}
 
-	referenceKey := e.referenceKey()
-
-	for _, v := range references {
-		if v == referenceKey {
-			return true, nil
-		}
+	if reference.APIVersion == "" || reference.Kind == "" || reference.Name == "" {
+		return false, fmt.Errorf("Explicit reference error: apiVersion, kind and name are required values in an explicit versioned reference")
 	}
 
-	return false, nil
+	baseName, _ := e.Resource.BaseNameAndVersion()
+	versionedResourceDesc := VersionedRefDesc{
+		Namespace:  e.Resource.res.Namespace(),
+		APIVersion: e.Resource.res.APIVersion(),
+		Kind:       e.Resource.res.Kind(),
+		Name:       baseName,
+	}
+
+	return reflect.DeepEqual(versionedResourceDesc, reference), nil
 }
 
-func (e *ExplicitVersionedRef) references() ([]string, error) {
-	list := []string{}
-	for _, v := range e.Annotation.References {
-		v, err := e.validateAndReplaceCoreGroup(v)
-		if err != nil {
-			return list, err
-		}
-
-		list = append(list, fmt.Sprintf("%s/%s/%s/%s", v.Namespace, v.APIGroup, v.Kind, v.Name))
-	}
-	return list, nil
-}
-
-func (e *ExplicitVersionedRef) validateAndReplaceCoreGroup(resourceDescription VersionedRefDesc) (VersionedRefDesc, error) {
-	// Replacing APIGroup value "core" with an empty string
-	// Edgecase for resources that are a part of "core"
-	if resourceDescription.APIGroup == "core" {
-		resourceDescription.APIGroup = ""
+func (e *ExplicitVersionedRef) VersionedReference() (string, error) {
+	reference := VersionedRefDesc{}
+	err := yaml.Unmarshal([]byte(e.Annotation), &reference)
+	if err != nil {
+		return "", fmt.Errorf("Error unmarshalling versioned reference: %s", err)
 	}
 
-	if resourceDescription.Kind == "" || resourceDescription.Name == "" {
-		return resourceDescription, fmt.Errorf("Explicit Reference Error: Name and Kind are required values in an explicit reference")
+	reference.Name = e.Resource.res.Name()
+	versionedReference, err := yaml.Marshal(reference)
+	if err != nil {
+		return "", fmt.Errorf("Error marshalling versioned reference: %s", err)
 	}
-	return resourceDescription, nil
-}
 
-func (e *ExplicitVersionedRef) referenceKey() string {
-	return e.Resource.UniqVersionedKey().String()
+	return string(versionedReference), nil
 }
 
 /*

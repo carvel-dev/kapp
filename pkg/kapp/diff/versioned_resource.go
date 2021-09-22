@@ -88,36 +88,25 @@ func (d VersionedResource) updateAffected(rule ctlconf.TemplateRule, rs []ctlres
 			if err != nil {
 				return err
 			}
+		}
+	}
 
-			if val, found := res.Annotations()[explicitReferenceKey]; found {
-				annotation := ExplicitVersionedRefAnn{}
-
-				err := json.Unmarshal([]byte(val), &annotation)
-				if err != nil {
-					return fmt.Errorf("Error unmarshalling explicit references : %s", err)
-				}
-
-				isReferenced, err := NewExplicitVersionedRef(d, annotation).IsReferenced()
+	for _, res := range rs {
+		for k, v := range res.Annotations() {
+			if k == explicitReferenceKey || strings.HasPrefix(k, explicitReferenceKeyPrefix) {
+				explicitRef := NewExplicitVersionedRef(d, v)
+				isReferenced, err := explicitRef.IsReferenced()
 				if err != nil {
 					return err
 				}
 
 				if isReferenced {
-					if annotation.VersionedNames == nil {
-						annotation.VersionedNames = map[string]string{}
-					}
-
-					annotation.VersionedNames[d.UniqVersionedKey().String()] = d.res.Name()
-
-					out, err := json.Marshal(annotation)
-					if err != nil {
-						return fmt.Errorf("Error marshalling reference annotation: %s", err)
-					}
-
-					err = d.annotationMod(string(out)).Apply(res)
+					versionedReference, err := explicitRef.VersionedReference()
 					if err != nil {
 						return err
 					}
+
+					d.annotationMod(k, versionedReference).Apply(res)
 				}
 			}
 		}
@@ -126,12 +115,12 @@ func (d VersionedResource) updateAffected(rule ctlconf.TemplateRule, rs []ctlres
 	return nil
 }
 
-func (d VersionedResource) annotationMod(annotation string) ctlres.StringMapAppendMod {
+func (d VersionedResource) annotationMod(annotation string, value string) ctlres.StringMapAppendMod {
 	return ctlres.StringMapAppendMod{
 		ResourceMatcher: ctlres.AllMatcher{},
 		Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
 		KVs: map[string]string{
-			explicitReferenceKey: annotation,
+			annotation: value,
 		},
 	}
 }

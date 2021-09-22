@@ -32,7 +32,11 @@ kind: ConfigMap
 metadata:
   name: config-2
   annotations:
-    kapp.k14s.io/versioned-explicit-ref: '{ "references": [ { "namespace": "kapp-test", "kind" : "ConfigMap", "name": "config-1"} ] }'
+    kapp.k14s.io/versioned-explicit-ref: |
+      namespace: kapp-test
+      apiVersion: v1
+      kind: ConfigMap
+      name: config-1
 data:
   foo: bar
 `
@@ -53,7 +57,11 @@ kind: ConfigMap
 metadata:
   name: config-2
   annotations:
-    kapp.k14s.io/versioned-explicit-ref: '{ "references": [ { "namespace": "kapp-test", "kind" : "ConfigMap", "name": "config-1"} ] }'
+    kapp.k14s.io/versioned-explicit-ref: |
+      namespace: kapp-test
+      apiVersion: v1
+      kind: ConfigMap
+      name: config-1
 data:
   foo: bar
 `
