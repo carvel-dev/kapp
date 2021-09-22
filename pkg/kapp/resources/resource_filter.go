@@ -157,6 +157,11 @@ func (f ResourceFilter) Matches(resource Resource) bool {
 	return true
 }
 
+func (f ResourceFilter) IsEmpty() bool {
+	return f.BoolFilter == nil && len(f.Names) == 0 && len(f.KindNames) == 0 && len(f.KindNsNames) == 0 &&
+		len(f.KindNamespaces) == 0 && len(f.Namespaces) == 0 && len(f.Kinds) == 0 && f.CreatedAtBeforeTime == nil && f.CreatedAtAfterTime == nil
+}
+
 type BoolFilter struct {
 	And      []BoolFilter
 	Or       []BoolFilter

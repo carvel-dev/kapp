@@ -24,19 +24,14 @@ type ChangeSetFilterRoot struct {
 	ExistingResource *ctlres.ResourceFilter
 }
 
-func (s *ChangeSetFilter) DiffFilter() (ChangeSetFilterRoot, error) {
-	var filter ChangeSetFilterRoot
-	if len(s.Filter) > 0 {
-		changeSetFilter, err := NewChangeSetFilterFromString(s.Filter)
-		if err != nil {
-			return ChangeSetFilterRoot{}, err
-		}
-		filter = *changeSetFilter
+func (s *ChangeSetFilter) DiffFilter() (*ChangeSetFilterRoot, error) {
+	if len(s.Filter) == 0 {
+		return &ChangeSetFilterRoot{}, nil
 	}
-	return filter, nil
+	return NewChangeSetFilterRootFromString(s.Filter)
 }
 
-func NewChangeSetFilterFromString(data string) (*ChangeSetFilterRoot, error) {
+func NewChangeSetFilterRootFromString(data string) (*ChangeSetFilterRoot, error) {
 	var filter ChangeSetFilterRoot
 
 	err := json.Unmarshal([]byte(data), &filter)
