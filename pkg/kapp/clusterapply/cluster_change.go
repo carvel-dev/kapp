@@ -146,7 +146,7 @@ func (c *ClusterChange) WaitOp() ClusterChangeWaitOp {
 		return ClusterChangeWaitOpNoop
 
 	case ctldiff.ChangeOpExists:
-		return ClusterChangeWaitOpNoop
+		return ClusterChangeWaitOpOK
 
 	default:
 		panic("Unknown change wait op")

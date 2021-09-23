@@ -20,7 +20,7 @@ const (
 )
 
 const (
-	placeHolderAnnKey = "kapp.k14s.io/placeholder"
+	placeHolderAnnKey = "kapp.k14s.io/placeholder" //value is ignored
 )
 
 type Change interface {
