@@ -389,9 +389,12 @@ changeGroupBindings:
 - name: change-groups.kapp.k14s.io/crds-{crd-group}-{crd-kind}
   resourceMatchers: *crdMatchers
 
-- name: change-groups.kapp.k14s.io/namespaces-{name}
+- name: change-groups.kapp.k14s.io/namespaces
   resourceMatchers: &namespaceMatchers
   - apiGroupKindMatcher: {kind: Namespace, apiGroup: ""}
+
+- name: change-groups.kapp.k14s.io/namespaces-{name}
+  resourceMatchers: *namespaceMatchers
 
 - name: change-groups.kapp.k14s.io/storage-class
   resourceMatchers: &storageClassMatchers
