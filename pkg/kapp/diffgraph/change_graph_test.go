@@ -95,6 +95,10 @@ kind: CustomResourceDefinition
 apiVersion: apiextensions.k8s.io/v1
 metadata:
   name: app-config
+spec:
+  group: app-group
+  names:
+    kind: app-kind
 ---
 kind: Namespace
 apiVersion: v1
@@ -462,6 +466,120 @@ metadata:
 	}
 	if err.Error() != "Detected cycle while ordering changes: [job/job1 () cluster] -> [job/job1 () cluster] (found repeated: job/job1 () cluster)" {
 		t.Fatalf("Expected to detect cycle: %s", err)
+	}
+}
+
+func TestChangeGraphWithNamespaceAndCRDs(t *testing.T) {
+	configYAML := `
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kapp-namespace-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kapp-namespace-2
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kapp-secret-1
+  namespace: kapp-namespace-2
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kapp-secret-2
+  namespace: kapp-namespace-2
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kapp-secret-3
+  namespace: default
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+  name: kapp-crd-1
+spec:
+  group: appGroup
+  names:
+    kind: KappCRD1
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+  name: kapp-crd-2
+spec:
+  group: appGroup
+  names:
+    kind: KappCRD2
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+  name: kapp-crd-3
+spec:
+  group: appGroup
+  names:
+    kind: KappCRD3
+---
+kind: KappCRD1
+apiVersion: appGroup/v1
+metadata:
+  name: kapp-cr-1
+---
+kind: KappCRD2
+apiVersion: appGroup/v1
+metadata:
+  name: kapp-cr-2
+`
+
+	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
+	if err != nil {
+		t.Fatalf("Error parsing conf defaults")
+	}
+
+	opts := buildGraphOpts{
+		resourcesBs:         configYAML,
+		op:                  ctldgraph.ActualChangeOpUpsert,
+		changeGroupBindings: conf.ChangeGroupBindings(),
+		changeRuleBindings:  conf.ChangeRuleBindings(),
+	}
+
+	graph, err := buildChangeGraphWithOpts(opts, t)
+	if err != nil {
+		t.Fatalf("Expected graph to build")
+	}
+
+	output := strings.TrimSpace(graph.PrintStr())
+	expectedOutput := strings.TrimSpace(`
+(upsert) namespace/kapp-namespace-1 (v1) cluster
+(upsert) namespace/kapp-namespace-2 (v1) cluster
+(upsert) namespace/app (v1) cluster
+(upsert) secret/kapp-secret-1 (v1) namespace: kapp-namespace-2
+  (upsert) namespace/kapp-namespace-2 (v1) cluster
+(upsert) secret/kapp-secret-2 (v1) namespace: kapp-namespace-2
+  (upsert) namespace/kapp-namespace-2 (v1) cluster
+(upsert) secret/kapp-secret-3 (v1) namespace: default
+(upsert) customresourcedefinition/kapp-crd-1 (apiextensions.k8s.io/v1) cluster
+(upsert) customresourcedefinition/kapp-crd-2 (apiextensions.k8s.io/v1) cluster
+(upsert) customresourcedefinition/kapp-crd-3 (apiextensions.k8s.io/v1) cluster
+(upsert) kappcrd1/kapp-cr-1 (appGroup/v1) cluster
+  (upsert) customresourcedefinition/kapp-crd-1 (apiextensions.k8s.io/v1) cluster
+(upsert) kappcrd2/kapp-cr-2 (appGroup/v1) cluster
+  (upsert) customresourcedefinition/kapp-crd-2 (apiextensions.k8s.io/v1) cluster
+`)
+
+	if output != expectedOutput {
+		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
 	}
 }
 

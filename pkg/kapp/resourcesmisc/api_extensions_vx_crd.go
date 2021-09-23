@@ -81,6 +81,22 @@ func (o crdObj) Versions() []string {
 	return result
 }
 
+func (s APIExtensionsVxCRD) Group() (crdGroup string, err error) {
+	crdObj, err := s.contents()
+	if err != nil {
+		return crdGroup, err
+	}
+	return crdObj.Spec.Group, err
+}
+
+func (s APIExtensionsVxCRD) Kind() (crdName string, err error) {
+	crdObj, err := s.contents()
+	if err != nil {
+		return crdName, err
+	}
+	return crdObj.Spec.Names.Kind, err
+}
+
 /*
 
 ---

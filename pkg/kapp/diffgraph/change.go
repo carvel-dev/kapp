@@ -104,7 +104,11 @@ func (c *Change) Groups() ([]ChangeGroup, error) {
 
 	for k, v := range res.Annotations() {
 		if k == changeGroupAnnKey || strings.HasPrefix(k, changeGroupAnnPrefixKey) {
-			groupKey, err := NewChangeGroupFromAnnString(v)
+			name, err := NewChangeGroupNameForResource(v, c.Change.Resource()).AsString()
+			if err != nil {
+				return nil, err
+			}
+			groupKey, err := NewChangeGroupFromAnnString(name)
 			if err != nil {
 				return nil, err
 			}
@@ -116,7 +120,11 @@ func (c *Change) Groups() ([]ChangeGroup, error) {
 		rms := ctlconf.ResourceMatchers(groupConfig.ResourceMatchers).AsResourceMatchers()
 
 		if (ctlres.AnyMatcher{rms}).Matches(res) {
-			groupKey, err := NewChangeGroupFromAnnString(groupConfig.Name)
+			name, err := NewChangeGroupNameForResource(groupConfig.Name, c.Change.Resource()).AsString()
+			if err != nil {
+				return nil, err
+			}
+			groupKey, err := NewChangeGroupFromAnnString(name)
 			if err != nil {
 				return nil, err
 			}
@@ -139,7 +147,11 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 
 	for k, v := range res.Annotations() {
 		if k == changeRuleAnnKey || strings.HasPrefix(k, changeRuleAnnPrefixKey) {
-			rule, err := NewChangeRuleFromAnnString(v)
+			ruleStr, err := NewChangeGroupNameForResource(v, c.Change.Resource()).AsString()
+			if err != nil {
+				return nil, err
+			}
+			rule, err := NewChangeRuleFromAnnString(ruleStr)
 			if err != nil {
 				return nil, fmt.Errorf("Resource %s: %s", res.Description(), err)
 			}
@@ -152,6 +164,10 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 
 		if (ctlres.AnyMatcher{rms}).Matches(res) {
 			for _, ruleStr := range ruleConfig.Rules {
+				ruleStr, err := NewChangeGroupNameForResource(ruleStr, c.Change.Resource()).AsString()
+				if err != nil {
+					return nil, err
+				}
 				rule, err := NewChangeRuleFromAnnString(ruleStr)
 				if err != nil {
 					return nil, fmt.Errorf("Resource %s: %s", res.Description(), err)

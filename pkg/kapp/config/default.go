@@ -386,9 +386,15 @@ changeGroupBindings:
   resourceMatchers: &crdMatchers
   - apiGroupKindMatcher: {kind: CustomResourceDefinition, apiGroup: apiextensions.k8s.io}
 
+- name: change-groups.kapp.k14s.io/crds-{crd-group}-{crd-kind}
+  resourceMatchers: *crdMatchers
+
 - name: change-groups.kapp.k14s.io/namespaces
   resourceMatchers: &namespaceMatchers
   - apiGroupKindMatcher: {kind: Namespace, apiGroup: ""}
+
+- name: change-groups.kapp.k14s.io/namespaces-{name}
+  resourceMatchers: *namespaceMatchers
 
 - name: change-groups.kapp.k14s.io/storage-class
   resourceMatchers: &storageClassMatchers
@@ -439,7 +445,7 @@ changeGroupBindings:
 changeRuleBindings:
 # Insert CRDs before all CRs
 - rules:
-  - "upsert after upserting change-groups.kapp.k14s.io/crds"
+  - "upsert after upserting change-groups.kapp.k14s.io/crds-{api-group}-{kind}"
   resourceMatchers:
   - andMatcher:
       matchers:
@@ -482,7 +488,7 @@ changeRuleBindings:
 
 # Insert namespaces before all namespaced resources
 - rules:
-  - "upsert after upserting change-groups.kapp.k14s.io/namespaces"
+  - "upsert after upserting change-groups.kapp.k14s.io/namespaces-{namespace}"
   resourceMatchers:
   - andMatcher:
       matchers:
