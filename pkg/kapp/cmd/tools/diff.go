@@ -49,10 +49,12 @@ func (o *DiffOptions) Run() error {
 	}
 
 	changeFactory := ctldiff.NewChangeFactory(nil, nil)
+
 	changes, err := ctldiff.NewChangeSet(existingResources, newResources, o.DiffFlags.ChangeSetOpts, changeFactory).Calculate()
 	if err != nil {
 		return err
 	}
+
 	var changeViews []ctlcap.ChangeView
 
 	for _, change := range changes {

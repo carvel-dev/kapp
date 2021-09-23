@@ -85,6 +85,7 @@ func (c *ClusterChange) ApplyOp() ClusterChangeApplyOp {
 			return ClusterChangeApplyOpNoop
 		}
 	}
+
 	switch c.change.Op() {
 	case ctldiff.ChangeOpAdd:
 		return ClusterChangeApplyOpAdd
@@ -183,6 +184,7 @@ func (c *ClusterChange) Apply() (bool, []string, error) {
 
 func (c *ClusterChange) applyStrategy() (ApplyStrategy, error) {
 	op := c.ApplyOp()
+
 	switch op {
 	case ClusterChangeApplyOpAdd, ClusterChangeApplyOpUpdate:
 		return AddOrUpdateChange{

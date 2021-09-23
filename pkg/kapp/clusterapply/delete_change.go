@@ -35,6 +35,7 @@ type DeleteChange struct {
 func (c DeleteChange) ApplyStrategy() (ApplyStrategy, error) {
 	res := c.change.ExistingResource()
 	strategy := res.Annotations()[deleteStrategyAnnKey]
+
 	switch ClusterChangeApplyStrategyOp(strategy) {
 	case deleteStrategyPlainAnnValue:
 		return DeletePlainStrategy{res, c}, nil

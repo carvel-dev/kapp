@@ -234,7 +234,7 @@ func (cs Changes) MatchesRule(rule ChangeRule, exceptChange *Change) ([]*Change,
 			op := change.Change.Op()
 
 			switch op {
-			case ActualChangeOpUpsert:
+			case ActualChangeOpUpsert, ActualChangeOpExists:
 				if rule.TargetAction == ChangeRuleTargetActionUpserting {
 					result = append(result, change)
 				}
@@ -243,10 +243,6 @@ func (cs Changes) MatchesRule(rule ChangeRule, exceptChange *Change) ([]*Change,
 					result = append(result, change)
 				}
 			case ActualChangeOpNoop:
-			case ActualChangeOpExists:
-				if rule.TargetAction == ChangeRuleTargetActionUpserting {
-					result = append(result, change)
-				}
 			default:
 				panic(fmt.Sprintf("Unknown change operation: %s", op))
 			}

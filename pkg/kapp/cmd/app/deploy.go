@@ -138,6 +138,7 @@ func (o *DeployOptions) Run() error {
 	if err != nil {
 		return err
 	}
+
 	clusterChangeSet, clusterChangesGraph, hasNoChanges, changeSummary, err :=
 		o.calculateAndPresentChanges(existingResources, newResources, conf, supportObjs)
 	if err != nil {

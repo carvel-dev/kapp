@@ -67,6 +67,7 @@ func (f ChangeFactory) NewExactChange(existingRes, newRes ctlres.Resource) (Chan
 		if err != nil {
 			return nil, err
 		}
+
 		existingRes = historylessExistingRes
 	}
 

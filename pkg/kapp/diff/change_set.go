@@ -74,10 +74,12 @@ func (d ChangeSet) Calculate() ([]Change, error) {
 			if err != nil {
 				return nil, err
 			}
+
 			changes = append(changes, change)
 			alreadyChecked[existingResKey] = struct{}{}
 		}
 	}
+
 	return d.collapseChangesWithSameUID(changes)
 }
 

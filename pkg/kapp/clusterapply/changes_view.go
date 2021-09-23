@@ -184,10 +184,10 @@ func (v *ChangesView) applyOpCode(op ClusterChangeApplyOp) uitable.Value {
 		return uitable.ValueFmt{V: uitable.NewValueString(applyOpCodeUI[op]), Error: true}
 	case ClusterChangeApplyOpUpdate:
 		return uitable.ValueFmt{V: uitable.NewValueString(applyOpCodeUI[op]), Error: false}
-	case ClusterChangeApplyOpNoop:
-		return uitable.NewValueString("")
 	case ClusterChangeApplyOpExists:
 		return uitable.ValueFmt{V: uitable.NewValueString(applyOpCodeUI[op]), Error: false}
+	case ClusterChangeApplyOpNoop:
+		return uitable.NewValueString("")
 	default:
 		return uitable.NewValueString("???")
 	}
