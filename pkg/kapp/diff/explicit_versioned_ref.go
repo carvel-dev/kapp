@@ -5,21 +5,14 @@ package diff
 
 import (
 	"fmt"
-	"reflect"
 
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"gopkg.in/yaml.v2"
 )
 
-type VersionedRefDesc struct {
-	Namespace  string `yaml:"namespace"`
-	APIVersion string `yaml:"apiVersion"`
-	Kind       string `yaml:"kind"`
-	Name       string `yaml:"name"`
-}
-
 type ExplicitVersionedRef struct {
-	Resource   VersionedResource
-	Annotation string
+	AnnotationKey string
+	Annotation    string
 }
 
 const (
@@ -27,54 +20,39 @@ const (
 	explicitReferenceKeyPrefix = "kapp.k14s.io/versioned-explicit-ref."
 )
 
-func NewExplicitVersionedRef(res VersionedResource, annotation string) *ExplicitVersionedRef {
-	return &ExplicitVersionedRef{res, annotation}
+func NewExplicitVersionedRef(annotationKey string, annotation string) *ExplicitVersionedRef {
+	return &ExplicitVersionedRef{annotationKey, annotation}
 }
 
-// Returns true if the resource is referenced by the annotation
-func (e *ExplicitVersionedRef) IsReferenced() (bool, error) {
-	reference := VersionedRefDesc{}
-	err := yaml.Unmarshal([]byte(e.Annotation), &reference)
+func (e *ExplicitVersionedRef) AsObjectRef() (map[string]interface{}, error) {
+	var objectRef map[string]interface{}
+	err := yaml.Unmarshal([]byte(e.Annotation), &objectRef)
 	if err != nil {
-		return false, fmt.Errorf("Error unmarshalling versioned reference: %s", err)
+		return nil, fmt.Errorf("Parsing versioned explicit reference from annotation '%s': %s", e.AnnotationKey, err)
 	}
 
-	if reference.APIVersion == "" || reference.Kind == "" || reference.Name == "" {
-		return false, fmt.Errorf("Explicit reference error: apiVersion, kind and name are required values in an explicit versioned reference")
+	_, hasAPIVersionKey := objectRef["apiVersion"]
+	_, hasKindKey := objectRef["kind"]
+	_, hasNameKey := objectRef["name"]
+
+	if !(hasAPIVersionKey && hasKindKey && hasNameKey) {
+		return nil, fmt.Errorf("Expected versioned explicit reference to specify non-empty apiVersion, kind and name keys")
 	}
 
-	baseName, _ := e.Resource.BaseNameAndVersion()
-	versionedResourceDesc := VersionedRefDesc{
-		Namespace:  e.Resource.res.Namespace(),
-		APIVersion: e.Resource.res.APIVersion(),
-		Kind:       e.Resource.res.Kind(),
-		Name:       baseName,
-	}
-
-	return reflect.DeepEqual(versionedResourceDesc, reference), nil
+	return objectRef, nil
 }
 
-func (e *ExplicitVersionedRef) VersionedReference() (string, error) {
-	reference := VersionedRefDesc{}
-	err := yaml.Unmarshal([]byte(e.Annotation), &reference)
+func (e *ExplicitVersionedRef) AnnotationMod(objectRef map[string]interface{}) (ctlres.StringMapAppendMod, error) {
+	value, err := yaml.Marshal(objectRef)
 	if err != nil {
-		return "", fmt.Errorf("Error unmarshalling versioned reference: %s", err)
+		return ctlres.StringMapAppendMod{}, fmt.Errorf("Marshalling explicit reference: %s", err)
 	}
 
-	reference.Name = e.Resource.res.Name()
-	versionedReference, err := yaml.Marshal(reference)
-	if err != nil {
-		return "", fmt.Errorf("Error marshalling versioned reference: %s", err)
-	}
-
-	return string(versionedReference), nil
+	return ctlres.StringMapAppendMod{
+		ResourceMatcher: ctlres.AllMatcher{},
+		Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
+		KVs: map[string]string{
+			e.AnnotationKey: string(value),
+		},
+	}, nil
 }
-
-/*
-Annotation with a list of references in JSON format:
-
-kapp.k14s.io/versioned-explicit-ref: '{ "references": [ { "namespace": <resource-namespace>, "apiGroup":  <resource-apiGroup>, "kind" : <resource-kind>, "name":  <resource-name> } ] }'
-
-"namespace" need not be assigned a value for cluster-scoped resources.
-"apiGroup" need not be assigned a value for resources belonging to "core" API group.
-*/

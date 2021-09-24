@@ -33,10 +33,33 @@ metadata:
   name: config-2
   annotations:
     kapp.k14s.io/versioned-explicit-ref: |
-      namespace: kapp-test
       apiVersion: v1
       kind: ConfigMap
       name: config-1
+data:
+foo: bar
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-3
+  annotations:
+    kapp.k14s.io/versioned-explicit-ref.match: |
+      apiVersion: v1
+      kind: ConfigMap
+      name: config-1
+data:
+  foo: bar
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-4
+  annotations:
+    kapp.k14s.io/versioned-explicit-ref.nomatch: |
+      apiVersion: v1
+      kind: ConfigMap
+      name: config-2
 data:
   foo: bar
 `
@@ -58,10 +81,33 @@ metadata:
   name: config-2
   annotations:
     kapp.k14s.io/versioned-explicit-ref: |
-      namespace: kapp-test
       apiVersion: v1
       kind: ConfigMap
       name: config-1
+data:
+  foo: bar
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-3
+  annotations:
+    kapp.k14s.io/versioned-explicit-ref.match: |
+      apiVersion: v1
+      kind: ConfigMap
+      name: config-1
+data:
+  foo: bar
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-4
+  annotations:
+    kapp.k14s.io/versioned-explicit-ref.nomatch: |
+      apiVersion: v1
+      kind: ConfigMap
+      name: config-2
 data:
   foo: bar
 `
@@ -75,8 +121,64 @@ data:
 	defer cleanUp()
 
 	logger.Section("deploy initial", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+		resp := uitest.JSONUIFromBytes(t, []byte(out))
+
+		expected := []map[string]string{
+			{
+				"age":             "",
+				"conditions":      "",
+				"kind":            "ConfigMap",
+				"name":            "config-1-ver-1",
+				"namespace":       "kapp-test",
+				"op":              "create",
+				"op_strategy":     "",
+				"reconcile_info":  "",
+				"reconcile_state": "",
+				"wait_to":         "reconcile",
+			},
+			{
+				"age":             "",
+				"conditions":      "",
+				"kind":            "ConfigMap",
+				"name":            "config-2",
+				"namespace":       "kapp-test",
+				"op":              "create",
+				"op_strategy":     "",
+				"reconcile_info":  "",
+				"reconcile_state": "",
+				"wait_to":         "reconcile",
+			},
+			{
+				"age":             "",
+				"conditions":      "",
+				"kind":            "ConfigMap",
+				"name":            "config-3",
+				"namespace":       "kapp-test",
+				"op":              "create",
+				"op_strategy":     "",
+				"reconcile_info":  "",
+				"reconcile_state": "",
+				"wait_to":         "reconcile",
+			},
+			{
+				"age":             "",
+				"conditions":      "",
+				"kind":            "ConfigMap",
+				"name":            "config-4",
+				"namespace":       "kapp-test",
+				"op":              "create",
+				"op_strategy":     "",
+				"reconcile_info":  "",
+				"reconcile_state": "",
+				"wait_to":         "reconcile",
+			},
+		}
+
+		if !reflect.DeepEqual(resp.Tables[0].Rows, expected) {
+			t.Fatalf("Expected to see correct changes but recieved >>%s<<", out)
+		}
 	})
 
 	logger.Section("update versioned resource", func() {
@@ -84,32 +186,47 @@ data:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 
-		expected := []map[string]string{{
-			"age":             "",
-			"conditions":      "",
-			"kind":            "ConfigMap",
-			"name":            "config-1-ver-2",
-			"namespace":       "kapp-test",
-			"op":              "create",
-			"op_strategy":     "",
-			"reconcile_info":  "",
-			"reconcile_state": "",
-			"wait_to":         "reconcile",
-		}, {
-			"age":             "<replaced>",
-			"conditions":      "",
-			"kind":            "ConfigMap",
-			"name":            "config-2",
-			"namespace":       "kapp-test",
-			"op":              "update",
-			"op_strategy":     "",
-			"reconcile_info":  "",
-			"reconcile_state": "ok",
-			"wait_to":         "reconcile",
-		}}
+		expected := []map[string]string{
+			{
+				"age":             "",
+				"conditions":      "",
+				"kind":            "ConfigMap",
+				"name":            "config-1-ver-2",
+				"namespace":       "kapp-test",
+				"op":              "create",
+				"op_strategy":     "",
+				"reconcile_info":  "",
+				"reconcile_state": "",
+				"wait_to":         "reconcile",
+			},
+			{
+				"age":             "<replaced>",
+				"conditions":      "",
+				"kind":            "ConfigMap",
+				"name":            "config-2",
+				"namespace":       "kapp-test",
+				"op":              "update",
+				"op_strategy":     "",
+				"reconcile_info":  "",
+				"reconcile_state": "ok",
+				"wait_to":         "reconcile",
+			},
+			{
+				"age":             "<replaced>",
+				"conditions":      "",
+				"kind":            "ConfigMap",
+				"name":            "config-3",
+				"namespace":       "kapp-test",
+				"op":              "update",
+				"op_strategy":     "",
+				"reconcile_info":  "",
+				"reconcile_state": "ok",
+				"wait_to":         "reconcile",
+			},
+		}
 
 		if !reflect.DeepEqual(replaceAge(resp.Tables[0].Rows), expected) {
-			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
+			t.Fatalf("Expected to see correct changes but recieved >>%s<<", out)
 		}
 	})
 }
