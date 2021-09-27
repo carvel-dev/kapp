@@ -32,5 +32,5 @@ func (c WaitStrategy) Apply() error {
 	if exists {
 		return nil
 	}
-	return errors.New("Resource doesn't exists")
+	return errors.New("Placeholder resource doesn't exists")
 }

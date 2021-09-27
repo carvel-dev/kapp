@@ -166,6 +166,7 @@ func (c *ClusterChange) ApplyStrategyOp() (ClusterChangeApplyStrategyOp, error) 
 
 func (c *ClusterChange) Apply() (bool, []string, error) {
 	descMsgs := []string{c.ApplyDescription()}
+	var retryable bool
 
 	strategy, err := c.applyStrategy()
 	if err != nil {
@@ -173,8 +174,10 @@ func (c *ClusterChange) Apply() (bool, []string, error) {
 	}
 
 	err = strategy.Apply()
+	if err != nil {
+		retryable = ctlres.IsResourceChangeBlockedErr(err) || ctlres.IsPlaceholderResourceExistenceErr(err)
+	}
 
-	retryable := err != nil && ctlres.IsResourceChangeBlockedErr(err)
 	if retryable {
 		descMsgs = append(descMsgs, uiWaitMsgPrefix+"Retryable error: "+err.Error())
 	}
