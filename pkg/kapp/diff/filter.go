@@ -42,9 +42,6 @@ func NewChangeSetFilterRootFromString(data string) (*ChangeSetFilterRoot, error)
 }
 
 func (f ChangeSetFilterRoot) Apply(changes []Change) []Change {
-	if f.IsEmpty() {
-		return changes
-	}
 	var result []Change
 
 	for _, change := range changes {
@@ -95,12 +92,18 @@ func (f ChangeSetFilterRoot) Matches(change Change) bool {
 		return f.ExistingResource.Matches(change.ExistingResource())
 	}
 
+	// case when user is trying to filter on existing resource but existing resource not exists
+	if f.ExistingResource != nil && change.ExistingResource() == nil {
+		return false
+	}
+
+	// case when user is trying to filter on new resource but new resource not exists
+	if f.NewResource != nil && change.NewResource() == nil {
+		return false
+	}
+
 	if len(f.Ops) > 0 && change.Op() != "" {
 		return f.Ops.Matches(change)
 	}
-	return false
-}
-
-func (f ChangeSetFilterRoot) IsEmpty() bool {
-	return f.And == nil && f.Or == nil && f.Not == nil && f.NewResource == nil && f.ExistingResource == nil && f.Ops == nil
+	return true
 }

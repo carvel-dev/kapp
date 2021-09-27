@@ -38,35 +38,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: redis-config
+  namespace: kapp-test
   labels:
     x: "z"
 data:
   key: value
 ---
-`
-	deploymentResourceYaml := `
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: simple-app
-  namespace: kapp-test
-  labels:
-    change-me: "no"
-spec:
-  selector:
-    matchLabels:
-      simple-app: ""
-  template:
-    metadata:
-      labels:
-        simple-app: ""
-    spec:
-      containers:
-        - name: simple-app
-          image: docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0
-          env:
-            - name: HELLO_MSG
-              value: hello
 `
 
 	modifiedServiceResourceYaml := `
@@ -88,29 +65,18 @@ spec:
 ---
 `
 
-	modifiedDeploymentResourceYaml := `
-apiVersion: apps/v1
-kind: Deployment
+	modifiedConfigMapResourceyYaml := `
+---
+apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: simple-app
+  name: redis-config
   namespace: kapp-test
   labels:
-    change-me: "no"
-spec:
-  selector:
-    matchLabels:
-      simple-app: ""
-  template:
-    metadata:
-      labels:
-        simple-app: ""
-    spec:
-      containers:
-        - name: simple-app
-          image: docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0
-          env:
-            - name: HELLO_MSG
-              value: hello world
+    x: "z"
+data:
+  key: value2
+---
 `
 
 	name := "test-diff-filter"
@@ -123,7 +89,7 @@ spec:
 	logger.Section("diff filter by label on new resource", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
 			"--diff-filter", "{\"newResource\": {\"labels\": [\"x=z\"]}}", "--json"},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + configMapResourceyYaml + deploymentResourceYaml)})
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + configMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
 			"conditions":      "",
@@ -145,8 +111,8 @@ spec:
 
 	logger.Section("diff filter by kind and namespace on new resource", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
-			"--diff-filter", "{\"newResource\": {\"kinds\": [\"Service\", \"Deployment\"], \"namespaces\": [\"kapp-test\"]}}", "--json"},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + configMapResourceyYaml + deploymentResourceYaml)})
+			"--diff-filter", "{\"newResource\": {\"kinds\": [\"Service\"], \"namespaces\": [\"kapp-test\"]}}", "--json"},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + configMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
 			"conditions":      "",
@@ -158,33 +124,23 @@ spec:
 			"reconcile_info":  "",
 			"reconcile_state": "",
 			"wait_to":         "reconcile",
-		}, {
-			"conditions":      "",
-			"kind":            "Deployment",
-			"name":            "simple-app",
-			"namespace":       "kapp-test",
-			"op":              "create",
-			"op_strategy":     "",
-			"reconcile_info":  "",
-			"reconcile_state": "",
-			"wait_to":         "reconcile",
 		}}
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 
-		validateChanges(t, resp.Tables, expectedChange, "Op:      2 create, 0 delete, 0 update, 0 noop",
-			"Wait to: 2 reconcile, 0 delete, 0 noop", out)
+		validateChanges(t, resp.Tables, expectedChange, "Op:      1 create, 0 delete, 0 update, 0 noop",
+			"Wait to: 1 reconcile, 0 delete, 0 noop", out)
 	})
 
 	logger.Section("diff filter on update operation", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
 			"--diff-filter", "{\"ops\": [\"update\"]}", "--json"},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + configMapResourceyYaml + modifiedDeploymentResourceYaml)})
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + modifiedConfigMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
-			"conditions":      "2/2 t",
-			"kind":            "Deployment",
-			"name":            "simple-app",
+			"conditions":      "",
+			"kind":            "ConfigMap",
+			"name":            "redis-config",
 			"namespace":       "kapp-test",
 			"op":              "update",
 			"op_strategy":     "",
@@ -201,13 +157,13 @@ spec:
 
 	logger.Section("diff filter delete resource with label", func() {
 		out, _ := kapp.RunWithOpts([]string{"delete", "-a", name,
-			"--diff-filter", "{\"existingResource\": {\"labels\": [\"change-me=no\"]}}", "--json"},
+			"--diff-filter", "{\"existingResource\": {\"labels\": [\"x=z\"]}}", "--json"},
 			RunOpts{})
 
 		expectedChange := []map[string]string{{
-			"conditions":      "2/2 t",
-			"kind":            "Deployment",
-			"name":            "simple-app",
+			"conditions":      "",
+			"kind":            "ConfigMap",
+			"name":            "redis-config",
 			"namespace":       "kapp-test",
 			"op":              "delete",
 			"op_strategy":     "",
@@ -224,13 +180,13 @@ spec:
 
 	logger.Section("filter with or condition on new, existing resource", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
-			"--diff-filter", "{ \"or\": [{\"newResource\": {\"labels\": [\"change-me=no\"]}},{\"existingResource\": {\"labels\": [\"change-me!=no\"]}}]}", "--json"},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + configMapResourceyYaml + deploymentResourceYaml)})
+			"--diff-filter", "{ \"or\": [{\"newResource\": {\"labels\": [\"x=z\"]}},{\"existingResource\": {\"labels\": [\"x!=z\"]}}]}", "--json"},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + configMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
 			"conditions":      "",
-			"kind":            "Deployment",
-			"name":            "simple-app",
+			"kind":            "ConfigMap",
+			"name":            "redis-config",
 			"namespace":       "kapp-test",
 			"op":              "create",
 			"op_strategy":     "",
@@ -247,31 +203,8 @@ spec:
 
 	logger.Section("filter with and condition on new, existing resource", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
-			"--diff-filter", "{ \"and\": [{\"newResource\": {\"labels\": [\"change-me=no\"]}},{\"existingResource\": {\"labels\": [\"change-me=no\"]}}]}", "--json"},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + configMapResourceyYaml + modifiedDeploymentResourceYaml)})
-
-		expectedChange := []map[string]string{{
-			"conditions":      "2/2 t",
-			"kind":            "Deployment",
-			"name":            "simple-app",
-			"namespace":       "kapp-test",
-			"op":              "update",
-			"op_strategy":     "",
-			"reconcile_info":  "",
-			"reconcile_state": "ok",
-			"wait_to":         "reconcile",
-		}}
-
-		resp := uitest.JSONUIFromBytes(t, []byte(out))
-
-		validateChanges(t, resp.Tables, expectedChange, "Op:      0 create, 0 delete, 1 update, 0 noop",
-			"Wait to: 1 reconcile, 0 delete, 0 noop", out)
-	})
-
-	logger.Section("filter existing resource on labels", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
-			"--diff-filter", "{ \"not\": {\"existingResource\": {\"labels\": [\"change-me=no\"]}}}", "--json"},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(modifiedServiceResourceYaml + configMapResourceyYaml + deploymentResourceYaml)})
+			"--diff-filter", "{ \"and\": [{\"newResource\": {\"labels\": [\"x=y\"]}},{\"existingResource\": {\"labels\": [\"x=y\"]}}]}", "--json"},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(modifiedServiceResourceYaml + configMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
 			"conditions":      "",
@@ -291,7 +224,30 @@ spec:
 			"Wait to: 1 reconcile, 0 delete, 0 noop", out)
 	})
 
-	logger.Section("diff filter delete resource with label", func() {
+	logger.Section("filter existing resource on labels", func() {
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
+			"--diff-filter", "{ \"not\": {\"existingResource\": {\"labels\": [\"x=y\"]}}}", "--json"},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + modifiedConfigMapResourceyYaml)})
+
+		expectedChange := []map[string]string{{
+			"conditions":      "",
+			"kind":            "ConfigMap",
+			"name":            "redis-config",
+			"namespace":       "kapp-test",
+			"op":              "update",
+			"op_strategy":     "",
+			"reconcile_info":  "",
+			"reconcile_state": "ok",
+			"wait_to":         "reconcile",
+		}}
+
+		resp := uitest.JSONUIFromBytes(t, []byte(out))
+
+		validateChanges(t, resp.Tables, expectedChange, "Op:      0 create, 0 delete, 1 update, 0 noop",
+			"Wait to: 1 reconcile, 0 delete, 0 noop", out)
+	})
+
+	logger.Section("diff filter delete resource with name", func() {
 		out, _ := kapp.RunWithOpts([]string{"delete", "-a", name,
 			"--diff-filter", "{\"existingResource\": {\"names\": [\"redis-primary\", \"redis-config\"]}}", "--json"},
 			RunOpts{})

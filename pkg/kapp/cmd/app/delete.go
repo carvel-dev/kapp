@@ -30,6 +30,11 @@ type DeleteOptions struct {
 	ResourceTypesFlags  ResourceTypesFlags
 }
 
+type changesFlag struct {
+	hasNoChanges     bool
+	isFullyDeleteApp bool
+}
+
 func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeleteOptions {
 	return &DeleteOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
@@ -76,7 +81,7 @@ func (o *DeleteOptions) Run() error {
 
 	failingAPIServicesPolicy.MarkRequiredGVs(usedGVs)
 
-	existingResources, fullyDeleteApp, err := o.existingResources(app, supportObjs)
+	existingResources, isFullyDeleteApp, err := o.existingResources(app, supportObjs)
 	if err != nil {
 		return err
 	}
@@ -86,15 +91,22 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	clusterChangeSet, clusterChangesGraph, hasNoChanges, isFullyDeleteApp, err :=
-		o.calculateAndPresentChanges(app, existingResources, conf, supportObjs, fullyDeleteApp)
+	clusterChangeSet, clusterChangesGraph, changesFlag, err :=
+		o.calculateAndPresentChanges(existingResources, conf, supportObjs)
 	if err != nil {
 		if o.DiffFlags.UI && clusterChangesGraph != nil {
 			return o.presentDiffUI(clusterChangesGraph)
 		}
 		return err
 	}
-	fullyDeleteApp = isFullyDeleteApp
+
+	// Deciding based on isFullyDeleteFlag flag from resource filter and diff filter
+	if !isFullyDeleteApp || !changesFlag.isFullyDeleteApp {
+		isFullyDeleteApp = false
+		o.ui.PrintLinef("App '%s' (namespace: %s) will not be fully deleted "+
+			"because some resources are excluded by filters",
+			app.Name(), o.AppFlags.NamespaceFlags.Name)
+	}
 
 	if o.DiffFlags.UI {
 		return o.presentDiffUI(clusterChangesGraph)
@@ -102,7 +114,7 @@ func (o *DeleteOptions) Run() error {
 
 	if o.DiffFlags.Run {
 		if o.DiffFlags.ExitStatus {
-			return DeployDiffExitStatus{hasNoChanges}
+			return DeployDiffExitStatus{changesFlag.hasNoChanges}
 		}
 		return nil
 	}
@@ -119,7 +131,7 @@ func (o *DeleteOptions) Run() error {
 		if err != nil {
 			return err
 		}
-		if fullyDeleteApp {
+		if isFullyDeleteApp {
 			return app.Delete()
 		}
 		return nil
@@ -129,7 +141,7 @@ func (o *DeleteOptions) Run() error {
 	}
 
 	if o.ApplyFlags.ExitStatus {
-		return DeployApplyExitStatus{hasNoChanges}
+		return DeployApplyExitStatus{changesFlag.hasNoChanges}
 	}
 	return nil
 }
@@ -155,8 +167,8 @@ func (o *DeleteOptions) existingResources(app ctlapp.App,
 	fullyDeleteApp := true
 	applicableExistingResources := resourceFilter.Apply(existingResources)
 
-	if !resourceFilter.IsEmpty() {
-		fullyDeleteApp = o.IsFullyDeleteApp(app, len(existingResources), len(applicableExistingResources))
+	if len(applicableExistingResources) != len(existingResources) {
+		fullyDeleteApp = false
 	}
 
 	existingResources = applicableExistingResources
@@ -166,10 +178,13 @@ func (o *DeleteOptions) existingResources(app ctlapp.App,
 	return existingResources, fullyDeleteApp, nil
 }
 
-func (o *DeleteOptions) calculateAndPresentChanges(app ctlapp.App, existingResources []ctlres.Resource, conf ctlconf.Conf,
-	supportObjs FactorySupportObjs, isFullyDeleteApp bool) (ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, bool, bool, error) {
+func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Resource, conf ctlconf.Conf,
+	supportObjs FactorySupportObjs) (ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, changesFlag, error) {
 
-	var clusterChangeSet ctlcap.ClusterChangeSet
+	var (
+		clusterChangeSet ctlcap.ClusterChangeSet
+		isFullyDeleteApp bool
+	)
 
 	{ // Figure out changes for X existing resources -> 0 new resources
 		changeFactory := ctldiff.NewChangeFactory(nil, nil)
@@ -177,20 +192,19 @@ func (o *DeleteOptions) calculateAndPresentChanges(app ctlapp.App, existingResou
 
 		changes, err := changeSetFactory.New(existingResources, nil).Calculate()
 		if err != nil {
-			return ctlcap.ClusterChangeSet{}, nil, false, isFullyDeleteApp, err
+			return ctlcap.ClusterChangeSet{}, nil, changesFlag{}, err
 		}
 
 		diffFilter, err := o.DiffFlags.DiffFilter()
 		if err != nil {
-			return ctlcap.ClusterChangeSet{}, nil, false, isFullyDeleteApp, err
+			return ctlcap.ClusterChangeSet{}, nil, changesFlag{}, err
 		}
 
 		appliedChanges := diffFilter.Apply(changes)
 
-		if !diffFilter.IsEmpty() {
-			isFullyDeleteApp = o.IsFullyDeleteApp(app, len(changes), len(appliedChanges))
+		if len(changes) != len(appliedChanges) {
+			isFullyDeleteApp = false
 		}
-		changes = appliedChanges
 
 		{ // Build cluster changes based on diff changes
 			msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
@@ -204,14 +218,14 @@ func (o *DeleteOptions) calculateAndPresentChanges(app ctlapp.App, existingResou
 				changeFactory, changeSetFactory, convergedResFactory, msgsUI)
 
 			clusterChangeSet = ctlcap.NewClusterChangeSet(
-				changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory,
+				appliedChanges, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory,
 				conf.ChangeGroupBindings(), conf.ChangeRuleBindings(), msgsUI, o.logger)
 		}
 	}
 
 	clusterChanges, clusterChangesGraph, err := clusterChangeSet.Calculate()
 	if err != nil {
-		return ctlcap.ClusterChangeSet{}, nil, false, isFullyDeleteApp, err
+		return ctlcap.ClusterChangeSet{}, nil, changesFlag{}, err
 	}
 
 	{ // Present cluster changes in UI
@@ -221,7 +235,7 @@ func (o *DeleteOptions) calculateAndPresentChanges(app ctlapp.App, existingResou
 		changeSetView.Print(o.ui)
 	}
 
-	return clusterChangeSet, clusterChangesGraph, (len(clusterChanges) == 0), isFullyDeleteApp, nil
+	return clusterChangeSet, clusterChangesGraph, changesFlag{len(clusterChanges) == 0, isFullyDeleteApp}, nil
 }
 
 const (
@@ -244,14 +258,4 @@ func (o *DeleteOptions) presentDiffUI(graph *ctldgraph.ChangeGraph) error {
 		DiffDataFunc: func() *ctldgraph.ChangeGraph { return graph },
 	}
 	return ctldiffui.NewServer(opts, o.ui).Run()
-}
-
-func (o *DeleteOptions) IsFullyDeleteApp(app ctlapp.App, existingResourceCount int, applicableExistingResourceCount int) bool {
-	if existingResourceCount != applicableExistingResourceCount {
-		o.ui.PrintLinef("App '%s' (namespace: %s) will not be fully deleted "+
-			"because some resources are excluded by filters",
-			app.Name(), o.AppFlags.NamespaceFlags.Name)
-		return false
-	}
-	return true
 }
