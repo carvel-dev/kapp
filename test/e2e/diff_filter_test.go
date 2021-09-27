@@ -88,7 +88,7 @@ data:
 	defer cleanUp()
 	logger.Section("diff filter by label on new resource", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
-			"--diff-filter", "{\"newResource\": {\"labels\": [\"x=z\"]}}", "--json"},
+			"--diff-filter", `{"newResource": {"labels": ["x=z"]}}`, "--json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + configMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
@@ -111,7 +111,7 @@ data:
 
 	logger.Section("diff filter by kind and namespace on new resource", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
-			"--diff-filter", "{\"newResource\": {\"kinds\": [\"Service\"], \"namespaces\": [\"kapp-test\"]}}", "--json"},
+			"--diff-filter", `{"newResource": {"kinds": ["Service"], "namespaces": ["kapp-test"]}}`, "--json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + configMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
@@ -134,7 +134,7 @@ data:
 
 	logger.Section("diff filter on update operation", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
-			"--diff-filter", "{\"ops\": [\"update\"]}", "--json"},
+			"--diff-filter", `{"ops": ["update"]}`, "--json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + modifiedConfigMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
@@ -157,7 +157,7 @@ data:
 
 	logger.Section("diff filter delete resource with label", func() {
 		out, _ := kapp.RunWithOpts([]string{"delete", "-a", name,
-			"--diff-filter", "{\"existingResource\": {\"labels\": [\"x=z\"]}}", "--json"},
+			"--diff-filter", `{"existingResource": {"labels": ["x=z"]}}`, "--json"},
 			RunOpts{})
 
 		expectedChange := []map[string]string{{
@@ -180,7 +180,7 @@ data:
 
 	logger.Section("filter with or condition on new, existing resource", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
-			"--diff-filter", "{ \"or\": [{\"newResource\": {\"labels\": [\"x=z\"]}},{\"existingResource\": {\"labels\": [\"x!=z\"]}}]}", "--json"},
+			"--diff-filter", `{"or": [{"newResource": {"labels": ["x=z"]}},{"existingResource": {"labels": ["x!=z"]}}]}`, "--json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + configMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
@@ -203,7 +203,7 @@ data:
 
 	logger.Section("filter with and condition on new, existing resource", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
-			"--diff-filter", "{ \"and\": [{\"newResource\": {\"labels\": [\"x=y\"]}},{\"existingResource\": {\"labels\": [\"x=y\"]}}]}", "--json"},
+			"--diff-filter", `{"and": [{"newResource": {"labels": ["x=y"]}},{"existingResource": {"labels": ["x=y"]}}]}`, "--json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(modifiedServiceResourceYaml + configMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
@@ -226,7 +226,7 @@ data:
 
 	logger.Section("filter existing resource on labels", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
-			"--diff-filter", "{ \"not\": {\"existingResource\": {\"labels\": [\"x=y\"]}}}", "--json"},
+			"--diff-filter", `{"not": {"existingResource": {"labels": ["x=y"]}}}`, "--json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + modifiedConfigMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
@@ -249,7 +249,7 @@ data:
 
 	logger.Section("diff filter delete resource with name", func() {
 		out, _ := kapp.RunWithOpts([]string{"delete", "-a", name,
-			"--diff-filter", "{\"existingResource\": {\"names\": [\"redis-primary\", \"redis-config\"]}}", "--json"},
+			"--diff-filter", `{"existingResource": {"names": ["redis-primary", "redis-config"]}}`, "--json"},
 			RunOpts{})
 
 		expectedChange := []map[string]string{{
