@@ -30,7 +30,7 @@ type DeleteOptions struct {
 	ResourceTypesFlags  ResourceTypesFlags
 }
 
-type changesFlag struct {
+type changeFlags struct {
 	hasNoChanges     bool
 	isFullyDeleteApp bool
 }
@@ -179,7 +179,7 @@ func (o *DeleteOptions) existingResources(app ctlapp.App,
 }
 
 func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Resource, conf ctlconf.Conf,
-	supportObjs FactorySupportObjs) (ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, changesFlag, error) {
+	supportObjs FactorySupportObjs) (ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, changeFlags, error) {
 
 	var (
 		clusterChangeSet ctlcap.ClusterChangeSet
@@ -192,12 +192,12 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 
 		changes, err := changeSetFactory.New(existingResources, nil).Calculate()
 		if err != nil {
-			return ctlcap.ClusterChangeSet{}, nil, changesFlag{}, err
+			return ctlcap.ClusterChangeSet{}, nil, changeFlags{}, err
 		}
 
 		diffFilter, err := o.DiffFlags.DiffFilter()
 		if err != nil {
-			return ctlcap.ClusterChangeSet{}, nil, changesFlag{}, err
+			return ctlcap.ClusterChangeSet{}, nil, changeFlags{}, err
 		}
 
 		appliedChanges := diffFilter.Apply(changes)
@@ -225,7 +225,7 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 
 	clusterChanges, clusterChangesGraph, err := clusterChangeSet.Calculate()
 	if err != nil {
-		return ctlcap.ClusterChangeSet{}, nil, changesFlag{}, err
+		return ctlcap.ClusterChangeSet{}, nil, changeFlags{}, err
 	}
 
 	{ // Present cluster changes in UI
@@ -235,7 +235,7 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 		changeSetView.Print(o.ui)
 	}
 
-	return clusterChangeSet, clusterChangesGraph, changesFlag{len(clusterChanges) == 0, isFullyDeleteApp}, nil
+	return clusterChangeSet, clusterChangesGraph, changeFlags{len(clusterChanges) == 0, isFullyDeleteApp}, nil
 }
 
 const (
