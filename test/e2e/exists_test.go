@@ -90,7 +90,7 @@ Succeeded`
 	logger.Section("inspecting app", func() {
 		out, _ := kapp.RunWithOpts([]string{"inspect", "-a", name},
 			RunOpts{StdinReader: strings.NewReader(app)})
-		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
+		out = strings.TrimSpace(replaceTarget(replaceAgeStr(replaceSpaces(replaceTs(out)))))
 
 		expectedOutput := `
 Resources in app 'app'
@@ -105,7 +105,7 @@ Ri: Reconcile information
 
 Succeeded`
 
-		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
+		expectedOutput = strings.TrimSpace(replaceAgeStr(replaceSpaces(expectedOutput)))
 		if expectedOutput != out {
 			t.Fatalf("Expected output to be >>%s<<, but got >>%s<<\n", expectedOutput, out)
 		}

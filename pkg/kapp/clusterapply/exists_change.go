@@ -22,13 +22,13 @@ func (c ExistsChange) ApplyStrategy() (ApplyStrategy, error) {
 
 type WaitStrategy struct {
 	res ctlres.Resource
-	d   ExistsChange
+	e   ExistsChange
 }
 
 func (c WaitStrategy) Op() ClusterChangeApplyStrategyOp { return "" }
 
 func (c WaitStrategy) Apply() error {
-	exists, _ := c.d.identifiedResources.Exists(c.res, ctlres.ExistsOpts{})
+	exists, _ := c.e.identifiedResources.Exists(c.res, ctlres.ExistsOpts{})
 	if exists {
 		return nil
 	}
