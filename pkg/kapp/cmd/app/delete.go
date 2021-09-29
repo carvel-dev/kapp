@@ -100,8 +100,8 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	// Deciding based on flag from resource filter and diff filter
-	if !shouldFullyDeleteApp || changesSummary.SkippedChanges {
+	// Deciding based on flag from diff filter
+	if changesSummary.SkippedChanges {
 		shouldFullyDeleteApp = false
 		o.ui.PrintLinef("App '%s' (namespace: %s) will not be fully deleted "+
 			"because some resources are excluded by filters",
@@ -203,6 +203,7 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 		appliedChanges := diffFilter.Apply(changes)
 
 		if len(changes) != len(appliedChanges) {
+			// setting it to true when changes are filtered by diffFilter
 			skippedChanges = true
 		}
 
