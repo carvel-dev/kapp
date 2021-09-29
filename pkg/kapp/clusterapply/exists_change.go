@@ -28,9 +28,12 @@ type WaitStrategy struct {
 func (c WaitStrategy) Op() ClusterChangeApplyStrategyOp { return "" }
 
 func (c WaitStrategy) Apply() error {
-	exists, _ := c.e.identifiedResources.Exists(c.res, ctlres.ExistsOpts{})
-	if exists {
-		return nil
+	exists, err := c.e.identifiedResources.Exists(c.res, ctlres.ExistsOpts{})
+	if !exists {
+		if err != nil {
+			return err
+		}
+		return errors.New("Placeholder resource doesn't exists")
 	}
-	return errors.New("Placeholder resource doesn't exists")
+	return nil
 }

@@ -82,7 +82,7 @@ func (d *ChangeImpl) AppliedResource() ctlres.Resource  { return d.appliedRes }
 
 func (d *ChangeImpl) Op() ChangeOp {
 	if d.existingRes == nil {
-		if isAdoptedResource(d.newRes) {
+		if hasPlaceholderAnnotation(d.newRes) {
 			return ChangeOpExists
 		}
 		return ChangeOpAdd
@@ -93,7 +93,7 @@ func (d *ChangeImpl) Op() ChangeOp {
 	}
 
 	if d.ConfigurableTextDiff().Full().HasChanges() {
-		if isAdoptedResource(d.newRes) {
+		if hasPlaceholderAnnotation(d.newRes) {
 			return ChangeOpExists
 		}
 		return ChangeOpUpdate
@@ -160,7 +160,7 @@ func (d *ChangeImpl) calculateOpsDiff() OpsDiff {
 	return OpsDiff(patch.Diff{Left: existingObj, Right: newObj}.Calculate())
 }
 
-func isAdoptedResource(res ctlres.Resource) bool {
+func hasPlaceholderAnnotation(res ctlres.Resource) bool {
 	_, hasPlaceholderAnnotation := res.Annotations()[placeHolderAnnKey]
 	return hasPlaceholderAnnotation
 }
