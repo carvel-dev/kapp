@@ -30,7 +30,6 @@ const (
 	ActualChangeOpUpsert ActualChangeOp = "upsert"
 	ActualChangeOpDelete ActualChangeOp = "delete"
 	ActualChangeOpNoop   ActualChangeOp = "noop"
-	ActualChangeOpExists ActualChangeOp = "exists"
 )
 
 type Change struct {
@@ -196,8 +195,6 @@ func (c *Change) ApplicableRules() ([]ChangeRule, error) {
 	case ActualChangeOpDelete:
 		delete = true
 	case ActualChangeOpNoop:
-	case ActualChangeOpExists:
-		upsert = true
 	default:
 		return nil, fmt.Errorf("Unknown change operation: %s", op)
 	}
@@ -234,7 +231,7 @@ func (cs Changes) MatchesRule(rule ChangeRule, exceptChange *Change) ([]*Change,
 			op := change.Change.Op()
 
 			switch op {
-			case ActualChangeOpUpsert, ActualChangeOpExists:
+			case ActualChangeOpUpsert:
 				if rule.TargetAction == ChangeRuleTargetActionUpserting {
 					result = append(result, change)
 				}

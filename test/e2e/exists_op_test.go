@@ -5,12 +5,12 @@ package e2e
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -35,7 +35,7 @@ metadata:
   name: external
   namespace: kapp-ns
   annotations:
-    kapp.k14s.io/placeholder: ""
+    kapp.k14s.io/external-resource: ""
 `
 
 	name := "app"
@@ -43,18 +43,31 @@ metadata:
 	externalResourceNamespace := "kapp-ns"
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
-		deleteExternalResource(clientset, externalResourceName, externalResourceNamespace)
+		err := deleteExternalResource(clientset, externalResourceName, externalResourceNamespace)
+		if err != nil {
+			t.Fatalf("Failed deleting external resource: %s", err)
+		}
 	}
 	cleanUp()
 	defer cleanUp()
 
-	logger.Section("deploying external resource", func() {
-		go deployExternalResource(clientset, externalResourceName, externalResourceNamespace)
-	})
+	errs := make(chan error, 1)
 
-	logger.Section("deploying app with placeholder annotation", func() {
+	go func() {
+		time.Sleep(2 * time.Second)
+		err := deployExternalResource(clientset, externalResourceName, externalResourceNamespace)
+		errs <- err
+	}()
+
+	logger.Section("deploying app with external resource annotation", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{StdinReader: strings.NewReader(app)})
+
+		externalResourceErr := <-errs
+		if externalResourceErr != nil {
+			t.Fatalf("Failed to deploy external resource: %s", externalResourceErr)
+		}
+
 		expectedOutput := `
 Changes
 
@@ -71,7 +84,7 @@ Wait to: 2 reconcile, 0 delete, 0 noop
 <replaced>: ok: reconcile namespace/kapp-ns (v1) cluster
 <replaced>: ---- applying 1 changes [1/2 done] ----
 <replaced>: exists configmap/external (v1) namespace: kapp-ns
-<replaced>:  ^ Retryable error: Placeholder resource doesn't exists
+<replaced>:  ^ Retryable error: External resource doesn't exists
 <replaced>: exists configmap/external (v1) namespace: kapp-ns
 <replaced>: ---- waiting on 1 changes [1/2 done] ----
 <replaced>: ok: reconcile configmap/external (v1) namespace: kapp-ns
@@ -112,26 +125,23 @@ Succeeded`
 	})
 }
 
-func deployExternalResource(clientset *kubernetes.Clientset, name string, namespace string) {
-	time.Sleep(2 * time.Second)
-	metaData := metav1.ObjectMeta{Name: name}
-	data := map[string]string{}
-	data["key1"] = "value1"
+func deployExternalResource(clientset *kubernetes.Clientset, name string, namespace string) error {
 	configMap := v1.ConfigMap{
-		ObjectMeta: metaData,
-		Data:       data,
+		ObjectMeta: metav1.ObjectMeta{Name: name},
+		Data: map[string]string{
+			"key1": "value1",
+		},
 	}
 	_, err := clientset.CoreV1().ConfigMaps(namespace).Create(context.TODO(), &configMap, metav1.CreateOptions{})
-	if err != nil {
-		panic(err)
-	}
+	return err
 }
 
-func deleteExternalResource(clientset *kubernetes.Clientset, name string, namespace string) {
+func deleteExternalResource(clientset *kubernetes.Clientset, name string, namespace string) error {
 	err := clientset.CoreV1().ConfigMaps(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 	if err != nil {
-		if err.Error() != fmt.Sprintf(`configmaps "%s" not found`, name) {
-			panic(err)
+		if errors.IsNotFound(err) {
+			return nil
 		}
 	}
+	return err
 }

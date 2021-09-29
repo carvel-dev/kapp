@@ -20,7 +20,7 @@ const (
 )
 
 const (
-	placeHolderAnnKey = "kapp.k14s.io/placeholder" //value is ignored
+	ExternalResourceAnnKey = "kapp.k14s.io/external-resource" //value is ignored
 )
 
 type Change interface {
@@ -82,7 +82,7 @@ func (d *ChangeImpl) AppliedResource() ctlres.Resource  { return d.appliedRes }
 
 func (d *ChangeImpl) Op() ChangeOp {
 	if d.existingRes == nil {
-		if hasPlaceholderAnnotation(d.newRes) {
+		if hasExternalResourceAnnotation(d.newRes) {
 			return ChangeOpExists
 		}
 		return ChangeOpAdd
@@ -93,7 +93,7 @@ func (d *ChangeImpl) Op() ChangeOp {
 	}
 
 	if d.ConfigurableTextDiff().Full().HasChanges() {
-		if hasPlaceholderAnnotation(d.newRes) {
+		if hasExternalResourceAnnotation(d.newRes) {
 			return ChangeOpExists
 		}
 		return ChangeOpUpdate
@@ -160,7 +160,7 @@ func (d *ChangeImpl) calculateOpsDiff() OpsDiff {
 	return OpsDiff(patch.Diff{Left: existingObj, Right: newObj}.Calculate())
 }
 
-func hasPlaceholderAnnotation(res ctlres.Resource) bool {
-	_, hasPlaceholderAnnotation := res.Annotations()[placeHolderAnnKey]
-	return hasPlaceholderAnnotation
+func hasExternalResourceAnnotation(res ctlres.Resource) bool {
+	_, hasExternalResourceAnnotation := res.Annotations()[ExternalResourceAnnKey]
+	return hasExternalResourceAnnotation
 }

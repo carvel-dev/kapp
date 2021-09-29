@@ -587,16 +587,6 @@ func IsResourceChangeBlockedErr(err error) bool {
 	}
 }
 
-func IsPlaceholderResourceExistenceErr(err error) bool {
-	errMsg := err.Error()
-	switch {
-	case strings.Contains(errMsg, "Placeholder resource doesn't exists"):
-		return true
-	default:
-		return false
-	}
-}
-
 // Retries retryable errors thrown by etcd server.
 // Addresses : https://github.com/vmware-tanzu/carvel-kapp/issues/106
 func (c *ResourcesImpl) isEtcdRetryableError(err error) bool {

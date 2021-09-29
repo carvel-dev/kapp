@@ -175,7 +175,12 @@ func (c *ClusterChange) Apply() (bool, []string, error) {
 
 	err = strategy.Apply()
 	if err != nil {
-		retryable = ctlres.IsResourceChangeBlockedErr(err) || ctlres.IsPlaceholderResourceExistenceErr(err)
+		switch err.(type) {
+		case *ExistsChangeError:
+			retryable = true
+		default:
+			retryable = ctlres.IsResourceChangeBlockedErr(err)
+		}
 	}
 
 	if retryable {
