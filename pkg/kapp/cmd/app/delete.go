@@ -235,7 +235,7 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 		changeSetView.Print(o.ui)
 	}
 
-	return clusterChangeSet, clusterChangesGraph, changesSummary{ HasNoChanges: len(clusterChanges) == 0, SkippedChanges: skippedChanges}, nil
+	return clusterChangeSet, clusterChangesGraph, changesSummary{HasNoChanges: len(clusterChanges) == 0, SkippedChanges: skippedChanges}, nil
 }
 
 const (
