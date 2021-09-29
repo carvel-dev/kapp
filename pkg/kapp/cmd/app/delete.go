@@ -30,9 +30,9 @@ type DeleteOptions struct {
 	ResourceTypesFlags  ResourceTypesFlags
 }
 
-type changeFlags struct {
-	hasNoChanges     bool
-	isFullyDeleteApp bool
+type changesSummary struct {
+	HasNoChanges   bool
+	SkippedChanges bool
 }
 
 func NewDeleteOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeleteOptions {
@@ -81,7 +81,7 @@ func (o *DeleteOptions) Run() error {
 
 	failingAPIServicesPolicy.MarkRequiredGVs(usedGVs)
 
-	existingResources, isFullyDeleteApp, err := o.existingResources(app, supportObjs)
+	existingResources, shouldFullyDeleteApp, err := o.existingResources(app, supportObjs)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	clusterChangeSet, clusterChangesGraph, changesFlag, err :=
+	clusterChangeSet, clusterChangesGraph, changesSummary, err :=
 		o.calculateAndPresentChanges(existingResources, conf, supportObjs)
 	if err != nil {
 		if o.DiffFlags.UI && clusterChangesGraph != nil {
@@ -100,9 +100,9 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	// Deciding based on isFullyDeleteFlag flag from resource filter and diff filter
-	if !isFullyDeleteApp || !changesFlag.isFullyDeleteApp {
-		isFullyDeleteApp = false
+	// Deciding based on flag from resource filter and diff filter
+	if !shouldFullyDeleteApp || changesSummary.SkippedChanges {
+		shouldFullyDeleteApp = false
 		o.ui.PrintLinef("App '%s' (namespace: %s) will not be fully deleted "+
 			"because some resources are excluded by filters",
 			app.Name(), o.AppFlags.NamespaceFlags.Name)
@@ -114,7 +114,7 @@ func (o *DeleteOptions) Run() error {
 
 	if o.DiffFlags.Run {
 		if o.DiffFlags.ExitStatus {
-			return DeployDiffExitStatus{changesFlag.hasNoChanges}
+			return DeployDiffExitStatus{changesSummary.HasNoChanges}
 		}
 		return nil
 	}
@@ -131,7 +131,7 @@ func (o *DeleteOptions) Run() error {
 		if err != nil {
 			return err
 		}
-		if isFullyDeleteApp {
+		if shouldFullyDeleteApp {
 			return app.Delete()
 		}
 		return nil
@@ -141,7 +141,7 @@ func (o *DeleteOptions) Run() error {
 	}
 
 	if o.ApplyFlags.ExitStatus {
-		return DeployApplyExitStatus{changesFlag.hasNoChanges}
+		return DeployApplyExitStatus{changesSummary.HasNoChanges}
 	}
 	return nil
 }
@@ -179,11 +179,11 @@ func (o *DeleteOptions) existingResources(app ctlapp.App,
 }
 
 func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Resource, conf ctlconf.Conf,
-	supportObjs FactorySupportObjs) (ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, changeFlags, error) {
+	supportObjs FactorySupportObjs) (ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, changesSummary, error) {
 
 	var (
 		clusterChangeSet ctlcap.ClusterChangeSet
-		isFullyDeleteApp bool
+		skippedChanges   bool
 	)
 
 	{ // Figure out changes for X existing resources -> 0 new resources
@@ -192,18 +192,18 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 
 		changes, err := changeSetFactory.New(existingResources, nil).Calculate()
 		if err != nil {
-			return ctlcap.ClusterChangeSet{}, nil, changeFlags{}, err
+			return ctlcap.ClusterChangeSet{}, nil, changesSummary{}, err
 		}
 
 		diffFilter, err := o.DiffFlags.DiffFilter()
 		if err != nil {
-			return ctlcap.ClusterChangeSet{}, nil, changeFlags{}, err
+			return ctlcap.ClusterChangeSet{}, nil, changesSummary{}, err
 		}
 
 		appliedChanges := diffFilter.Apply(changes)
 
 		if len(changes) != len(appliedChanges) {
-			isFullyDeleteApp = false
+			skippedChanges = true
 		}
 
 		{ // Build cluster changes based on diff changes
@@ -225,7 +225,7 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 
 	clusterChanges, clusterChangesGraph, err := clusterChangeSet.Calculate()
 	if err != nil {
-		return ctlcap.ClusterChangeSet{}, nil, changeFlags{}, err
+		return ctlcap.ClusterChangeSet{}, nil, changesSummary{}, err
 	}
 
 	{ // Present cluster changes in UI
@@ -235,7 +235,7 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 		changeSetView.Print(o.ui)
 	}
 
-	return clusterChangeSet, clusterChangesGraph, changeFlags{len(clusterChanges) == 0, isFullyDeleteApp}, nil
+	return clusterChangeSet, clusterChangesGraph, changesSummary{ HasNoChanges: len(clusterChanges) == 0, SkippedChanges: skippedChanges}, nil
 }
 
 const (
