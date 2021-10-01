@@ -100,9 +100,11 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	// Deciding based on flag from diff filter
 	if changesSummary.SkippedChanges {
 		shouldFullyDeleteApp = false
+	}
+
+	if !shouldFullyDeleteApp {
 		o.ui.PrintLinef("App '%s' (namespace: %s) will not be fully deleted "+
 			"because some resources are excluded by filters",
 			app.Name(), o.AppFlags.NamespaceFlags.Name)
