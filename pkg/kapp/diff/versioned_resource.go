@@ -91,6 +91,34 @@ func (d VersionedResource) updateAffected(rule ctlconf.TemplateRule, rs []ctlres
 		}
 	}
 
+	for _, res := range rs {
+		for k, v := range res.Annotations() {
+			if k == explicitReferenceKey || strings.HasPrefix(k, explicitReferenceKeyPrefix) {
+				explicitRef := NewExplicitVersionedRef(k, v)
+				objectRef, err := explicitRef.AsObjectRef()
+				if err != nil {
+					return fmt.Errorf("Parsing versioned explicit ref on resource '%s': %s", res.Description(), err)
+				}
+
+				// Passing empty TemplateAffectedObjRef as explicit references do not have a special name key
+				err = d.buildObjRefReplacementFunc(ctlconf.TemplateAffectedObjRef{})(objectRef)
+				if err != nil {
+					return fmt.Errorf("Processing object ref for explicit ref on resource '%s': %s", res.Description(), err)
+				}
+
+				annotationMod, err := explicitRef.AnnotationMod(objectRef)
+				if err != nil {
+					return fmt.Errorf("Preparing annotation mod for versioned explicit ref on resource '%s': %s", res.Description(), err)
+				}
+
+				err = annotationMod.Apply(res)
+				if err != nil {
+					return fmt.Errorf("Updating versioned explicit ref on resource '%s': %s", res.Description(), err)
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
