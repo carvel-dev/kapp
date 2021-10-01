@@ -329,6 +329,13 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 			return clusterChangeSet, nil, false, "", err
 		}
 
+		diffFilter, err := o.DiffFlags.DiffFilter()
+		if err != nil {
+			return clusterChangeSet, nil, false, "", err
+		}
+
+		changes = diffFilter.Apply(changes)
+
 		msgsUI := cmdcore.NewDedupingMessagesUI(cmdcore.NewPlainMessagesUI(o.ui))
 
 		convergedResFactory := ctlcap.NewConvergedResourceFactory(conf.WaitRules(), ctlcap.ConvergedResourceFactoryOpts{

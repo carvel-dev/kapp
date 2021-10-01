@@ -12,6 +12,7 @@ import (
 type DiffFlags struct {
 	ctlcap.ChangeSetViewOpts
 	ctldiff.ChangeSetOpts
+	ctldiff.ChangeSetFilter
 
 	Run        bool
 	ExitStatus bool
@@ -35,4 +36,6 @@ func (s *DiffFlags) SetWithPrefix(prefix string, cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&s.Mask, prefix+"mask", true, "Apply masking rules")
 
 	cmd.Flags().BoolVar(&s.AgainstLastApplied, prefix+"against-last-applied", true, "Show changes against last applied copy when possible")
+
+	cmd.Flags().StringVar(&s.Filter, prefix+"filter", "", `Set changes filter (example: {"and":[{"ops":["update"]},{"existingResource":{"kinds":["Deployment"]}]})`)
 }
