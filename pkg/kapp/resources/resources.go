@@ -524,8 +524,10 @@ func (c *ResourcesImpl) assumedAllowedNamespaces() ([]string, error) {
 				return c.fallbackAllowedNamespaces, nil
 			}
 		}
-		return nil, fmt.Errorf("fetching all namespaces: %s", err)
+		return nil, fmt.Errorf("Fetching all namespaces: %s", err)
 	}
+
+	c.logger.Info("Falled back to checking each namespace separately (much slower)")
 
 	var nsNames []string
 
