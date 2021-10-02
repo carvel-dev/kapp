@@ -20,7 +20,7 @@ const (
 )
 
 const (
-	ExternalResourceAnnKey = "kapp.k14s.io/external-resource" //value is ignored
+	ExternalResourceAnnKey = "kapp.k14s.io/external-resource" // Value is ignored
 )
 
 type Change interface {
@@ -81,10 +81,13 @@ func (d *ChangeImpl) ExistingResource() ctlres.Resource { return d.existingRes }
 func (d *ChangeImpl) AppliedResource() ctlres.Resource  { return d.appliedRes }
 
 func (d *ChangeImpl) Op() ChangeOp {
-	if d.existingRes == nil {
+	if d.newRes != nil {
 		if hasExternalResourceAnnotation(d.newRes) {
 			return ChangeOpExists
 		}
+	}
+
+	if d.existingRes == nil {
 		return ChangeOpAdd
 	}
 
@@ -93,9 +96,6 @@ func (d *ChangeImpl) Op() ChangeOp {
 	}
 
 	if d.ConfigurableTextDiff().Full().HasChanges() {
-		if hasExternalResourceAnnotation(d.newRes) {
-			return ChangeOpExists
-		}
 		return ChangeOpUpdate
 	}
 

@@ -4,25 +4,17 @@
 package e2e
 
 import (
-	"context"
 	"strings"
 	"testing"
 	"time"
-
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
 func TestExistsOpWithPlaceholderAnn(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
-	clientset, err := getKubernetesClientset()
-	if err != nil {
-		t.Fatalf("Error creating client, %v", err)
-	}
+	kubectl := Kubectl{t, env.Namespace, logger}
+
 	app := `
 apiVersion: v1
 kind: Namespace
@@ -41,32 +33,22 @@ metadata:
 	name := "app"
 	externalResourceName := "external"
 	externalResourceNamespace := "kapp-ns"
+	externalResourceKind := "configmap"
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
-		err := deleteExternalResource(clientset, externalResourceName, externalResourceNamespace)
-		if err != nil {
-			t.Fatalf("Failed deleting external resource: %s", err)
-		}
+		RemoveClusterResource(t, externalResourceKind, externalResourceName, externalResourceNamespace, kubectl)
 	}
 	cleanUp()
 	defer cleanUp()
 
-	errs := make(chan error, 1)
-
 	go func() {
 		time.Sleep(2 * time.Second)
-		err := deployExternalResource(clientset, externalResourceName, externalResourceNamespace)
-		errs <- err
+		NewClusterResource(t, externalResourceKind, externalResourceName, externalResourceNamespace, kubectl)
 	}()
 
 	logger.Section("deploying app with external resource annotation", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{StdinReader: strings.NewReader(app)})
-
-		externalResourceErr := <-errs
-		if externalResourceErr != nil {
-			t.Fatalf("Failed to deploy external resource: %s", externalResourceErr)
-		}
 
 		expectedOutput := `
 Changes
@@ -123,25 +105,4 @@ Succeeded`
 			t.Fatalf("Expected output to be >>%s<<, but got >>%s<<\n", expectedOutput, out)
 		}
 	})
-}
-
-func deployExternalResource(clientset *kubernetes.Clientset, name string, namespace string) error {
-	configMap := v1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{Name: name},
-		Data: map[string]string{
-			"key1": "value1",
-		},
-	}
-	_, err := clientset.CoreV1().ConfigMaps(namespace).Create(context.TODO(), &configMap, metav1.CreateOptions{})
-	return err
-}
-
-func deleteExternalResource(clientset *kubernetes.Clientset, name string, namespace string) error {
-	err := clientset.CoreV1().ConfigMaps(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil
-		}
-	}
-	return err
 }

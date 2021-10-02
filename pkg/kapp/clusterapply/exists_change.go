@@ -33,13 +33,13 @@ func (e ExistsStrategy) Apply() error {
 		if err != nil {
 			return err
 		}
-		return &ExistsChangeError{}
+		return ExistsChangeError{}
 	}
 	return nil
 }
 
 type ExistsChangeError struct{}
 
-func (e *ExistsChangeError) Error() string {
+func (e ExistsChangeError) Error() string {
 	return fmt.Sprint("External resource doesn't exists")
 }
