@@ -81,8 +81,6 @@ func (v *ChangesView) Print(ui ui.UI) {
 		table.FillFirstColumn = true
 	}
 
-	v.countsView = NewChangesCountsView()
-
 	for _, view := range v.ChangeViews {
 		resource := view.Resource()
 		v.countsView.Add(view.ApplyOp(), view.WaitOp())
