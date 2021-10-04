@@ -38,7 +38,7 @@ func (v *ChangeSetView) Print(ui ui.UI) {
 		}
 	}
 
-	v.changesView = &ChangesView{ChangeViews: v.changeViews, Sort: true}
+	v.changesView = &ChangesView{ChangeViews: v.changeViews, Sort: true, countsView: NewChangesCountsView()}
 
 	if v.opts.Summary {
 		v.changesView.Print(ui)
