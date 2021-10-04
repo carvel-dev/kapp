@@ -11,11 +11,16 @@ import (
 type ResourceTypesFlags struct {
 	IgnoreFailingAPIServices   bool
 	CanIgnoreFailingAPIService func(schema.GroupVersion) bool
+
+	ScopeToFallbackAllowedNamespaces bool
 }
 
 func (s *ResourceTypesFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&s.IgnoreFailingAPIServices, "dangerous-ignore-failing-api-services",
 		false, "Allow to ignore failing APIServices")
+
+	cmd.Flags().BoolVar(&s.ScopeToFallbackAllowedNamespaces, "dangerous-scope-to-fallback-allowed-namespaces",
+		false, "Scope resource searching to fallback allowed namespaces")
 }
 
 func (s *ResourceTypesFlags) FailingAPIServicePolicy() *FailingAPIServicesPolicy {

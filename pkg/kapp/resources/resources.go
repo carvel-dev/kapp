@@ -53,11 +53,11 @@ type ExistsOpts struct {
 }
 
 type ResourcesImpl struct {
-	resourceTypes             ResourceTypes
-	coreClient                kubernetes.Interface
-	dynamicClient             dynamic.Interface
-	mutedDynamicClient        dynamic.Interface
-	fallbackAllowedNamespaces []string
+	resourceTypes      ResourceTypes
+	coreClient         kubernetes.Interface
+	dynamicClient      dynamic.Interface
+	mutedDynamicClient dynamic.Interface
+	opts               ResourcesImplOpts
 
 	assumedAllowedNamespacesMemoLock sync.Mutex
 	assumedAllowedNamespacesMemo     *[]string
@@ -65,17 +65,22 @@ type ResourcesImpl struct {
 	logger logger.Logger
 }
 
+type ResourcesImplOpts struct {
+	FallbackAllowedNamespaces        []string
+	ScopeToFallbackAllowedNamespaces bool
+}
+
 func NewResourcesImpl(resourceTypes ResourceTypes, coreClient kubernetes.Interface,
 	dynamicClient dynamic.Interface, mutedDynamicClient dynamic.Interface,
-	fallbackAllowedNamespaces []string, logger logger.Logger) *ResourcesImpl {
+	opts ResourcesImplOpts, logger logger.Logger) *ResourcesImpl {
 
 	return &ResourcesImpl{
-		resourceTypes:             resourceTypes,
-		coreClient:                coreClient,
-		dynamicClient:             dynamicClient,
-		mutedDynamicClient:        mutedDynamicClient,
-		fallbackAllowedNamespaces: fallbackAllowedNamespaces,
-		logger:                    logger.NewPrefixed("Resources"),
+		resourceTypes:      resourceTypes,
+		coreClient:         coreClient,
+		dynamicClient:      dynamicClient,
+		mutedDynamicClient: mutedDynamicClient,
+		opts:               opts,
+		logger:             logger.NewPrefixed("Resources"),
 	}
 }
 
@@ -91,8 +96,17 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 		opts.ListOpts = &metav1.ListOptions{}
 	}
 
+	nsScope := "" // all namespaces by default
+	nsScopeLimited := c.opts.ScopeToFallbackAllowedNamespaces && len(c.opts.FallbackAllowedNamespaces) == 1
+
+	// Eagerly use single fallback namespace to avoid making all-namespaces request
+	// just to see it fail, and fallback to making namespace-scoped request
+	if nsScopeLimited {
+		nsScope = c.opts.FallbackAllowedNamespaces[0]
+		c.logger.Info("Scoping listings to single namespace: %s", nsScope)
+	}
+
 	unstructItemsCh := make(chan unstructItems, len(resTypes))
-	warnErrsCh := make(chan error, len(resTypes))
 	fatalErrsCh := make(chan error, len(resTypes))
 	var itemsDone sync.WaitGroup
 
@@ -112,7 +126,7 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 
 			err = util.Retry2(time.Second, 5*time.Second, c.isServerRescaleErr, func() error {
 				if resType.Namespaced() {
-					list, err = client.Namespace("").List(context.TODO(), *opts.ListOpts)
+					list, err = client.Namespace(nsScope).List(context.TODO(), *opts.ListOpts)
 				} else {
 					list, err = client.List(context.TODO(), *opts.ListOpts)
 				}
@@ -123,15 +137,19 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 				if !errors.IsForbidden(err) {
 					// Ignore certain GVs due to failing API backing
 					if c.resourceTypes.CanIgnoreFailingGroupVersion(resType.GroupVersion()) {
-						c.logger.Info("Ignoring group version: %#v", resType.GroupVersionResource)
+						c.logger.Info("Ignoring group version: %#v: %s", resType.GroupVersionResource, err)
 					} else {
 						fatalErrsCh <- fmt.Errorf("Listing %#v, namespaced: %t: %s", resType.GroupVersionResource, resType.Namespaced(), err)
 					}
 					return
 				}
+				// At this point err==Forbidden...
 
-				if !resType.Namespaced() {
-					warnErrsCh <- fmt.Errorf("Listing %#v, namespaced: %t: %s", resType.GroupVersionResource, resType.Namespaced(), err)
+				// In case ns scope is limited already, we will not gain anything
+				// by trying to run namespace scoped lists for allowed namespaced
+				// (ie since it's would be same request that just failed)
+				if !resType.Namespaced() || nsScopeLimited {
+					c.logger.Debug("Skipping forbidden group version: %#v", resType.GroupVersionResource)
 					return
 				}
 
@@ -154,7 +172,6 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 
 	itemsDone.Wait()
 	close(unstructItemsCh)
-	close(warnErrsCh)
 	close(fatalErrsCh)
 
 	for err := range fatalErrsCh {
@@ -197,6 +214,8 @@ func (c *ResourcesImpl) allForNamespaces(client dynamic.NamespaceableResourceInt
 					fatalErrsCh <- err
 					return
 				}
+				// Ignore forbidden errors
+				// TODO somehow surface them
 			} else {
 				unstructItemsCh <- resList
 			}
@@ -520,12 +539,14 @@ func (c *ResourcesImpl) assumedAllowedNamespaces() ([]string, error) {
 	nsList, err := c.coreClient.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		if errors.IsForbidden(err) {
-			if len(c.fallbackAllowedNamespaces) > 0 {
-				return c.fallbackAllowedNamespaces, nil
+			if len(c.opts.FallbackAllowedNamespaces) > 0 {
+				return c.opts.FallbackAllowedNamespaces, nil
 			}
 		}
-		return nil, fmt.Errorf("fetching all namespaces: %s", err)
+		return nil, fmt.Errorf("Fetching all namespaces: %s", err)
 	}
+
+	c.logger.Info("Falling back to checking each namespace separately (much slower)")
 
 	var nsNames []string
 
