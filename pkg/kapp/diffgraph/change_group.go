@@ -43,7 +43,7 @@ func (r ChangeGroup) Validate() error {
 	}
 	errStrs := k8sval.IsQualifiedName(r.Name)
 	if len(errStrs) > 0 {
-		return fmt.Errorf("Expected name to be a qualified name: %s", strings.Join(errStrs, "; "))
+		return fmt.Errorf("Expected change group name %q to be a qualified name: %s", r.Name, strings.Join(errStrs, "; "))
 	}
 	return nil
 }
