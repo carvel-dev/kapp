@@ -13,6 +13,8 @@ type ResourceTypesFlags struct {
 	CanIgnoreFailingAPIService func(schema.GroupVersion) bool
 
 	ScopeToFallbackAllowedNamespaces bool
+
+	DryRun bool
 }
 
 func (s *ResourceTypesFlags) Set(cmd *cobra.Command) {

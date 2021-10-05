@@ -27,6 +27,7 @@ const (
 
 type AddOrUpdateChangeOpts struct {
 	DefaultUpdateStrategy string
+	DryRun                bool
 }
 
 type AddOrUpdateChange struct {
@@ -91,6 +92,10 @@ func (c AddOrUpdateChange) ApplyStrategy() (ApplyStrategy, error) {
 }
 
 func (c AddOrUpdateChange) replace() error {
+	if c.opts.DryRun {
+		return nil
+	}
+
 	// TODO do we have to wait for delete to finish?
 	err := c.identifiedResources.Delete(c.change.ExistingResource())
 	if err != nil {
@@ -119,6 +124,9 @@ func (c AddOrUpdateChange) replace() error {
 
 func (c AddOrUpdateChange) tryToResolveUpdateConflict(
 	origErr error, updateFallbackFunc func(error) error) error {
+	if c.opts.DryRun {
+		return nil
+	}
 
 	errMsgPrefix := "Failed to update due to resource conflict "
 
@@ -161,6 +169,10 @@ func (c AddOrUpdateChange) tryToResolveUpdateConflict(
 }
 
 func (c AddOrUpdateChange) tryToUpdateAfterCreateConflict() error {
+	if c.opts.DryRun {
+		return nil
+	}
+
 	var lastUpdateErr error
 
 	for i := 0; i < 10; i++ {
@@ -206,7 +218,7 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 	// It may not be benefitial to record last applied conf
 	// onto resource. This could be useful for resources that
 	// are very large, hence go over annotation value max length.
-	if !savedResWithHistory.AllowsRecordingLastApplied() {
+	if c.opts.DryRun || !savedResWithHistory.AllowsRecordingLastApplied() {
 		return nil
 	}
 

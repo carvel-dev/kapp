@@ -44,6 +44,7 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 	resourcesImplOpts := ctlres.ResourcesImplOpts{
 		FallbackAllowedNamespaces:        []string{nsFlags.Name},
 		ScopeToFallbackAllowedNamespaces: resTypesFlags.ScopeToFallbackAllowedNamespaces,
+		DryRun:                           resTypesFlags.DryRun,
 	}
 
 	resources := ctlres.NewResourcesImpl(

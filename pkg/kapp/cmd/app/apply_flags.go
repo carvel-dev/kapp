@@ -49,6 +49,7 @@ func (s *ApplyFlags) SetWithDefaults(prefix string, defaults ApplyFlags, cmd *co
 
 	cmd.Flags().StringVar(&s.AddOrUpdateChangeOpts.DefaultUpdateStrategy, prefix+"apply-default-update-strategy",
 		defaults.AddOrUpdateChangeOpts.DefaultUpdateStrategy, "Change default update strategy")
+	cmd.Flags().BoolVar(&s.AddOrUpdateChangeOpts.DryRun, prefix+"dry-run", false, "Execute a server side dry run without persisting changes on the cluster")
 
 	cmd.Flags().BoolVar(&s.Wait, prefix+"wait", defaults.Wait, "Set to wait for changes to be applied")
 	cmd.Flags().BoolVar(&s.WaitIgnored, prefix+"wait-ignored", defaults.WaitIgnored, "Set to wait for ignored changes to be applied")

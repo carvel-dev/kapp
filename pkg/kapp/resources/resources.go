@@ -68,6 +68,8 @@ type ResourcesImpl struct {
 type ResourcesImplOpts struct {
 	FallbackAllowedNamespaces        []string
 	ScopeToFallbackAllowedNamespaces bool
+
+	DryRun bool
 }
 
 func NewResourcesImpl(resourceTypes ResourceTypes, coreClient kubernetes.Interface,
@@ -255,8 +257,13 @@ func (c *ResourcesImpl) Create(resource Resource) (Resource, error) {
 
 	var createdUn *unstructured.Unstructured
 
+	createOpts := metav1.CreateOptions{}
+	if c.opts.DryRun {
+		createOpts.DryRun = []string{metav1.DryRunAll}
+	}
+
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
-		createdUn, err = resClient.Create(context.TODO(), resource.unstructuredPtr(), metav1.CreateOptions{})
+		createdUn, err = resClient.Create(context.TODO(), resource.unstructuredPtr(), createOpts)
 		return err
 	})
 	if err != nil {
@@ -282,8 +289,13 @@ func (c *ResourcesImpl) Update(resource Resource) (Resource, error) {
 
 	var updatedUn *unstructured.Unstructured
 
+	updateOpts := metav1.UpdateOptions{}
+	if c.opts.DryRun {
+		updateOpts.DryRun = []string{metav1.DryRunAll}
+	}
+
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
-		updatedUn, err = resClient.Update(context.TODO(), resource.unstructuredPtr(), metav1.UpdateOptions{})
+		updatedUn, err = resClient.Update(context.TODO(), resource.unstructuredPtr(), updateOpts)
 		return err
 	})
 	if err != nil {
@@ -306,8 +318,13 @@ func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data
 
 	var patchedUn *unstructured.Unstructured
 
+	patchOpts := metav1.PatchOptions{}
+	if c.opts.DryRun {
+		patchOpts.DryRun = []string{metav1.DryRunAll}
+	}
+
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
-		patchedUn, err = resClient.Patch(context.TODO(), resource.Name(), patchType, data, metav1.PatchOptions{})
+		patchedUn, err = resClient.Patch(context.TODO(), resource.Name(), patchType, data, patchOpts)
 		return err
 	})
 	if err != nil {
@@ -338,6 +355,10 @@ func (c *ResourcesImpl) Delete(resource Resource) error {
 		// https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/#setting-the-cascading-deletion-policy
 		delPol := metav1.DeletePropagationBackground
 		delOpts := metav1.DeleteOptions{PropagationPolicy: &delPol}
+
+		if c.opts.DryRun {
+			delOpts.DryRun = []string{metav1.DryRunAll}
+		}
 
 		// Some resources may not have UID (example: PodMetrics.metrics.k8s.io)
 		resUID := types.UID(resource.UID())

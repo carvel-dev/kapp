@@ -100,7 +100,7 @@ func (c *ClusterChange) ApplyOp() ClusterChangeApplyOp {
 }
 
 func (c *ClusterChange) WaitOp() ClusterChangeWaitOp {
-	if !c.opts.Wait {
+	if !c.opts.Wait || c.opts.DryRun {
 		return ClusterChangeWaitOpNoop
 	}
 

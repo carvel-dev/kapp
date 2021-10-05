@@ -82,7 +82,10 @@ func (o *DeployOptions) Run() error {
 		}
 	}
 
-	supportObjs, err := cmdapp.FactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger)
+	resTypesFlags := cmdapp.ResourceTypesFlags{
+		DryRun: o.AppFlags.ApplyFlags.AddOrUpdateChangeOpts.DryRun,
+	}
+	supportObjs, err := cmdapp.FactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, resTypesFlags, o.logger)
 	if err != nil {
 		return err
 	}
