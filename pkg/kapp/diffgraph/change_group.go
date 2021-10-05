@@ -41,9 +41,21 @@ func (r ChangeGroup) Validate() error {
 	if len(r.Name) == 0 {
 		return fmt.Errorf("Expected non-empty group name")
 	}
-	errStrs := k8sval.IsQualifiedName(r.Name)
+	errStrs := r.HasQualifiedName()
 	if len(errStrs) > 0 {
 		return fmt.Errorf("Expected change group name %q to be a qualified name: %s", r.Name, strings.Join(errStrs, "; "))
 	}
 	return nil
+}
+
+func (r ChangeGroup) HasQualifiedName() []string {
+	errStrs := k8sval.IsQualifiedName(r.Name)
+	var updatedErrStrs []string
+	for _, err := range errStrs {
+		// Allow change group names to have more characters than the default maxLength
+		if !strings.Contains(err, k8sval.MaxLenError(k8sval.DNS1035LabelMaxLength)) {
+			updatedErrStrs = append(updatedErrStrs, err)
+		}
+	}
+	return updatedErrStrs
 }
