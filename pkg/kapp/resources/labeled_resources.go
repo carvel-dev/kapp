@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/k14s/kapp/pkg/kapp/logger"
+	"github.com/k14s/kapp/pkg/kapp/util"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -84,7 +85,10 @@ func (a *LabeledResources) All() ([]Resource, error) {
 }
 
 type AllAndMatchingOpts struct {
-	SkipResourceOwnershipCheck     bool
+	ExistingNonLabeledResourcesCheck            bool
+	ExistingNonLabeledResourcesCheckConcurrency int
+	SkipResourceOwnershipCheck                  bool
+
 	DisallowedResourcesByLabelKeys []string
 	LabelErrorResolutionFunc       func(string, string) string
 }
@@ -101,9 +105,15 @@ func (a *LabeledResources) AllAndMatching(newResources []Resource, opts AllAndMa
 		return nil, err
 	}
 
-	nonLabeledResources, err := a.findNonLabeledResources(resources, newResources)
-	if err != nil {
-		return nil, err
+	var nonLabeledResources []Resource
+
+	if opts.ExistingNonLabeledResourcesCheck {
+		var err error
+		nonLabeledResources, err = a.findNonLabeledResources(
+			resources, newResources, opts.ExistingNonLabeledResourcesCheckConcurrency)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if !opts.SkipResourceOwnershipCheck && len(nonLabeledResources) > 0 {
@@ -182,7 +192,7 @@ func (a *LabeledResources) checkDisallowedLabels(resources []Resource, disallowe
 	return nil
 }
 
-func (a *LabeledResources) findNonLabeledResources(labeledResources, newResources []Resource) ([]Resource, error) {
+func (a *LabeledResources) findNonLabeledResources(labeledResources, newResources []Resource, concurrency int) ([]Resource, error) {
 	defer a.logger.DebugFunc("findNonLabeledResources").Finish()
 
 	var foundResources []Resource
@@ -193,6 +203,8 @@ func (a *LabeledResources) findNonLabeledResources(labeledResources, newResource
 	}
 
 	var wg sync.WaitGroup
+	throttle := util.NewThrottle(concurrency)
+
 	errCh := make(chan error, len(newResources))
 	resCh := make(chan Resource, len(newResources))
 
@@ -202,6 +214,9 @@ func (a *LabeledResources) findNonLabeledResources(labeledResources, newResource
 		if _, found := rsMap[NewUniqueResourceKey(res).String()]; !found {
 			wg.Add(1)
 			go func() {
+				throttle.Take()
+				defer throttle.Done()
+
 				defer func() { wg.Done() }()
 
 				exists, err := a.identifiedResources.Exists(res, ExistsOpts{})
