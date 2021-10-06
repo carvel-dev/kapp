@@ -85,7 +85,7 @@ metadata:
 `)
 
 	if output != expectedOutput {
-		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", output, expectedOutput)
+		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
 	}
 }
 
@@ -166,7 +166,7 @@ metadata:
 `)
 
 	if output != expectedOutput {
-		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", output, expectedOutput)
+		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
 	}
 }
 
@@ -208,7 +208,7 @@ metadata:
 `)
 
 	if output != expectedOutput {
-		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", output, expectedOutput)
+		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
 	}
 }
 
@@ -252,7 +252,7 @@ metadata:
 `)
 
 	if output != expectedOutput {
-		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", output, expectedOutput)
+		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
 	}
 }
 
@@ -329,7 +329,7 @@ metadata:
 `)
 
 	if output != expectedOutput {
-		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", output, expectedOutput)
+		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
 	}
 }
 
