@@ -286,7 +286,10 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 	}
 
 	matchingOpts := ctlres.AllAndMatchingOpts{
-		SkipResourceOwnershipCheck: o.DeployFlags.OverrideOwnershipOfExistingResources,
+		ExistingNonLabeledResourcesCheck:            o.DeployFlags.ExistingNonLabeledResourcesCheck,
+		ExistingNonLabeledResourcesCheckConcurrency: o.DeployFlags.ExistingNonLabeledResourcesCheckConcurrency,
+		SkipResourceOwnershipCheck:                  o.DeployFlags.OverrideOwnershipOfExistingResources,
+
 		// Prevent accidently overriding kapp state records
 		DisallowedResourcesByLabelKeys: []string{ctlapp.KappIsAppLabelKey},
 		LabelErrorResolutionFunc:       labelErrorResolutionFunc,

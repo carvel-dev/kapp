@@ -15,7 +15,9 @@ type DeployFlags struct {
 	Patch      bool
 	AllowEmpty bool
 
-	OverrideOwnershipOfExistingResources bool
+	ExistingNonLabeledResourcesCheck            bool
+	ExistingNonLabeledResourcesCheckConcurrency int
+	OverrideOwnershipOfExistingResources        bool
 
 	AppChangesMaxToKeep int
 
@@ -35,6 +37,10 @@ func (s *DeployFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&s.Patch, "patch", "p", false, "Add or update provided resources")
 	cmd.Flags().BoolVar(&s.AllowEmpty, "dangerous-allow-empty-list-of-resources", false, "Allow to apply empty set of resources (same as running kapp delete)")
 
+	cmd.Flags().BoolVar(&s.ExistingNonLabeledResourcesCheck, "existing-non-labeled-resources-check",
+		true, "Find and consider existing non-labeled resources in diff")
+	cmd.Flags().IntVar(&s.ExistingNonLabeledResourcesCheckConcurrency, "existing-non-labeled-resources-check-concurrency",
+		100, "Concurrency to check for existing non-labeled resources")
 	cmd.Flags().BoolVar(&s.OverrideOwnershipOfExistingResources, "dangerous-override-ownership-of-existing-resources",
 		false, "Steal existing resources from another app")
 
