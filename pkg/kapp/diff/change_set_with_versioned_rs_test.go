@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/stretchr/testify/require"
 )
 
 func TestChangeSet_ExistingVersioned_NewNonVersioned_Resource(t *testing.T) {
@@ -30,21 +31,13 @@ metadata:
 		ChangeSetOpts{}, ChangeFactory{})
 
 	changes, err := changeSetWithVerRes.Calculate()
-	if err != nil {
-		t.Fatalf("Expected non-error")
-	}
+	require.NoError(t, err)
 
-	if len(changes) != 2 {
-		t.Fatalf("Expected length of changes list is 2")
-	}
+	require.Len(t, changes, 2)
 
-	if changes[0].Op() != ChangeOpDelete {
-		t.Fatalf("Expected to get deleted: actual >>>%s<<< vs expected >>>%s<<<", changes[0].Op(), ChangeOpDelete)
-	}
+	require.Equal(t, ChangeOpDelete, changes[0].Op(), "Expected to get deleted")
 
-	if changes[1].Op() != ChangeOpAdd {
-		t.Fatalf("Expected to get added: actual >>>%s<<< vs expected >>>%s<<<", changes[1].Op(), ChangeOpAdd)
-	}
+	require.Equal(t, ChangeOpAdd, changes[1].Op(), "Expected to get added")
 
 	expectedDiff1 := `  0,  0 - apiVersion: v1
   1,  0 - kind: Secret
@@ -86,21 +79,13 @@ metadata:
 		ChangeSetOpts{}, ChangeFactory{})
 
 	changes, err := changeSetWithVerRes.Calculate()
-	if err != nil {
-		t.Fatalf("Expected non-error")
-	}
+	require.NoError(t, err)
 
-	if len(changes) != 2 {
-		t.Fatalf("Expected length of changes list is 2")
-	}
+	require.Len(t, changes, 2)
 
-	if changes[0].Op() != ChangeOpAdd {
-		t.Fatalf("Expected to get added: actual >>>%s<<< vs expected >>>%s<<<", changes[0].Op(), ChangeOpAdd)
-	}
+	require.Equal(t, ChangeOpAdd, changes[0].Op(), "Expected to get added")
 
-	if changes[1].Op() != ChangeOpDelete {
-		t.Fatalf("Expected to get deleted: actual >>>%s<<< vs expected >>>%s<<<", changes[1].Op(), ChangeOpDelete)
-	}
+	require.Equal(t, ChangeOpDelete, changes[1].Op(), "Expected to get deleted")
 
 	expectedDiff1 := `  0,  0 + apiVersion: v1
   0,  1 + kind: Secret
@@ -143,21 +128,13 @@ metadata:
 		ChangeSetOpts{}, ChangeFactory{})
 
 	changes, err := changeSetWithVerRes.Calculate()
-	if err != nil {
-		t.Fatalf("Expected non-error")
-	}
+	require.NoError(t, err)
 
-	if len(changes) != 2 {
-		t.Fatalf("Expected length of changes list is 2")
-	}
+	require.Len(t, changes, 2)
 
-	if changes[0].Op() != ChangeOpAdd {
-		t.Fatalf("Expected to get added: actual >>>%s<<< vs expected >>>%s<<<", changes[0].Op(), ChangeOpAdd)
-	}
+	require.Equal(t, ChangeOpAdd, changes[0].Op(), "Expected to get added")
 
-	if changes[1].Op() != ChangeOpUpdate {
-		t.Fatalf("Expected to get updated: actual >>>%s<<< vs expected >>>%s<<<", changes[1].Op(), ChangeOpUpdate)
-	}
+	require.Equal(t, ChangeOpUpdate, changes[1].Op(), "Expected to get updated")
 
 	expectedDiff1 := `  0,  0 + apiVersion: v1
   0,  1 + kind: Secret
@@ -185,8 +162,5 @@ metadata:
 func checkChangeDiff(t *testing.T, change Change, expectedDiff string) {
 	actualDiffString := change.ConfigurableTextDiff().Full().FullString()
 
-	if actualDiffString != expectedDiff {
-		t.Fatalf("Expected diff to match: actual >>>%s<<< vs expected >>>%s<<< %d %d",
-			actualDiffString, expectedDiff, len(actualDiffString), len(expectedDiff))
-	}
+	require.Equal(t, expectedDiff, actualDiffString, "Expected diff to match")
 }
