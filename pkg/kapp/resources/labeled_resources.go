@@ -219,18 +219,13 @@ func (a *LabeledResources) findNonLabeledResources(labeledResources, newResource
 
 				defer func() { wg.Done() }()
 
-				exists, err := a.identifiedResources.Exists(res, ExistsOpts{})
+				clusterRes, exists, err := a.identifiedResources.Exists(res, ExistsOpts{})
 				if err != nil {
 					errCh <- err
 					return
 				}
 
 				if exists {
-					clusterRes, err := a.identifiedResources.Get(res)
-					if err != nil {
-						errCh <- err
-						return
-					}
 					resCh <- clusterRes
 				}
 			}()

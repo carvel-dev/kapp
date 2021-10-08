@@ -41,7 +41,7 @@ const (
 type Resources interface {
 	All([]ResourceType, AllOpts) ([]Resource, error)
 	Delete(Resource) error
-	Exists(Resource, ExistsOpts) (bool, error)
+	Exists(Resource, ExistsOpts) (Resource, bool, error)
 	Get(Resource) (Resource, error)
 	Patch(Resource, types.PatchType, []byte) (Resource, error)
 	Update(Resource) (Resource, error)
@@ -388,23 +388,24 @@ func (c *ResourcesImpl) Get(resource Resource) (Resource, error) {
 	return NewResourceUnstructured(*item, resType), nil
 }
 
-func (c *ResourcesImpl) Exists(resource Resource, existsOpts ExistsOpts) (bool, error) {
+func (c *ResourcesImpl) Exists(resource Resource, existsOpts ExistsOpts) (Resource, bool, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { c.logger.Debug("exists %s", time.Now().UTC().Sub(t1)) }()
 	}
 
-	resClient, _, err := c.resourceClient(resource, resourceClientOpts{Warnings: false})
+	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: false})
 	if err != nil {
 		// Assume if type is not known to the API server
 		// then such resource cannot exist on the server
 		if _, ok := err.(ResourceTypesUnknownTypeErr); ok {
-			return false, nil
+			return nil, false, nil
 		}
-		return false, err
+		return nil, false, err
 	}
 
 	var found bool
+	var resObj Resource
 
 	err = util.Retry(time.Second, time.Minute, func() (bool, error) {
 		fetchedRes, err := resClient.Get(context.TODO(), resource.Name(), metav1.GetOptions{})
@@ -438,10 +439,11 @@ func (c *ResourcesImpl) Exists(resource Resource, existsOpts ExistsOpts) (bool, 
 		}
 
 		found = true
+		resObj = NewResourceUnstructured(*fetchedRes, resType)
 		return true, nil
 	})
 
-	return found, err
+	return resObj, found, err
 }
 
 var (
