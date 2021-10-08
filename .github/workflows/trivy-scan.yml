@@ -66,3 +66,4 @@ jobs:
         with:
           channel-id: C026Z8V6XPE
           slack-message: "Trivy Scan Summary is: ${{ env.SUMMARY }} "
+          
