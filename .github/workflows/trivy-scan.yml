@@ -23,8 +23,6 @@ jobs:
 
       - name: Build the kapp binary file
         run: |
-          # Ensure that there is no existing kapp installed
-          rm -f /tmp/bin/kapp
           ./hack/build.sh
 
       - name: Run Trivy vulnerability scanner in repo mode
