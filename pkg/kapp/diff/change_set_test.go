@@ -9,6 +9,7 @@ import (
 
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/stretchr/testify/require"
 )
 
 func TestChangeSet_RebaseWithoutNew_And_WithUnexpectedChanges(t *testing.T) {
@@ -52,9 +53,7 @@ metadata:
 		ctldiff.ChangeSetOpts{}, changeFactory)
 
 	changes, err := changeSet.Calculate()
-	if err != nil {
-		t.Fatalf("Expected non-err")
-	}
+	require.NoError(t, err)
 
 	actualDiff := changes[0].ConfigurableTextDiff().Full().FullString()
 
@@ -66,9 +65,7 @@ metadata:
   5,  4   <---space
 `, "<---space", "", -1)
 
-	if actualDiff != expectedDiff {
-		t.Fatalf("Expected diff to match: actual >>>%s<<< vs expected >>>%s<<< %d %d", actualDiff, expectedDiff, len(actualDiff), len(expectedDiff))
-	}
+	require.Equal(t, expectedDiff, actualDiff, "Expected diff to match")
 }
 
 func TestChangeSet_RebaseWithNew_And_UnexpectedChanges(t *testing.T) {
@@ -114,9 +111,7 @@ metadata:
 		ctldiff.ChangeSetOpts{}, changeFactory)
 
 	changes, err := changeSet.Calculate()
-	if err != nil {
-		t.Fatalf("Expected non-err")
-	}
+	require.NoError(t, err)
 
 	actualDiff := changes[0].ConfigurableTextDiff().Full().FullString()
 
@@ -129,9 +124,7 @@ metadata:
   5,  5   <---space
 `, "<---space", "", -1)
 
-	if actualDiff != expectedDiff {
-		t.Fatalf("Expected diff to match: actual >>>%s<<< vs expected >>>%s<<< %d %d", actualDiff, expectedDiff, len(actualDiff), len(expectedDiff))
-	}
+	require.Equal(t, expectedDiff, actualDiff, "Expected diff to match")
 }
 
 func TestChangeSet_WithoutNew_And_WithoutUnexpectedChanges_And_IgnoredFields(t *testing.T) {
@@ -186,9 +179,7 @@ metadata:
 		ctldiff.ChangeSetOpts{AgainstLastApplied: true}, changeFactory)
 
 	changes, err := changeSet.Calculate()
-	if err != nil {
-		t.Fatalf("Expected non-err")
-	}
+	require.NoError(t, err)
 
 	actualDiff := changes[0].ConfigurableTextDiff().Full().FullString()
 
@@ -199,9 +190,7 @@ metadata:
   4,  4   <---space
 `, "<---space", "", -1)
 
-	if actualDiff != expectedDiff {
-		t.Fatalf("Expected diff to match: actual >>>%s<<< vs expected >>>%s<<< %d %d", actualDiff, expectedDiff, len(actualDiff), len(expectedDiff))
-	}
+	require.Equal(t, expectedDiff, actualDiff, "Expected diff to match")
 }
 
 func TestChangeSet_WithoutNew_And_WithUnexpectedChanges_And_IgnoredFields(t *testing.T) {
@@ -262,9 +251,7 @@ metadata:
 		ctldiff.ChangeSetOpts{AgainstLastApplied: true}, changeFactory)
 
 	changes, err := changeSet.Calculate()
-	if err != nil {
-		t.Fatalf("Expected non-err")
-	}
+	require.NoError(t, err)
 
 	actualDiff := changes[0].ConfigurableTextDiff().Full().FullString()
 
@@ -277,7 +264,5 @@ metadata:
   6,  5   <---space
 `, "<---space", "", -1)
 
-	if actualDiff != expectedDiff {
-		t.Fatalf("Expected diff to match: actual >>>%s<<< vs expected >>>%s<<< %d %d", actualDiff, expectedDiff, len(actualDiff), len(expectedDiff))
-	}
+	require.Equal(t, expectedDiff, actualDiff, "Expected diff to match")
 }
