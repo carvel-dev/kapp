@@ -5,6 +5,7 @@ syntax = 'proto2';
 
 package github.com.vmware_tanzu.carvel_kapp_controller.pkg.apis.kappctrl.v1alpha1;
 
+import "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1/generated.proto";
 import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
@@ -99,6 +100,9 @@ message AppFetchGit {
   // +optional
   optional string ref = 2;
 
+  // +optional
+  optional github.com.vmware_tanzu.carvel_vendir.pkg.vendir.versions.v1alpha1.VersionSelection refSelection = 6;
+
   // Secret may include one or more keys: ssh-privatekey, ssh-knownhosts
   // +optional
   optional AppFetchLocalRef secretRef = 3;
@@ -150,6 +154,9 @@ message AppFetchImage {
   // Example: username/app1-config:v0.1.0
   optional string url = 1;
 
+  // +optional
+  optional github.com.vmware_tanzu.carvel_vendir.pkg.vendir.versions.v1alpha1.VersionSelection tagSelection = 4;
+
   // Secret may include one or more keys: username, password, token.
   // By default anonymous access is used for authentication.
   // TODO support docker config formated secret
@@ -163,6 +170,9 @@ message AppFetchImage {
 // +k8s:openapi-gen=true
 message AppFetchImgpkgBundle {
   optional string image = 1;
+
+  // +optional
+  optional github.com.vmware_tanzu.carvel_vendir.pkg.vendir.versions.v1alpha1.VersionSelection tagSelection = 3;
 
   // Secret may include one or more keys: username, password, token.
   // By default anonymous access is used for authentication.
