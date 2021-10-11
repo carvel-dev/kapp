@@ -526,8 +526,8 @@ github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57/go.mod h1:B0xN2MiNBGW
 github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115/go.mod h1:mGrnmO5qnhJIaSiwMo05cvRL6Ww9ccYbTgNFcm6RHZQ=
 github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368 h1:4bcRTTSx+LKSxMWibIwzHnDNmaN1x52oEpvnjCy+8vk=
 github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368/go.mod h1:lKGj1op99m4GtQISxoD2t+K+WO/q2NzEPKvfXFQfbCA=
-github.com/k14s/ytt v0.36.0 h1:ERr7q+r3ziYJv91fvTx2b76d1MIo3SI/EsAS01WU+Zo=
-github.com/k14s/ytt v0.36.0/go.mod h1:awQ3bHBk1qT2Xn3GJVdmaLss2khZOIBBKFd2TNXZNMk=
+github.com/k14s/ytt v0.37.0 h1:VFsx4332BT/im10AOzJ7Wn/11LI+v5ZcYwtWH8f8Ees=
+github.com/k14s/ytt v0.37.0/go.mod h1:eSzUnW1RaQoz9CFybuyZnADAJ7L7R5ht8WDVXqm1Q14=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=

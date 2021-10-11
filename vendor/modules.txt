@@ -79,7 +79,7 @@ github.com/k14s/starlark-go/resolve
 github.com/k14s/starlark-go/starlark
 github.com/k14s/starlark-go/starlarkstruct
 github.com/k14s/starlark-go/syntax
-# github.com/k14s/ytt v0.36.0
+# github.com/k14s/ytt v0.37.0
 ## explicit
 github.com/k14s/ytt/pkg/cmd/template
 github.com/k14s/ytt/pkg/cmd/ui
@@ -111,7 +111,7 @@ github.com/modern-go/concurrent
 github.com/modern-go/reflect2
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/spf13/cobra v1.1.3 => github.com/spf13/cobra v1.1.1
+# github.com/spf13/cobra v1.2.1 => github.com/spf13/cobra v1.1.1
 ## explicit
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
