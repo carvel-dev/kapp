@@ -3,6 +3,10 @@
 
 package v1alpha1
 
+import (
+	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+)
+
 // +k8s:openapi-gen=true
 type AppFetch struct {
 	Inline       *AppFetchInline       `json:"inline,omitempty" protobuf:"bytes,1,opt,name=inline"`
@@ -35,6 +39,8 @@ type AppFetchInlineSourceRef struct {
 type AppFetchImage struct {
 	// Example: username/app1-config:v0.1.0
 	URL string `json:"url,omitempty" protobuf:"bytes,1,opt,name=url"`
+	// +optional
+	TagSelection *versions.VersionSelection `json:"tagSelection,omitempty" protobuf:"bytes,4,opt,name=tagSelection"`
 	// Secret may include one or more keys: username, password, token.
 	// By default anonymous access is used for authentication.
 	// TODO support docker config formated secret
@@ -63,6 +69,8 @@ type AppFetchGit struct {
 	URL string `json:"url,omitempty" protobuf:"bytes,1,opt,name=url"`
 	// +optional
 	Ref string `json:"ref,omitempty" protobuf:"bytes,2,opt,name=ref"`
+	// +optional
+	RefSelection *versions.VersionSelection `json:"refSelection,omitempty" protobuf:"bytes,6,opt,name=refSelection"`
 	// Secret may include one or more keys: ssh-privatekey, ssh-knownhosts
 	// +optional
 	SecretRef *AppFetchLocalRef `json:"secretRef,omitempty" protobuf:"bytes,3,opt,name=secretRef"`
@@ -97,6 +105,8 @@ type AppFetchLocalRef struct {
 // +k8s:openapi-gen=true
 type AppFetchImgpkgBundle struct {
 	Image string `json:"image,omitempty" protobuf:"bytes,1,opt,name=image"`
+	// +optional
+	TagSelection *versions.VersionSelection `json:"tagSelection,omitempty" protobuf:"bytes,3,opt,name=tagSelection"`
 	// Secret may include one or more keys: username, password, token.
 	// By default anonymous access is used for authentication.
 	// TODO support docker config formated secret
