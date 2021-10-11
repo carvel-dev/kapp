@@ -19,8 +19,8 @@ require (
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
 	golang.org/x/net v0.0.0-20210520170846-37e1c6afe023
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.22.1 // kubernetes-1.22.1
-	k8s.io/apimachinery v0.22.1 // kubernetes-1.22.1
+	k8s.io/api v0.22.2 // kubernetes-1.22.1
+	k8s.io/apimachinery v0.22.2 // kubernetes-1.22.1
 	k8s.io/client-go v0.22.1 // kubernetes-1.22.1
 )
 
