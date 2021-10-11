@@ -214,7 +214,7 @@ gopkg.in/inf.v0
 gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 gopkg.in/yaml.v3
-# k8s.io/api v0.22.1
+# k8s.io/api v0.22.2
 ## explicit
 k8s.io/api/admissionregistration/v1
 k8s.io/api/admissionregistration/v1beta1
@@ -259,7 +259,7 @@ k8s.io/api/scheduling/v1beta1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apimachinery v0.22.1
+# k8s.io/apimachinery v0.22.2
 ## explicit
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
@@ -298,7 +298,7 @@ k8s.io/apimachinery/pkg/util/yaml
 k8s.io/apimachinery/pkg/version
 k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/client-go v0.22.1
+# k8s.io/client-go v0.22.2
 ## explicit
 k8s.io/client-go/applyconfigurations/admissionregistration/v1
 k8s.io/client-go/applyconfigurations/admissionregistration/v1beta1
@@ -420,7 +420,7 @@ k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/workqueue
 # k8s.io/klog/v2 v2.9.0
 k8s.io/klog/v2
-# k8s.io/utils v0.0.0-20210707171843-4b05e18ac7d9
+# k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a
 k8s.io/utils/integer
 # sigs.k8s.io/structured-merge-diff/v4 v4.1.2
 sigs.k8s.io/structured-merge-diff/v4/fieldpath
