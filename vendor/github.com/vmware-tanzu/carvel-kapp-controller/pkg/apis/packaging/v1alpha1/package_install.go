@@ -93,4 +93,8 @@ type PackageInstallStatus struct {
 	// TODO this is desired resolved version (not actually deployed)
 	// +optional
 	Version string `json:"version,omitempty"`
+	// LastAttemptedVersion specifies what version was last attempted to be installed.
+	// It does _not_ indicate it was successfully installed.
+	// +optional
+	LastAttemptedVersion string `json:"lastAttemptedVersion,omitempty"`
 }
