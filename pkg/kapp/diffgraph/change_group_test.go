@@ -29,7 +29,7 @@ func TestNewChangeGroupFromAnnString(t *testing.T) {
 	for _, name := range names {
 		cg, err := ctldgraph.NewChangeGroupFromAnnString(name)
 		require.NoError(t, err)
-		require.Equal(t, cg.Name, name)
+		require.Equal(t, name, cg.Name)
 	}
 
 	names = []string{

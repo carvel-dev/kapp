@@ -10,6 +10,7 @@ import (
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/stretchr/testify/require"
 )
 
 func TestChangeGraphWithAdditionalOrderRules(t *testing.T) {
@@ -43,9 +44,7 @@ changeRuleBindings:
 `
 
 	_, conf, err := ctlconf.NewConfFromResources([]ctlres.Resource{ctlres.MustNewResourceFromBytes([]byte(confYAML))})
-	if err != nil {
-		t.Fatalf("Expected parsing conf to succeed")
-	}
+	require.NoErrorf(t, err, "Expected parsing conf to succeed")
 
 	opts := buildGraphOpts{
 		resourcesBs:         configYAML,
@@ -55,9 +54,7 @@ changeRuleBindings:
 	}
 
 	graph, err := buildChangeGraphWithOpts(opts, t)
-	if err != nil {
-		t.Fatalf("Expected graph to build")
-	}
+	require.NoErrorf(t, err, "Expected graph to build")
 
 	output := strings.TrimSpace(graph.PrintStr())
 	expectedOutput := strings.TrimSpace(`
@@ -66,9 +63,7 @@ changeRuleBindings:
   (upsert) namespace/app1 (v1) cluster
 `)
 
-	if output != expectedOutput {
-		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
-	}
+	require.Equal(t, expectedOutput, output)
 }
 
 func TestChangeGraphWithOptionalRulesThatProduceCycles(t *testing.T) {
@@ -126,9 +121,7 @@ changeRuleBindings:
 `
 
 	_, conf, err := ctlconf.NewConfFromResources([]ctlres.Resource{ctlres.MustNewResourceFromBytes([]byte(confYAML))})
-	if err != nil {
-		t.Fatalf("Expected parsing conf to succeed")
-	}
+	require.NoErrorf(t, err, "Expected parsing conf to succeed")
 
 	opts := buildGraphOpts{
 		resourcesBs:         configYAML,
@@ -138,9 +131,7 @@ changeRuleBindings:
 	}
 
 	graph, err := buildChangeGraphWithOpts(opts, t)
-	if err != nil {
-		t.Fatalf("Expected graph to build")
-	}
+	require.NoErrorf(t, err, "Expected graph to build")
 
 	output := strings.TrimSpace(graph.PrintStr())
 	expectedOutput := strings.TrimSpace(`
@@ -152,7 +143,5 @@ changeRuleBindings:
 (upsert) secret/app-config (v1) namespace: app1
 `)
 
-	if output != expectedOutput {
-		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
-	}
+	require.Equal(t, expectedOutput, output)
 }

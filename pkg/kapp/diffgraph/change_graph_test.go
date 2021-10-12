@@ -11,6 +11,7 @@ import (
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/stretchr/testify/require"
 )
 
 func TestChangeGraph(t *testing.T) {
@@ -61,9 +62,7 @@ metadata:
 `
 
 	graph, err := buildChangeGraph(configYAML, ctldgraph.ActualChangeOpUpsert, t)
-	if err != nil {
-		t.Fatalf("Expected graph to build")
-	}
+	require.NoErrorf(t, err, "Expected graph to build")
 
 	output := strings.TrimSpace(graph.PrintStr())
 	expectedOutput := strings.TrimSpace(`
@@ -83,10 +82,7 @@ metadata:
     (upsert) job/migrations () cluster
       (upsert) job/import-etcd-into-db () cluster
 `)
-
-	if output != expectedOutput {
-		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
-	}
+	require.Equal(t, expectedOutput, output)
 }
 
 func TestChangeGraphWithConfDefaults(t *testing.T) {
@@ -129,9 +125,7 @@ metadata:
 `
 
 	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
-	if err != nil {
-		t.Fatalf("Error parsing conf defaults")
-	}
+	require.NoErrorf(t, err, "Expected parsing conf defaults to succeed")
 
 	opts := buildGraphOpts{
 		resourcesBs:         configYAML,
@@ -141,9 +135,7 @@ metadata:
 	}
 
 	graph, err := buildChangeGraphWithOpts(opts, t)
-	if err != nil {
-		t.Fatalf("Expected graph to build")
-	}
+	require.NoErrorf(t, err, "Expected graph to build")
 
 	output := strings.TrimSpace(graph.PrintStr())
 	expectedOutput := strings.TrimSpace(`
@@ -165,9 +157,7 @@ metadata:
     (upsert) namespace/app1 (v1) cluster
 `)
 
-	if output != expectedOutput {
-		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
-	}
+	require.Equal(t, expectedOutput, output)
 }
 
 func TestChangeGraphWithMultipleRules(t *testing.T) {
@@ -193,9 +183,7 @@ metadata:
 `
 
 	graph, err := buildChangeGraph(configYAML, ctldgraph.ActualChangeOpUpsert, t)
-	if err != nil {
-		t.Fatalf("Expected graph to build")
-	}
+	require.NoErrorf(t, err, "Expected graph to build")
 
 	output := strings.TrimSpace(graph.PrintStr())
 	expectedOutput := strings.TrimSpace(`
@@ -207,9 +195,7 @@ metadata:
   (upsert) job/import-etcd-into-db () cluster
 `)
 
-	if output != expectedOutput {
-		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
-	}
+	require.Equal(t, expectedOutput, output)
 }
 
 func TestChangeGraphWithMultipleGroups(t *testing.T) {
@@ -237,9 +223,7 @@ metadata:
 `
 
 	graph, err := buildChangeGraph(configYAML, ctldgraph.ActualChangeOpUpsert, t)
-	if err != nil {
-		t.Fatalf("Expected graph to build")
-	}
+	require.NoErrorf(t, err, "Expected graph to build")
 
 	output := strings.TrimSpace(graph.PrintStr())
 	expectedOutput := strings.TrimSpace(`
@@ -251,9 +235,7 @@ metadata:
   (upsert) job/import-etcd-into-db () cluster
 `)
 
-	if output != expectedOutput {
-		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
-	}
+	require.Equal(t, expectedOutput, output)
 }
 
 func TestChangeGraphWithDeletes(t *testing.T) {
@@ -306,9 +288,7 @@ metadata:
 `
 
 	graph, err := buildChangeGraph(configYAML, ctldgraph.ActualChangeOpDelete, t)
-	if err != nil {
-		t.Fatalf("Expected graph to build")
-	}
+	require.NoErrorf(t, err, "Expected graph to build")
 
 	output := strings.TrimSpace(graph.PrintStr())
 	expectedOutput := strings.TrimSpace(`
@@ -328,9 +308,7 @@ metadata:
 (delete) job/app-health-check () cluster
 `)
 
-	if output != expectedOutput {
-		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
-	}
+	require.Equal(t, expectedOutput, output)
 }
 
 func TestChangeGraphCircularOther(t *testing.T) {
@@ -351,12 +329,10 @@ metadata:
 `
 
 	_, err := buildChangeGraph(circularDep1YAML, ctldgraph.ActualChangeOpUpsert, t)
-	if err == nil {
-		t.Fatalf("Expected graph to fail building")
-	}
-	if err.Error() != "Detected cycle while ordering changes: [job/job1 () cluster] -> [job/job2 () cluster] -> [job/job1 () cluster] (found repeated: job/job1 () cluster)" {
-		t.Fatalf("Expected to detect cycle: %s", err)
-	}
+	require.Error(t, err, "Expected graph to fail building")
+
+	expectedErr := "Detected cycle while ordering changes: [job/job1 () cluster] -> [job/job2 () cluster] -> [job/job1 () cluster] (found repeated: job/job1 () cluster)"
+	require.EqualError(t, err, expectedErr, "Expected to detect cycle")
 }
 
 func TestChangeGraphCircularTransitive(t *testing.T) {
@@ -384,12 +360,10 @@ metadata:
 `
 
 	_, err := buildChangeGraph(circularDep1YAML, ctldgraph.ActualChangeOpUpsert, t)
-	if err == nil {
-		t.Fatalf("Expected graph to fail building")
-	}
-	if err.Error() != "Detected cycle while ordering changes: [job/job1 () cluster] -> [job/job3 () cluster] -> [job/job2 () cluster] -> [job/job1 () cluster] (found repeated: job/job1 () cluster)" {
-		t.Fatalf("Expected to detect cycle: %s", err)
-	}
+	require.Error(t, err, "Expected graph to fail building")
+
+	expectedErr := "Detected cycle while ordering changes: [job/job1 () cluster] -> [job/job3 () cluster] -> [job/job2 () cluster] -> [job/job1 () cluster] (found repeated: job/job1 () cluster)"
+	require.EqualError(t, err, expectedErr, "Expected to detect cycle")
 }
 
 func TestChangeGraphCircularDirect(t *testing.T) {
@@ -410,12 +384,10 @@ metadata:
 `
 
 	_, err := buildChangeGraph(circularDep1YAML, ctldgraph.ActualChangeOpUpsert, t)
-	if err == nil {
-		t.Fatalf("Expected graph to fail building")
-	}
-	if err.Error() != "Detected cycle while ordering changes: [job/job1 () cluster] -> [job/job2 () cluster] -> [job/job1 () cluster] (found repeated: job/job1 () cluster)" {
-		t.Fatalf("Expected to detect cycle: %s", err)
-	}
+	require.Error(t, err, "Expected graph to fail building")
+
+	expectedErr := "Detected cycle while ordering changes: [job/job1 () cluster] -> [job/job2 () cluster] -> [job/job1 () cluster] (found repeated: job/job1 () cluster)"
+	require.EqualError(t, err, expectedErr, "Expected to detect cycle")
 }
 
 func TestChangeGraphCircularWithinADep(t *testing.T) {
@@ -442,12 +414,10 @@ metadata:
 `
 
 	_, err := buildChangeGraph(circularDep1YAML, ctldgraph.ActualChangeOpUpsert, t)
-	if err == nil {
-		t.Fatalf("Expected graph to fail building")
-	}
-	if err.Error() != "Detected cycle while ordering changes: [job/job3 () cluster] -> [job/job1 () cluster] -> [job/job2 () cluster] -> [job/job1 () cluster] (found repeated: job/job1 () cluster)" {
-		t.Fatalf("Expected to detect cycle: %s", err)
-	}
+	require.Error(t, err, "Expected graph to fail building")
+
+	expectedErr := "Detected cycle while ordering changes: [job/job3 () cluster] -> [job/job1 () cluster] -> [job/job2 () cluster] -> [job/job1 () cluster] (found repeated: job/job1 () cluster)"
+	require.EqualError(t, err, expectedErr, "Expected to detect cycle")
 }
 
 func TestChangeGraphCircularSelf(t *testing.T) {
@@ -461,12 +431,10 @@ metadata:
 `
 
 	_, err := buildChangeGraph(circularDep2YAML, ctldgraph.ActualChangeOpUpsert, t)
-	if err == nil {
-		t.Fatalf("Expected graph to fail building")
-	}
-	if err.Error() != "Detected cycle while ordering changes: [job/job1 () cluster] -> [job/job1 () cluster] (found repeated: job/job1 () cluster)" {
-		t.Fatalf("Expected to detect cycle: %s", err)
-	}
+	require.Error(t, err, "Expected graph to fail building")
+
+	expectedErr := "Detected cycle while ordering changes: [job/job1 () cluster] -> [job/job1 () cluster] (found repeated: job/job1 () cluster)"
+	require.EqualError(t, err, expectedErr, "Expected to detect cycle")
 }
 
 func TestChangeGraphWithNamespaceAndCRDs(t *testing.T) {
@@ -543,9 +511,7 @@ metadata:
 `
 
 	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
-	if err != nil {
-		t.Fatalf("Error parsing conf defaults")
-	}
+	require.NoError(t, err, "Expected parsing conf defaults to succeed")
 
 	opts := buildGraphOpts{
 		resourcesBs:         configYAML,
@@ -555,9 +521,7 @@ metadata:
 	}
 
 	graph, err := buildChangeGraphWithOpts(opts, t)
-	if err != nil {
-		t.Fatalf("Expected graph to build")
-	}
+	require.NoError(t, err, "Expected graph to build")
 
 	output := strings.TrimSpace(graph.PrintStr())
 	expectedOutput := strings.TrimSpace(`
@@ -578,9 +542,7 @@ metadata:
   (upsert) customresourcedefinition/kapp-crd-2 (apiextensions.k8s.io/v1) cluster
 `)
 
-	if output != expectedOutput {
-		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
-	}
+	require.Equal(t, expectedOutput, output)
 }
 
 func buildChangeGraph(resourcesBs string, op ctldgraph.ActualChangeOp, t *testing.T) (*ctldgraph.ChangeGraph, error) {
@@ -603,9 +565,7 @@ func buildChangeGraphWithOpts(opts buildGraphOpts, t *testing.T) (*ctldgraph.Cha
 	} else {
 		var err error
 		rs, err = ctlres.NewFileResource(ctlres.NewBytesSource([]byte(opts.resourcesBs))).Resources()
-		if err != nil {
-			t.Fatalf("Expected resources to parse")
-		}
+		require.NoError(t, err, "Expected resources to parse")
 	}
 
 	actualChanges := []ctldgraph.ActualChange{}

@@ -12,23 +12,18 @@ import (
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/stretchr/testify/require"
 )
 
 func TestChangeGraphCFForK8sUpsert(t *testing.T) {
 	configYAML, err := ioutil.ReadFile("assets/cf-for-k8s.yml")
-	if err != nil {
-		t.Fatalf("Reading cf-for-k8s asset: %s", err)
-	}
+	require.NoErrorf(t, err, "Reading cf-for-k8s asset")
 
 	configRs, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(configYAML))).Resources()
-	if err != nil {
-		t.Fatalf("Error parsing resources: %s", err)
-	}
+	require.NoErrorf(t, err, "Parsing resources")
 
 	rs, conf, err := ctlconf.NewConfFromResourcesWithDefaults(configRs)
-	if err != nil {
-		t.Fatalf("Error parsing conf defaults: %s", err)
-	}
+	require.NoErrorf(t, err, "Parsing conf defaults")
 
 	opts := buildGraphOpts{
 		resources:           rs,
@@ -40,37 +35,25 @@ func TestChangeGraphCFForK8sUpsert(t *testing.T) {
 	t1 := time.Now()
 
 	graph, err := buildChangeGraphWithOpts(opts, t)
-	if err != nil {
-		t.Fatalf("Expected graph to build: %s", err)
-	}
+	require.NoErrorf(t, err, "Expected graph to build")
 
-	if time.Now().Sub(t1) > time.Duration(1*time.Second) {
-		t.Fatalf("Graph build took too long")
-	}
+	require.Less(t, time.Now().Sub(t1), time.Duration(1*time.Second), "Graph build took too long")
 
 	output := strings.TrimSpace(graph.PrintLinearizedStr())
 	expectedOutput := strings.TrimSpace(cfForK8sExpectedOutputUpsert)
 
-	if output != expectedOutput {
-		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
-	}
+	require.Equal(t, expectedOutput, output)
 }
 
 func TestChangeGraphCFForK8sDelete(t *testing.T) {
 	configYAML, err := ioutil.ReadFile("assets/cf-for-k8s.yml")
-	if err != nil {
-		t.Fatalf("Reading cf-for-k8s asset: %s", err)
-	}
+	require.NoErrorf(t, err, "Reading cf-for-k8s asset")
 
 	configRs, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(configYAML))).Resources()
-	if err != nil {
-		t.Fatalf("Error parsing resources: %s", err)
-	}
+	require.NoErrorf(t, err, "Parsing resources")
 
 	rs, conf, err := ctlconf.NewConfFromResourcesWithDefaults(configRs)
-	if err != nil {
-		t.Fatalf("Error parsing conf defaults: %s", err)
-	}
+	require.NoErrorf(t, err, "Parsing conf defaults")
 
 	opts := buildGraphOpts{
 		resources:           rs,
@@ -82,20 +65,14 @@ func TestChangeGraphCFForK8sDelete(t *testing.T) {
 	t1 := time.Now()
 
 	graph, err := buildChangeGraphWithOpts(opts, t)
-	if err != nil {
-		t.Fatalf("Expected graph to build: %s", err)
-	}
+	require.NoErrorf(t, err, "Expected graph to build")
 
-	if time.Now().Sub(t1) > time.Duration(1*time.Second) {
-		t.Fatalf("Graph build took too long")
-	}
+	require.Less(t, time.Now().Sub(t1), time.Duration(1*time.Second), "Graph build took too long")
 
 	output := strings.TrimSpace(graph.PrintLinearizedStr())
 	expectedOutput := strings.TrimSpace(cfForK8sExpectedOutputDelete)
 
-	if output != expectedOutput {
-		t.Fatalf("Expected output to be >>>%s<<< but was >>>%s<<<", expectedOutput, output)
-	}
+	require.Equal(t, expectedOutput, output)
 }
 
 const (

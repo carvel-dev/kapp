@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/k14s/kapp/pkg/kapp/matcher"
+	"github.com/stretchr/testify/require"
 )
 
 func TestStringMatcherMatches(t *testing.T) {
@@ -47,8 +48,5 @@ type stringMatcherExample struct {
 
 func (e stringMatcherExample) Check(t *testing.T) {
 	result := matcher.NewStringMatcher(e.Expected).Matches(e.Actual)
-	if result != e.Result {
-		t.Fatalf("Did not match result: expected=%s actual=%s wanted=%t got=%t",
-			e.Expected, e.Actual, e.Result, result)
-	}
+	require.Equal(t, e.Result, result, "Did not match result: expected=%s actual=%s", e.Expected, e.Actual)
 }
