@@ -30,6 +30,8 @@ jobs:
           mkdir -p /tmp/bin
           export PATH=/tmp/bin:$PATH
 
+          ./hack/verify-no-dirty-files.sh
+
           wget -O- https://carvel.dev/install.sh | K14SIO_INSTALL_BIN_DIR=/tmp/bin bash
 
           wget -O- https://github.com/kubernetes/minikube/releases/download/v1.10.0/minikube-linux-amd64 > /tmp/bin/minikube
