@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/stretchr/testify/require"
 )
 
 func TestModFieldCopy(t *testing.T) {
@@ -231,14 +232,10 @@ func (e modFieldCopyExample) Check(t *testing.T) {
 		Path:            e.Path,
 		Sources:         e.Sources,
 	}.ApplyFromMultiple(res, ress)
-	if err != nil {
-		t.Fatalf("Expected no err, but was %s", err)
-	}
+	require.NoError(t, err)
 
 	resultBs, err := res.AsYAMLBytes()
-	if err != nil {
-		t.Fatalf("Expected no err, but was %s", err)
-	}
+	require.NoError(t, err)
 
 	expectEqualsStripped(t, e.Description, string(resultBs), e.Expected)
 }

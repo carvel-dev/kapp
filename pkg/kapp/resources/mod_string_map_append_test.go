@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/stretchr/testify/require"
 )
 
 func TestModStringMapAppend(t *testing.T) {
@@ -168,23 +169,17 @@ type modStringMapAppendExample struct {
 
 func (e modStringMapAppendExample) Check(t *testing.T) {
 	res, err := ctlres.NewResourceFromBytes([]byte(e.Res))
-	if err != nil {
-		t.Fatalf("Expected no err, but was %s", err)
-	}
+	require.NoError(t, err)
 
 	err = ctlres.StringMapAppendMod{
 		ResourceMatcher: ctlres.AllMatcher{},
 		Path:            e.Path,
 		KVs:             e.KVs,
 	}.Apply(res)
-	if err != nil {
-		t.Fatalf("Expected no err, but was %s", err)
-	}
+	require.NoError(t, err)
 
 	resultBs, err := res.AsYAMLBytes()
-	if err != nil {
-		t.Fatalf("Expected no err, but was %s", err)
-	}
+	require.NoError(t, err)
 
 	expectEqualsStripped(t, e.Description, string(resultBs), e.Expected)
 }
