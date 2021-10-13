@@ -29,12 +29,14 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
-          input: './kapp'
+          input: '.'
           ignore-unfixed: true
           format: 'template'
           template: '@/contrib/sarif.tpl'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH,MEDIUM'
+          # Ignoring the go.sum file as it may contain the older dependencies entries which are not being used now.
+          skip-dirs: 'go.sum'
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v1
@@ -45,10 +47,12 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
-          input: './kapp'
+          input: '.'
           ignore-unfixed: true
           format: json
           output: 'results.json'
+          # Ignoring the go.sum file as it may contain the older dependencies entries which are not being used now.
+          skip-dirs: 'go.sum'
 
       - name: Create Issues Summary
         run: |
