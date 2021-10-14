@@ -1,0 +1,72 @@
+name: Trivy CVE Dependency Scanner
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    # Set permissions of github token. See https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#permissions
+    permissions:
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16.0
+
+      - name: Build the kapp binary file
+        run: |
+          ./hack/build.sh
+
+      - name: Run Trivy vulnerability scanner in repo mode
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          input: '.'
+          ignore-unfixed: true
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          # Ignoring the go.sum file as it may contain the older dependencies entries which are not being used now.
+          skip-dirs: 'go.sum'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run Trivy to generate report for slack Notification
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          input: '.'
+          ignore-unfixed: true
+          format: json
+          output: 'results.json'
+          # Ignoring the go.sum file as it may contain the older dependencies entries which are not being used now.
+          skip-dirs: 'go.sum'
+
+      - name: Create Issues Summary
+        run: |
+          summary=$(jq '.[] | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' results.json | tr -d \\)
+          if [ -z $summary ]
+          then
+            summary="0 Issues"
+          fi
+          echo "SUMMARY=$summary" >> $GITHUB_ENV
+
+      - name: Send Slack Notification
+        uses: slackapi/slack-github-action@v1.15.0
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        with:
+          channel-id: C026Z8V6XPE
+          slack-message: "Trivy Scan Summary is: ${{ env.SUMMARY }} "
