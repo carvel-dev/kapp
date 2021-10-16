@@ -141,9 +141,7 @@ status:
 
 func buildDaemonSet(resourcesBs string, t *testing.T) *ctlresm.AppsV1DaemonSet {
 	newResources, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(resourcesBs))).Resources()
-	if err != nil {
-		t.Fatalf("Expected resources to parse")
-	}
+	require.NoErrorf(t, err, "Expected resources to parse")
 
 	return ctlresm.NewAppsV1DaemonSet(newResources[0])
 }
