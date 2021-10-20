@@ -4,12 +4,12 @@
 package resourcesmisc_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAppsV1DeploymentMinRepAvailable(t *testing.T) {

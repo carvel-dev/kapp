@@ -4,11 +4,12 @@
 package resourcesmisc_test
 
 import (
+	"strings"
+	"testing"
+
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 	"github.com/stretchr/testify/require"
-	"strings"
-	"testing"
 )
 
 func TestAppsV1DaemonSetCreation(t *testing.T) {
