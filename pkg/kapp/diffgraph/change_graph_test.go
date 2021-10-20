@@ -545,6 +545,51 @@ metadata:
 	require.Equal(t, expectedOutput, output)
 }
 
+func TestGraphOrderWithClusterRoleAndClusterRoleBinding(t *testing.T) {
+	configYAML := `
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: test-rbac-cluster-role
+rules:
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: test-rbac-cluster-role-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: test-rbac-cluster-role
+`
+
+	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
+	if err != nil {
+		t.Fatalf("Error parsing conf defaults")
+	}
+
+	opts := buildGraphOpts{
+		resourcesBs:         configYAML,
+		op:                  ctldgraph.ActualChangeOpUpsert,
+		changeGroupBindings: conf.ChangeGroupBindings(),
+		changeRuleBindings:  conf.ChangeRuleBindings(),
+	}
+
+	graph, err := buildChangeGraphWithOpts(opts, t)
+	if err != nil {
+		t.Fatalf("Expected graph to build")
+	}
+
+	output := strings.TrimSpace(graph.PrintStr())
+	expectedOutput := strings.TrimSpace(`
+(upsert) clusterrole/test-rbac-cluster-role (rbac.authorization.k8s.io/v1) cluster
+(upsert) clusterrolebinding/test-rbac-cluster-role-binding (rbac.authorization.k8s.io/v1) cluster
+  (upsert) clusterrole/test-rbac-cluster-role (rbac.authorization.k8s.io/v1) cluster
+`)
+	require.Equal(t, expectedOutput, output)
+}
+
 func buildChangeGraph(resourcesBs string, op ctldgraph.ActualChangeOp, t *testing.T) (*ctldgraph.ChangeGraph, error) {
 	return buildChangeGraphWithOpts(buildGraphOpts{resourcesBs: resourcesBs, op: op}, t)
 }
