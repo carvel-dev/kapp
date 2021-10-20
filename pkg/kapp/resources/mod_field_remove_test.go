@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/stretchr/testify/require"
 )
 
 func TestModFieldRemove(t *testing.T) {
@@ -123,22 +124,16 @@ type modFieldRemoveExample struct {
 
 func (e modFieldRemoveExample) Check(t *testing.T) {
 	res, err := ctlres.NewResourceFromBytes([]byte(e.Res))
-	if err != nil {
-		t.Fatalf("Expected no err, but was %s", err)
-	}
+	require.NoError(t, err)
 
 	err = ctlres.FieldRemoveMod{
 		ResourceMatcher: ctlres.AllMatcher{},
 		Path:            e.Path,
 	}.Apply(res)
-	if err != nil {
-		t.Fatalf("Expected no err, but was %s", err)
-	}
+	require.NoError(t, err)
 
 	resultBs, err := res.AsYAMLBytes()
-	if err != nil {
-		t.Fatalf("Expected no err, but was %s", err)
-	}
+	require.NoError(t, err)
 
 	expectEqualsStripped(t, e.Description, string(resultBs), e.Expected)
 }

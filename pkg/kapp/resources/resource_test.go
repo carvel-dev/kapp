@@ -4,10 +4,10 @@
 package resources_test
 
 import (
-	"strings"
 	"testing"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCompactBytesLength(t *testing.T) {
@@ -40,29 +40,18 @@ metadata:
 
 	// resource can be read from full repr
 	resFromFull, err := ctlres.NewResourceFromBytes([]byte(fullBs))
-	if err != nil {
-		t.Fatalf("Expected to parse full bytes: %s", err)
-	}
+	require.NoError(t, err, "Expected to parse full bytes")
 
 	compactBs, err := resFromFull.AsCompactBytes()
-	if err != nil {
-		t.Fatalf("Expected to produce compact bytes: %s", err)
-	}
+	require.NoError(t, err, "Expected to produce compact bytes")
 
 	// resource can be read from compact repr
 	resFromCompact, err := ctlres.NewResourceFromBytes([]byte(compactBs))
-	if err != nil {
-		t.Fatalf("Expected to parse compact bytes: %s", err)
-	}
+	require.NoError(t, err, "Expected to parse compact bytes")
 
-	if !resFromFull.Equal(resFromCompact) {
-		t.Fatalf("Expected resources to match: '%s' vs '%s'", fullBs, compactBs)
-	}
+	require.True(t, resFromFull.Equal(resFromCompact), "Expected resources to match: %q vs %q", fullBs, compactBs)
 
-	if len(compactBs) >= len(fullBs) {
-		t.Fatalf("Compact repr should be shorter than full repr: %d '%s' vs %d '%s'",
-			len(fullBs), fullBs, len(compactBs), compactBs)
-	}
+	require.Less(t, len(compactBs), len(fullBs), "Compact repr should be shorter than full repr")
 }
 
 func TestCompactBytesNoNewlinesForBetterFormatting(t *testing.T) {
@@ -80,19 +69,12 @@ metadata:
 `
 
 	resFromFull, err := ctlres.NewResourceFromBytes([]byte(fullBs))
-	if err != nil {
-		t.Fatalf("Expected to parse full bytes: %s", err)
-	}
+	require.NoError(t, err, "Expected to parse full bytes")
 
 	compactBs, err := resFromFull.AsCompactBytes()
-	if err != nil {
-		t.Fatalf("Expected to produce compact bytes: %s", err)
-	}
+	require.NoError(t, err, "Expected to produce compact bytes")
 
-	if !strings.Contains(string(fullBs), "\n") {
-		t.Fatalf("Expected full repr to have newlines: %s", fullBs)
-	}
-	if strings.Contains(string(compactBs), "\n") {
-		t.Fatalf("Expected compact repr to not have newlines: %s", compactBs)
-	}
+	require.Contains(t, string(fullBs), "\n", "Expected full repr to have newlines")
+
+	require.NotContains(t, string(compactBs), "\n", "Expected compact repr to not have newlines")
 }

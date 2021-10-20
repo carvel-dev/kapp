@@ -6,6 +6,8 @@ package resources_test
 import (
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func expectEqualsStripped(t *testing.T, description, resultStr, expectedStr string) {
@@ -13,8 +15,5 @@ func expectEqualsStripped(t *testing.T, description, resultStr, expectedStr stri
 }
 
 func expectEquals(t *testing.T, description, resultStr, expectedStr string) {
-	if resultStr != expectedStr {
-		t.Fatalf("%s: not equal\n\n### result %d chars:\n>>>%s<<<\n###expected %d chars:\n>>>%s<<<",
-			description, len(resultStr), resultStr, len(expectedStr), expectedStr)
-	}
+	require.Equal(t, expectedStr, resultStr, "%s: not equal", description)
 }
