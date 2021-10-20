@@ -4,11 +4,11 @@
 package e2e
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateUpdateDelete(t *testing.T) {
@@ -78,9 +78,8 @@ data:
 
 		config := NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
 		val := config.RawPath(ctlres.NewPathFromStrings([]string{"data", "key"}))
-		if !reflect.DeepEqual(val, "value2") {
-			t.Fatalf("Expected value to be updated")
-		}
+
+		require.Exactlyf(t, "value2", val, "Expected value to be updated")
 
 		NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
 	})

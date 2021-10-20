@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"github.com/stretchr/testify/require"
 	"os"
 	"strings"
 	"testing"
@@ -35,7 +36,5 @@ func (e Env) Validate(t *testing.T) {
 		errStrs = append(errStrs, "Expected Namespace to be non-empty")
 	}
 
-	if len(errStrs) > 0 {
-		t.Fatalf("%s", strings.Join(errStrs, "\n"))
-	}
+	require.Len(t, errStrs, 0, "%s", strings.Join(errStrs, "\n"))
 }

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateFallbackOnUpdate(t *testing.T) {
@@ -68,9 +69,7 @@ imagePullSecrets:
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{AllowError: true, StdinReader: strings.NewReader(yamlNoCreateStrategy)})
 
-		if !strings.Contains(err.Error(), `serviceaccounts "default" already exists`) {
-			t.Fatalf("Expected serviceaccount to be already created, but error was: %s", err)
-		}
+		require.Containsf(t, err.Error(), `serviceaccounts "default" already exists`, "Expected serviceaccount to be already created, but error was: %s", err)
 
 		cleanUp()
 	})
@@ -86,8 +85,6 @@ imagePullSecrets:
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 
-		if len(resp.Tables[0].Rows) != 0 {
-			t.Fatalf("Expected to see no changes, but did not: '%s'", out)
-		}
+		require.Len(t, resp.Tables[0].Rows, 0, "Expected to see no changes, but did not")
 	})
 }

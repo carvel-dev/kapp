@@ -6,6 +6,7 @@ package e2e
 import (
 	"bytes"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"os"
 	"os/exec"
 	"strings"
@@ -57,9 +58,7 @@ func (k Kubectl) RunWithOpts(args []string, opts RunOpts) (string, error) {
 	if err != nil {
 		err = fmt.Errorf("Execution error: stderr: '%s' error: '%s'", stderr.String(), err)
 
-		if !opts.AllowError {
-			k.t.Fatalf("Failed to successfully execute '%s': %v", k.cmdDesc(args), err)
-		}
+		require.Truef(k.t, opts.AllowError, "Failed to successfully execute '%s': %v", k.cmdDesc(args), err)
 	}
 
 	return stdout.String(), err

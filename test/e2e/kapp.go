@@ -6,6 +6,7 @@ package e2e
 import (
 	"bytes"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"io"
 	"os"
 	"os/exec"
@@ -88,9 +89,7 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 		err = fmt.Errorf("Execution error: stdout: '%s' stderr: '%s' error: '%s' exit code: '%d'",
 			stdoutStr, stderr.String(), err, exitCode)
 
-		if !opts.AllowError {
-			k.t.Fatalf("Failed to successfully execute '%s': %v", k.cmdDesc(args, opts), err)
-		}
+		require.Truef(k.t, opts.AllowError, "Failed to successfully execute '%s': %v", k.cmdDesc(args, opts), err)
 	}
 
 	return stdoutStr, err

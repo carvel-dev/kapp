@@ -4,12 +4,12 @@
 package e2e
 
 import (
-	"reflect"
 	"regexp"
 	"strings"
 	"testing"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTemplate(t *testing.T) {
@@ -230,9 +230,8 @@ data:
 		NewPresentClusterResource("configmap", "config-ver-1", env.Namespace, kubectl)
 
 		val := dep.RawPath(ctlres.NewPathFromInterfaces(depPath))
-		if !reflect.DeepEqual(val, "config-ver-1") {
-			t.Fatalf("Expected value to be updated")
-		}
+
+		require.Exactlyf(t, "config-ver-1", val, "Expected value to be updated")
 	})
 
 	logger.Section("deploy update that changes configmap", func() {
@@ -245,9 +244,8 @@ data:
 		NewPresentClusterResource("configmap", "config-ver-2", env.Namespace, kubectl)
 
 		val := dep.RawPath(ctlres.NewPathFromInterfaces(depPath))
-		if !reflect.DeepEqual(val, "config-ver-2") {
-			t.Fatalf("Expected value to be updated")
-		}
+
+		require.Exactlyf(t, "config-ver-2", val, "Expected value to be updated")
 	})
 
 	logger.Section("deploy update that has no changes", func() {
@@ -260,9 +258,8 @@ data:
 		NewPresentClusterResource("configmap", "config-ver-2", env.Namespace, kubectl)
 
 		val := dep.RawPath(ctlres.NewPathFromInterfaces(depPath))
-		if !reflect.DeepEqual(val, "config-ver-2") {
-			t.Fatalf("Expected value to be updated")
-		}
+
+		require.Exactlyf(t, "config-ver-2", val, "Expected value to be updated")
 	})
 
 	// TODO deploy via patch or filter
@@ -284,8 +281,5 @@ func checkChangesOutput(t *testing.T, actualOutput, expectedOutput string) {
 	// printLines("actual", actualOutput)
 	// printLines("expected", expectedOutput)
 
-	if actualOutput != expectedOutput {
-		t.Fatalf("Expected output to match:  %d >>>%s<<< vs %d >>>%s<<<",
-			len(actualOutput), actualOutput, len(expectedOutput), expectedOutput)
-	}
+	require.Equalf(t, expectedOutput, actualOutput, "Expected output to match actual")
 }

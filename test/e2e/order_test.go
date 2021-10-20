@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"github.com/stretchr/testify/require"
 	"regexp"
 	"sort"
 	"strings"
@@ -122,10 +123,7 @@ Wait to: 7 reconcile, 0 delete, 0 noop
 Succeeded
 `))
 
-		if out != expectedOutput {
-			t.Fatalf("Expected output to equal (%d) >>>%s<<< but was (%d) >>>%s<<<",
-				len(expectedOutput), expectedOutput, len(out), out)
-		}
+		require.Equal(t, expectedOutput, out)
 	})
 
 	logger.Section("deploy with upsert before delete", func() {
@@ -207,10 +205,7 @@ Wait to: 1 reconcile, 1 delete, 0 noop
 Succeeded
 `))
 
-		if out != expectedOutput {
-			t.Fatalf("Expected output to equal (%d) >>>%s<<< but was (%d) >>>%s<<<",
-				len(expectedOutput), expectedOutput, len(out), out)
-		}
+		require.Equal(t, expectedOutput, out)
 	})
 }
 
