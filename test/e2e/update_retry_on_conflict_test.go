@@ -5,12 +5,13 @@ package e2e
 
 import (
 	"bufio"
-	"github.com/stretchr/testify/require"
 	"io"
 	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateRetryOnConflict_WithoutConflict(t *testing.T) {
