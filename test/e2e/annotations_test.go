@@ -467,8 +467,9 @@ data:
 		require.NoErrorf(t, err, "Expected to successfully unmarshal")
 
 		_, versionedAnnExists := respKubectl.Annotations["kapp.k14s.io/versioned"]
-		isConditionsMet := respKubectl.Kind == "ConfigMap" || respKubectl.Name == "config" || versionedAnnExists
-		require.True(t, isConditionsMet, "Expected to have versioned ConfigMap resource")
+		require.Condition(t, func() bool {
+			return respKubectl.Kind == "ConfigMap" && respKubectl.Name == "config" && versionedAnnExists
+		}, "Expected to have versioned ConfigMap resource")
 
 		kappOut, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml)})

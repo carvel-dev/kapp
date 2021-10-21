@@ -183,7 +183,6 @@ spec:
 		_, err := kapp.RunWithOpts([]string{"deploy", "--tty", "-f", tmpFile.Name(), "-a", name},
 			RunOpts{IntoNs: true, StdinReader: promptOutput.YesReader(),
 				StdoutWriter: promptOutput.OutputWriter(), Interactive: true, AllowError: true})
-
 		require.Errorf(t, err, "Expected error, but err was nil")
 
 		require.Contains(t, err.Error(), "Failed to update due to resource conflict (approved diff no longer matches)",
@@ -312,7 +311,8 @@ func (p promptOutput) WaitPresented() {
 			break
 		}
 	}
-	require.NoError(p.t, scanner.Err())
+	err := scanner.Err()
+	require.NoError(p.t, err)
 }
 
 func newTmpFile(content string, t *testing.T) *os.File {

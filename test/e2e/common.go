@@ -19,8 +19,8 @@ func validateChanges(t *testing.T, respTable []ui.JSONUITableResp, expected []ma
 		delete(row, "age")
 	}
 
-	require.Exactlyf(t, expected, respTable[0].Rows, "Expected to see correct changes, but did not")
-	require.Equalf(t, notesOp, respTable[0].Notes[0], "Expected to see correct summary, but did not")
-	require.Equalf(t, notesWaitTo, respTable[0].Notes[1], "Expected to see correct summary, but did not")
+	require.Exactlyf(t, expected, respTable[0].Rows, "Expected to see correct changes, but did not: '%s'", output)
+	require.Equalf(t, notesOp, respTable[0].Notes[0], "Expected to see correct summary, but did not: '%s'", output)
+	require.Equalf(t, notesWaitTo, respTable[0].Notes[1], "Expected to see correct summary, but did not: '%s'", output)
 
 }

@@ -6,12 +6,13 @@ package e2e
 import (
 	"bytes"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type Kapp struct {

@@ -240,6 +240,7 @@ func TestDiffExitStatus(t *testing.T) {
 		RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader("---\n")})
 
 	require.Errorf(t, err, "Expected to receive error")
+
 	require.Containsf(t, err.Error(), "Exiting after diffing with no pending changes (exit status 2)", "Expected to find stderr output")
 	require.Containsf(t, err.Error(), "exit code: '2'", "Expected to find exit code")
 
@@ -255,6 +256,7 @@ metadata:
 		RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
 	require.Errorf(t, err, "Expected to receive error")
+
 	require.Containsf(t, err.Error(), "Exiting after diffing with pending changes (exit status 3)", "Expected to find stderr output")
 	require.Containsf(t, err.Error(), "exit code: '3'", "Expected to find exit code")
 }

@@ -128,8 +128,8 @@ metadata:
 	logger.Section("deploy app that uses failing api service", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name3}, RunOpts{
 			AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml3)})
-
 		require.Errorf(t, err, "Expected error when deploying with failing api service")
+
 		require.Contains(t, err.Error(), "unable to retrieve the complete list of server APIs: dummykapptest.com/v1: the server is currently unable to handle the request",
 			"Expected api retrieval error")
 	})
@@ -139,10 +139,9 @@ metadata:
 
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name3, ignoreFlag}, RunOpts{
 			AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml3)})
-
 		require.Errorf(t, err, "Expected error when deploying with failing api service")
-		require.Contains(t, err.Error(), "Expected to find kind 'dummykapptest.com/v1/Foo', but did not",
-			"Expected CRD retrieval error")
+
+		require.Contains(t, err.Error(), "Expected to find kind 'dummykapptest.com/v1/Foo', but did not", "Expected CRD retrieval error")
 	})
 
 	logger.Section("delete app that does not use api service", func() {
@@ -279,10 +278,9 @@ spec: {}
 	logger.Section("deploy app that uses failing group version", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name3, "--apply-timeout=5s"}, RunOpts{
 			AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml3)})
-
 		require.Errorf(t, err, "Expected error when deploying with failing group version")
-		require.Contains(t, err.Error(), `service "failing-group-version-webhook" not found`,
-			"Expected api retrieval error")
+
+		require.Contains(t, err.Error(), `service "failing-group-version-webhook" not found`, "Expected api retrieval error")
 	})
 
 	logger.Section("delete app that uses failing group version", func() {

@@ -4,11 +4,12 @@
 package e2e
 
 import (
-	"github.com/stretchr/testify/require"
 	"regexp"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestOrder(t *testing.T) {

@@ -6,11 +6,12 @@ package e2e
 import (
 	"bytes"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"os"
 	"os/exec"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type Kubectl struct {

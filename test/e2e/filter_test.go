@@ -4,9 +4,10 @@
 package e2e
 
 import (
-	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestFilter(t *testing.T) {
