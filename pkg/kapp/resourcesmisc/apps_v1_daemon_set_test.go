@@ -4,11 +4,12 @@
 package resourcesmisc_test
 
 import (
+	"strings"
+	"testing"
+
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 	"github.com/stretchr/testify/require"
-	"strings"
-	"testing"
 )
 
 func TestAppsV1DaemonSetCreation(t *testing.T) {
@@ -141,9 +142,7 @@ status:
 
 func buildDaemonSet(resourcesBs string, t *testing.T) *ctlresm.AppsV1DaemonSet {
 	newResources, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(resourcesBs))).Resources()
-	if err != nil {
-		t.Fatalf("Expected resources to parse")
-	}
+	require.NoErrorf(t, err, "Expected resources to parse")
 
 	return ctlresm.NewAppsV1DaemonSet(newResources[0])
 }

@@ -9,6 +9,7 @@ import (
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAppsV1StatefulSetCreation(t *testing.T) {
@@ -28,9 +29,7 @@ spec:
 		Successful: false,
 		Message:    "Waiting for generation 1 to be observed",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
 
 	currentData = `
 apiVersion: apps/v1
@@ -54,9 +53,7 @@ status:
 		Successful: false,
 		Message:    "Waiting for 2 replicas to be updated",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
 
 	currentData = strings.Replace(currentData, "currentReplicas: 1", "currentReplicas: 3", -1)
 	currentData = strings.Replace(currentData, "updatedReplicas: 1", "updatedReplicas: 3", -1)
@@ -69,9 +66,7 @@ status:
 		Successful: false,
 		Message:    "Waiting for 1 replicas to be ready",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
 
 	currentData = strings.Replace(currentData, "readyReplicas: 2", "readyReplicas: 3", -1)
 
@@ -81,9 +76,8 @@ status:
 		Successful: true,
 		Message:    "",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
+
 }
 
 func TestAppsV1StatefulSetUpdate(t *testing.T) {
@@ -109,9 +103,7 @@ status:
 		Successful: false,
 		Message:    "Waiting for generation 2 to be observed",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
 
 	// StatefulSet controller marks one of the "current" pods for deletion. (but all 3 are still ready, at this moment)
 	currentData = strings.Replace(currentData, "updatedReplicas: 3", "updatedReplicas: 0", -1) // new image ==> new updateRevision ==> now, there are no pods of that revision
@@ -124,9 +116,7 @@ status:
 		Successful: false,
 		Message:    "Waiting for 3 replicas to be updated",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
 
 	// StatefulSet Controller deleted one pod, and replaced it with one updated pod.
 	currentData = strings.Replace(currentData, "readyReplicas: 3", "readyReplicas: 2", -1)
@@ -138,9 +128,7 @@ status:
 		Successful: false,
 		Message:    "Waiting for 2 replicas to be updated",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
 
 	// StatefulSet Controller updated all pods, and all but the last pod are ready.
 	currentData = strings.Replace(currentData, "updatedReplicas: 1", "updatedReplicas: 3", -1)
@@ -152,9 +140,7 @@ status:
 		Successful: false,
 		Message:    "Waiting for 1 replicas to be ready",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
 
 	currentData = strings.Replace(currentData, "readyReplicas: 2", "readyReplicas: 3", -1)
 
@@ -164,9 +150,8 @@ status:
 		Successful: true,
 		Message:    "",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
+
 }
 
 func TestAppsV1StatefulSetUpdatePartition(t *testing.T) {
@@ -195,9 +180,7 @@ status:
 		Successful: false,
 		Message:    "Waiting for generation 2 to be observed",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
 
 	// StatefulSet controller marks one of the "current" pods for deletion. (but all 3 are still ready, at this moment)
 	currentData = strings.Replace(currentData, "updatedReplicas: 3", "updatedReplicas: 0", -1) // new image ==> new updateRevision ==> now, there are no pods of that revision
@@ -210,9 +193,7 @@ status:
 		Successful: false,
 		Message:    "Waiting for 2 replicas to be updated (updating only 2 of 3 total)",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
 
 	// StatefulSet Controller deleted one pod, and replaced it with one updated pod.
 	currentData = strings.Replace(currentData, "readyReplicas: 3", "readyReplicas: 2", -1)
@@ -224,9 +205,7 @@ status:
 		Successful: false,
 		Message:    "Waiting for 1 replicas to be updated (updating only 2 of 3 total)",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
 
 	// StatefulSet Controller updated all pods, and all but the last pod are ready.
 	currentData = strings.Replace(currentData, "updatedReplicas: 1", "updatedReplicas: 2", -1)
@@ -238,9 +217,7 @@ status:
 		Successful: false,
 		Message:    "Waiting for 1 replicas to be ready",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
 
 	currentData = strings.Replace(currentData, "readyReplicas: 2", "readyReplicas: 3", -1)
 
@@ -250,9 +227,8 @@ status:
 		Successful: true,
 		Message:    "",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
+
 }
 
 func TestAppsV1StatefulSetScaleDown(t *testing.T) {
@@ -278,9 +254,7 @@ status:
 		Successful: false,
 		Message:    "Waiting for generation 2 to be observed",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
 
 	// StatefulSet controller marks one of the "current" pods for deletion. Updated == current since scaling change does not create a new revision.
 	currentData = strings.Replace(currentData, "updatedReplicas: 2", "updatedReplicas: 1", -1)
@@ -293,9 +267,7 @@ status:
 		Successful: false,
 		Message:    "Waiting for 1 replicas to be deleted",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
 
 	currentData = strings.Replace(currentData, "readyReplicas: 2", "readyReplicas: 1", -1)
 
@@ -305,9 +277,7 @@ status:
 		Successful: false,
 		Message:    "Waiting for 1 replicas to be deleted",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
 
 	// StatefulSet Controller has finished removing replicas
 	currentData = strings.Replace(currentData, "status:\n  replicas: 2", "status:\n  replicas: 1", -1)
@@ -318,16 +288,12 @@ status:
 		Successful: true,
 		Message:    "",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
 }
 
 func buildStatefulSet(resourcesBs string, t *testing.T) *ctlresm.AppsV1StatefulSet {
 	newResources, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(resourcesBs))).Resources()
-	if err != nil {
-		t.Fatalf("Expected resources to parse")
-	}
+	require.NoErrorf(t, err, "Expected resources to parse")
 
 	return ctlresm.NewAppsV1StatefulSet(newResources[0], nil)
 }
