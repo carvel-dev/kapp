@@ -122,7 +122,6 @@ data:
 
 		secondData := NewPresentClusterResource("configmap", "second", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"data"}))
 		require.Exactlyf(t, map[string]interface{}{"keep": "", "keep2": "", "delete": ""}, secondData, "Expected value to be correct")
-
 	})
 }
 
@@ -191,7 +190,6 @@ secrets:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
 		secrets := NewPresentClusterResource("serviceaccount", "test-sa-with-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-
 		require.Len(t, secrets, 2, "Expected one set and one generated secret")
 		require.Exactlyf(t, map[string]interface{}{"name": "some-secret"}, secrets[0], "Expected provided secret at idx0: %#v", secrets[0])
 
@@ -199,7 +197,6 @@ secrets:
 		require.True(t, strings.HasPrefix(generatedSecretName, "test-sa-with-secrets-token-"), "Expected generated secret at idx1: %#v", secrets[1])
 
 		secrets = NewPresentClusterResource("serviceaccount", "test-sa-without-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-
 		require.Len(t, secrets, 1, "Expected one set and one generated secret")
 		require.True(t, strings.HasPrefix(secrets[0].(map[string]interface{})["name"].(string), "test-sa-without-secrets-token-"), "Expected generated secret at idx0: %#v", secrets[0])
 	})
@@ -226,12 +223,10 @@ secrets:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 		secrets := NewPresentClusterResource("serviceaccount", "test-sa-with-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-
 		require.Len(t, secrets, 3, "Expected one set and one generated secret")
 		require.Exactlyf(t, map[string]interface{}{"name": "some-secret"}, secrets[0], "Expected provided secret at idx0")
 		require.Exactlyf(t, map[string]interface{}{"name": "new-some-secret"}, secrets[1], "Expected provided secret at idx1")
 		require.Exactlyf(t, map[string]interface{}{"name": generatedSecretName}, secrets[2], "Expected previous generated secret at idx2")
-
 	})
 
 	ensureDeploysWithNoChanges(yaml2)
@@ -241,16 +236,13 @@ secrets:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml3)})
 
 		secrets := NewPresentClusterResource("serviceaccount", "test-sa-with-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-
 		require.Len(t, secrets, 1, "Expected one set and one generated secret")
 		require.Exactlyf(t, map[string]interface{}{"name": generatedSecretName}, secrets[0], "Expected previous generated secret at idx0")
 
 		secrets = NewPresentClusterResource("serviceaccount", "test-sa-without-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-
 		require.Len(t, secrets, 2, "Expected one set and one generated secret")
 		require.Exactlyf(t, map[string]interface{}{"name": "some-secret"}, secrets[0], "Expected provided secret at idx0")
 		require.True(t, strings.HasPrefix(secrets[1].(map[string]interface{})["name"].(string), "test-sa-without-secrets-token-"), "Expected generated secret at idx1: %#v", secrets[1])
-
 	})
 
 	ensureDeploysWithNoChanges(yaml3)

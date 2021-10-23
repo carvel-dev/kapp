@@ -37,5 +37,5 @@ func (e Env) Validate(t *testing.T) {
 		errStrs = append(errStrs, "Expected Namespace to be non-empty")
 	}
 
-	require.Len(t, errStrs, 0, "%s", strings.Join(errStrs, "\n"))
+	require.Lenf(t, errStrs, 0, "%s", strings.Join(errStrs, "\n"))
 }

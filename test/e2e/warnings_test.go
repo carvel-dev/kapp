@@ -109,14 +109,15 @@ Succeeded`
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
 
 		require.Equal(t, expectedOutput, out)
+	})
 
-		logger.Section("deploying with --warnings flag", func() {
-			yaml := strings.Replace(crYaml, "<cr-name>", "cr-2", 1)
+	logger.Section("deploying with --warnings flag", func() {
+		yaml := strings.Replace(crYaml, "<cr-name>", "cr-2", 1)
 
-			out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", crName2, "--warnings=false"},
-				RunOpts{StdinReader: strings.NewReader(yaml)})
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", crName2, "--warnings=false"},
+			RunOpts{StdinReader: strings.NewReader(yaml)})
 
-			expectedOutput := `
+		expectedOutput := `
 Changes
 
 Namespace  Name  Kind     Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
@@ -134,11 +135,10 @@ Wait to: 1 reconcile, 0 delete, 0 noop
 
 Succeeded`
 
-			out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
-			expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
+		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
+		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
 
-			require.Equal(t, expectedOutput, out)
-		})
+		require.Equal(t, expectedOutput, out)
 	})
 }
 
