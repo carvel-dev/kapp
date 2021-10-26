@@ -82,7 +82,7 @@ func (d *ChangeImpl) AppliedResource() ctlres.Resource  { return d.appliedRes }
 
 func (d *ChangeImpl) Op() ChangeOp {
 	if d.newRes != nil {
-		if hasExternalResourceAnnotation(d.newRes) {
+		if _, ok := d.newRes.Annotations()[ExternalResourceAnnKey]; ok {
 			return ChangeOpExists
 		}
 	}
@@ -158,9 +158,4 @@ func (d *ChangeImpl) calculateOpsDiff() OpsDiff {
 	}
 
 	return OpsDiff(patch.Diff{Left: existingObj, Right: newObj}.Calculate())
-}
-
-func hasExternalResourceAnnotation(res ctlres.Resource) bool {
-	_, hasExternalResourceAnnotation := res.Annotations()[ExternalResourceAnnKey]
-	return hasExternalResourceAnnotation
 }

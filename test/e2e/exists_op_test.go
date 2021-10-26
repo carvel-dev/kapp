@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestExistsOpWithPlaceholderAnn(t *testing.T) {
@@ -77,9 +79,7 @@ Succeeded`
 
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
-		if expectedOutput != out {
-			t.Fatalf("Expected output to be >>%s<<, but got >>%s<<\n", expectedOutput, out)
-		}
+		require.Equal(t, expectedOutput, out)
 	})
 
 	logger.Section("inspecting app", func() {
@@ -101,8 +101,6 @@ Ri: Reconcile information
 Succeeded`
 
 		expectedOutput = strings.TrimSpace(replaceAgeStr(replaceSpaces(expectedOutput)))
-		if expectedOutput != out {
-			t.Fatalf("Expected output to be >>%s<<, but got >>%s<<\n", expectedOutput, out)
-		}
+		require.Equal(t, expectedOutput, out)
 	})
 }
