@@ -4,8 +4,9 @@
 package e2e
 
 import (
-	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestVersion(t *testing.T) {
@@ -14,7 +15,5 @@ func TestVersion(t *testing.T) {
 
 	out, _ := kapp.RunWithOpts([]string{"version"}, RunOpts{NoNamespace: true})
 
-	if !strings.Contains(out, "kapp version") {
-		t.Fatalf("Expected to find client version")
-	}
+	require.Contains(t, out, "kapp version", "Expected to find client version")
 }

@@ -4,11 +4,11 @@
 package e2e
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestVersionedExplicitReference(t *testing.T) {
@@ -176,9 +176,7 @@ data:
 			},
 		}
 
-		if !reflect.DeepEqual(resp.Tables[0].Rows, expected) {
-			t.Fatalf("Expected to see correct changes but recieved >>%s<<", out)
-		}
+		require.Exactlyf(t, expected, resp.Tables[0].Rows, "Expected to see correct changes")
 	})
 
 	logger.Section("update versioned resource", func() {
@@ -225,8 +223,6 @@ data:
 			},
 		}
 
-		if !reflect.DeepEqual(replaceAge(resp.Tables[0].Rows), expected) {
-			t.Fatalf("Expected to see correct changes but recieved >>%s<<", out)
-		}
+		require.Exactlyf(t, expected, replaceAge(resp.Tables[0].Rows), "Expected to see correct changes")
 	})
 }

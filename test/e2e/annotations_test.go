@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -463,14 +464,12 @@ data:
 		respKubectl := corev1.ConfigMap{}
 
 		err := json.Unmarshal([]byte(out), &respKubectl)
-		if err != nil {
-			t.Fatalf("Expected to successfully unmarshal: %s", err)
-		}
+		require.NoErrorf(t, err, "Expected to successfully unmarshal")
 
 		_, versionedAnnExists := respKubectl.Annotations["kapp.k14s.io/versioned"]
-		if respKubectl.Kind != "ConfigMap" || respKubectl.Name != "config" || !versionedAnnExists {
-			t.Fatalf("Expected to have versioned ConfigMap resource")
-		}
+		require.Condition(t, func() bool {
+			return respKubectl.Kind == "ConfigMap" && respKubectl.Name == "config" && versionedAnnExists
+		}, "Expected to have versioned ConfigMap resource")
 
 		kappOut, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml)})

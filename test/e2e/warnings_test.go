@@ -8,15 +8,15 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 func TestWarningsFlag(t *testing.T) {
 	minorVersion, err := getServerMinorVersion()
-	if err != nil {
-		t.Fatalf("Error getting k8s server minor version, %v", err)
-	}
+	require.NoErrorf(t, err, "Error getting k8s server minor version")
+
 	if minorVersion < 19 {
 		t.Skip("Skipping test as warnings weren't introduced before v1.19")
 	}
@@ -108,9 +108,7 @@ Succeeded`
 		expectedOutput = strings.Replace(expectedOutput, "<custom-warning>", customWarning, 1)
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
 
-		if expectedOutput != out {
-			t.Fatalf("Expected output with warning >>%s<<, but got >>%s<<\n", expectedOutput, out)
-		}
+		require.Equal(t, expectedOutput, out)
 	})
 
 	logger.Section("deploying with --warnings flag", func() {
@@ -139,9 +137,8 @@ Succeeded`
 
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
-		if expectedOutput != out {
-			t.Fatalf("Expected output without warning >>%s<< but got >>%s<<\n", expectedOutput, out)
-		}
+
+		require.Equal(t, expectedOutput, out)
 	})
 }
 

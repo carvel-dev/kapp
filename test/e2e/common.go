@@ -4,10 +4,10 @@
 package e2e
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/cppforlife/go-cli-ui/ui"
+	"github.com/stretchr/testify/require"
 )
 
 // validateChanges: common func used by multiple test cases for validation between actual and expected
@@ -19,13 +19,8 @@ func validateChanges(t *testing.T, respTable []ui.JSONUITableResp, expected []ma
 		delete(row, "age")
 	}
 
-	if !reflect.DeepEqual(respTable[0].Rows, expected) {
-		t.Fatalf("Expected to see correct changes, but did not: '%s'", output)
-	}
-	if respTable[0].Notes[0] != notesOp {
-		t.Fatalf("Expected to see correct summary, but did not: '%s'", output)
-	}
-	if respTable[0].Notes[1] != notesWaitTo {
-		t.Fatalf("Expected to see correct summary, but did not: '%s'", output)
-	}
+	require.Exactlyf(t, expected, respTable[0].Rows, "Expected to see correct changes, but did not: '%s'", output)
+	require.Equalf(t, notesOp, respTable[0].Notes[0], "Expected to see correct summary, but did not: '%s'", output)
+	require.Equalf(t, notesWaitTo, respTable[0].Notes[1], "Expected to see correct summary, but did not: '%s'", output)
+
 }

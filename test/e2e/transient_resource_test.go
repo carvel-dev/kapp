@@ -4,11 +4,11 @@
 package e2e
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTransientResourceInspectDelete(t *testing.T) {
@@ -82,9 +82,7 @@ spec:
 			})
 		}
 
-		if !reflect.DeepEqual(replaceAge(respRows), expected) {
-			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
-		}
+		require.Exactlyf(t, expected, replaceAge(respRows), "Expected to see correct changes")
 	})
 
 	logger.Section("delete includes transient resource", func() {
@@ -132,9 +130,7 @@ spec:
 			})
 		}
 
-		if !reflect.DeepEqual(replaceAge(respRows), expected) {
-			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
-		}
+		require.Exactlyf(t, expected, replaceAge(respRows), "Expected to see correct changes")
 	})
 }
 
@@ -197,9 +193,8 @@ metadata:
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}}
-		if !reflect.DeepEqual(replaceAge(respRows), expected) {
-			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
-		}
+
+		require.Exactlyf(t, expected, replaceAge(respRows), "Expected to see correct changes")
 	})
 
 	logger.Section("delete with previously transient resource (now non-transient)", func() {
@@ -247,9 +242,7 @@ metadata:
 			})
 		}
 
-		if !reflect.DeepEqual(replaceAge(respRows), expected) {
-			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
-		}
+		require.Exactlyf(t, expected, replaceAge(respRows), "Expected to see correct changes")
 	})
 }
 

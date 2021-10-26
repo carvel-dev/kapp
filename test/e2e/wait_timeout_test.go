@@ -6,6 +6,8 @@ package e2e
 import (
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestWaitTimeout(t *testing.T) {
@@ -43,9 +45,7 @@ func TestWaitTimeout(t *testing.T) {
 			"100s", "--wait-resource-timeout", "1s", "--json"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
-		if !strings.Contains(err.Error(), "Resource timed out waiting after 1s") {
-			t.Fatalf("Expected to see timed out, but did not: '%s'", err.Error())
-		}
+		require.Containsf(t, err.Error(), "Resource timed out waiting after 1s", "Expected to see timed out, but did not")
 	})
 
 	cleanUp()
@@ -55,9 +55,7 @@ func TestWaitTimeout(t *testing.T) {
 			"1s", "--wait-resource-timeout", "100s", "--json"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
-		if !strings.Contains(err.Error(), "kapp: Error: Timed out waiting after 1s") {
-			t.Fatalf("Expected to see timed out, but did not: '%s'", err.Error())
-		}
+		require.Containsf(t, err.Error(), "kapp: Error: Timed out waiting after 1s", "Expected to see timed out, but did not")
 	})
 
 	cleanUp()
@@ -67,8 +65,6 @@ func TestWaitTimeout(t *testing.T) {
 			"10000s", "--wait-resource-timeout", "10000s", "--json"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
-		if err != nil {
-			t.Fatalf("Expected to be successful without resource timeout: '%s'", err)
-		}
+		require.NoErrorf(t, err, "Expected to be successful without resource timeout")
 	})
 }

@@ -4,11 +4,11 @@
 package e2e
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestInspect(t *testing.T) {
@@ -83,9 +83,7 @@ spec:
 			})
 		}
 
-		if !reflect.DeepEqual(replaceAge(respRows), expected) {
-			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
-		}
+		require.Exactlyf(t, expected, replaceAge(respRows), "Expected to see correct changes")
 	})
 
 	logger.Section("tree inspect", func() {
@@ -128,8 +126,6 @@ spec:
 			})
 		}
 
-		if !reflect.DeepEqual(replaceAge(respRows), expected) {
-			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
-		}
+		require.Exactlyf(t, expected, replaceAge(respRows), "Expected to see correct changes")
 	})
 }

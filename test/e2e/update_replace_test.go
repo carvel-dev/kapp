@@ -6,6 +6,8 @@ package e2e
 import (
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateFallbackOnReplace(t *testing.T) {
@@ -67,9 +69,7 @@ spec:
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 		curr := NewPresentClusterResource(objKind, objName, env.Namespace, kubectl)
 
-		if prev.UID() == curr.UID() {
-			t.Fatalf("Expected object to be replaced, but found same UID")
-		}
+		require.NotEqual(t, prev.UID(), curr.UID(), "Expected object to be replaced, but found same UID")
 	})
 
 	logger.Section("deploy update to service that does not set spec.clusterIP", func() {
@@ -78,9 +78,7 @@ spec:
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 		curr := NewPresentClusterResource(objKind, objName, env.Namespace, kubectl)
 
-		if prev.UID() != curr.UID() {
-			t.Fatalf("Expected object to be rebased, but found different UID")
-		}
+		require.Equal(t, prev.UID(), curr.UID(), "Expected object to be rebased, but found different UID")
 	})
 }
 
@@ -143,9 +141,7 @@ spec:
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 		curr := NewPresentClusterResource(objKind, objName, env.Namespace, kubectl)
 
-		if prev.UID() == curr.UID() {
-			t.Fatalf("Expected object to be replaced, but found same UID")
-		}
+		require.NotEqual(t, prev.UID(), curr.UID(), "Expected object to be replaced, but found same UID")
 	})
 
 	logger.Section("deploy update to service that does not set spec.clusterIP", func() {
@@ -154,8 +150,6 @@ spec:
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 		curr := NewPresentClusterResource(objKind, objName, env.Namespace, kubectl)
 
-		if prev.UID() != curr.UID() {
-			t.Fatalf("Expected object to be rebased, but found different UID")
-		}
+		require.Equal(t, prev.UID(), curr.UID(), "Expected object to be rebased, but found different UID")
 	})
 }

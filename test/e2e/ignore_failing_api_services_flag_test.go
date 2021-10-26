@@ -4,11 +4,11 @@
 package e2e
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIgnoreFailingAPIServices(t *testing.T) {
@@ -122,20 +122,16 @@ metadata:
 			"reconcile_state": "ok",
 		}}
 
-		if !reflect.DeepEqual(replaceAge(resp.Tables[0].Rows), expected) {
-			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
-		}
+		require.Exactlyf(t, expected, replaceAge(resp.Tables[0].Rows), "Expected to see correct changes")
 	})
 
 	logger.Section("deploy app that uses failing api service", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name3}, RunOpts{
 			AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml3)})
-		if err == nil {
-			t.Fatalf("Expected error when deploying with failing api service")
-		}
-		if !strings.Contains(err.Error(), "unable to retrieve the complete list of server APIs: dummykapptest.com/v1: the server is currently unable to handle the request") {
-			t.Fatalf("Expected api retrieval error but was '%s'", err)
-		}
+		require.Errorf(t, err, "Expected error when deploying with failing api service")
+
+		require.Contains(t, err.Error(), "unable to retrieve the complete list of server APIs: dummykapptest.com/v1: the server is currently unable to handle the request",
+			"Expected api retrieval error")
 	})
 
 	logger.Section("deploy app that uses failing api service and try to ignore it", func() {
@@ -143,12 +139,9 @@ metadata:
 
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name3, ignoreFlag}, RunOpts{
 			AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml3)})
-		if err == nil {
-			t.Fatalf("Expected error when deploying with failing api service")
-		}
-		if !strings.Contains(err.Error(), "Expected to find kind 'dummykapptest.com/v1/Foo', but did not") {
-			t.Fatalf("Expected CRD retrieval error but was '%s'", err)
-		}
+		require.Errorf(t, err, "Expected error when deploying with failing api service")
+
+		require.Contains(t, err.Error(), "Expected to find kind 'dummykapptest.com/v1/Foo', but did not", "Expected CRD retrieval error")
 	})
 
 	logger.Section("delete app that does not use api service", func() {
@@ -279,20 +272,15 @@ spec: {}
 			"reconcile_state": "ok",
 		}}
 
-		if !reflect.DeepEqual(replaceAge(resp.Tables[0].Rows), expected) {
-			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
-		}
+		require.Exactlyf(t, expected, replaceAge(resp.Tables[0].Rows), "Expected to see correct changes")
 	})
 
 	logger.Section("deploy app that uses failing group version", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name3, "--apply-timeout=5s"}, RunOpts{
 			AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml3)})
-		if err == nil {
-			t.Fatalf("Expected error when deploying with failing group version")
-		}
-		if !strings.Contains(err.Error(), `service "failing-group-version-webhook" not found`) {
-			t.Fatalf("Expected api retrieval error but was '%s'", err)
-		}
+		require.Errorf(t, err, "Expected error when deploying with failing group version")
+
+		require.Contains(t, err.Error(), `service "failing-group-version-webhook" not found`, "Expected api retrieval error")
 	})
 
 	logger.Section("delete app that uses failing group version", func() {

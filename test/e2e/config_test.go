@@ -4,7 +4,6 @@
 package e2e
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 
@@ -108,14 +107,10 @@ data:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
 		firstData := NewPresentClusterResource("configmap", "first", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"data"}))
-		if !reflect.DeepEqual(firstData, map[string]interface{}{"keep": "", "delete": ""}) {
-			t.Fatalf("Expected value to be correct: %#v", firstData)
-		}
+		require.Exactlyf(t, map[string]interface{}{"keep": "", "delete": ""}, firstData, "Expected value to be correct")
 
 		secondData := NewPresentClusterResource("configmap", "second", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"data"}))
-		if !reflect.DeepEqual(secondData, map[string]interface{}{"keep": "", "delete": ""}) {
-			t.Fatalf("Expected value to be correct: %#v", secondData)
-		}
+		require.Exactlyf(t, map[string]interface{}{"keep": "", "delete": ""}, secondData, "Expected value to be correct")
 	})
 
 	logger.Section("check rebases", func() {
@@ -123,14 +118,10 @@ data:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 		firstData := NewPresentClusterResource("configmap", "first", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"data"}))
-		if !reflect.DeepEqual(firstData, map[string]interface{}{"keep": "", "keep2": ""}) {
-			t.Fatalf("Expected value to be correct: %#v", firstData)
-		}
+		require.Exactlyf(t, map[string]interface{}{"keep": "", "keep2": ""}, firstData, "Expected value to be correct")
 
 		secondData := NewPresentClusterResource("configmap", "second", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"data"}))
-		if !reflect.DeepEqual(secondData, map[string]interface{}{"keep": "", "keep2": "", "delete": ""}) {
-			t.Fatalf("Expected value to be correct: %#v", secondData)
-		}
+		require.Exactlyf(t, map[string]interface{}{"keep": "", "keep2": "", "delete": ""}, secondData, "Expected value to be correct")
 	})
 }
 
@@ -199,24 +190,15 @@ secrets:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
 		secrets := NewPresentClusterResource("serviceaccount", "test-sa-with-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-		if len(secrets) != 2 {
-			t.Fatalf("Expected one set and one generated secret")
-		}
-		if !reflect.DeepEqual(secrets[0], map[string]interface{}{"name": "some-secret"}) {
-			t.Fatalf("Expected provided secret at idx0: %#v", secrets[0])
-		}
+		require.Len(t, secrets, 2, "Expected one set and one generated secret")
+		require.Exactlyf(t, map[string]interface{}{"name": "some-secret"}, secrets[0], "Expected provided secret at idx0: %#v", secrets[0])
+
 		generatedSecretName = secrets[1].(map[string]interface{})["name"].(string)
-		if !strings.HasPrefix(generatedSecretName, "test-sa-with-secrets-token-") {
-			t.Fatalf("Expected generated secret at idx1: %#v", secrets[1])
-		}
+		require.True(t, strings.HasPrefix(generatedSecretName, "test-sa-with-secrets-token-"), "Expected generated secret at idx1: %#v", secrets[1])
 
 		secrets = NewPresentClusterResource("serviceaccount", "test-sa-without-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-		if len(secrets) != 1 {
-			t.Fatalf("Expected one set and one generated secret")
-		}
-		if !strings.HasPrefix(secrets[0].(map[string]interface{})["name"].(string), "test-sa-without-secrets-token-") {
-			t.Fatalf("Expected generated secret at idx0: %#v", secrets[0])
-		}
+		require.Len(t, secrets, 1, "Expected one set and one generated secret")
+		require.True(t, strings.HasPrefix(secrets[0].(map[string]interface{})["name"].(string), "test-sa-without-secrets-token-"), "Expected generated secret at idx0: %#v", secrets[0])
 	})
 
 	ensureDeploysWithNoChanges := func(yamlContent string) {
@@ -228,12 +210,8 @@ secrets:
 				resp := uitest.JSONUIFromBytes(t, []byte(out))
 				expected := []map[string]string{}
 
-				if !reflect.DeepEqual(resp.Tables[0].Rows, expected) {
-					t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
-				}
-				if resp.Tables[0].Notes[0] != "Op:      0 create, 0 delete, 0 update, 0 noop" {
-					t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
-				}
+				require.Exactlyf(t, expected, resp.Tables[0].Rows, "Expected to see correct changes, but did not")
+				require.Equalf(t, "Op:      0 create, 0 delete, 0 update, 0 noop", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
 			})
 		}
 	}
@@ -245,18 +223,10 @@ secrets:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 		secrets := NewPresentClusterResource("serviceaccount", "test-sa-with-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-		if len(secrets) != 3 {
-			t.Fatalf("Expected one set and one generated secret")
-		}
-		if !reflect.DeepEqual(secrets[0], map[string]interface{}{"name": "some-secret"}) {
-			t.Fatalf("Expected provided secret at idx0: %#v", secrets[0])
-		}
-		if !reflect.DeepEqual(secrets[1], map[string]interface{}{"name": "new-some-secret"}) {
-			t.Fatalf("Expected provided secret at idx1: %#v", secrets[0])
-		}
-		if !reflect.DeepEqual(secrets[2], map[string]interface{}{"name": generatedSecretName}) {
-			t.Fatalf("Expected previous generated secret at idx2: %#v", secrets[1])
-		}
+		require.Len(t, secrets, 3, "Expected one set and one generated secret")
+		require.Exactlyf(t, map[string]interface{}{"name": "some-secret"}, secrets[0], "Expected provided secret at idx0")
+		require.Exactlyf(t, map[string]interface{}{"name": "new-some-secret"}, secrets[1], "Expected provided secret at idx1")
+		require.Exactlyf(t, map[string]interface{}{"name": generatedSecretName}, secrets[2], "Expected previous generated secret at idx2")
 	})
 
 	ensureDeploysWithNoChanges(yaml2)
@@ -266,23 +236,13 @@ secrets:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml3)})
 
 		secrets := NewPresentClusterResource("serviceaccount", "test-sa-with-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-		if len(secrets) != 1 {
-			t.Fatalf("Expected one set and one generated secret")
-		}
-		if !reflect.DeepEqual(secrets[0], map[string]interface{}{"name": generatedSecretName}) {
-			t.Fatalf("Expected previous generated secret at idx0: %#v", secrets[0])
-		}
+		require.Len(t, secrets, 1, "Expected one set and one generated secret")
+		require.Exactlyf(t, map[string]interface{}{"name": generatedSecretName}, secrets[0], "Expected previous generated secret at idx0")
 
 		secrets = NewPresentClusterResource("serviceaccount", "test-sa-without-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-		if len(secrets) != 2 {
-			t.Fatalf("Expected one set and one generated secret")
-		}
-		if !reflect.DeepEqual(secrets[0], map[string]interface{}{"name": "some-secret"}) {
-			t.Fatalf("Expected provided secret at idx0: %#v", secrets[0])
-		}
-		if !strings.HasPrefix(secrets[1].(map[string]interface{})["name"].(string), "test-sa-without-secrets-token-") {
-			t.Fatalf("Expected generated secret at idx1: %#v", secrets[1])
-		}
+		require.Len(t, secrets, 2, "Expected one set and one generated secret")
+		require.Exactlyf(t, map[string]interface{}{"name": "some-secret"}, secrets[0], "Expected provided secret at idx0")
+		require.True(t, strings.HasPrefix(secrets[1].(map[string]interface{})["name"].(string), "test-sa-without-secrets-token-"), "Expected generated secret at idx1: %#v", secrets[1])
 	})
 
 	ensureDeploysWithNoChanges(yaml3)
@@ -438,12 +398,8 @@ data:
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 		expected := []map[string]string{}
 
-		if !reflect.DeepEqual(resp.Tables[0].Rows, expected) {
-			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
-		}
-		if resp.Tables[0].Notes[0] != "Op:      0 create, 0 delete, 0 update, 0 noop" {
-			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
-		}
+		require.Exactlyf(t, expected, resp.Tables[0].Rows, "Expected to see correct changes, but did not")
+		require.Equalf(t, "Op:      0 create, 0 delete, 0 update, 0 noop", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
 
 		cm = NewPresentClusterResource("configmap", "test-cm", env.Namespace, kubectl)
 		data := cm.RawPath(ctlres.NewPathFromStrings([]string{"data"})).(map[string]interface{})
