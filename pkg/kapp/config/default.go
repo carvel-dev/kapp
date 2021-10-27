@@ -507,7 +507,7 @@ changeRuleBindings:
           matcher: *disableDefaultChangeGroupAnnMatcher
 
 # Insert roles/ClusterRoles before inserting any roleBinding/ClusterRoleBinding
-# Sometime Binding Creation fail as corresponding Role is not created.
+# Sometimes Binding Creation fail as corresponding Role is not created.
 # https://github.com/vmware-tanzu/carvel-kapp/issues/145
 - rules:
   - "upsert after upserting change-groups.kapp.k14s.io/rbac-roles"
@@ -515,7 +515,7 @@ changeRuleBindings:
   resourceMatchers:
   - andMatcher:
       matchers:
-      - anyMatcher: {matchers: *rbacRoleBindingMatchers}      
+      - anyMatcher: {matchers: *rbacRoleBindingMatchers}
       - notMatcher:
           matcher: *disableDefaultChangeGroupAnnMatcher
 
