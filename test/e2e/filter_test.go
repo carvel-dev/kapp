@@ -6,6 +6,8 @@ package e2e
 import (
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestFilter(t *testing.T) {
@@ -66,9 +68,7 @@ kapp-test  redis-config   ConfigMap  -       -    create  -       reconcile  -  
 Op:      2 create, 0 delete, 0 update, 0 noop
 Wait to: 2 reconcile, 0 delete, 0 noop
 `
-		if !strings.Contains(out, expectedOutput1) {
-			t.Fatalf("Did not find expected diff output >>%s<< in >>%s<<", out, expectedOutput1)
-		}
+		require.Contains(t, out, expectedOutput1, "Did not find expected diff output")
 	})
 
 	logger.Section("not equal filter label", func() {
@@ -83,9 +83,7 @@ kapp-test  redis-config   ConfigMap  -       -    create  -       reconcile  -  
 Op:      2 create, 0 delete, 0 update, 0 noop
 Wait to: 2 reconcile, 0 delete, 0 noop
 `
-		if !strings.Contains(out, expectedOutput2) {
-			t.Fatalf("Did not find expected diff output >>%s<< in >>%s<<", out, expectedOutput2)
-		}
+		require.Contains(t, out, expectedOutput2, "Did not find expected diff output")
 	})
 
 	logger.Section("test filter flag", func() {
@@ -99,9 +97,7 @@ kapp-test  redis-primary  Service  -       -    create  -       reconcile  -   -
 Op:      1 create, 0 delete, 0 update, 0 noop
 Wait to: 1 reconcile, 0 delete, 0 noop
 `
-		if !strings.Contains(out, expectedOutput3) {
-			t.Fatalf("Did not find expected diff output >>%s<< in >>%s<<", out, expectedOutput3)
-		}
+		require.Contains(t, out, expectedOutput3, "Did not find expected diff output")
 	})
 
 	logger.Section("test multiple filter flags together", func() {
@@ -117,8 +113,6 @@ kapp-test  redis-config2  ConfigMap  -       -    create  -       reconcile  -  
 Op:      1 create, 0 delete, 0 update, 0 noop
 Wait to: 1 reconcile, 0 delete, 0 noop
 `
-		if !strings.Contains(out, expectedOutput4) {
-			t.Fatalf("Did not find expected diff output >>%s<< in >>%s<<", out, expectedOutput4)
-		}
+		require.Contains(t, out, expectedOutput4, "Did not find expected diff output")
 	})
 }

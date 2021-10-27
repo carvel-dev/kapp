@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestFormattedError(t *testing.T) {
@@ -70,13 +72,6 @@ kapp: Error: Applying create job/successful-job (batch/v1) namespace: default:
 		replaceUIDs := regexp.MustCompile(`"controller-uid":"[^"]+"`)
 		out = replaceUIDs.ReplaceAllString(out, "-replaced-")
 
-		if !strings.Contains(out, expectedErr) {
-			t.Fatalf("Expected to see expected err in output, but did not: %d chars >>>%s<<< vs %d chars >>>%s<<<",
-				len(out), replaceSpace(out), len(expectedErr), replaceSpace(expectedErr))
-		}
+		require.Containsf(t, out, expectedErr, "Expected to see expected err in output, but did not")
 	})
-}
-
-func replaceSpace(in string) string {
-	return strings.ReplaceAll(in, " ", "#")
 }

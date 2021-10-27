@@ -4,12 +4,12 @@
 package e2e
 
 import (
-	"reflect"
 	"regexp"
 	"strings"
 	"testing"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDiff(t *testing.T) {
@@ -114,15 +114,9 @@ data:
 			"reconcile_state": "",
 		}}
 
-		if !reflect.DeepEqual(resp.Tables[0].Rows, expected) {
-			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
-		}
-		if resp.Tables[0].Notes[0] != "Op:      3 create, 0 delete, 0 update, 0 noop" {
-			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
-		}
-		if resp.Tables[0].Notes[1] != "Wait to: 3 reconcile, 0 delete, 0 noop" {
-			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
-		}
+		require.Exactlyf(t, expected, resp.Tables[0].Rows, "Expected to see correct changes, but did not")
+		require.Equalf(t, "Op:      3 create, 0 delete, 0 update, 0 noop", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
+		require.Equalf(t, "Wait to: 3 reconcile, 0 delete, 0 noop", resp.Tables[0].Notes[1], "Expected to see correct summary, but did not")
 	})
 
 	logger.Section("deploy no change", func() {
@@ -132,15 +126,9 @@ data:
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 		expected := []map[string]string{}
 
-		if !reflect.DeepEqual(resp.Tables[0].Rows, expected) {
-			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
-		}
-		if resp.Tables[0].Notes[0] != "Op:      0 create, 0 delete, 0 update, 0 noop" {
-			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
-		}
-		if resp.Tables[0].Notes[1] != "Wait to: 0 reconcile, 0 delete, 0 noop" {
-			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
-		}
+		require.Exactlyf(t, expected, resp.Tables[0].Rows, "Expected to see correct changes, but did not")
+		require.Equalf(t, "Op:      0 create, 0 delete, 0 update, 0 noop", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
+		require.Equalf(t, "Wait to: 0 reconcile, 0 delete, 0 noop", resp.Tables[0].Notes[1], "Expected to see correct summary, but did not")
 	})
 
 	logger.Section("deploy update with 1 delete, 1 update, 1 create", func() {
@@ -184,15 +172,9 @@ data:
 			"reconcile_state": "",
 		}}
 
-		if !reflect.DeepEqual(replaceAge(resp.Tables[0].Rows), expected) {
-			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
-		}
-		if resp.Tables[0].Notes[0] != "Op:      1 create, 1 delete, 1 update, 0 noop" {
-			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
-		}
-		if resp.Tables[0].Notes[1] != "Wait to: 2 reconcile, 1 delete, 0 noop" {
-			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
-		}
+		require.Exactlyf(t, expected, replaceAge(resp.Tables[0].Rows), "Expected to see correct changes, but did not")
+		require.Equalf(t, "Op:      1 create, 1 delete, 1 update, 0 noop", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
+		require.Equalf(t, "Wait to: 2 reconcile, 1 delete, 0 noop", resp.Tables[0].Notes[1], "Expected to see correct summary, but did not")
 	})
 
 	logger.Section("delete", func() {
@@ -235,15 +217,9 @@ data:
 			"reconcile_state": "ok",
 		}}
 
-		if !reflect.DeepEqual(replaceAge(resp.Tables[0].Rows), expected) {
-			t.Fatalf("Expected to see correct changes, but did not: '%s'", out)
-		}
-		if resp.Tables[0].Notes[0] != "Op:      0 create, 3 delete, 0 update, 0 noop" {
-			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
-		}
-		if resp.Tables[0].Notes[1] != "Wait to: 0 reconcile, 3 delete, 0 noop" {
-			t.Fatalf("Expected to see correct summary, but did not: '%s'", out)
-		}
+		require.Exactlyf(t, expected, replaceAge(resp.Tables[0].Rows), "Expected to see correct changes, but did not")
+		require.Equalf(t, "Op:      0 create, 3 delete, 0 update, 0 noop", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
+		require.Equalf(t, "Wait to: 0 reconcile, 3 delete, 0 noop", resp.Tables[0].Notes[1], "Expected to see correct summary, but did not")
 	})
 }
 
@@ -262,16 +238,11 @@ func TestDiffExitStatus(t *testing.T) {
 	_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
 		"--diff-run", "--diff-exit-status", "--dangerous-allow-empty-list-of-resources"},
 		RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader("---\n")})
-	if err == nil {
-		t.Fatalf("Expected to receive error")
-	}
 
-	if !strings.Contains(err.Error(), "Exiting after diffing with no pending changes (exit status 2)") {
-		t.Fatalf("Expected to find stderr output")
-	}
-	if !strings.Contains(err.Error(), "exit code: '2'") {
-		t.Fatalf("Expected to find exit code")
-	}
+	require.Errorf(t, err, "Expected to receive error")
+
+	require.Containsf(t, err.Error(), "Exiting after diffing with no pending changes (exit status 2)", "Expected to find stderr output")
+	require.Containsf(t, err.Error(), "exit code: '2'", "Expected to find exit code")
 
 	yaml1 := `
 apiVersion: v1
@@ -283,16 +254,11 @@ metadata:
 	_, err = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
 		"--diff-run", "--diff-exit-status"},
 		RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
-	if err == nil {
-		t.Fatalf("Expected to receive error")
-	}
 
-	if !strings.Contains(err.Error(), "Exiting after diffing with pending changes (exit status 3)") {
-		t.Fatalf("Expected to find stderr output")
-	}
-	if !strings.Contains(err.Error(), "exit code: '3'") {
-		t.Fatalf("Expected to find exit code")
-	}
+	require.Errorf(t, err, "Expected to receive error")
+
+	require.Containsf(t, err.Error(), "Exiting after diffing with pending changes (exit status 3)", "Expected to find stderr output")
+	require.Containsf(t, err.Error(), "exit code: '3'", "Expected to find exit code")
 }
 
 func TestDiffMaskRules(t *testing.T) {
@@ -402,9 +368,7 @@ data:
 
 	out = replaceAnnsLabels(out)
 
-	if !strings.Contains(out, expectedOutput) {
-		t.Fatalf("Did not find expected diff output >>%s<< in >>%s<<", out, expectedOutput)
-	}
+	require.Containsf(t, out, expectedOutput, "Did not find expected diff output")
 
 	out, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "-c", "-p"},
 		RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
@@ -419,9 +383,7 @@ data:
   5,  5   metadata:
 `
 
-	if !strings.Contains(out, expectedOutput) {
-		t.Fatalf("Did not find expected diff output >>%s<< in >>%s<<", out, expectedOutput)
-	}
+	require.Containsf(t, out, expectedOutput, "Did not find expected diff output")
 }
 
 func replaceAge(result []map[string]string) []map[string]string {

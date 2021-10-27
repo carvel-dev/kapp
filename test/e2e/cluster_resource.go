@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -41,9 +42,9 @@ func NewPresentClusterResource(kind, name, ns string, kubectl Kubectl) ClusterRe
 
 func NewMissingClusterResource(t *testing.T, kind, name, ns string, kubectl Kubectl) {
 	_, err := kubectl.RunWithOpts([]string{"get", kind, name, "-n", ns, "-o", "yaml"}, RunOpts{AllowError: true})
-	if err == nil || !strings.Contains(err.Error(), "Error from server (NotFound)") {
-		t.Fatalf("Expected resource to not exist")
-	}
+	require.Condition(t, func() bool {
+		return err != nil && strings.Contains(err.Error(), "Error from server (NotFound)")
+	}, "Expected resource to not exist")
 }
 
 func (r ClusterResource) UID() string {

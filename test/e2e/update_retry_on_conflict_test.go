@@ -10,6 +10,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateRetryOnConflict_WithoutConflict(t *testing.T) {
@@ -182,15 +184,13 @@ spec:
 		_, err := kapp.RunWithOpts([]string{"deploy", "--tty", "-f", tmpFile.Name(), "-a", name},
 			RunOpts{IntoNs: true, StdinReader: promptOutput.YesReader(),
 				StdoutWriter: promptOutput.OutputWriter(), Interactive: true, AllowError: true})
-		if err == nil {
-			t.Fatalf("Expected error, but err was nil")
-		}
-		if !strings.Contains(err.Error(), "Failed to update due to resource conflict (approved diff no longer matches)") {
-			t.Fatalf("Expected error to include resource conflict description, but was '%s'", err)
-		}
-		if !strings.Contains(err.Error(), "please apply your changes to the latest version and try again (reason: Conflict)") {
-			t.Fatalf("Expected error to include k8s reason, but was '%s'", err)
-		}
+		require.Errorf(t, err, "Expected error, but err was nil")
+
+		require.Contains(t, err.Error(), "Failed to update due to resource conflict (approved diff no longer matches)",
+			"Expected error to include resource conflict description")
+
+		require.Contains(t, err.Error(), "please apply your changes to the latest version and try again (reason: Conflict)",
+			"Expected error to include k8s reason")
 	})
 }
 
@@ -292,13 +292,11 @@ type promptOutput struct {
 
 func newPromptOutput(t *testing.T) promptOutput {
 	yesReader, yesWriter, err := os.Pipe()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	outputReader, outputWriter, err := os.Pipe()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	return promptOutput{t, yesWriter, yesReader, outputWriter, outputReader}
 }
 
@@ -314,21 +312,19 @@ func (p promptOutput) WaitPresented() {
 			break
 		}
 	}
-	if err := scanner.Err(); err != nil {
-		p.t.Fatal(err)
-	}
+	err := scanner.Err()
+	require.NoError(p.t, err)
 }
 
 func newTmpFile(content string, t *testing.T) *os.File {
 	file, err := ioutil.TempFile("", "kapp-test-update-retry-on-conflict")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := file.Write([]byte(content)); err != nil {
-		t.Fatal(err)
-	}
-	if err := file.Close(); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
+	_, err = file.Write([]byte(content))
+	require.NoError(t, err)
+
+	err = file.Close()
+	require.NoError(t, err)
+
 	return file
 }

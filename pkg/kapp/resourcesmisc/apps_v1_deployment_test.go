@@ -9,6 +9,7 @@ import (
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAppsV1DeploymentMinRepAvailable(t *testing.T) {
@@ -45,23 +46,22 @@ status:
 		Successful: false,
 		Message:    "Waiting for at least 1 available replicas (currently 4 available)",
 	}
-	if state != expectedState {
-		t.Fatalf("Found incorrect state: %#v", state)
-	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
 
 	configYAML = strings.Replace(configYAML, "availableReplicas: 4", "availableReplicas: 5", -1)
 
 	state = buildDep(configYAML, t).IsDoneApplying()
-	if state != (ctlresm.DoneApplyState{Done: true, Successful: true, Message: ""}) {
-		t.Fatalf("Found incorrect state: %#v", state)
+	expectedState = ctlresm.DoneApplyState{
+		Done:       true,
+		Successful: true,
+		Message:    "",
 	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
 }
 
 func buildDep(resourcesBs string, t *testing.T) *ctlresm.AppsV1Deployment {
 	newResources, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(resourcesBs))).Resources()
-	if err != nil {
-		t.Fatalf("Expected resources to parse")
-	}
+	require.NoErrorf(t, err, "Expected resources to parse")
 
 	return ctlresm.NewAppsV1Deployment(newResources[0], newResources[1:])
 }

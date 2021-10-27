@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type Env struct {
@@ -35,7 +37,5 @@ func (e Env) Validate(t *testing.T) {
 		errStrs = append(errStrs, "Expected Namespace to be non-empty")
 	}
 
-	if len(errStrs) > 0 {
-		t.Fatalf("%s", strings.Join(errStrs, "\n"))
-	}
+	require.Lenf(t, errStrs, 0, "%s", strings.Join(errStrs, "\n"))
 }
