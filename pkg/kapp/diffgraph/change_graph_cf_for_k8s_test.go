@@ -78,9 +78,7 @@ func TestChangeGraphCFForK8sDelete(t *testing.T) {
 const (
 	cfForK8sExpectedOutputUpsert = `
 (upsert) clusterrole/kpack-watcher (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/kpack-watcher-binding (rbac.authorization.k8s.io/v1) cluster
 (upsert) namespace/cf-workloads-staging (v1) cluster
-(upsert) clusterrolebinding/cc-api-service-account-superuser (rbac.authorization.k8s.io/v1) cluster
 (upsert) podsecuritypolicy/cf-workloads-app-psp (policy/v1beta1) cluster
 (upsert) podsecuritypolicy/cf-workloads-privileged-app-psp (policy/v1beta1) cluster
 (upsert) podsecuritypolicy/eirini (policy/v1beta1) cluster
@@ -89,7 +87,6 @@ const (
 (upsert) customresourcedefinition/builders.build.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) customresourcedefinition/clusterbuilders.build.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) clusterrole/kpack-controller-admin (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/kpack-controller-admin-binding (rbac.authorization.k8s.io/v1) cluster
 (upsert) customresourcedefinition/custombuilders.experimental.kpack.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) customresourcedefinition/customclusterbuilders.experimental.kpack.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) customresourcedefinition/images.build.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
@@ -98,13 +95,9 @@ const (
 (upsert) customresourcedefinition/stores.experimental.kpack.pivotal.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) mutatingwebhookconfiguration/resource.webhook.kpack.pivotal.io (admissionregistration.k8s.io/v1beta1) cluster
 (upsert) clusterrole/kpack-webhook-mutatingwebhookconfiguration-admin (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/kpack-webhook-certs-mutatingwebhookconfiguration-admin-binding (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/fluentd-service-account-pod-namespace-read (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/metric-proxy (rbac.authorization.k8s.io/v1) cluster
 (upsert) namespace/cf-blobstore (v1) cluster
 (upsert) customresourcedefinition/routebulksyncs.apps.cloudfoundry.org (apiextensions.k8s.io/v1beta1) cluster
 (upsert) clusterrole/istio-reader-istio-system (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/istio-reader-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) customresourcedefinition/attributemanifests.config.istio.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) customresourcedefinition/clusterrbacconfigs.rbac.istio.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) customresourcedefinition/destinationrules.networking.istio.io (apiextensions.k8s.io/v1beta1) cluster
@@ -130,21 +123,14 @@ const (
 (upsert) customresourcedefinition/authorizationpolicies.security.istio.io (apiextensions.k8s.io/v1beta1) cluster
 (upsert) namespace/istio-system (v1) cluster
 (upsert) clusterrole/istio-citadel-istio-system (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/istio-citadel-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrole/istio-galley-istio-system (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/istio-galley-admin-role-binding-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrole/istio-sidecar-injector-istio-system (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/istio-sidecar-injector-admin-role-binding-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) mutatingwebhookconfiguration/istio-sidecar-injector (admissionregistration.k8s.io/v1beta1) cluster
 (upsert) clusterrole/istio-pilot-istio-system (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/istio-pilot-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrole/istio-policy (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/istio-policy-admin-role-binding-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrole/istio-mixer-istio-system (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/istio-mixer-admin-role-binding-istio-system (rbac.authorization.k8s.io/v1) cluster
 (upsert) namespace/metacontroller (v1) cluster
 (upsert) clusterrole/metacontroller (rbac.authorization.k8s.io/v1) cluster
-(upsert) clusterrolebinding/metacontroller (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrole/aggregate-metacontroller-view (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrole/aggregate-metacontroller-edit (rbac.authorization.k8s.io/v1) cluster
 (upsert) customresourcedefinition/compositecontrollers.metacontroller.k8s.io (apiextensions.k8s.io/v1beta1) cluster
@@ -155,7 +141,6 @@ const (
 (upsert) namespace/cf-workloads (v1) cluster
 ---
 (upsert) role/kpack-watcher-pod-logs-reader (rbac.authorization.k8s.io/v1) namespace: cf-workloads
-(upsert) rolebinding/kpack-watcher-pod-logs-binding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
 (upsert) configmap/cloud-controller-ng-yaml (v1) namespace: cf-system
 (upsert) configmap/nginx (v1) namespace: cf-system
 (upsert) secret/opi-secrets (v1) namespace: cf-system
@@ -171,10 +156,6 @@ const (
 (upsert) role/cf-workloads-privileged-app-role (rbac.authorization.k8s.io/v1) namespace: cf-workloads
 (upsert) role/eirini-role (rbac.authorization.k8s.io/v1) namespace: cf-workloads
 (upsert) role/eirini-role (rbac.authorization.k8s.io/v1) namespace: cf-system
-(upsert) rolebinding/cf-workloads-app-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
-(upsert) rolebinding/cf-workloads-privileged-app-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
-(upsert) rolebinding/eirini-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
-(upsert) rolebinding/eirini-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-system
 (upsert) secret/eirini-internal-tls-certs (v1) namespace: cf-system
 (upsert) networkpolicy/allow-app-ingress-from-ingressgateway (networking.k8s.io/v1) namespace: cf-workloads
 (upsert) secret/app-registry-credentials (v1) namespace: cf-workloads
@@ -182,7 +163,6 @@ const (
 (upsert) serviceaccount/controller (v1) namespace: kpack
 (upsert) serviceaccount/webhook (v1) namespace: kpack
 (upsert) role/kpack-webhook-certs-admin (rbac.authorization.k8s.io/v1) namespace: kpack
-(upsert) rolebinding/kpack-webhook-certs-admin-binding (rbac.authorization.k8s.io/v1) namespace: kpack
 (upsert) serviceaccount/fluentd-service-account (v1) namespace: cf-system
 (upsert) clusterrole/pod-namespace-read (rbac.authorization.k8s.io/v1) namespace: cf-system
 (upsert) configmap/fluentd-config (v1) namespace: cf-system
@@ -212,7 +192,6 @@ const (
 (upsert) serviceaccount/istio-galley-service-account (v1) namespace: istio-system
 (upsert) poddisruptionbudget/ingressgateway (policy/v1beta1) namespace: istio-system
 (upsert) role/istio-ingressgateway-sds (rbac.authorization.k8s.io/v1) namespace: istio-system
-(upsert) rolebinding/istio-ingressgateway-sds (rbac.authorization.k8s.io/v1) namespace: istio-system
 (upsert) serviceaccount/istio-ingressgateway-service-account (v1) namespace: istio-system
 (upsert) configmap/injector-mesh (v1) namespace: istio-system
 (upsert) poddisruptionbudget/istio-sidecar-injector (policy/v1beta1) namespace: istio-system
@@ -241,6 +220,28 @@ const (
 (upsert) configmap/uaa-config (v1) namespace: cf-system
 (upsert) serviceaccount/uaa (v1) namespace: cf-system
 (upsert) secret/uaa-certs (v1) namespace: cf-system
+---
+(upsert) clusterrolebinding/kpack-watcher-binding (rbac.authorization.k8s.io/v1) cluster
+(upsert) rolebinding/kpack-watcher-pod-logs-binding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(upsert) clusterrolebinding/cc-api-service-account-superuser (rbac.authorization.k8s.io/v1) cluster
+(upsert) rolebinding/cf-workloads-app-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(upsert) rolebinding/cf-workloads-privileged-app-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(upsert) rolebinding/eirini-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
+(upsert) rolebinding/eirini-rolebinding (rbac.authorization.k8s.io/v1) namespace: cf-system
+(upsert) clusterrolebinding/kpack-controller-admin-binding (rbac.authorization.k8s.io/v1) cluster
+(upsert) rolebinding/kpack-webhook-certs-admin-binding (rbac.authorization.k8s.io/v1) namespace: kpack
+(upsert) clusterrolebinding/kpack-webhook-certs-mutatingwebhookconfiguration-admin-binding (rbac.authorization.k8s.io/v1) cluster
+(upsert) clusterrolebinding/fluentd-service-account-pod-namespace-read (rbac.authorization.k8s.io/v1) cluster
+(upsert) clusterrolebinding/metric-proxy (rbac.authorization.k8s.io/v1) cluster
+(upsert) clusterrolebinding/istio-reader-istio-system (rbac.authorization.k8s.io/v1) cluster
+(upsert) clusterrolebinding/istio-citadel-istio-system (rbac.authorization.k8s.io/v1) cluster
+(upsert) clusterrolebinding/istio-galley-admin-role-binding-istio-system (rbac.authorization.k8s.io/v1) cluster
+(upsert) rolebinding/istio-ingressgateway-sds (rbac.authorization.k8s.io/v1) namespace: istio-system
+(upsert) clusterrolebinding/istio-sidecar-injector-admin-role-binding-istio-system (rbac.authorization.k8s.io/v1) cluster
+(upsert) clusterrolebinding/istio-pilot-istio-system (rbac.authorization.k8s.io/v1) cluster
+(upsert) clusterrolebinding/istio-policy-admin-role-binding-istio-system (rbac.authorization.k8s.io/v1) cluster
+(upsert) clusterrolebinding/istio-mixer-admin-role-binding-istio-system (rbac.authorization.k8s.io/v1) cluster
+(upsert) clusterrolebinding/metacontroller (rbac.authorization.k8s.io/v1) cluster
 ---
 (upsert) deployment/capi-api-server (apps/v1) namespace: cf-system
 (upsert) deployment/capi-kpack-watcher (apps/v1) namespace: cf-system

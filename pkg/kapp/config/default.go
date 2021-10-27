@@ -406,20 +406,30 @@ changeGroupBindings:
   - apiVersionKindMatcher: {kind: PersistentVolume, apiVersion: v1}
   - apiVersionKindMatcher: {kind: PersistentVolumeClaim, apiVersion: v1}
 
-- name: change-groups.kapp.k14s.io/rbac
-  resourceMatchers: &rbacMatchers
+- name: change-groups.kapp.k14s.io/rbac-roles
+  resourceMatchers: &rbacRoleMatchers
   - apiVersionKindMatcher: {kind: ClusterRole, apiVersion: rbac.authorization.k8s.io/v1}
   - apiVersionKindMatcher: {kind: ClusterRole, apiVersion: rbac.authorization.k8s.io/v1alpha1}
   - apiVersionKindMatcher: {kind: ClusterRole, apiVersion: rbac.authorization.k8s.io/v1beta1}
-  - apiVersionKindMatcher: {kind: ClusterRoleBinding, apiVersion: rbac.authorization.k8s.io/v1}
-  - apiVersionKindMatcher: {kind: ClusterRoleBinding, apiVersion: rbac.authorization.k8s.io/v1alpha1}
-  - apiVersionKindMatcher: {kind: ClusterRoleBinding, apiVersion: rbac.authorization.k8s.io/v1beta1}
   - apiVersionKindMatcher: {kind: Role, apiVersion: rbac.authorization.k8s.io/v1}
   - apiVersionKindMatcher: {kind: Role, apiVersion: rbac.authorization.k8s.io/v1alpha1}
   - apiVersionKindMatcher: {kind: Role, apiVersion: rbac.authorization.k8s.io/v1beta1}
+  
+- name: change-groups.kapp.k14s.io/rbac-role-bindings
+  resourceMatchers: &rbacRoleBindingMatchers
+  - apiVersionKindMatcher: {kind: ClusterRoleBinding, apiVersion: rbac.authorization.k8s.io/v1}
+  - apiVersionKindMatcher: {kind: ClusterRoleBinding, apiVersion: rbac.authorization.k8s.io/v1alpha1}
+  - apiVersionKindMatcher: {kind: ClusterRoleBinding, apiVersion: rbac.authorization.k8s.io/v1beta1}
   - apiVersionKindMatcher: {kind: RoleBinding, apiVersion: rbac.authorization.k8s.io/v1}
   - apiVersionKindMatcher: {kind: RoleBinding, apiVersion: rbac.authorization.k8s.io/v1alpha1}
   - apiVersionKindMatcher: {kind: RoleBinding, apiVersion: rbac.authorization.k8s.io/v1beta1}
+
+- name: change-groups.kapp.k14s.io/rbac
+  resourceMatchers: &rbacMatchers
+  - anyMatcher:
+      matchers:
+        - anyMatcher: {matchers: *rbacRoleMatchers}
+        - anyMatcher: {matchers: *rbacRoleBindingMatchers}
 
 - name: change-groups.kapp.k14s.io/pod-related
   resourceMatchers: &podRelatedMatchers
@@ -493,6 +503,19 @@ changeRuleBindings:
   - andMatcher:
       matchers:
       - hasNamespaceMatcher: {}
+      - notMatcher:
+          matcher: *disableDefaultChangeGroupAnnMatcher
+
+# Insert roles/ClusterRoles before inserting any roleBinding/ClusterRoleBinding
+# Sometimes Binding Creation fail as corresponding Role is not created.
+# https://github.com/vmware-tanzu/carvel-kapp/issues/145
+- rules:
+  - "upsert after upserting change-groups.kapp.k14s.io/rbac-roles"
+  ignoreIfCyclical: true
+  resourceMatchers:
+  - andMatcher:
+      matchers:
+      - anyMatcher: {matchers: *rbacRoleBindingMatchers}
       - notMatcher:
           matcher: *disableDefaultChangeGroupAnnMatcher
 
