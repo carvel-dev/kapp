@@ -28,7 +28,7 @@ type ExistsStrategy struct {
 func (e ExistsStrategy) Op() ClusterChangeApplyStrategyOp { return "" }
 
 func (e ExistsStrategy) Apply() error {
-	exists, err := e.identifiedResources.Exists(e.res, ctlres.ExistsOpts{})
+	_, exists, err := e.identifiedResources.Exists(e.res, ctlres.ExistsOpts{})
 	if !exists {
 		if err != nil {
 			return err
