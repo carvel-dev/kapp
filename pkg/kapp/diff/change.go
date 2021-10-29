@@ -20,7 +20,7 @@ const (
 )
 
 const (
-	ExternalResourceAnnKey = "kapp.k14s.io/external-resource" // Value is ignored
+	UnmanagedResourceAnnKey = "kapp.k14s.io/unmanaged" // Value is ignored
 )
 
 type Change interface {
@@ -82,7 +82,7 @@ func (d *ChangeImpl) AppliedResource() ctlres.Resource  { return d.appliedRes }
 
 func (d *ChangeImpl) Op() ChangeOp {
 	if d.newRes != nil {
-		if _, ok := d.newRes.Annotations()[ExternalResourceAnnKey]; ok {
+		if _, ok := d.newRes.Annotations()[UnmanagedResourceAnnKey]; ok {
 			return ChangeOpExists
 		}
 	}
