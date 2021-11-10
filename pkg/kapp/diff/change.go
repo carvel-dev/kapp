@@ -20,7 +20,7 @@ const (
 )
 
 const (
-	UnmanagedResourceAnnKey = "kapp.k14s.io/unmanaged" // Value is ignored
+	ExistsAnnKey = "kapp.k14s.io/exists" // Value is ignored
 )
 
 type Change interface {
@@ -82,7 +82,7 @@ func (d *ChangeImpl) AppliedResource() ctlres.Resource  { return d.appliedRes }
 
 func (d *ChangeImpl) Op() ChangeOp {
 	if d.existingRes == nil {
-		if hasUnmanagedResourceAnnotation(d.newRes) {
+		if hasExistsAnnotation(d.newRes) {
 			return ChangeOpExists
 		}
 		return ChangeOpAdd
@@ -93,7 +93,7 @@ func (d *ChangeImpl) Op() ChangeOp {
 	}
 
 	if d.ConfigurableTextDiff().Full().HasChanges() {
-		if hasUnmanagedResourceAnnotation(d.newRes) {
+		if hasExistsAnnotation(d.newRes) {
 			return ChangeOpKeep
 		}
 		return ChangeOpUpdate
@@ -160,7 +160,7 @@ func (d *ChangeImpl) calculateOpsDiff() OpsDiff {
 	return OpsDiff(patch.Diff{Left: existingObj, Right: newObj}.Calculate())
 }
 
-func hasUnmanagedResourceAnnotation(res ctlres.Resource) bool {
-	_, hasUnmanagedResourceAnnotation := res.Annotations()[UnmanagedResourceAnnKey]
-	return hasUnmanagedResourceAnnotation
+func hasExistsAnnotation(res ctlres.Resource) bool {
+	_, hasExistsAnnotation := res.Annotations()[ExistsAnnKey]
+	return hasExistsAnnotation
 }

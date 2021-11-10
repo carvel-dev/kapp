@@ -29,7 +29,7 @@ metadata:
   name: external
   namespace: kapp-ns
   annotations:
-    kapp.k14s.io/unmanaged: ""
+    kapp.k14s.io/exists: ""
 `
 
 	name := "app"
