@@ -81,13 +81,10 @@ func (d *ChangeImpl) ExistingResource() ctlres.Resource { return d.existingRes }
 func (d *ChangeImpl) AppliedResource() ctlres.Resource  { return d.appliedRes }
 
 func (d *ChangeImpl) Op() ChangeOp {
-	if d.newRes != nil {
-		if _, ok := d.newRes.Annotations()[UnmanagedResourceAnnKey]; ok {
+	if d.existingRes == nil {
+		if hasUnmanagedResourceAnnotation(d.newRes) {
 			return ChangeOpExists
 		}
-	}
-
-	if d.existingRes == nil {
 		return ChangeOpAdd
 	}
 
@@ -96,6 +93,9 @@ func (d *ChangeImpl) Op() ChangeOp {
 	}
 
 	if d.ConfigurableTextDiff().Full().HasChanges() {
+		if hasUnmanagedResourceAnnotation(d.newRes) {
+			return ChangeOpKeep
+		}
 		return ChangeOpUpdate
 	}
 
@@ -158,4 +158,9 @@ func (d *ChangeImpl) calculateOpsDiff() OpsDiff {
 	}
 
 	return OpsDiff(patch.Diff{Left: existingObj, Right: newObj}.Calculate())
+}
+
+func hasUnmanagedResourceAnnotation(res ctlres.Resource) bool {
+	_, hasUnmanagedResourceAnnotation := res.Annotations()[UnmanagedResourceAnnKey]
+	return hasUnmanagedResourceAnnotation
 }
