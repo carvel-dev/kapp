@@ -29,7 +29,6 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
-          input: '.'
           ignore-unfixed: true
           format: 'template'
           template: '@/contrib/sarif.tpl'
