@@ -1,26 +1,33 @@
 # cloud.google.com/go v0.65.0
+## explicit; go 1.11
 cloud.google.com/go/compute/metadata
 # github.com/Azure/go-autorest v14.2.0+incompatible
+## explicit
 github.com/Azure/go-autorest
 # github.com/Azure/go-autorest/autorest v0.11.18
+## explicit; go 1.12
 github.com/Azure/go-autorest/autorest
 github.com/Azure/go-autorest/autorest/azure
 # github.com/Azure/go-autorest/autorest/adal v0.9.13
+## explicit; go 1.12
 github.com/Azure/go-autorest/autorest/adal
 # github.com/Azure/go-autorest/autorest/date v0.3.0
+## explicit; go 1.12
 github.com/Azure/go-autorest/autorest/date
 # github.com/Azure/go-autorest/logger v0.2.1
+## explicit; go 1.12
 github.com/Azure/go-autorest/logger
 # github.com/Azure/go-autorest/tracing v0.6.0
+## explicit; go 1.12
 github.com/Azure/go-autorest/tracing
 # github.com/cppforlife/cobrautil v0.0.0-20200514214827-bb86e6965d72
 ## explicit
 github.com/cppforlife/cobrautil
 # github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
-## explicit
+## explicit; go 1.13
 github.com/cppforlife/color
 # github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
-## explicit
+## explicit; go 1.13
 github.com/cppforlife/go-cli-ui/errors
 github.com/cppforlife/go-cli-ui/ui
 github.com/cppforlife/go-cli-ui/ui/table
@@ -29,33 +36,41 @@ github.com/cppforlife/go-cli-ui/ui/test
 ## explicit
 github.com/cppforlife/go-patch/patch
 # github.com/davecgh/go-spew v1.1.1
+## explicit
 github.com/davecgh/go-spew/spew
 # github.com/form3tech-oss/jwt-go v3.2.3+incompatible
+## explicit
 github.com/form3tech-oss/jwt-go
 # github.com/ghodss/yaml v1.0.0
 ## explicit
 github.com/ghodss/yaml
 # github.com/go-logr/logr v0.4.0
+## explicit; go 1.14
 github.com/go-logr/logr
 # github.com/gogo/protobuf v1.3.2
+## explicit; go 1.15
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
 # github.com/golang/protobuf v1.5.2
+## explicit; go 1.9
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/google/go-cmp v0.5.5
+## explicit; go 1.8
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
 # github.com/google/gofuzz v1.2.0
+## explicit; go 1.12
 github.com/google/gofuzz
 github.com/google/gofuzz/bytesource
 # github.com/googleapis/gnostic v0.5.5
+## explicit; go 1.12
 github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
 github.com/googleapis/gnostic/jsonschema
@@ -64,15 +79,19 @@ github.com/googleapis/gnostic/openapiv2
 ## explicit
 github.com/hashicorp/go-version
 # github.com/imdario/mergo v0.3.10
+## explicit; go 1.13
 github.com/imdario/mergo
 # github.com/inconshreveable/mousetrap v1.0.0
+## explicit
 github.com/inconshreveable/mousetrap
 # github.com/json-iterator/go v1.1.11
+## explicit; go 1.12
 github.com/json-iterator/go
 # github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57
 ## explicit
 github.com/k14s/difflib
 # github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368
+## explicit; go 1.13
 github.com/k14s/starlark-go/internal/compile
 github.com/k14s/starlark-go/internal/spell
 github.com/k14s/starlark-go/resolve
@@ -80,7 +99,7 @@ github.com/k14s/starlark-go/starlark
 github.com/k14s/starlark-go/starlarkstruct
 github.com/k14s/starlark-go/syntax
 # github.com/k14s/ytt v0.36.0
-## explicit
+## explicit; go 1.16
 github.com/k14s/ytt/pkg/cmd/template
 github.com/k14s/ytt/pkg/cmd/ui
 github.com/k14s/ytt/pkg/filepos
@@ -99,44 +118,51 @@ github.com/k14s/ytt/pkg/yamltemplate
 github.com/k14s/ytt/pkg/yttlibrary
 github.com/k14s/ytt/pkg/yttlibrary/overlay
 # github.com/mattn/go-colorable v0.1.8
+## explicit; go 1.13
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.12
+## explicit; go 1.12
 github.com/mattn/go-isatty
 # github.com/mitchellh/go-wordwrap v1.0.1
-## explicit
+## explicit; go 1.14
 github.com/mitchellh/go-wordwrap
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
+## explicit
 github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.1
+## explicit
 github.com/modern-go/reflect2
 # github.com/pmezard/go-difflib v1.0.0
+## explicit
 github.com/pmezard/go-difflib/difflib
 # github.com/spf13/cobra v1.1.3 => github.com/spf13/cobra v1.1.1
-## explicit
+## explicit; go 1.12
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
-## explicit
+## explicit; go 1.12
 github.com/spf13/pflag
 # github.com/stretchr/testify v1.7.0
-## explicit
+## explicit; go 1.13
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/vito/go-interact v0.0.0-20171111012221-fa338ed9e9ec
+## explicit
 github.com/vito/go-interact/interact
 github.com/vito/go-interact/interact/terminal
 # github.com/vmware-tanzu/carvel-kapp-controller v0.27.0
-## explicit
+## explicit; go 1.16
 github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1
 github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1
 # github.com/vmware-tanzu/carvel-vendir v0.23.0
+## explicit; go 1.16
 github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1
 # golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
-## explicit
+## explicit; go 1.17
 golang.org/x/crypto/pkcs12
 golang.org/x/crypto/pkcs12/internal/rc2
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/net v0.0.0-20210520170846-37e1c6afe023
-## explicit
+## explicit; go 1.17
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/http/httpguts
@@ -144,6 +170,7 @@ golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 # golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
+## explicit; go 1.11
 golang.org/x/oauth2
 golang.org/x/oauth2/authhandler
 golang.org/x/oauth2/google
@@ -152,20 +179,25 @@ golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
+## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
+## explicit; go 1.11
 golang.org/x/term
 # golang.org/x/text v0.3.6
+## explicit; go 1.11
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
+## explicit
 golang.org/x/time/rate
 # google.golang.org/appengine v1.6.6
+## explicit; go 1.11
 google.golang.org/appengine
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/app_identity
@@ -177,6 +209,7 @@ google.golang.org/appengine/internal/remote_api
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
 # google.golang.org/protobuf v1.26.0
+## explicit; go 1.9
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
 google.golang.org/protobuf/internal/descfmt
@@ -208,14 +241,16 @@ google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/timestamppb
 # gopkg.in/inf.v0 v0.9.1
+## explicit
 gopkg.in/inf.v0
 # gopkg.in/yaml.v2 v2.4.0
-## explicit
+## explicit; go 1.15
 gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+## explicit
 gopkg.in/yaml.v3
 # k8s.io/api v0.22.1
-## explicit
+## explicit; go 1.16
 k8s.io/api/admissionregistration/v1
 k8s.io/api/admissionregistration/v1beta1
 k8s.io/api/apiserverinternal/v1alpha1
@@ -260,7 +295,7 @@ k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
 # k8s.io/apimachinery v0.22.1
-## explicit
+## explicit; go 1.16
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
 k8s.io/apimachinery/pkg/api/resource
@@ -299,7 +334,7 @@ k8s.io/apimachinery/pkg/version
 k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/reflect
 # k8s.io/client-go v0.22.1
-## explicit
+## explicit; go 1.16
 k8s.io/client-go/applyconfigurations/admissionregistration/v1
 k8s.io/client-go/applyconfigurations/admissionregistration/v1beta1
 k8s.io/client-go/applyconfigurations/apiserverinternal/v1alpha1
@@ -419,14 +454,18 @@ k8s.io/client-go/util/jsonpath
 k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/workqueue
 # k8s.io/klog/v2 v2.9.0
+## explicit; go 1.13
 k8s.io/klog/v2
 # k8s.io/utils v0.0.0-20210707171843-4b05e18ac7d9
+## explicit; go 1.12
 k8s.io/utils/integer
 # sigs.k8s.io/structured-merge-diff/v4 v4.1.2
+## explicit; go 1.13
 sigs.k8s.io/structured-merge-diff/v4/fieldpath
 sigs.k8s.io/structured-merge-diff/v4/schema
 sigs.k8s.io/structured-merge-diff/v4/typed
 sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
+## explicit; go 1.12
 sigs.k8s.io/yaml
 # github.com/spf13/cobra => github.com/spf13/cobra v1.1.1
