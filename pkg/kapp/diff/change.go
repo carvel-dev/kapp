@@ -82,7 +82,7 @@ func (d *ChangeImpl) AppliedResource() ctlres.Resource  { return d.appliedRes }
 
 func (d *ChangeImpl) Op() ChangeOp {
 	if d.existingRes == nil {
-		if hasExistsAnnotation(d.newRes) {
+		if d.newResHasExistsAnnotation() {
 			return ChangeOpExists
 		}
 		return ChangeOpAdd
@@ -93,7 +93,7 @@ func (d *ChangeImpl) Op() ChangeOp {
 	}
 
 	if d.ConfigurableTextDiff().Full().HasChanges() {
-		if hasExistsAnnotation(d.newRes) {
+		if d.newResHasExistsAnnotation() {
 			return ChangeOpKeep
 		}
 		return ChangeOpUpdate
@@ -160,7 +160,7 @@ func (d *ChangeImpl) calculateOpsDiff() OpsDiff {
 	return OpsDiff(patch.Diff{Left: existingObj, Right: newObj}.Calculate())
 }
 
-func hasExistsAnnotation(res ctlres.Resource) bool {
-	_, hasExistsAnnotation := res.Annotations()[ExistsAnnKey]
+func (d *ChangeImpl) newResHasExistsAnnotation() bool {
+	_, hasExistsAnnotation := d.newRes.Annotations()[ExistsAnnKey]
 	return hasExistsAnnotation
 }
