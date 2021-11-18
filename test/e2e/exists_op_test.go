@@ -48,7 +48,7 @@ metadata:
 		NewClusterResource(t, externalResourceKind, externalResourceName, externalResourceNamespace, kubectl)
 	}()
 
-	logger.Section("deploying app with external resource annotation", func() {
+	logger.Section("deploying app with exists annotation for a non existing resource", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{StdinReader: strings.NewReader(app)})
 
@@ -74,6 +74,25 @@ Wait to: 2 reconcile, 0 delete, 0 noop
 <replaced>: ok: reconcile configmap/external (v1) namespace: kapp-ns
 <replaced>: ---- applying complete [2/2 done] ----
 <replaced>: ---- waiting complete [2/2 done] ----
+
+Succeeded`
+
+		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
+		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
+		require.Equal(t, expectedOutput, out)
+	})
+
+	logger.Section("deploying app with exists annotation for an already existing resource", func() {
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{StdinReader: strings.NewReader(app)})
+
+		expectedOutput := `
+Changes
+
+Namespace  Name  Kind  Conds.  Age  Op  Op st.  Wait to  Rs  Ri  $
+
+Op:      0 create, 0 delete, 0 update, 0 noop
+Wait to: 0 reconcile, 0 delete, 0 noop
 
 Succeeded`
 
