@@ -44,6 +44,30 @@ func NewPodContainerLog(
 }
 
 func (l PodContainerLog) Tail(ui ui.UI, cancelCh chan struct{}) error {
+	for {
+		linePrefix := ""
+		if len(l.opts.LinePrefix) > 0 {
+			linePrefix = l.opts.LinePrefix + " | "
+		}
+		err := l.StartTail(ui, cancelCh)
+
+		if err == io.EOF{
+			if l.opts.Follow {
+				ui.BeginLinef("Container Restarted\n")
+				time.Sleep(500*time.Millisecond)
+				continue
+			} else {
+				ui.BeginLinef("%s# ending tailing '%s' logs\n", linePrefix, l.tag)
+				return nil
+			}
+		}
+		if err != nil {
+			return err
+		}
+	}
+}
+
+func (l PodContainerLog) StartTail(ui ui.UI, cancelCh chan struct{}) error {
 	var streamCanceled atomic.Value
 
 	linePrefix := ""
@@ -76,8 +100,7 @@ func (l PodContainerLog) Tail(ui ui.UI, cancelCh chan struct{}) error {
 		line, err := reader.ReadBytes('\n')
 		if err != nil {
 			if err == io.EOF {
-				ui.BeginLinef("%s# ending tailing '%s' logs\n", linePrefix, l.tag)
-				return nil
+				return err
 			}
 			typedCanceled, ok := streamCanceled.Load().(bool)
 			if ok && typedCanceled {
@@ -140,6 +163,17 @@ func (l PodContainerLog) readyToGetLogs() bool {
 	if err != nil {
 		return false
 	}
+	containerStatuses := pod.Status.ContainerStatuses
+	for _, containerStatus := range containerStatuses {
+		//We should focus only on the status of this particular container.
+		if l.container != containerStatus.Name {
+			continue
+		}
+		if containerStatus.State.Running != nil {
+			return true
+		}
+	}
+	return false
 
-	return len(pod.Status.ContainerStatuses) > 0 || len(pod.Status.InitContainerStatuses) > 0
 }
+
