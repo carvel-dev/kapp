@@ -54,7 +54,7 @@ func (l PodContainerLog) Tail(ui ui.UI, cancelCh chan struct{}) error {
 		if err == io.EOF {
 			if l.opts.Follow {
 				ui.BeginLinef("Container Restarted\n")
-				//time.Sleep(500* time.Millisecond)
+				time.Sleep(500 * time.Millisecond)
 				continue
 			} else {
 				ui.BeginLinef("%s# ending tailing '%s' logs\n", linePrefix, l.tag)
