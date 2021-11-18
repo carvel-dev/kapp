@@ -97,6 +97,8 @@ func (c *ClusterChange) ApplyOp() ClusterChangeApplyOp {
 		return ClusterChangeApplyOpNoop
 	case ctldiff.ChangeOpExists:
 		return ClusterChangeApplyOpExists
+	case ctldiff.ChangeOpNoop:
+		return ClusterChangeApplyOpNoop
 	default:
 		panic("Unknown change apply op")
 	}
@@ -148,6 +150,9 @@ func (c *ClusterChange) WaitOp() ClusterChangeWaitOp {
 
 	case ctldiff.ChangeOpExists:
 		return ClusterChangeWaitOpOK
+
+	case ctldiff.ChangeOpNoop:
+		return ClusterChangeWaitOpNoop
 
 	default:
 		panic("Unknown change wait op")

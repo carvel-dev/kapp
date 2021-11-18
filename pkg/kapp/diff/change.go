@@ -17,10 +17,12 @@ const (
 	ChangeOpUpdate ChangeOp = "update"
 	ChangeOpKeep   ChangeOp = "keep" // unchanged
 	ChangeOpExists ChangeOp = "exists"
+	ChangeOpNoop   ChangeOp = "noop"
 )
 
 const (
 	ExistsAnnKey = "kapp.k14s.io/exists" // Value is ignored
+	NoopAnnKey   = "kapp.k14s.io/noop"   // value is ignored
 )
 
 type Change interface {
@@ -81,6 +83,12 @@ func (d *ChangeImpl) ExistingResource() ctlres.Resource { return d.existingRes }
 func (d *ChangeImpl) AppliedResource() ctlres.Resource  { return d.appliedRes }
 
 func (d *ChangeImpl) Op() ChangeOp {
+	if d.newRes != nil {
+		if _, hasNoopAnnotation := d.newRes.Annotations()[NoopAnnKey]; hasNoopAnnotation {
+			return ChangeOpNoop
+		}
+	}
+
 	if d.existingRes == nil {
 		if d.newResHasExistsAnnotation() {
 			return ChangeOpExists
