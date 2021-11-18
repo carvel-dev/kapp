@@ -23,7 +23,6 @@ jobs:
 
       - name: Build the kapp binary file
         run: |
-          rootDir=$(pwd)
           # Build kapp Binary File
           ./hack/build.sh
 
