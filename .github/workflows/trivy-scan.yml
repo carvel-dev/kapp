@@ -26,22 +26,22 @@ jobs:
           rootDir=$(pwd)
           # Build kapp Binary File
           ./hack/build.sh
-          kappBinaryDir=$(pwd)
-          
-          # Download trivy from Github and generate binary.
-          cd ../
-          mkdir trivy
-          cd trivy
+
+      - name: Install trivy
+        run: |
+          # Download trivy binary.
+          brew install aquasecurity/trivy/trivy
           
           # Create trivy binary file
-          git clone --depth 1 --branch v0.20.2 https://github.com/aquasecurity/trivy
-          cd trivy/cmd/trivy
-          go install
+          git clone --depth 1 https://github.com/aquasecurity/trivy
+        
+      - name: Run trivy to generate reports
+        run: |  
           # Generate trivy report in sarif format
-          trivy rootfs --ignore-unfixed --format template --template  "@../../contrib/sarif.tpl" --output  $rootDir/trivy-results.sarif $kappBinaryDir/kapp
+          trivy rootfs --ignore-unfixed --format template --template  "@trivy/contrib/sarif.tpl" --output trivy-results.sarif kapp
           
           # Generate trivy report in json format
-          trivy rootfs --ignore-unfixed --format json --output $rootDir/results.json $kappBinaryDir/kapp
+          trivy rootfs --ignore-unfixed --format json --output results.json kapp
       
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v1
