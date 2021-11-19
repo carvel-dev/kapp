@@ -16,6 +16,13 @@ const (
 	ChangeOpDelete ChangeOp = "delete"
 	ChangeOpUpdate ChangeOp = "update"
 	ChangeOpKeep   ChangeOp = "keep" // unchanged
+	ChangeOpExists ChangeOp = "exists"
+	ChangeOpNoop   ChangeOp = "noop"
+)
+
+const (
+	ExistsAnnKey = "kapp.k14s.io/exists" // Value is ignored
+	NoopAnnKey   = "kapp.k14s.io/noop"   // value is ignored
 )
 
 type Change interface {
@@ -76,7 +83,16 @@ func (d *ChangeImpl) ExistingResource() ctlres.Resource { return d.existingRes }
 func (d *ChangeImpl) AppliedResource() ctlres.Resource  { return d.appliedRes }
 
 func (d *ChangeImpl) Op() ChangeOp {
+	if d.newRes != nil {
+		if _, hasNoopAnnotation := d.newRes.Annotations()[NoopAnnKey]; hasNoopAnnotation {
+			return ChangeOpNoop
+		}
+	}
+
 	if d.existingRes == nil {
+		if d.newResHasExistsAnnotation() {
+			return ChangeOpExists
+		}
 		return ChangeOpAdd
 	}
 
@@ -85,6 +101,9 @@ func (d *ChangeImpl) Op() ChangeOp {
 	}
 
 	if d.ConfigurableTextDiff().Full().HasChanges() {
+		if d.newResHasExistsAnnotation() {
+			return ChangeOpKeep
+		}
 		return ChangeOpUpdate
 	}
 
@@ -147,4 +166,9 @@ func (d *ChangeImpl) calculateOpsDiff() OpsDiff {
 	}
 
 	return OpsDiff(patch.Diff{Left: existingObj, Right: newObj}.Calculate())
+}
+
+func (d *ChangeImpl) newResHasExistsAnnotation() bool {
+	_, hasExistsAnnotation := d.newRes.Annotations()[ExistsAnnKey]
+	return hasExistsAnnotation
 }

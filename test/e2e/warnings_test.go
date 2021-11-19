@@ -143,16 +143,7 @@ Succeeded`
 }
 
 func getServerMinorVersion() (minorVersion int, err error) {
-	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	configOverrides := &clientcmd.ConfigOverrides{}
-	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
-
-	config, err := kubeConfig.ClientConfig()
-	if err != nil {
-		return minorVersion, err
-	}
-
-	clientset, err := kubernetes.NewForConfig(config)
+	clientset, err := getKubernetesClientset()
 	if err != nil {
 		return minorVersion, err
 	}
@@ -167,4 +158,18 @@ func getServerMinorVersion() (minorVersion int, err error) {
 	}
 
 	return minorVersion, err
+}
+
+func getKubernetesClientset() (*kubernetes.Clientset, error) {
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	configOverrides := &clientcmd.ConfigOverrides{}
+	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+
+	config, err := kubeConfig.ClientConfig()
+	if err != nil {
+		return &kubernetes.Clientset{}, err
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	return clientset, err
 }

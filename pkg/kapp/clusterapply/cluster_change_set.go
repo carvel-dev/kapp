@@ -152,6 +152,9 @@ func (c wrappedClusterChange) Op() ctldgraph.ActualChangeOp {
 	case ClusterChangeApplyOpNoop:
 		return ctldgraph.ActualChangeOpNoop
 
+	case ClusterChangeApplyOpExists:
+		return ctldgraph.ActualChangeOpUpsert
+
 	default:
 		panic(fmt.Sprintf("Unknown change apply operation: %s", op))
 	}
