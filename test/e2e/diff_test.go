@@ -115,7 +115,7 @@ data:
 		}}
 
 		require.Exactlyf(t, expected, resp.Tables[0].Rows, "Expected to see correct changes, but did not")
-		require.Equalf(t, "Op:      3 create, 0 delete, 0 update, 0 noop", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
+		require.Equalf(t, "Op:      3 create, 0 delete, 0 update, 0 noop, 0 exists", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
 		require.Equalf(t, "Wait to: 3 reconcile, 0 delete, 0 noop", resp.Tables[0].Notes[1], "Expected to see correct summary, but did not")
 	})
 
@@ -127,7 +127,7 @@ data:
 		expected := []map[string]string{}
 
 		require.Exactlyf(t, expected, resp.Tables[0].Rows, "Expected to see correct changes, but did not")
-		require.Equalf(t, "Op:      0 create, 0 delete, 0 update, 0 noop", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
+		require.Equalf(t, "Op:      0 create, 0 delete, 0 update, 0 noop, 0 exists", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
 		require.Equalf(t, "Wait to: 0 reconcile, 0 delete, 0 noop", resp.Tables[0].Notes[1], "Expected to see correct summary, but did not")
 	})
 
@@ -173,7 +173,7 @@ data:
 		}}
 
 		require.Exactlyf(t, expected, replaceAge(resp.Tables[0].Rows), "Expected to see correct changes, but did not")
-		require.Equalf(t, "Op:      1 create, 1 delete, 1 update, 0 noop", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
+		require.Equalf(t, "Op:      1 create, 1 delete, 1 update, 0 noop, 0 exists", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
 		require.Equalf(t, "Wait to: 2 reconcile, 1 delete, 0 noop", resp.Tables[0].Notes[1], "Expected to see correct summary, but did not")
 	})
 
@@ -218,7 +218,7 @@ data:
 		}}
 
 		require.Exactlyf(t, expected, replaceAge(resp.Tables[0].Rows), "Expected to see correct changes, but did not")
-		require.Equalf(t, "Op:      0 create, 3 delete, 0 update, 0 noop", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
+		require.Equalf(t, "Op:      0 create, 3 delete, 0 update, 0 noop, 0 exists", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
 		require.Equalf(t, "Wait to: 0 reconcile, 3 delete, 0 noop", resp.Tables[0].Notes[1], "Expected to see correct summary, but did not")
 	})
 }

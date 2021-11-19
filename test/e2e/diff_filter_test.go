@@ -105,7 +105,7 @@ data:
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 
-		validateChanges(t, resp.Tables, expectedChange, "Op:      1 create, 0 delete, 0 update, 0 noop",
+		validateChanges(t, resp.Tables, expectedChange, "Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists",
 			"Wait to: 1 reconcile, 0 delete, 0 noop", out)
 	})
 
@@ -128,7 +128,7 @@ data:
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 
-		validateChanges(t, resp.Tables, expectedChange, "Op:      1 create, 0 delete, 0 update, 0 noop",
+		validateChanges(t, resp.Tables, expectedChange, "Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists",
 			"Wait to: 1 reconcile, 0 delete, 0 noop", out)
 	})
 
@@ -151,7 +151,7 @@ data:
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 
-		validateChanges(t, resp.Tables, expectedChange, "Op:      0 create, 0 delete, 1 update, 0 noop",
+		validateChanges(t, resp.Tables, expectedChange, "Op:      0 create, 0 delete, 1 update, 0 noop, 0 exists",
 			"Wait to: 1 reconcile, 0 delete, 0 noop", out)
 	})
 
@@ -174,7 +174,7 @@ data:
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 
-		validateChanges(t, resp.Tables, expectedChange, "Op:      0 create, 1 delete, 0 update, 0 noop",
+		validateChanges(t, resp.Tables, expectedChange, "Op:      0 create, 1 delete, 0 update, 0 noop, 0 exists",
 			"Wait to: 0 reconcile, 1 delete, 0 noop", out)
 	})
 
@@ -197,7 +197,7 @@ data:
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 
-		validateChanges(t, resp.Tables, expectedChange, "Op:      1 create, 0 delete, 0 update, 0 noop",
+		validateChanges(t, resp.Tables, expectedChange, "Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists",
 			"Wait to: 1 reconcile, 0 delete, 0 noop", out)
 	})
 
@@ -220,7 +220,7 @@ data:
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 
-		validateChanges(t, resp.Tables, expectedChange, "Op:      0 create, 0 delete, 1 update, 0 noop",
+		validateChanges(t, resp.Tables, expectedChange, "Op:      0 create, 0 delete, 1 update, 0 noop, 0 exists",
 			"Wait to: 1 reconcile, 0 delete, 0 noop", out)
 	})
 
@@ -243,7 +243,7 @@ data:
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 
-		validateChanges(t, resp.Tables, expectedChange, "Op:      0 create, 0 delete, 1 update, 0 noop",
+		validateChanges(t, resp.Tables, expectedChange, "Op:      0 create, 0 delete, 1 update, 0 noop, 0 exists",
 			"Wait to: 1 reconcile, 0 delete, 0 noop", out)
 	})
 
@@ -286,7 +286,7 @@ data:
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 
-		validateChanges(t, resp.Tables, expectedChange, "Op:      0 create, 2 delete, 0 update, 1 noop",
+		validateChanges(t, resp.Tables, expectedChange, "Op:      0 create, 2 delete, 0 update, 1 noop, 0 exists",
 			"Wait to: 0 reconcile, 3 delete, 0 noop", out)
 	})
 }
