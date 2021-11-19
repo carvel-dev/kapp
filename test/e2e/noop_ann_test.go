@@ -52,7 +52,7 @@ Changes
 Namespace  Name     Kind       Conds.  Age  Op      Op st.  Wait to    Rs  Ri  $
 (cluster)  kapp-ns  Namespace  -       -    create  -       reconcile  -   -  $
 
-Op:      1 create, 0 delete, 0 update, 0 noop
+Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 1 reconcile, 0 delete, 0 noop
 
 <replaced>: ---- applying 1 changes [0/1 done] ----
@@ -79,7 +79,7 @@ Changes
 
 Namespace  Name  Kind  Conds.  Age  Op  Op st.  Wait to  Rs  Ri  $
 
-Op:      0 create, 0 delete, 0 update, 0 noop
+Op:      0 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 0 reconcile, 0 delete, 0 noop
 
 Succeeded`
