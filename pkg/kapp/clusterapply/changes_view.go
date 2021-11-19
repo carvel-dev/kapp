@@ -235,7 +235,7 @@ func (v *ChangesCountsView) Add(applyOp ClusterChangeApplyOp, waitOp ClusterChan
 func (v *ChangesCountsView) Strings(table bool) []string {
 	applyOpsStats := []string{}
 	visibleApplyOps := []ClusterChangeApplyOp{
-		ClusterChangeApplyOpAdd, ClusterChangeApplyOpDelete, ClusterChangeApplyOpUpdate, ClusterChangeApplyOpNoop}
+		ClusterChangeApplyOpAdd, ClusterChangeApplyOpDelete, ClusterChangeApplyOpUpdate, ClusterChangeApplyOpNoop, ClusterChangeApplyOpExists}
 
 	for _, op := range visibleApplyOps {
 		applyOpsStats = append(applyOpsStats, fmt.Sprintf("%d %s", v.applyOps[op], applyOpCodeUI[op]))

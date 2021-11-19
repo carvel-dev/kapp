@@ -65,7 +65,7 @@ Namespace  Name           Kind       Conds.  Age  Op      Op st.  Wait to    Rs 
 kapp-test  redis-config   ConfigMap  -       -    create  -       reconcile  -   -  
 ^          redis-primary  Service    -       -    create  -       reconcile  -   -  
 
-Op:      2 create, 0 delete, 0 update, 0 noop
+Op:      2 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 2 reconcile, 0 delete, 0 noop
 `
 		require.Contains(t, out, expectedOutput1, "Did not find expected diff output")
@@ -80,7 +80,7 @@ Namespace  Name           Kind       Conds.  Age  Op      Op st.  Wait to    Rs 
 kapp-test  redis-config   ConfigMap  -       -    create  -       reconcile  -   -  
 ^          redis-config2  ConfigMap  -       -    create  -       reconcile  -   -  
 
-Op:      2 create, 0 delete, 0 update, 0 noop
+Op:      2 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 2 reconcile, 0 delete, 0 noop
 `
 		require.Contains(t, out, expectedOutput2, "Did not find expected diff output")
@@ -94,7 +94,7 @@ Wait to: 2 reconcile, 0 delete, 0 noop
 Namespace  Name           Kind     Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
 kapp-test  redis-primary  Service  -       -    create  -       reconcile  -   -  
 
-Op:      1 create, 0 delete, 0 update, 0 noop
+Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 1 reconcile, 0 delete, 0 noop
 `
 		require.Contains(t, out, expectedOutput3, "Did not find expected diff output")
@@ -110,7 +110,7 @@ Wait to: 1 reconcile, 0 delete, 0 noop
 Namespace  Name           Kind       Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
 kapp-test  redis-config2  ConfigMap  -       -    create  -       reconcile  -   -  
 
-Op:      1 create, 0 delete, 0 update, 0 noop
+Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 1 reconcile, 0 delete, 0 noop
 `
 		require.Contains(t, out, expectedOutput4, "Did not find expected diff output")

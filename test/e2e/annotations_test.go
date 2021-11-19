@@ -113,7 +113,7 @@ metadata:
 
 		respNonVer := uitest.JSONUIFromBytes(t, []byte(nonVerOut))
 
-		validateChanges(t, respNonVer.Tables, expectedNonVer, "Op:      2 create, 0 delete, 0 update, 0 noop",
+		validateChanges(t, respNonVer.Tables, expectedNonVer, "Op:      2 create, 0 delete, 0 update, 0 noop, 0 exists",
 			"Wait to: 2 reconcile, 0 delete, 0 noop", nonVerOut)
 
 		verOut, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
@@ -163,7 +163,7 @@ metadata:
 			"wait_to":         "reconcile",
 		}}
 
-		validateChanges(t, respVer.Tables, expectedVer, "Op:      2 create, 2 delete, 0 update, 0 noop",
+		validateChanges(t, respVer.Tables, expectedVer, "Op:      2 create, 2 delete, 0 update, 0 noop, 0 exists",
 			"Wait to: 2 reconcile, 2 delete, 0 noop", verOut)
 
 		verKeepOrgOut, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
@@ -215,7 +215,7 @@ metadata:
 			},
 		}
 
-		validateChanges(t, respVerKeepOrg.Tables, expectedVerKeepOrg, "Op:      4 create, 0 delete, 0 update, 0 noop",
+		validateChanges(t, respVerKeepOrg.Tables, expectedVerKeepOrg, "Op:      4 create, 0 delete, 0 update, 0 noop, 0 exists",
 			"Wait to: 4 reconcile, 0 delete, 0 noop", verKeepOrgOut)
 	})
 
@@ -271,7 +271,7 @@ metadata:
 			},
 		}
 
-		validateChanges(t, respVerKeepOrg.Tables, expectedVerKeepOrg, "Op:      4 create, 0 delete, 0 update, 0 noop",
+		validateChanges(t, respVerKeepOrg.Tables, expectedVerKeepOrg, "Op:      4 create, 0 delete, 0 update, 0 noop, 0 exists",
 			"Wait to: 4 reconcile, 0 delete, 0 noop", verKeepOrgOut)
 
 		verOut, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
@@ -321,7 +321,7 @@ metadata:
 			"wait_to":         "reconcile",
 		}}
 
-		validateChanges(t, respVer.Tables, expectedVer, "Op:      2 create, 2 delete, 0 update, 0 noop",
+		validateChanges(t, respVer.Tables, expectedVer, "Op:      2 create, 2 delete, 0 update, 0 noop, 0 exists",
 			"Wait to: 2 reconcile, 2 delete, 0 noop", verOut)
 	})
 
@@ -377,7 +377,7 @@ metadata:
 			},
 		}
 
-		validateChanges(t, respVerKeepOrg.Tables, expectedVerKeepOrg, "Op:      4 create, 0 delete, 0 update, 0 noop",
+		validateChanges(t, respVerKeepOrg.Tables, expectedVerKeepOrg, "Op:      4 create, 0 delete, 0 update, 0 noop, 0 exists",
 			"Wait to: 4 reconcile, 0 delete, 0 noop", verKeepOrgOut)
 
 		nonVerOut, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
@@ -427,7 +427,7 @@ metadata:
 			"wait_to":         "delete",
 		}}
 
-		validateChanges(t, respNonVer.Tables, expectedVer, "Op:      0 create, 2 delete, 2 update, 0 noop",
+		validateChanges(t, respNonVer.Tables, expectedVer, "Op:      0 create, 2 delete, 2 update, 0 noop, 0 exists",
 			"Wait to: 2 reconcile, 2 delete, 0 noop", nonVerOut)
 	})
 }
@@ -497,7 +497,7 @@ data:
 			"reconcile_state": "",
 			"wait_to":         "reconcile",
 		}}
-		validateChanges(t, respKapp.Tables, expectedKapp, "Op:      1 create, 1 delete, 0 update, 0 noop",
+		validateChanges(t, respKapp.Tables, expectedKapp, "Op:      1 create, 1 delete, 0 update, 0 noop, 0 exists",
 			"Wait to: 1 reconcile, 1 delete, 0 noop", kappOut)
 	})
 }
