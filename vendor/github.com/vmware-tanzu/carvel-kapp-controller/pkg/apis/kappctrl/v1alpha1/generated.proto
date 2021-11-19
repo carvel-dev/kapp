@@ -290,15 +290,22 @@ message AppTemplateSops {
   optional AppTemplateSopsPGP pgp = 1;
 
   repeated string paths = 2;
+
+  optional AppTemplateSopsAge age = 3;
+}
+
+// +k8s:openapi-gen=true
+message AppTemplateSopsAge {
+  optional AppTemplateSopsPrivateKeysSecretRef privateKeysSecretRef = 1;
 }
 
 // +k8s:openapi-gen=true
 message AppTemplateSopsPGP {
-  optional AppTemplateSopsPGPPrivateKeysSecretRef privateKeysSecretRef = 1;
+  optional AppTemplateSopsPrivateKeysSecretRef privateKeysSecretRef = 1;
 }
 
 // +k8s:openapi-gen=true
-message AppTemplateSopsPGPPrivateKeysSecretRef {
+message AppTemplateSopsPrivateKeysSecretRef {
   optional string name = 1;
 }
 

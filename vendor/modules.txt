@@ -149,8 +149,8 @@ github.com/stretchr/testify/require
 ## explicit
 github.com/vito/go-interact/interact
 github.com/vito/go-interact/interact/terminal
-# github.com/vmware-tanzu/carvel-kapp-controller v0.27.0
-## explicit; go 1.16
+# github.com/vmware-tanzu/carvel-kapp-controller v0.30.0
+## explicit; go 1.17
 github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1
 github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1
 # github.com/vmware-tanzu/carvel-vendir v0.23.0
