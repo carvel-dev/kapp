@@ -18,9 +18,9 @@ require (
 	github.com/vmware-tanzu/carvel-kapp-controller v0.27.0
 	golang.org/x/net v0.0.0-20210520170846-37e1c6afe023
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.22.1 // kubernetes-1.22.1
-	k8s.io/apimachinery v0.22.1 // kubernetes-1.22.1
-	k8s.io/client-go v0.22.1 // kubernetes-1.22.1
+	k8s.io/api v0.22.4 // kubernetes-1.22.1
+	k8s.io/apimachinery v0.22.4 // kubernetes-1.22.1
+	k8s.io/client-go v0.22.4 // kubernetes-1.22.1
 )
 
 require (
@@ -61,7 +61,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	k8s.io/klog/v2 v2.9.0 // indirect
-	k8s.io/utils v0.0.0-20210707171843-4b05e18ac7d9 // indirect
+	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
