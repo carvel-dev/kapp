@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	isChangeLabelKey   = "kapp.k14s.io/is-app-change"
+	IsChangeLabelKey   = "kapp.k14s.io/is-app-change"
 	isChangeLabelValue = ""
 	changeLabelKey     = "kapp.k14s.io/app-change-app" // holds app name
 )
@@ -37,7 +37,7 @@ func (a RecordedAppChanges) List() ([]Change, error) {
 
 	listOpts := metav1.ListOptions{
 		LabelSelector: labels.Set(map[string]string{
-			isChangeLabelKey: isChangeLabelValue,
+			IsChangeLabelKey: isChangeLabelValue,
 			changeLabelKey:   a.appName,
 		}).String(),
 	}
@@ -69,7 +69,7 @@ func (a RecordedAppChanges) List() ([]Change, error) {
 func (a RecordedAppChanges) DeleteAll() error {
 	listOpts := metav1.ListOptions{
 		LabelSelector: labels.Set(map[string]string{
-			isChangeLabelKey: isChangeLabelValue,
+			IsChangeLabelKey: isChangeLabelValue,
 			changeLabelKey:   a.appName,
 		}).String(),
 	}
@@ -94,6 +94,7 @@ func (a RecordedAppChanges) Begin(meta ChangeMeta) (*ChangeImpl, error) {
 		StartedAt:   time.Now().UTC(),
 		Description: meta.Description,
 		Namespaces:  meta.Namespaces,
+		DiffChanges: meta.DiffChanges,
 	}
 
 	configMap := &corev1.ConfigMap{
@@ -101,7 +102,7 @@ func (a RecordedAppChanges) Begin(meta ChangeMeta) (*ChangeImpl, error) {
 			GenerateName: a.appName + "-change-",
 			Namespace:    a.nsName,
 			Labels: map[string]string{
-				isChangeLabelKey: isChangeLabelValue,
+				IsChangeLabelKey: isChangeLabelValue,
 				changeLabelKey:   a.appName,
 			},
 		},

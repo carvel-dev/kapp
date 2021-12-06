@@ -6,6 +6,7 @@ package app
 type Touch struct {
 	App              App
 	Description      string
+	DiffChanges      string
 	Namespaces       []string
 	IgnoreSuccessErr bool
 }
@@ -14,6 +15,7 @@ func (t Touch) Do(doFunc func() error) error {
 	meta := ChangeMeta{
 		Description: t.Description,
 		Namespaces:  t.Namespaces,
+		DiffChanges: t.DiffChanges,
 	}
 
 	change, err := t.App.BeginChange(meta)

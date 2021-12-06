@@ -4,6 +4,9 @@
 package clusterapply
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/cppforlife/go-cli-ui/ui"
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
@@ -43,6 +46,17 @@ func (v *ChangeSetView) Print(ui ui.UI) {
 	if v.opts.Summary {
 		v.changesView.Print(ui)
 	}
+}
+
+func (v *ChangeSetView) DiffChangesString() string {
+	var diffChangesBuffer strings.Builder
+	for _, view := range v.changeViews {
+		textDiffView := ctldiff.NewTextDiffView(view.ConfigurableTextDiff(), v.maskRules, v.opts.TextDiffViewOpts)
+		diffChangesBuffer.Write([]byte(fmt.Sprintf("@@ %s %s @@\n", applyOpCodeUI[view.ApplyOp()], view.Resource().Description())))
+		diffChangesBuffer.WriteString(textDiffView.String())
+	}
+
+	return diffChangesBuffer.String()
 }
 
 func (v *ChangeSetView) Summary() string {

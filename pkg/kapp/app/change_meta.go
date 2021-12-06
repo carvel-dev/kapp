@@ -9,12 +9,16 @@ import (
 	"time"
 )
 
+const ChangeMetaKey = "spec"
+
 type ChangeMeta struct {
 	StartedAt  time.Time `json:"startedAt"`
 	FinishedAt time.Time `json:"finishedAt,omitempty"`
 
 	Successful  *bool  `json:"successful,omitempty"`
 	Description string `json:"description,omitempty"`
+
+	DiffChanges string `json:"diffChanges,omitempty"`
 
 	Namespaces []string `json:"namespaces,omitempty"`
 }
@@ -31,7 +35,7 @@ func NewChangeMetaFromString(data string) ChangeMeta {
 }
 
 func NewChangeMetaFromData(data map[string]string) ChangeMeta {
-	return NewChangeMetaFromString(data["spec"])
+	return NewChangeMetaFromString(data[ChangeMetaKey])
 }
 
 func (m ChangeMeta) AsString() string {
