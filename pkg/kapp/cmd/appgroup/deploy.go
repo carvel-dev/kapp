@@ -54,6 +54,7 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	o.AppFlags.ApplyFlags.SetWithDefaults("", cmdapp.ApplyFlagsDeployDefaults, cmd)
 	o.AppFlags.DeleteApplyFlags.SetWithDefaults("delete", cmdapp.ApplyFlagsDeleteDefaults, cmd)
 	o.AppFlags.DeployFlags.Set(cmd)
+	o.AppFlags.LabelFlags.Set(cmd)
 	return cmd
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
 )
@@ -20,6 +21,7 @@ type ListOptions struct {
 	logger      logger.Logger
 
 	NamespaceFlags cmdcore.NamespaceFlags
+	AppFilterFlags cmdtools.AppFilterFlags
 	AllNamespaces  bool
 }
 
@@ -38,6 +40,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		},
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
+	o.AppFilterFlags.Set(cmd)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List apps in all namespaces")
 	return cmd
 }
@@ -58,13 +61,24 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
-	items, err := supportObjs.Apps.List(nil)
+	resourceFilter, err := o.AppFilterFlags.AppFilter()
+
+	var additionalLabels map[string]string
+	if len(resourceFilter.Labels) > 0 {
+		labelFlags := LabelFlags{Labels: resourceFilter.Labels}
+		additionalLabels, err = labelFlags.AsMap()
+		if err != nil {
+			return err
+		}
+	}
+
+	items, err := supportObjs.Apps.List(additionalLabels)
 	if err != nil {
 		return err
 	}
 
 	labelHeader := uitable.NewHeader("Label")
-	labelHeader.Hidden = true
+	labelHeader.Hidden = false
 
 	lcsHeader := uitable.NewHeader("Last Change Successful")
 	lcsHeader.Title = "Lcs"
