@@ -61,11 +61,11 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
-	resourceFilter, err := o.AppFilterFlags.AppFilter()
+	appFilter, err := o.AppFilterFlags.AppFilter()
 
 	var additionalLabels map[string]string
-	if len(resourceFilter.Labels) > 0 {
-		labelFlags := LabelFlags{Labels: resourceFilter.Labels}
+	if len(appFilter.Labels) > 0 {
+		labelFlags := LabelFlags{Labels: appFilter.Labels}
 		additionalLabels, err = labelFlags.AsMap()
 		if err != nil {
 			return err
@@ -77,8 +77,10 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
+	items = appFilter.Apply(items)
+
 	labelHeader := uitable.NewHeader("Label")
-	labelHeader.Hidden = false
+	labelHeader.Hidden = true
 
 	lcsHeader := uitable.NewHeader("Last Change Successful")
 	lcsHeader.Title = "Lcs"
