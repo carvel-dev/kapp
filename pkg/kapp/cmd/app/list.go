@@ -63,13 +63,10 @@ func (o *ListOptions) Run() error {
 
 	appFilter, err := o.AppFilterFlags.AppFilter()
 
-	var additionalLabels map[string]string
-	if len(appFilter.Labels) > 0 {
-		labelFlags := LabelFlags{Labels: appFilter.Labels}
-		additionalLabels, err = labelFlags.AsMap()
-		if err != nil {
-			return err
-		}
+	labelFlags := &LabelFlags{Labels: appFilter.Labels}
+	additionalLabels, err := labelFlags.AsMap()
+	if err != nil {
+		return err
 	}
 
 	items, err := supportObjs.Apps.List(additionalLabels)
