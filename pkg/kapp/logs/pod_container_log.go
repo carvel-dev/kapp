@@ -53,7 +53,7 @@ func (l PodContainerLog) Tail(ui ui.UI, cancelCh chan struct{}) error {
 
 		if err == io.EOF {
 			if l.opts.Follow {
-				ui.BeginLinef("Container Restarted\n")
+				ui.BeginLinef("%s# container restarting '%s' logs\n", linePrefix, l.tag)
 				time.Sleep(500 * time.Millisecond)
 				continue
 			} else {
