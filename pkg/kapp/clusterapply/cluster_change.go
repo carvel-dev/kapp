@@ -24,6 +24,7 @@ const (
 	ClusterChangeApplyOpDelete ClusterChangeApplyOp = "delete"
 	ClusterChangeApplyOpUpdate ClusterChangeApplyOp = "update"
 	ClusterChangeApplyOpNoop   ClusterChangeApplyOp = "noop"
+	ClusterChangeApplyOpExists ClusterChangeApplyOp = "exists"
 )
 
 type ClusterChangeWaitOp string
@@ -94,6 +95,10 @@ func (c *ClusterChange) ApplyOp() ClusterChangeApplyOp {
 		return ClusterChangeApplyOpUpdate
 	case ctldiff.ChangeOpKeep:
 		return ClusterChangeApplyOpNoop
+	case ctldiff.ChangeOpExists:
+		return ClusterChangeApplyOpExists
+	case ctldiff.ChangeOpNoop:
+		return ClusterChangeApplyOpNoop
 	default:
 		panic("Unknown change apply op")
 	}
@@ -143,6 +148,12 @@ func (c *ClusterChange) WaitOp() ClusterChangeWaitOp {
 		}
 		return ClusterChangeWaitOpNoop
 
+	case ctldiff.ChangeOpExists:
+		return ClusterChangeWaitOpOK
+
+	case ctldiff.ChangeOpNoop:
+		return ClusterChangeWaitOpNoop
+
 	default:
 		panic("Unknown change wait op")
 	}
@@ -160,6 +171,7 @@ func (c *ClusterChange) ApplyStrategyOp() (ClusterChangeApplyStrategyOp, error) 
 
 func (c *ClusterChange) Apply() (bool, []string, error) {
 	descMsgs := []string{c.ApplyDescription()}
+	var retryable bool
 
 	strategy, err := c.applyStrategy()
 	if err != nil {
@@ -167,8 +179,15 @@ func (c *ClusterChange) Apply() (bool, []string, error) {
 	}
 
 	err = strategy.Apply()
+	if err != nil {
+		switch err.(type) {
+		case ExistsChangeError:
+			retryable = true
+		default:
+			retryable = ctlres.IsResourceChangeBlockedErr(err)
+		}
+	}
 
-	retryable := err != nil && ctlres.IsResourceChangeBlockedErr(err)
 	if retryable {
 		descMsgs = append(descMsgs, uiWaitMsgPrefix+"Retryable error: "+err.Error())
 	}
@@ -190,6 +209,9 @@ func (c *ClusterChange) applyStrategy() (ApplyStrategy, error) {
 
 	case ClusterChangeApplyOpNoop:
 		return NoopStrategy{}, nil
+
+	case ClusterChangeApplyOpExists:
+		return ExistsChange{c.change, c.identifiedResources}.ApplyStrategy()
 
 	default:
 		return nil, fmt.Errorf("Unknown change apply operation: %s", op)

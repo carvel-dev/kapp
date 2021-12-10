@@ -211,7 +211,7 @@ secrets:
 				expected := []map[string]string{}
 
 				require.Exactlyf(t, expected, resp.Tables[0].Rows, "Expected to see correct changes, but did not")
-				require.Equalf(t, "Op:      0 create, 0 delete, 0 update, 0 noop", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
+				require.Equalf(t, "Op:      0 create, 0 delete, 0 update, 0 noop, 0 exists", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
 			})
 		}
 	}
@@ -399,7 +399,7 @@ data:
 		expected := []map[string]string{}
 
 		require.Exactlyf(t, expected, resp.Tables[0].Rows, "Expected to see correct changes, but did not")
-		require.Equalf(t, "Op:      0 create, 0 delete, 0 update, 0 noop", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
+		require.Equalf(t, "Op:      0 create, 0 delete, 0 update, 0 noop, 0 exists", resp.Tables[0].Notes[0], "Expected to see correct summary, but did not")
 
 		cm = NewPresentClusterResource("configmap", "test-cm", env.Namespace, kubectl)
 		data := cm.RawPath(ctlres.NewPathFromStrings([]string{"data"})).(map[string]interface{})

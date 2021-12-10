@@ -74,7 +74,7 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 
 		case part.ArrayIndex != nil:
 			if isLast {
-				panic("Expected last part of the path to be map key")
+				return false, fmt.Errorf("Expected last part of the path to be map key")
 			}
 
 			switch {

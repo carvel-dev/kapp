@@ -614,6 +614,6 @@ type resourcePlainErr struct {
 }
 
 func (e resourcePlainErr) Error() string {
-	return fmt.Sprintf("%s resource %s: %s (reason: %s)",
+	return fmt.Sprintf("%s resource %s: API server says: %s (reason: %s)",
 		e.action, e.resource.Description(), e.err, errors.ReasonForError(e.err))
 }

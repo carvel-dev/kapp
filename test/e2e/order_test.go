@@ -93,7 +93,7 @@ kapp-test  app                  ConfigMap  -       -    create  -       reconcil
 ^          import-etcd-into-db  ConfigMap  -       -    create  -       reconcile  -   -  $
 ^          migrations           ConfigMap  -       -    create  -       reconcile  -   -  $
 
-Op:      7 create, 0 delete, 0 update, 0 noop
+Op:      7 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 7 reconcile, 0 delete, 0 noop
 
 <replaced>: ---- applying 4 changes [0/7 done] ----
@@ -189,7 +189,7 @@ Namespace  Name                 Kind       Conds.  Age  Op      Op st.  Wait to 
 kapp-test  app-config2          ConfigMap  -       -    create  -       reconcile  -   -  $
 ^          import-etcd-into-db  ConfigMap  -       <replaced>  delete  -       delete     ok  -  $
 
-Op:      1 create, 1 delete, 0 update, 0 noop
+Op:      1 create, 1 delete, 0 update, 0 noop, 0 exists
 Wait to: 1 reconcile, 1 delete, 0 noop
 
 <replaced>: ---- applying 1 changes [0/2 done] ----

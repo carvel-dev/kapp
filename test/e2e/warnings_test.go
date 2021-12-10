@@ -91,7 +91,7 @@ Changes
 Namespace  Name  Kind     Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
 kapp-test  cr-1  CronTab  -       -    create  -       reconcile  -   -  
 
-Op:      1 create, 0 delete, 0 update, 0 noop
+Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 1 reconcile, 0 delete, 0 noop
 
 <replaced>: ---- applying 1 changes [0/1 done] ----
@@ -123,7 +123,7 @@ Changes
 Namespace  Name  Kind     Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
 kapp-test  cr-2  CronTab  -       -    create  -       reconcile  -   -  
 
-Op:      1 create, 0 delete, 0 update, 0 noop
+Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 1 reconcile, 0 delete, 0 noop
 
 <replaced>: ---- applying 1 changes [0/1 done] ----
@@ -143,16 +143,7 @@ Succeeded`
 }
 
 func getServerMinorVersion() (minorVersion int, err error) {
-	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	configOverrides := &clientcmd.ConfigOverrides{}
-	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
-
-	config, err := kubeConfig.ClientConfig()
-	if err != nil {
-		return minorVersion, err
-	}
-
-	clientset, err := kubernetes.NewForConfig(config)
+	clientset, err := getKubernetesClientset()
 	if err != nil {
 		return minorVersion, err
 	}
@@ -167,4 +158,18 @@ func getServerMinorVersion() (minorVersion int, err error) {
 	}
 
 	return minorVersion, err
+}
+
+func getKubernetesClientset() (*kubernetes.Clientset, error) {
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	configOverrides := &clientcmd.ConfigOverrides{}
+	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+
+	config, err := kubeConfig.ClientConfig()
+	if err != nil {
+		return &kubernetes.Clientset{}, err
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	return clientset, err
 }

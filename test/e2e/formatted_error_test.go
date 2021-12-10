@@ -52,7 +52,8 @@ spec:
 		expectedErr := strings.TrimSpace(`
 kapp: Error: Applying create job/successful-job (batch/v1) namespace: default:
   Creating resource job/successful-job (batch/v1) namespace: default:
-    Job.batch "successful-job" is invalid: 
+    API server says:
+      Job.batch "successful-job" is invalid: 
 
   - spec.selector: Invalid value: v1.LabelSelector{MatchLabels:map[string]string{"blah":"balh", -replaced-, -replaced-}, MatchExpressions:[]v1.LabelSelectorRequirement(nil)}: 'selector' not auto-generated
 

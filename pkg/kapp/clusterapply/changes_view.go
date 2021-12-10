@@ -139,6 +139,7 @@ var (
 		ClusterChangeApplyOpDelete: "delete",
 		ClusterChangeApplyOpUpdate: "update",
 		ClusterChangeApplyOpNoop:   "noop",
+		ClusterChangeApplyOpExists: "exists",
 	}
 
 	applyStrategyCodeUI = map[ClusterChangeApplyOp]map[ClusterChangeApplyStrategyOp]string{
@@ -162,6 +163,10 @@ var (
 		ClusterChangeApplyOpNoop: {
 			noopStrategyOp: "",
 		},
+
+		ClusterChangeApplyOpExists: {
+			noopStrategyOp: "",
+		},
 	}
 
 	waitOpCodeUI = map[ClusterChangeWaitOp]string{
@@ -178,6 +183,8 @@ func (v *ChangesView) applyOpCode(op ClusterChangeApplyOp) uitable.Value {
 	case ClusterChangeApplyOpDelete:
 		return uitable.ValueFmt{V: uitable.NewValueString(applyOpCodeUI[op]), Error: true}
 	case ClusterChangeApplyOpUpdate:
+		return uitable.ValueFmt{V: uitable.NewValueString(applyOpCodeUI[op]), Error: false}
+	case ClusterChangeApplyOpExists:
 		return uitable.ValueFmt{V: uitable.NewValueString(applyOpCodeUI[op]), Error: false}
 	case ClusterChangeApplyOpNoop:
 		return uitable.NewValueString("")
@@ -228,7 +235,7 @@ func (v *ChangesCountsView) Add(applyOp ClusterChangeApplyOp, waitOp ClusterChan
 func (v *ChangesCountsView) Strings(table bool) []string {
 	applyOpsStats := []string{}
 	visibleApplyOps := []ClusterChangeApplyOp{
-		ClusterChangeApplyOpAdd, ClusterChangeApplyOpDelete, ClusterChangeApplyOpUpdate, ClusterChangeApplyOpNoop}
+		ClusterChangeApplyOpAdd, ClusterChangeApplyOpDelete, ClusterChangeApplyOpUpdate, ClusterChangeApplyOpNoop, ClusterChangeApplyOpExists}
 
 	for _, op := range visibleApplyOps {
 		applyOpsStats = append(applyOpsStats, fmt.Sprintf("%d %s", v.applyOps[op], applyOpCodeUI[op]))
