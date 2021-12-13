@@ -24,3 +24,14 @@ func validateChanges(t *testing.T, respTable []ui.JSONUITableResp, expected []ma
 	require.Equalf(t, notesWaitTo, respTable[0].Notes[1], "Expected to see correct summary, but did not: '%s'", output)
 
 }
+
+// validateAppListChanges: validating actual and expected of kapp ls
+func validateAppListChanges(t *testing.T, respTable []ui.JSONUITableResp, expected []map[string]string, output string) {
+
+	//deleting last_change_age from response table rows as it is varying from 0s to 1s making test case fail
+	for _, row := range respTable[0].Rows {
+		delete(row, "last_change_age")
+	}
+
+	require.Exactlyf(t, expected, respTable[0].Rows, "Expected to see correct changes, but did not: '%s'", output)
+}

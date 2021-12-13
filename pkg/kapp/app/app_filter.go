@@ -12,26 +12,32 @@ type AppFilter struct {
 	Labels []string
 }
 
-func (f AppFilter) Apply(apps []App) []App {
+func (f AppFilter) Apply(apps []App) ([]App, error) {
 	var result []App
 
 	for _, app := range apps {
-		if f.Matches(app) {
+		lastChange, err := app.LastChange()
+		if err != nil {
+			return []App{}, nil
+		}
+
+		if f.Matches(lastChange) {
 			result = append(result, app)
 		}
 	}
-	return result
+	return result, nil
 }
 
-func (f AppFilter) Matches(app App) bool {
+func (f AppFilter) Matches(change Change) bool {
+
 	if f.CreatedAtBeforeTime != nil {
-		if lc, _ := app.LastChange(); lc.Meta().StartedAt.After(*f.CreatedAtBeforeTime) {
+		if change.Meta().StartedAt.After(*f.CreatedAtBeforeTime) {
 			return false
 		}
 	}
 
 	if f.CreatedAtAfterTime != nil {
-		if lc, _ := app.LastChange(); lc.Meta().StartedAt.Before(*f.CreatedAtAfterTime) {
+		if change.Meta().StartedAt.Before(*f.CreatedAtAfterTime) {
 			return false
 		}
 	}

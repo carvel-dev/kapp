@@ -4,9 +4,12 @@
 package e2e
 
 import (
-	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
+	"time"
+
+	uitest "github.com/cppforlife/go-cli-ui/ui/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAppListing(t *testing.T) {
@@ -40,8 +43,8 @@ data:
   key: value
 `
 
-	name := "test-app-list"
-	name2 := "test-app-list-2"
+	name := "test-app-1"
+	name2 := "test-app-2"
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
 		kapp.Run([]string{"delete", "-a", name2})
@@ -50,59 +53,48 @@ data:
 	cleanUp()
 	defer cleanUp()
 	logger.Section("App listing and filter label", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
+		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
 			"--labels", "x=y"}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
-		expectedOutput1 := `
-Namespace  Name           Kind     Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
-kapp-test  redis-primary  Service  -       -    create  -       reconcile  -   -  
 
-Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists
-Wait to: 1 reconcile, 0 delete, 0 noop
-`
-		require.Contains(t, out, expectedOutput1, "Did not find expected diff output")
-
-		out2, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name2,
+		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name2,
 			"--labels", "a=b"}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
-		expectedOutput2 := `
-Namespace  Name          Kind       Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
-kapp-test  redis-config  ConfigMap  -       -    create  -       reconcile  -   -  
 
-Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists
-Wait to: 1 reconcile, 0 delete, 0 noop
-`
-		require.Contains(t, out2, expectedOutput2, "Did not find expected diff output")
+		listedAppsWithAge, _ := kapp.RunWithOpts([]string{"ls", "--filter-age", "2m+", "--json"}, RunOpts{Interactive: true})
 
-		listedApps, _ := kapp.RunWithOpts([]string{"ls"}, RunOpts{Interactive: true})
+		response := uitest.JSONUIFromBytes(t, []byte(listedAppsWithAge))
 
-		expectedAppsList := `
-Apps in namespace 'kapp-test'
+		if len(response.Tables) > 0 {
+			require.Empty(t, response.Tables[0].Rows, "Expected table rows to empty")
+		}
 
-Name             Namespaces  Lcs   Lca  
-test-app-list    kapp-test   true  0s  
-test-app-list-2  kapp-test   true  0s  
+		time.Sleep(2 * time.Second)
 
-Lcs: Last Change Successful
-Lca: Last Change Age
+		listedApps, _ := kapp.RunWithOpts([]string{"ls", "--filter-age", "2s+", "--json"}, RunOpts{Interactive: true})
 
-2 apps
-`
-		require.Contains(t, listedApps, expectedAppsList, "Did not find expected diff output")
+		expectedAppsList := []map[string]string{{
+			"last_change_successful": "true",
+			"name":                   "test-app-1",
+			"namespaces":             "kapp-test",
+		}, {
+			"last_change_successful": "true",
+			"name":                   "test-app-2",
+			"namespaces":             "kapp-test",
+		}}
 
-		filteredApps, _ := kapp.RunWithOpts([]string{"ls", "--filter-labels", "x=y"}, RunOpts{Interactive: true})
+		resp := uitest.JSONUIFromBytes(t, []byte(listedApps))
 
-		expectedFilteredApps := `
-Apps in namespace 'kapp-test'
+		validateAppListChanges(t, resp.Tables, expectedAppsList, listedApps)
 
-Name           Namespaces  Lcs   Lca  
-test-app-list  kapp-test   true  0s  
+		filteredApps, _ := kapp.RunWithOpts([]string{"ls", "--filter-labels", "x=y", "--json"}, RunOpts{Interactive: true})
 
-Lcs: Last Change Successful
-Lca: Last Change Age
+		expectedFilteredApps := []map[string]string{{
+			"last_change_successful": "true",
+			"name":                   "test-app-1",
+			"namespaces":             "kapp-test",
+		}}
 
-1 apps
+		resp2 := uitest.JSONUIFromBytes(t, []byte(filteredApps))
 
-Succeeded
-`
-		require.Contains(t, filteredApps, expectedFilteredApps, "Did not find expected diff output")
+		validateAppListChanges(t, resp2.Tables, expectedFilteredApps, filteredApps)
 	})
 }

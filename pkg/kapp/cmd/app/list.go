@@ -62,6 +62,9 @@ func (o *ListOptions) Run() error {
 	}
 
 	appFilter, err := o.AppFilterFlags.AppFilter()
+	if err != nil {
+		return err
+	}
 
 	labelFlags := &LabelFlags{Labels: appFilter.Labels}
 	additionalLabels, err := labelFlags.AsMap()
@@ -74,7 +77,10 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
-	items = appFilter.Apply(items)
+	items, err = appFilter.Apply(items)
+	if err != nil {
+		return err
+	}
 
 	labelHeader := uitable.NewHeader("Label")
 	labelHeader.Hidden = true

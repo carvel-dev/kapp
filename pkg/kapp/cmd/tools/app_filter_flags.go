@@ -49,6 +49,8 @@ func (s *AppFilterFlags) Times() (*time.Time, *time.Time, error) {
 		ageOlder = true
 	case "-":
 		ageStr = s.age[:lastIdx]
+	default:
+		ageStr = s.age
 	}
 
 	dur, err := time.ParseDuration(ageStr)
