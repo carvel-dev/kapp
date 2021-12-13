@@ -82,7 +82,7 @@ func (o *DeployOptions) Run() error {
 		}
 	}
 
-	supportObjs, err := cmdapp.FactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger)
+	supportObjs, err := cmdapp.FactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger, &o.AppFlags.ApplyFlags.FieldManagerName)
 	if err != nil {
 		return err
 	}

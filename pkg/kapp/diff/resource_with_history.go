@@ -180,7 +180,7 @@ func (r ResourceWithHistory) newExactHistorylessChange(existingRes, newRes ctlre
 		return nil, err
 	}
 
-	return r.changeFactory.NewExactChange(existingRes, newRes)
+	return r.changeFactory.NewExactChange(nil, existingRes, newRes)
 }
 
 type resourceWithoutHistory struct {
@@ -217,6 +217,10 @@ func (resourceWithoutHistory) removeAppliedResAnnKeysMods() []ctlres.ResourceMod
 		ctlres.FieldRemoveMod{
 			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", debugAppliedResDiffFullAnnKey}),
+		},
+		ctlres.FieldRemoveMod{
+			ResourceMatcher: ctlres.AllMatcher{},
+			Path:            ctlres.NewPathFromStrings([]string{"metadata", "managedFields"}),
 		},
 	}
 }

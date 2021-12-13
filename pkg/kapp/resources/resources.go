@@ -43,7 +43,7 @@ type Resources interface {
 	Delete(Resource) error
 	Exists(Resource, ExistsOpts) (Resource, bool, error)
 	Get(Resource) (Resource, error)
-	Patch(Resource, types.PatchType, []byte) (Resource, error)
+	Patch(Resource, types.PatchType, []byte, bool) (Resource, error)
 	Update(Resource) (Resource, error)
 	Create(resource Resource) (Resource, error)
 }
@@ -68,6 +68,11 @@ type ResourcesImpl struct {
 type ResourcesImplOpts struct {
 	FallbackAllowedNamespaces        []string
 	ScopeToFallbackAllowedNamespaces bool
+
+	//ResourcesImpl is instantiated in the Factory even for commands not making CREATE/UPDATE/PATCH calls
+	//and these commands don't have FieldManager CLI flag. Use pointer type here to force panic
+	//in case such write operation sneak into these commands in the future
+	FieldManagerName *string
 }
 
 func NewResourcesImpl(resourceTypes ResourceTypes, coreClient kubernetes.Interface,
@@ -256,7 +261,9 @@ func (c *ResourcesImpl) Create(resource Resource) (Resource, error) {
 	var createdUn *unstructured.Unstructured
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
-		createdUn, err = resClient.Create(context.TODO(), resource.unstructuredPtr(), metav1.CreateOptions{})
+		createdUn, err = resClient.Create(context.TODO(), resource.unstructuredPtr(), metav1.CreateOptions{
+			FieldManager: *c.opts.FieldManagerName,
+		})
 		return err
 	})
 	if err != nil {
@@ -283,7 +290,9 @@ func (c *ResourcesImpl) Update(resource Resource) (Resource, error) {
 	var updatedUn *unstructured.Unstructured
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
-		updatedUn, err = resClient.Update(context.TODO(), resource.unstructuredPtr(), metav1.UpdateOptions{})
+		updatedUn, err = resClient.Update(context.TODO(), resource.unstructuredPtr(), metav1.UpdateOptions{
+			FieldManager: *c.opts.FieldManagerName,
+		})
 		return err
 	})
 	if err != nil {
@@ -293,7 +302,7 @@ func (c *ResourcesImpl) Update(resource Resource) (Resource, error) {
 	return NewResourceUnstructured(*updatedUn, resType), nil
 }
 
-func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data []byte) (Resource, error) {
+func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data []byte, dryRun bool) (Resource, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { c.logger.Debug("patch %s", time.Now().UTC().Sub(t1)) }()
@@ -305,9 +314,17 @@ func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data
 	}
 
 	var patchedUn *unstructured.Unstructured
+	var dryRunOpt []string
+
+	if dryRun {
+		dryRunOpt = []string{"All"}
+	}
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
-		patchedUn, err = resClient.Patch(context.TODO(), resource.Name(), patchType, data, metav1.PatchOptions{})
+		patchedUn, err = resClient.Patch(context.TODO(), resource.Name(), patchType, data, metav1.PatchOptions{
+			FieldManager: *c.opts.FieldManagerName,
+			DryRun:       dryRunOpt,
+		})
 		return err
 	})
 	if err != nil {

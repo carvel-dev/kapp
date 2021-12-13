@@ -54,7 +54,7 @@ func (o *LogsOptions) Run() error {
 		return err
 	}
 
-	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, ResourceTypesFlags{}, o.logger)
+	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, ResourceTypesFlags{}, o.logger, nil)
 	if err != nil {
 		return err
 	}

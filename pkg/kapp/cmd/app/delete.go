@@ -59,7 +59,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 func (o *DeleteOptions) Run() error {
 	failingAPIServicesPolicy := o.ResourceTypesFlags.FailingAPIServicePolicy()
 
-	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
+	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger, &o.ApplyFlags.FieldManagerName)
 	if err != nil {
 		return err
 	}
@@ -189,10 +189,10 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 	)
 
 	{ // Figure out changes for X existing resources -> 0 new resources
-		changeFactory := ctldiff.NewChangeFactory(nil, nil)
+		changeFactory := ctldiff.NewChangeFactory(nil, nil, supportObjs.Resources)
 		changeSetFactory := ctldiff.NewChangeSetFactory(o.DiffFlags.ChangeSetOpts, changeFactory)
 
-		changes, err := changeSetFactory.New(existingResources, nil).Calculate()
+		changes, err := changeSetFactory.New(existingResources, nil).Calculate(nil)
 		if err != nil {
 			return ctlcap.ClusterChangeSet{}, nil, changesSummary{}, err
 		}

@@ -4,21 +4,64 @@
 package diff
 
 import (
+	"context"
+	"fmt"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 type ChangeFactory struct {
 	rebaseMods                               []ctlres.ResourceModWithMultiple
 	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod
+	resources                                ctlres.Resources
 }
+
+type ChangeFactoryFunc func(ctx context.Context, existingRes, newRes ctlres.Resource) (Change, error)
+
+var _ ChangeFactoryFunc = ChangeFactory{}.NewChangeSSA
+var _ ChangeFactoryFunc = ChangeFactory{}.NewChangeAgainstLastApplied
+var _ ChangeFactoryFunc = ChangeFactory{}.NewExactChange
 
 func NewChangeFactory(rebaseMods []ctlres.ResourceModWithMultiple,
-	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod) ChangeFactory {
+	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod, resources ctlres.Resources) ChangeFactory {
 
-	return ChangeFactory{rebaseMods, diffAgainstLastAppliedFieldExclusionMods}
+	return ChangeFactory{rebaseMods, diffAgainstLastAppliedFieldExclusionMods, resources}
 }
 
-func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Resource) (Change, error) {
+func (f ChangeFactory) NewChangeSSA(ctx context.Context, existingRes, newRes ctlres.Resource) (Change, error) {
+	if existingRes != nil {
+		historylessExistingRes, err := f.NewResourceWithHistory(existingRes).HistorylessResource()
+		if err != nil {
+			return nil, err
+		}
+
+		existingRes = historylessExistingRes
+	}
+
+	newResAsIs := newRes
+	if newResAsIs != nil {
+		historylessNewRes, err := f.NewResourceWithHistory(newRes).HistorylessResource()
+		if err != nil {
+			return nil, err
+		}
+
+		newResAsIs = historylessNewRes
+	}
+
+	dryRunRes := newResAsIs
+	if dryRunRes != nil && existingRes != nil {
+		newResBytes, _ := newRes.AsYAMLBytes()
+		dryRunResult, err := f.resources.Patch(existingRes, types.ApplyPatchType, newResBytes, true)
+		if err != nil {
+			return nil, fmt.Errorf("SSA dry run: %s", err)
+		}
+		dryRunRes = dryRunResult
+	}
+
+	return NewChangeSSA(existingRes, newResAsIs, dryRunRes), nil
+}
+
+func (f ChangeFactory) NewChangeAgainstLastApplied(ctx context.Context, existingRes, newRes ctlres.Resource) (Change, error) {
 	// Retain original copy of existing resource and use it
 	// for rebasing last applied resource and new resource.
 	existingResForRebasing := existingRes
@@ -61,7 +104,7 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Re
 	return NewChange(existingRes, rebasedNewRes, newRes), nil
 }
 
-func (f ChangeFactory) NewExactChange(existingRes, newRes ctlres.Resource) (Change, error) {
+func (f ChangeFactory) NewExactChange(ctx context.Context, existingRes, newRes ctlres.Resource) (Change, error) {
 	if existingRes != nil {
 		historylessExistingRes, err := f.NewResourceWithHistory(existingRes).HistorylessResource()
 		if err != nil {

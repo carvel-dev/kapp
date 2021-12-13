@@ -36,7 +36,7 @@ func NewLabelCmd(o *LabelOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comm
 }
 
 func (o *LabelOptions) Run() error {
-	app, _, err := Factory(o.depsFactory, o.AppFlags, ResourceTypesFlags{}, o.logger)
+	app, _, err := Factory(o.depsFactory, o.AppFlags, ResourceTypesFlags{}, o.logger, nil)
 	if err != nil {
 		return err
 	}

@@ -4,14 +4,23 @@
 package diff
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
+type ChangeSetMode string
+
+const (
+	ExactChangeSetMode              = "Exact"
+	AgainstLastAppliedChangeSetMode = "AgainstLastApplied"
+	ServerSideApplyChangeSetMode    = "ServerSideApply"
+)
+
 type ChangeSetOpts struct {
-	AgainstLastApplied bool
+	Mode ChangeSetMode
 }
 
 type ChangeSet struct {
@@ -26,10 +35,17 @@ func NewChangeSet(existingRs, newRs []ctlres.Resource,
 	return &ChangeSet{existingRs, newRs, opts, changeFactory}
 }
 
-func (d ChangeSet) Calculate() ([]Change, error) {
-	changeFactoryFunc := d.changeFactory.NewExactChange
-	if d.opts.AgainstLastApplied {
+func (d ChangeSet) Calculate(ctx context.Context) ([]Change, error) {
+	var changeFactoryFunc ChangeFactoryFunc
+	switch d.opts.Mode {
+	case ExactChangeSetMode:
+		changeFactoryFunc = d.changeFactory.NewExactChange
+	case AgainstLastAppliedChangeSetMode:
 		changeFactoryFunc = d.changeFactory.NewChangeAgainstLastApplied
+	case ServerSideApplyChangeSetMode:
+		changeFactoryFunc = d.changeFactory.NewChangeSSA
+	default:
+		panic(fmt.Sprintf("Unexpected change set mode: %s", d.opts.Mode))
 	}
 
 	existingRsMap := map[string]ctlres.Resource{}
@@ -49,12 +65,12 @@ func (d ChangeSet) Calculate() ([]Change, error) {
 		var err error
 
 		if existingRes, found := existingRsMap[newResKey]; found {
-			change, err = changeFactoryFunc(existingRes, newRes)
+			change, err = changeFactoryFunc(ctx, existingRes, newRes)
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			change, err = changeFactoryFunc(nil, newRes)
+			change, err = changeFactoryFunc(ctx, nil, newRes)
 			if err != nil {
 				return nil, err
 			}
@@ -70,7 +86,7 @@ func (d ChangeSet) Calculate() ([]Change, error) {
 		existingResKey := ctlres.NewUniqueResourceKey(existingRes).String()
 
 		if _, found := alreadyChecked[existingResKey]; !found {
-			change, err := changeFactoryFunc(existingRes, nil)
+			change, err := changeFactoryFunc(ctx, existingRes, nil)
 			if err != nil {
 				return nil, err
 			}

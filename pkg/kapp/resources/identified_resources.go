@@ -26,9 +26,7 @@ func NewIdentifiedResources(coreClient kubernetes.Interface, resourceTypes Resou
 		fallbackAllowedNamespaces, logger.NewPrefixed("IdentifiedResources")}
 }
 
-func (r IdentifiedResources) Create(resource Resource) (Resource, error) {
-	defer r.logger.DebugFunc(fmt.Sprintf("Create(%s)", resource.Description())).Finish()
-
+func WithIdentityAnnotation(resource Resource, f func(Resource) (Resource, error)) (Resource, error) {
 	resource = resource.DeepCopy()
 
 	err := NewIdentityAnnotation(resource).AddMod().Apply(resource)
@@ -36,7 +34,7 @@ func (r IdentifiedResources) Create(resource Resource) (Resource, error) {
 		return nil, err
 	}
 
-	resource, err = r.resources.Create(resource)
+	resource, err = f(resource)
 	if err != nil {
 		return nil, err
 	}
@@ -47,34 +45,23 @@ func (r IdentifiedResources) Create(resource Resource) (Resource, error) {
 	}
 
 	return resource, nil
+}
+
+func (r IdentifiedResources) Create(resource Resource) (Resource, error) {
+	defer r.logger.DebugFunc(fmt.Sprintf("Create(%s)", resource.Description())).Finish()
+
+	return WithIdentityAnnotation(resource, r.resources.Create)
 }
 
 func (r IdentifiedResources) Update(resource Resource) (Resource, error) {
 	defer r.logger.DebugFunc(fmt.Sprintf("Update(%s)", resource.Description())).Finish()
 
-	resource = resource.DeepCopy()
-
-	err := NewIdentityAnnotation(resource).AddMod().Apply(resource)
-	if err != nil {
-		return nil, err
-	}
-
-	resource, err = r.resources.Update(resource)
-	if err != nil {
-		return nil, err
-	}
-
-	err = NewIdentityAnnotation(resource).RemoveMod().Apply(resource)
-	if err != nil {
-		return nil, err
-	}
-
-	return resource, nil
+	return WithIdentityAnnotation(resource, r.resources.Update)
 }
 
 func (r IdentifiedResources) Patch(resource Resource, patchType types.PatchType, data []byte) (Resource, error) {
 	defer r.logger.DebugFunc(fmt.Sprintf("Patch(%s)", resource.Description())).Finish()
-	return r.resources.Patch(resource, patchType, data)
+	return r.resources.Patch(resource, patchType, data, false)
 }
 
 func (r IdentifiedResources) Delete(resource Resource) error {

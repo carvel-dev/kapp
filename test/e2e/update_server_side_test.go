@@ -82,7 +82,7 @@ spec:
 
 	name := strings.ToLower(t.Name())
 	cleanUp := func() {
-		//kapp.Run([]string{"delete", "-a", name})
+		kapp.Run([]string{"delete", "-a", name})
 	}
 
 	kubectl := Kubectl{t, env.Namespace, logger}

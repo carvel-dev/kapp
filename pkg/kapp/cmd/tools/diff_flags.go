@@ -35,7 +35,11 @@ func (s *DiffFlags) SetWithPrefix(prefix string, cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&s.LineNumbers, prefix+"line-numbers", true, "Show line numbers")
 	cmd.Flags().BoolVar(&s.Mask, prefix+"mask", true, "Apply masking rules")
 
-	cmd.Flags().BoolVar(&s.AgainstLastApplied, prefix+"against-last-applied", true, "Show changes against last applied copy when possible")
+	if *cmd.Flags().Bool(prefix+"against-last-applied", true, "Show changes against last applied copy when possible. Ignored when server-side apply is used.") {
+		s.ChangeSetOpts.Mode = ctldiff.AgainstLastAppliedChangeSetMode
+	} else {
+		s.ChangeSetOpts.Mode = ctldiff.ExactChangeSetMode
+	}
 
 	cmd.Flags().StringVar(&s.Filter, prefix+"filter", "", `Set changes filter (example: {"and":[{"ops":["update"]},{"existingResource":{"kinds":["Deployment"]}]})`)
 }

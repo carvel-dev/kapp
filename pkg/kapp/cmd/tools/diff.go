@@ -4,6 +4,7 @@
 package tools
 
 import (
+	"context"
 	"github.com/cppforlife/go-cli-ui/ui"
 	ctlcap "github.com/k14s/kapp/pkg/kapp/clusterapply"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
@@ -33,11 +34,15 @@ func NewDiffCmd(o *DiffOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	}
 	o.FileFlags.Set(cmd)
 	o.FileFlags2.Set(cmd)
+
+	//TODO: support for the server side apply in diff command
 	o.DiffFlags.SetWithPrefix("", cmd)
 	return cmd
 }
 
 func (o *DiffOptions) Run() error {
+	ctx := context.Background()
+
 	newResources, err := o.fileResources(o.FileFlags.Files)
 	if err != nil {
 		return err
@@ -48,9 +53,9 @@ func (o *DiffOptions) Run() error {
 		return err
 	}
 
-	changeFactory := ctldiff.NewChangeFactory(nil, nil)
+	changeFactory := ctldiff.NewChangeFactory(nil, nil, nil)
 
-	changes, err := ctldiff.NewChangeSet(existingResources, newResources, o.DiffFlags.ChangeSetOpts, changeFactory).Calculate()
+	changes, err := ctldiff.NewChangeSet(existingResources, newResources, o.DiffFlags.ChangeSetOpts, changeFactory).Calculate(ctx)
 	if err != nil {
 		return err
 	}

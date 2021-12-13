@@ -4,7 +4,9 @@
 package clusterapply
 
 import (
+	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/types"
 	"time"
 
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
@@ -26,7 +28,9 @@ const (
 )
 
 type AddOrUpdateChangeOpts struct {
-	DefaultUpdateStrategy string
+	DefaultUpdateStrategy   string
+	ServerSideApply         bool
+	ServerSideForceConflict bool
 }
 
 type AddOrUpdateChange struct {
@@ -131,7 +135,7 @@ func (c AddOrUpdateChange) tryToResolveUpdateConflict(
 		changeSet := c.changeSetFactory.New([]ctlres.Resource{latestExistingRes},
 			[]ctlres.Resource{c.change.AppliedResource()})
 
-		recalcChanges, err := changeSet.Calculate()
+		recalcChanges, err := changeSet.Calculate(context.TODO())
 		if err != nil {
 			return err
 		}
@@ -172,7 +176,7 @@ func (c AddOrUpdateChange) tryToUpdateAfterCreateConflict() error {
 		changeSet := c.changeSetFactory.New([]ctlres.Resource{latestExistingRes},
 			[]ctlres.Resource{c.change.AppliedResource()})
 
-		recalcChanges, err := changeSet.Calculate()
+		recalcChanges, err := changeSet.Calculate(context.TODO())
 		if err != nil {
 			return err
 		}
@@ -295,7 +299,17 @@ type UpdatePlainStrategy struct {
 func (c UpdatePlainStrategy) Op() ClusterChangeApplyStrategyOp { return updateStrategyPlainAnnValue }
 
 func (c UpdatePlainStrategy) Apply() error {
-	updatedRes, err := c.aou.identifiedResources.Update(c.newRes)
+	var updatedRes ctlres.Resource
+	var err error
+
+	if c.aou.opts.ServerSideApply {
+		updatedRes, err = ctlres.WithIdentityAnnotation(c.newRes, func(r ctlres.Resource) (ctlres.Resource, error) {
+			resBytes, _ := r.AsYAMLBytes()
+			return c.aou.identifiedResources.Patch(r, types.ApplyPatchType, resBytes)
+		})
+	} else {
+		updatedRes, err = c.aou.identifiedResources.Update(c.newRes)
+	}
 	if err != nil {
 		if errors.IsConflict(err) {
 			return c.aou.tryToResolveUpdateConflict(err, func(err error) error { return err })
@@ -323,8 +337,20 @@ func (c UpdateOrFallbackOnReplaceStrategy) Apply() error {
 		return err
 	}
 
-	updatedRes, err := c.aou.identifiedResources.Update(c.newRes)
+	var updatedRes ctlres.Resource
+	var err error
+
+	if c.aou.opts.ServerSideApply {
+		updatedRes, err = ctlres.WithIdentityAnnotation(c.newRes, func(r ctlres.Resource) (ctlres.Resource, error) {
+			resBytes, _ := r.AsYAMLBytes()
+			return c.aou.identifiedResources.Patch(r, types.ApplyPatchType, resBytes)
+		})
+	} else {
+		updatedRes, err = c.aou.identifiedResources.Update(c.newRes)
+	}
+
 	if err != nil {
+		//TODO: find out if SSA conflicts worth retrying
 		if errors.IsConflict(err) {
 			return c.aou.tryToResolveUpdateConflict(err, replaceIfIsInvalidErrFunc)
 		}
