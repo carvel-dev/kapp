@@ -91,8 +91,9 @@ spec:
 	defer cleanUp()
 
 	logger.Section("deploy basic service", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+		err := kapp.RunEmbedded([]string{"deploy", "--server-side", "-f", "-", "-a", name},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+		require.NoError(t, err)
 	})
 
 	logger.Section("edit resource with kubectl outside of kapp", func() {
@@ -103,8 +104,9 @@ spec:
 	})
 
 	logger.Section("deploy updated service", func() {
-		kapp.RunWithOpts([]string{"deploy", "--yes", "-f", "-", "-a", name},
+		err := kapp.RunEmbedded([]string{"deploy", "--server-side", "-f", "-", "-a", name},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
+		require.NoError(t, err)
 	})
 
 	inClusterObj := corev1.Service{}

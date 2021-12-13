@@ -6,7 +6,10 @@ package e2e
 import (
 	"bytes"
 	"fmt"
+	"github.com/cppforlife/go-cli-ui/ui"
+	"github.com/k14s/kapp/pkg/kapp/cmd"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -96,10 +99,75 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 	return stdoutStr, err
 }
 
+func (k Kapp) RunEmbedded(args []string, opts RunOpts) error {
+	var stdout io.Writer = os.Stdout
+
+	if opts.StdoutWriter != nil {
+		stdout = opts.StdoutWriter
+	}
+
+	confUI := ui.NewWrappingConfUI(ui.NewWriterUI(stdout, os.Stderr, ui.NewNoopLogger()), ui.NewNoopLogger())
+	defer confUI.Flush()
+
+	if !opts.NoNamespace {
+		args = append(args, []string{"-n", k.namespace}...)
+	}
+	if opts.IntoNs {
+		args = append(args, []string{"--into-ns", k.namespace}...)
+	}
+	if !opts.Interactive {
+		args = append(args, "--yes")
+	}
+
+	if opts.StdinReader != nil {
+		stdin, err := ioutil.ReadAll(opts.StdinReader)
+		if err != nil {
+			return fmt.Errorf("stdin err: %s", err)
+		}
+		tmpFile, err := newTmpFileSimple(string(stdin))
+		if err != nil {
+			return fmt.Errorf("tmpfile err: %s", err)
+		}
+		defer os.Remove(tmpFile.Name())
+		replaceArg(args, "-", tmpFile.Name())
+	}
+
+	command := cmd.NewDefaultKappCmd(confUI)
+	command.SetArgs(args)
+	return command.Execute()
+}
+
+func replaceArg(s []string, elem, replacement string) {
+	for i, x := range s {
+		if x == elem {
+			s[i] = replacement
+		}
+	}
+}
+
 func (k Kapp) cmdDesc(args []string, opts RunOpts) string {
 	prefix := "kapp"
 	if opts.Redact {
 		return prefix + " -redacted-"
 	}
 	return fmt.Sprintf("%s %s", prefix, strings.Join(args, " "))
+}
+
+func newTmpFileSimple(content string) (*os.File, error) {
+	file, err := ioutil.TempFile("", "kapp-e2e")
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = file.Write([]byte(content))
+	if err != nil {
+		return nil, err
+	}
+
+	err = file.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
 }
