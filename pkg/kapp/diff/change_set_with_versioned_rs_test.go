@@ -4,6 +4,7 @@
 package diff
 
 import (
+	"context"
 	"testing"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
@@ -30,7 +31,7 @@ metadata:
 	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRes}, []ctlres.Resource{newRs}, nil,
 		ChangeSetOpts{}, ChangeFactory{})
 
-	changes, err := changeSetWithVerRes.Calculate()
+	changes, err := changeSetWithVerRes.Calculate(context.Background())
 	require.NoError(t, err)
 
 	require.Len(t, changes, 2)
@@ -78,7 +79,7 @@ metadata:
 	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRes}, []ctlres.Resource{newRs}, nil,
 		ChangeSetOpts{}, ChangeFactory{})
 
-	changes, err := changeSetWithVerRes.Calculate()
+	changes, err := changeSetWithVerRes.Calculate(context.Background())
 	require.NoError(t, err)
 
 	require.Len(t, changes, 2)
@@ -127,7 +128,7 @@ metadata:
 	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRes}, []ctlres.Resource{newRs}, nil,
 		ChangeSetOpts{}, ChangeFactory{})
 
-	changes, err := changeSetWithVerRes.Calculate()
+	changes, err := changeSetWithVerRes.Calculate(context.Background())
 	require.NoError(t, err)
 
 	require.Len(t, changes, 2)

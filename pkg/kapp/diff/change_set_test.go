@@ -4,6 +4,7 @@
 package diff_test
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -48,11 +49,11 @@ metadata:
 		},
 	}
 
-	changeFactory := ctldiff.NewChangeFactory(mods, nil)
+	changeFactory := ctldiff.NewChangeFactory(mods, nil, nil)
 	changeSet := ctldiff.NewChangeSet([]ctlres.Resource{existingRes}, []ctlres.Resource{newRes},
 		ctldiff.ChangeSetOpts{}, changeFactory)
 
-	changes, err := changeSet.Calculate()
+	changes, err := changeSet.Calculate(context.Background())
 	require.NoError(t, err)
 
 	actualDiff := changes[0].ConfigurableTextDiff().Full().FullString()
@@ -106,11 +107,11 @@ metadata:
 		},
 	}
 
-	changeFactory := ctldiff.NewChangeFactory(mods, nil)
+	changeFactory := ctldiff.NewChangeFactory(mods, nil, nil)
 	changeSet := ctldiff.NewChangeSet([]ctlres.Resource{existingRes}, []ctlres.Resource{newRes},
 		ctldiff.ChangeSetOpts{}, changeFactory)
 
-	changes, err := changeSet.Calculate()
+	changes, err := changeSet.Calculate(context.Background())
 	require.NoError(t, err)
 
 	actualDiff := changes[0].ConfigurableTextDiff().Full().FullString()
@@ -174,11 +175,11 @@ metadata:
 		},
 	}
 
-	changeFactory := ctldiff.NewChangeFactory(rebaseMods, ignoreFieldsMods)
+	changeFactory := ctldiff.NewChangeFactory(rebaseMods, ignoreFieldsMods, nil)
 	changeSet := ctldiff.NewChangeSet([]ctlres.Resource{existingRes}, []ctlres.Resource{newRes},
-		ctldiff.ChangeSetOpts{AgainstLastApplied: true}, changeFactory)
+		ctldiff.ChangeSetOpts{Mode: ctldiff.AgainstLastAppliedChangeSetMode}, changeFactory)
 
-	changes, err := changeSet.Calculate()
+	changes, err := changeSet.Calculate(context.Background())
 	require.NoError(t, err)
 
 	actualDiff := changes[0].ConfigurableTextDiff().Full().FullString()
@@ -246,11 +247,11 @@ metadata:
 		},
 	}
 
-	changeFactory := ctldiff.NewChangeFactory(rebaseMods, ignoreFieldsMods)
+	changeFactory := ctldiff.NewChangeFactory(rebaseMods, ignoreFieldsMods, nil)
 	changeSet := ctldiff.NewChangeSet([]ctlres.Resource{existingRes}, []ctlres.Resource{newRes},
-		ctldiff.ChangeSetOpts{AgainstLastApplied: true}, changeFactory)
+		ctldiff.ChangeSetOpts{Mode: ctldiff.AgainstLastAppliedChangeSetMode}, changeFactory)
 
-	changes, err := changeSet.Calculate()
+	changes, err := changeSet.Calculate(context.Background())
 	require.NoError(t, err)
 
 	actualDiff := changes[0].ConfigurableTextDiff().Full().FullString()

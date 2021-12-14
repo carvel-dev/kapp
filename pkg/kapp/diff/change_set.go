@@ -32,6 +32,10 @@ type ChangeSet struct {
 func NewChangeSet(existingRs, newRs []ctlres.Resource,
 	opts ChangeSetOpts, changeFactory ChangeFactory) *ChangeSet {
 
+	if opts.Mode == "" {
+		opts.Mode = ExactChangeSetMode
+	}
+
 	return &ChangeSet{existingRs, newRs, opts, changeFactory}
 }
 

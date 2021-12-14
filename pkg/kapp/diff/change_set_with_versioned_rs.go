@@ -29,6 +29,10 @@ type ChangeSetWithVersionedRs struct {
 func NewChangeSetWithVersionedRs(existingRs, newRs []ctlres.Resource,
 	rules []ctlconf.TemplateRule, opts ChangeSetOpts, changeFactory ChangeFactory) *ChangeSetWithVersionedRs {
 
+	if opts.Mode == "" {
+		opts.Mode = ExactChangeSetMode
+	}
+
 	return &ChangeSetWithVersionedRs{existingRs, newRs, rules, opts, changeFactory}
 }
 
