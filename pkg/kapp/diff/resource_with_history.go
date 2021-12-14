@@ -218,6 +218,8 @@ func (resourceWithoutHistory) removeAppliedResAnnKeysMods() []ctlres.ResourceMod
 			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", debugAppliedResDiffFullAnnKey}),
 		},
+		// metadata.managedFields technically is not kapp history, but we want to strip it in same situations we are
+		// stripping kapp history, it is server side apply history after all
 		ctlres.FieldRemoveMod{
 			ResourceMatcher: ctlres.AllMatcher{},
 			Path:            ctlres.NewPathFromStrings([]string{"metadata", "managedFields"}),

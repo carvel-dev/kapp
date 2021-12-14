@@ -91,8 +91,8 @@ spec:
 	defer cleanUp()
 
 	logger.Section("deploy basic service", func() {
-		err := kapp.RunEmbedded([]string{"deploy", "--server-side", "-f", "-", "-a", name},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+		_, err := kapp.RunEmbedded([]string{"deploy", "--server-side", "-f", "-", "-a", name},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1), StdoutWriter: os.Stdout})
 		require.NoError(t, err)
 	})
 
@@ -104,8 +104,8 @@ spec:
 	})
 
 	logger.Section("deploy updated service", func() {
-		err := kapp.RunEmbedded([]string{"deploy", "--server-side", "-f", "-", "-a", name},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
+		_, err := kapp.RunEmbedded([]string{"deploy", "--server-side", "-f", "-", "-a", name},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2), StdoutWriter: os.Stdout})
 		require.NoError(t, err)
 	})
 

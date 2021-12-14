@@ -87,7 +87,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "",
 		}, {
@@ -98,7 +98,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config1",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "",
 		}, {
@@ -109,7 +109,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config2",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "",
 		}}
@@ -120,8 +120,9 @@ data:
 	})
 
 	logger.Section("deploy no change", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+		require.NoError(t, err)
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 		expected := []map[string]string{}
@@ -145,7 +146,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}, {
@@ -156,7 +157,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config1",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}, {
@@ -167,7 +168,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config3",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "",
 		}}
@@ -190,7 +191,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config1",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}, {
@@ -201,7 +202,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config2",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}, {
@@ -212,7 +213,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config3",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}}

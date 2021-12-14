@@ -99,8 +99,10 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 	return stdoutStr, err
 }
 
-func (k Kapp) RunEmbedded(args []string, opts RunOpts) error {
-	var stdout io.Writer = os.Stdout
+func (k Kapp) RunEmbedded(args []string, opts RunOpts) (string, error) {
+	var stdoutBuf bytes.Buffer
+	//var stdout io.Writer = bufio.NewWriter(&stdoutBuf)
+	var stdout io.Writer = &stdoutBuf
 
 	if opts.StdoutWriter != nil {
 		stdout = opts.StdoutWriter
@@ -122,11 +124,11 @@ func (k Kapp) RunEmbedded(args []string, opts RunOpts) error {
 	if opts.StdinReader != nil {
 		stdin, err := ioutil.ReadAll(opts.StdinReader)
 		if err != nil {
-			return fmt.Errorf("stdin err: %s", err)
+			return "", fmt.Errorf("stdin err: %s", err)
 		}
 		tmpFile, err := newTmpFileSimple(string(stdin))
 		if err != nil {
-			return fmt.Errorf("tmpfile err: %s", err)
+			return "", fmt.Errorf("tmpfile err: %s", err)
 		}
 		defer os.Remove(tmpFile.Name())
 		replaceArg(args, "-", tmpFile.Name())
@@ -134,7 +136,10 @@ func (k Kapp) RunEmbedded(args []string, opts RunOpts) error {
 
 	command := cmd.NewDefaultKappCmd(confUI)
 	command.SetArgs(args)
-	return command.Execute()
+
+	err := command.Execute()
+	confUI.Flush()
+	return stdoutBuf.String(), err
 }
 
 func replaceArg(s []string, elem, replacement string) {

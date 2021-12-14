@@ -65,8 +65,15 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(ctx context.Context, existing
 	// Retain original copy of existing resource and use it
 	// for rebasing last applied resource and new resource.
 	existingResForRebasing := existingRes
+	var err error
 
 	if existingRes != nil {
+		// Strip rebasing "base" object of kapp history so that it never shows up in the diff, regardless
+		// of rebase rules used
+		existingResForRebasing, err = f.NewResourceWithHistory(existingRes).HistorylessResource()
+		if err != nil {
+			return nil, err
+		}
 		// If we have copy of last applied resource (assuming it's still "valid"),
 		// use it as an existing resource to provide "smart" diff instead of
 		// diffing against resource that is actually stored on cluster.
@@ -78,13 +85,6 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(ctx context.Context, existing
 			}
 			existingRes = rebasedLastAppliedRes
 		}
-
-		historylessExistingRes, err := f.NewResourceWithHistory(existingRes).HistorylessResource()
-		if err != nil {
-			return nil, err
-		}
-
-		existingRes = historylessExistingRes
 	}
 
 	if newRes != nil {
