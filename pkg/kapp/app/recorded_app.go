@@ -25,6 +25,7 @@ const (
 type RecordedApp struct {
 	name   string
 	nsName string
+	labels map[string]string
 
 	coreClient             kubernetes.Interface
 	identifiedResources    ctlres.IdentifiedResources
@@ -217,7 +218,12 @@ func (a *RecordedApp) labeledApp() (*LabeledApp, error) {
 		return nil, err
 	}
 
-	sel := labels.Set(meta.Labels()).AsSelector()
+	appLabels := meta.Labels()
+	for key, val := range a.labels {
+		appLabels[key] = val
+	}
+
+	sel := labels.Set(appLabels).AsSelector()
 
 	return &LabeledApp{sel, a.identifiedResources}, nil
 }
