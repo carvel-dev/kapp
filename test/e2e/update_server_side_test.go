@@ -111,7 +111,7 @@ spec:
 
 	inClusterObj := corev1.Service{}
 
-	err := kubectl.RunWithOptsIntoJson([]string{"get", "svc", "redis-primary"},
+	err := kubectl.RunWithOptsIntoJSON([]string{"get", "svc", "redis-primary"},
 		RunOpts{IntoNs: true}, &inClusterObj)
 	require.NoError(t, err)
 
@@ -121,7 +121,7 @@ spec:
 	expectedObj := corev1.Service{}
 
 	// Patch dry run returns merged object with all patch-file fields present
-	err = kubectl.RunWithOptsIntoJson([]string{"patch", "svc", "redis-primary", "--patch-file", tmpFile.Name(), "--dry-run=client"},
+	err = kubectl.RunWithOptsIntoJSON([]string{"patch", "svc", "redis-primary", "--patch-file", tmpFile.Name(), "--dry-run=client"},
 		RunOpts{IntoNs: true}, &expectedObj)
 	require.NoError(t, err)
 

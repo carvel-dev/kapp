@@ -66,7 +66,7 @@ func (k Kubectl) RunWithOpts(args []string, opts RunOpts) (string, error) {
 	return stdout.String(), err
 }
 
-func (k Kubectl) RunWithOptsIntoJson(args []string, opts RunOpts, in interface{}) error {
+func (k Kubectl) RunWithOptsIntoJSON(args []string, opts RunOpts, in interface{}) error {
 	jsonArgs := append(args, "-o", "json")
 	out, err := k.RunWithOpts(jsonArgs, opts)
 	if err != nil {

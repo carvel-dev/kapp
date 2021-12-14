@@ -149,7 +149,7 @@ func (o *DeployOptions) Run() error {
 	}
 
 	clusterChangeSet, clusterChangesGraph, hasNoChanges, changeSummary, err :=
-		o.calculateAndPresentChanges(existingResources, newResources, conf, supportObjs, ctx)
+		o.calculateAndPresentChanges(ctx, existingResources, newResources, conf, supportObjs)
 	if err != nil {
 		if o.DiffFlags.UI && clusterChangesGraph != nil {
 			return o.presentDiffUI(clusterChangesGraph)
@@ -324,9 +324,7 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 	return resourceFilter.Apply(existingResources), o.existingPodResources(existingResources), nil
 }
 
-func (o *DeployOptions) calculateAndPresentChanges(existingResources,
-	newResources []ctlres.Resource, conf ctlconf.Conf, supportObjs FactorySupportObjs, ctx context.Context) (
-	ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, bool, string, error) {
+func (o *DeployOptions) calculateAndPresentChanges(ctx context.Context, existingResources, newResources []ctlres.Resource, conf ctlconf.Conf, supportObjs FactorySupportObjs) (ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, bool, string, error) {
 
 	var clusterChangeSet ctlcap.ClusterChangeSet
 
