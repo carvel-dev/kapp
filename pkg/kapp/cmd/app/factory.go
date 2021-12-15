@@ -8,13 +8,11 @@ import (
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
 
 type FactorySupportObjs struct {
 	CoreClient          kubernetes.Interface
-	DynamicClient       dynamic.Interface
 	ResourceTypes       *ctlres.ResourceTypesImpl
 	IdentifiedResources ctlres.IdentifiedResources
 	Resources           ctlres.Resources
@@ -58,7 +56,6 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 
 	result := FactorySupportObjs{
 		CoreClient:          coreClient,
-		DynamicClient:       dynamicClient,
 		ResourceTypes:       resTypes,
 		IdentifiedResources: identifiedResources,
 		Resources:           resources,
