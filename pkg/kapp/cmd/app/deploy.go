@@ -324,7 +324,9 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 	return resourceFilter.Apply(existingResources), o.existingPodResources(existingResources), nil
 }
 
-func (o *DeployOptions) calculateAndPresentChanges(ctx context.Context, existingResources, newResources []ctlres.Resource, conf ctlconf.Conf, supportObjs FactorySupportObjs) (ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, bool, string, error) {
+func (o *DeployOptions) calculateAndPresentChanges(ctx context.Context, existingResources,
+	newResources []ctlres.Resource, conf ctlconf.Conf, supportObjs FactorySupportObjs) (
+	ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, bool, string, error) {
 
 	var clusterChangeSet ctlcap.ClusterChangeSet
 
