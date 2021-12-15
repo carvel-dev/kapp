@@ -29,26 +29,7 @@ func NewChangeFactory(rebaseMods []ctlres.ResourceModWithMultiple,
 }
 
 func (f ChangeFactory) NewChangeSSA(ctx context.Context, existingRes, newRes ctlres.Resource) (Change, error) {
-	if existingRes != nil {
-		historylessExistingRes, err := f.NewResourceWithHistory(existingRes).HistorylessResource()
-		if err != nil {
-			return nil, err
-		}
-
-		existingRes = historylessExistingRes
-	}
-
-	newResAsIs := newRes
-	if newResAsIs != nil {
-		historylessNewRes, err := f.NewResourceWithHistory(newRes).HistorylessResource()
-		if err != nil {
-			return nil, err
-		}
-
-		newResAsIs = historylessNewRes
-	}
-
-	dryRunRes := newResAsIs
+	dryRunRes := newRes
 	if dryRunRes != nil && existingRes != nil {
 		newResBytes, _ := newRes.AsYAMLBytes()
 		dryRunResult, err := f.resources.Patch(existingRes, types.ApplyPatchType, newResBytes, true)
@@ -58,7 +39,7 @@ func (f ChangeFactory) NewChangeSSA(ctx context.Context, existingRes, newRes ctl
 		dryRunRes = dryRunResult
 	}
 
-	return NewChangeSSA(existingRes, newResAsIs, dryRunRes), nil
+	return NewChangeSSA(existingRes, newRes, dryRunRes), nil
 }
 
 func (f ChangeFactory) NewChangeAgainstLastApplied(ctx context.Context, existingRes, newRes ctlres.Resource) (Change, error) {
