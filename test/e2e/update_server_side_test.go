@@ -91,7 +91,7 @@ spec:
 	defer cleanUp()
 
 	logger.Section("deploy basic service", func() {
-		_, err := kapp.RunEmbedded([]string{"deploy", "--ssa-enable", "-f", "-", "-a", name},
+		_, err := kapp.RunWithOpts([]string{"deploy", "--ssa-enable", "-f", "-", "-a", name},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1), StdoutWriter: os.Stdout})
 		require.NoError(t, err)
 	})
@@ -104,7 +104,7 @@ spec:
 	})
 
 	logger.Section("deploy updated service", func() {
-		kapp.RunEmbedded([]string{"deploy", "--ssa-enable", "-f", "-", "-a", name},
+		kapp.RunWithOpts([]string{"deploy", "--ssa-enable", "-f", "-", "-a", name},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2), StdoutWriter: os.Stdout})
 	})
 

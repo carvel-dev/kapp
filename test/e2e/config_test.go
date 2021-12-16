@@ -341,7 +341,7 @@ data:
 	var expectedDataStr string
 
 	logger.Section("second deploy (rebase runs)", func() {
-		kapp.RunEmbedded([]string{"deploy", "-f", "-", "-a", name},
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(config + yaml1)})
 
 		expectedDataStr = asYAML(t, map[string]interface{}{
