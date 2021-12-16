@@ -31,6 +31,10 @@ func NewChangeFactory(rebaseMods []ctlres.ResourceModWithMultiple,
 func (f ChangeFactory) NewChangeSSA(ctx context.Context, existingRes, newRes ctlres.Resource) (Change, error) {
 	dryRunRes := newRes
 	if dryRunRes != nil && existingRes != nil {
+		// When diffing versioned objects, newRes name might be different from existingRes name, which makes PATCH command
+		// bellow to fail. Non-SSA change ignores newRes name when generating Change, here we do the same by unsetting it
+		newRes := newRes.DeepCopy()
+		newRes.SetName("")
 		newResBytes, _ := newRes.AsYAMLBytes()
 		dryRunResult, err := f.resources.Patch(existingRes, types.ApplyPatchType, newResBytes, ctlres.PatchOpts{DryRun: true})
 		if err != nil {
