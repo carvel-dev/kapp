@@ -313,6 +313,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: test-cm
+  annotations:
+    ann1: val1
 data:
   key1: val1`
 
@@ -339,7 +341,7 @@ data:
 	var expectedDataStr string
 
 	logger.Section("second deploy (rebase runs)", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+		kapp.RunEmbedded([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(config + yaml1)})
 
 		expectedDataStr = asYAML(t, map[string]interface{}{
@@ -351,6 +353,7 @@ data:
 			"values": asYAML(t, map[string]interface{}{
 				"existing": func() interface{} {
 					raw := cm.Raw()
+					removeHistory(raw)
 					metadata := raw["metadata"].(map[string]interface{})
 					anns := metadata["annotations"].(map[string]interface{})
 					delete(anns, "kapp.k14s.io/identity")
@@ -358,8 +361,10 @@ data:
 				}(),
 				"_current": func() interface{} {
 					raw := cm.Raw()
+					removeHistory(raw)
 					metadata := raw["metadata"].(map[string]interface{})
-					delete(metadata, "annotations")
+					anns := metadata["annotations"].(map[string]interface{})
+					delete(anns, "kapp.k14s.io/identity")
 					data := raw["data"].(map[string]interface{})
 					data["changed_in_rebase_rule"] = "1"
 					return raw
@@ -375,6 +380,9 @@ data:
 						"labels": map[string]interface{}{
 							"kapp.k14s.io/app":         cm.Labels()["kapp.k14s.io/app"],
 							"kapp.k14s.io/association": cm.Labels()["kapp.k14s.io/association"],
+						},
+						"annotations": map[string]string{
+							"ann1": "val1",
 						},
 					},
 					"data": map[string]interface{}{
