@@ -139,6 +139,10 @@ func (k Kapp) RunEmbedded(args []string, opts RunOpts) (string, error) {
 
 	err := command.Execute()
 	confUI.Flush()
+
+	if err != nil {
+		require.Truef(k.t, opts.AllowError, "Failed to successfully execute '%s': %v", k.cmdDesc(args, opts), err)
+	}
 	return stdoutBuf.String(), err
 }
 
