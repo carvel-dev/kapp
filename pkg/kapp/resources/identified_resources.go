@@ -61,7 +61,7 @@ func (r IdentifiedResources) Update(resource Resource) (Resource, error) {
 
 func (r IdentifiedResources) Patch(resource Resource, patchType types.PatchType, data []byte) (Resource, error) {
 	defer r.logger.DebugFunc(fmt.Sprintf("Patch(%s)", resource.Description())).Finish()
-	return r.resources.Patch(resource, patchType, data, false)
+	return r.resources.Patch(resource, patchType, data, PatchOpts{DryRun: false})
 }
 
 func (r IdentifiedResources) Delete(resource Resource) error {

@@ -32,7 +32,7 @@ func (f ChangeFactory) NewChangeSSA(ctx context.Context, existingRes, newRes ctl
 	dryRunRes := newRes
 	if dryRunRes != nil && existingRes != nil {
 		newResBytes, _ := newRes.AsYAMLBytes()
-		dryRunResult, err := f.resources.Patch(existingRes, types.ApplyPatchType, newResBytes, true)
+		dryRunResult, err := f.resources.Patch(existingRes, types.ApplyPatchType, newResBytes, ctlres.PatchOpts{DryRun: true})
 		if err != nil {
 			return nil, fmt.Errorf("SSA dry run: %s", err)
 		}

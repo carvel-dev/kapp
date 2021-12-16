@@ -38,12 +38,16 @@ const (
 	resourcesDebug = false
 )
 
+type PatchOpts struct {
+	DryRun bool
+}
+
 type Resources interface {
 	All([]ResourceType, AllOpts) ([]Resource, error)
 	Delete(Resource) error
 	Exists(Resource, ExistsOpts) (Resource, bool, error)
 	Get(Resource) (Resource, error)
-	Patch(Resource, types.PatchType, []byte, bool) (Resource, error)
+	Patch(Resource, types.PatchType, []byte, PatchOpts) (Resource, error)
 	Update(Resource) (Resource, error)
 	Create(resource Resource) (Resource, error)
 }
@@ -302,7 +306,7 @@ func (c *ResourcesImpl) Update(resource Resource) (Resource, error) {
 	return NewResourceUnstructured(*updatedUn, resType), nil
 }
 
-func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data []byte, dryRun bool) (Resource, error) {
+func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data []byte, opts PatchOpts) (Resource, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { c.logger.Debug("patch %s", time.Now().UTC().Sub(t1)) }()
@@ -316,7 +320,7 @@ func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data
 	var patchedUn *unstructured.Unstructured
 	var dryRunOpt []string
 
-	if dryRun {
+	if opts.DryRun {
 		dryRunOpt = []string{"All"}
 	}
 
