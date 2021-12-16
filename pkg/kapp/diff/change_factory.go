@@ -65,6 +65,10 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(ctx context.Context, existing
 				return nil, err
 			}
 			existingRes = rebasedLastAppliedRes
+		} else {
+			// If lastApplied not found/not valid, we still want to generate Change using
+			// a history-less existing resource
+			existingRes = existingResForRebasing
 		}
 	}
 

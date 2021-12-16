@@ -200,6 +200,8 @@ metadata:
   name: my-res
 `))
 
+	// NOTE: kapp.k14s.io/original annotation is not used as a base for rebase
+	// due to md5 mismatch because of unexpected field present
 	existingRes := ctlres.MustNewResourceFromBytes([]byte(`
 metadata:
   name: my-res
