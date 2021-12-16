@@ -32,8 +32,6 @@ type ApplyFlags struct {
 	ctlcap.ClusterChangeSetOpts
 	ctlcap.ClusterChangeOpts
 
-	FieldManagerName string
-
 	ExitStatus bool
 }
 
@@ -63,10 +61,6 @@ func (s *ApplyFlags) SetWithDefaults(prefix string, defaults ApplyFlags, cmd *co
 		mustParseDuration("1s"), "Amount of time to sleep between checks while waiting")
 	cmd.Flags().IntVar(&s.WaitingChangesOpts.Concurrency, prefix+"wait-concurrency",
 		5, "Maximum number of concurrent wait operations")
-
-	cmd.Flags().BoolVar(&s.ServerSideApply, prefix+"server-side", false, "If true, apply runs in the server instead of the client")
-	cmd.Flags().StringVar(&s.FieldManagerName, prefix+"field-manager", "kapp-server-side-apply", "Name of the manager used to track field ownership")
-	cmd.Flags().BoolVar(&s.ServerSideForceConflict, prefix+"force-conflicts", false, "If true, server-side apply will force the changes against conflicts.")
 
 	cmd.Flags().BoolVar(&s.ExitStatus, prefix+"apply-exit-status", false, "Return specific exit status based on number of changes")
 }

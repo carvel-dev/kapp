@@ -34,11 +34,14 @@ type DeployAppFlags struct {
 	DeleteApplyFlags    cmdapp.ApplyFlags
 	DeployFlags         cmdapp.DeployFlags
 	LabelFlags          cmdapp.LabelFlags
+	SSAFlags            cmdtools.SSAFlags
 }
 
 func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeployOptions {
 	return &DeployOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
+
+const diffFlagsPrefix = "diff"
 
 func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
@@ -46,15 +49,25 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		Aliases: []string{"d", "dep"},
 		Short:   "Deploy app group",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		PreRunE: func(cmd *cobra.Command, _ []string) error {
+			return o.ValidateAndAdjustFlags(cmd)
+		},
 	}
 	o.AppGroupFlags.Set(cmd, flagsFactory)
 	o.DeployFlags.Set(cmd)
-	o.AppFlags.DiffFlags.SetWithPrefix("diff", cmd)
+	o.AppFlags.DiffFlags.SetWithPrefix(diffFlagsPrefix, cmd)
 	o.AppFlags.ResourceFilterFlags.Set(cmd)
 	o.AppFlags.ApplyFlags.SetWithDefaults("", cmdapp.ApplyFlagsDeployDefaults, cmd)
 	o.AppFlags.DeleteApplyFlags.SetWithDefaults("delete", cmdapp.ApplyFlagsDeleteDefaults, cmd)
 	o.AppFlags.DeployFlags.Set(cmd)
+	o.AppFlags.SSAFlags.Set(cmd)
 	return cmd
+}
+
+func (o *DeployOptions) ValidateAndAdjustFlags(cmd *cobra.Command) error {
+	cmdapp.AdjustApplyFlags(o.AppFlags.SSAFlags, &o.AppFlags.ApplyFlags)
+	return cmdtools.AdjustDiffFlags(o.AppFlags.SSAFlags, &o.AppFlags.DiffFlags, diffFlagsPrefix, cmd)
+	return nil
 }
 
 func (o *DeployOptions) Run() error {
@@ -82,7 +95,7 @@ func (o *DeployOptions) Run() error {
 		}
 	}
 
-	supportObjs, err := cmdapp.FactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger, &o.AppFlags.ApplyFlags.FieldManagerName)
+	supportObjs, err := cmdapp.FactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger, &o.AppFlags.SSAFlags.FieldManagerName)
 	if err != nil {
 		return err
 	}

@@ -41,11 +41,14 @@ type DeployOptions struct {
 	DeployFlags         DeployFlags
 	ResourceTypesFlags  ResourceTypesFlags
 	LabelFlags          LabelFlags
+	SSAFlags            cmdtools.SSAFlags
 }
 
 func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeployOptions {
 	return &DeployOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
+
+const diffFlagsPrefix = "diff"
 
 func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
@@ -53,10 +56,10 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		Aliases: []string{"d", "dep"},
 		Short:   "Deploy app",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			if o.ApplyFlags.ServerSideApply {
-				o.DiffFlags.ChangeSetOpts.Mode = ctldiff.ServerSideApplyChangeSetMode
-			}
 			return o.Run()
+		},
+		PreRunE: func(cmd *cobra.Command, _ []string) error {
+			return o.ValidateAndAdjustFlags(cmd)
 		},
 		Annotations: map[string]string{
 			cmdcore.AppHelpGroup.Key: cmdcore.AppHelpGroup.Value,
@@ -80,13 +83,19 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	o.FileFlags.Set(cmd)
 	o.ResourceFilterFlags.Set(cmd)
 	o.ApplyFlags.SetWithDefaults("", ApplyFlagsDeployDefaults, cmd)
-	o.DiffFlags.SetWithPrefix("diff", cmd)
+	o.DiffFlags.SetWithPrefix(diffFlagsPrefix, cmd)
 
 	o.DeployFlags.Set(cmd)
 	o.ResourceTypesFlags.Set(cmd)
 	o.LabelFlags.Set(cmd)
+	o.SSAFlags.Set(cmd)
 
 	return cmd
+}
+
+func (o *DeployOptions) ValidateAndAdjustFlags(cmd *cobra.Command) error {
+	AdjustApplyFlags(o.SSAFlags, &o.ApplyFlags)
+	return cmdtools.AdjustDiffFlags(o.SSAFlags, &o.DiffFlags, diffFlagsPrefix, cmd)
 }
 
 func (o *DeployOptions) Run() error {
@@ -94,7 +103,7 @@ func (o *DeployOptions) Run() error {
 
 	failingAPIServicesPolicy := o.ResourceTypesFlags.FailingAPIServicePolicy()
 
-	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger, &o.ApplyFlags.FieldManagerName)
+	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger, &o.SSAFlags.FieldManagerName)
 	if err != nil {
 		return err
 	}

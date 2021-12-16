@@ -20,6 +20,7 @@ type DiffOptions struct {
 	FileFlags  FileFlags
 	FileFlags2 FileFlags2
 	DiffFlags  DiffFlags
+	SSAFlags   SSAFlags
 }
 
 func NewDiffOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *DiffOptions {
@@ -31,13 +32,19 @@ func NewDiffCmd(o *DiffOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		Use:   "diff",
 		Short: "Diff files against files2",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
+		PreRunE: func(cmd *cobra.Command, _ []string) error {
+			return o.ValidateAndAdjustFlags(cmd)
+		},
 	}
 	o.FileFlags.Set(cmd)
 	o.FileFlags2.Set(cmd)
 
-	//TODO: support for the server side apply in diff command
 	o.DiffFlags.SetWithPrefix("", cmd)
+	o.SSAFlags.Set(cmd)
 	return cmd
+}
+func (o *DiffOptions) ValidateAndAdjustFlags(cmd *cobra.Command) error {
+	return AdjustDiffFlags(o.SSAFlags, &o.DiffFlags, "", cmd)
 }
 
 func (o *DiffOptions) Run() error {
