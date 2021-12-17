@@ -15,7 +15,7 @@ import (
 func TestDiff(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env, logger}
 
 	yaml1 := `
 ---
@@ -225,7 +225,7 @@ data:
 
 func TestDiffExitStatus(t *testing.T) {
 	env := BuildEnv(t)
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, Logger{}}
+	kapp := Kapp{t, env, Logger{}}
 
 	name := "test-diff-exit-status"
 	cleanUp := func() {
@@ -263,7 +263,7 @@ metadata:
 
 func TestDiffMaskRules(t *testing.T) {
 	env := BuildEnv(t)
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, Logger{}}
+	kapp := Kapp{t, env, Logger{}}
 
 	yaml1 := `
 apiVersion: v1

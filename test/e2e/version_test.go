@@ -11,7 +11,7 @@ import (
 
 func TestVersion(t *testing.T) {
 	env := BuildEnv(t)
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, Logger{}}
+	kapp := Kapp{t, env, Logger{}}
 
 	out, _ := kapp.RunWithOpts([]string{"version"}, RunOpts{NoNamespace: true})
 

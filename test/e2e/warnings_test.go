@@ -22,7 +22,7 @@ func TestWarningsFlag(t *testing.T) {
 	}
 	env := BuildEnv(t)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, Logger{}}
+	kapp := Kapp{t, env, Logger{}}
 	crdName := "test-no-warnings-crd"
 	crName1 := "test-no-warnings-cr1"
 	crName2 := "test-no-warnings-cr2"

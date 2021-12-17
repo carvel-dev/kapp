@@ -14,7 +14,7 @@ import (
 func TestCreateUpdateDelete(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env, logger}
 	kubectl := Kubectl{t, env.Namespace, logger}
 
 	yaml1 := `

@@ -19,10 +19,9 @@ import (
 )
 
 type Kapp struct {
-	t         *testing.T
-	namespace string
-	kappPath  string
-	l         Logger
+	t *testing.T
+	Env
+	l Logger
 }
 
 type RunOpts struct {
@@ -43,11 +42,14 @@ func (k Kapp) Run(args []string) string {
 }
 
 func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
+	if k.SSAEnabled {
+		args = enableSSA(args)
+	}
 	if !opts.NoNamespace {
-		args = append(args, []string{"-n", k.namespace}...)
+		args = append(args, []string{"-n", k.Namespace}...)
 	}
 	if opts.IntoNs {
-		args = append(args, []string{"--into-ns", k.namespace}...)
+		args = append(args, []string{"--into-ns", k.Namespace}...)
 	}
 	if !opts.Interactive {
 		args = append(args, "--yes")
@@ -55,7 +57,7 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 
 	k.l.Debugf("Running '%s'...\n", k.cmdDesc(args, opts))
 
-	cmd := exec.Command(k.kappPath, args...)
+	cmd := exec.Command(k.KappBinaryPath, args...)
 	cmd.Stdin = opts.StdinReader
 
 	var stderr, stdout bytes.Buffer
@@ -100,6 +102,9 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 }
 
 func (k Kapp) RunEmbedded(args []string, opts RunOpts) (string, error) {
+	if k.SSAEnabled {
+		args = enableSSA(args)
+	}
 	var stdoutBuf bytes.Buffer
 	//var stdout io.Writer = bufio.NewWriter(&stdoutBuf)
 	var stdout io.Writer = &stdoutBuf
@@ -112,10 +117,10 @@ func (k Kapp) RunEmbedded(args []string, opts RunOpts) (string, error) {
 	defer confUI.Flush()
 
 	if !opts.NoNamespace {
-		args = append(args, []string{"-n", k.namespace}...)
+		args = append(args, []string{"-n", k.Namespace}...)
 	}
 	if opts.IntoNs {
-		args = append(args, []string{"--into-ns", k.namespace}...)
+		args = append(args, []string{"--into-ns", k.Namespace}...)
 	}
 	if !opts.Interactive {
 		args = append(args, "--yes")
@@ -131,7 +136,7 @@ func (k Kapp) RunEmbedded(args []string, opts RunOpts) (string, error) {
 			return "", fmt.Errorf("tmpfile err: %s", err)
 		}
 		defer os.Remove(tmpFile.Name())
-		replaceArg(args, "-", tmpFile.Name())
+		args = replaceArg(args, "-", tmpFile.Name())
 	}
 
 	command := cmd.NewDefaultKappCmd(confUI)
@@ -146,12 +151,22 @@ func (k Kapp) RunEmbedded(args []string, opts RunOpts) (string, error) {
 	return stdoutBuf.String(), err
 }
 
-func replaceArg(s []string, elem, replacement string) {
-	for i, x := range s {
+func enableSSA(args []string) []string {
+	args = replaceArg(args, "deploy", "deploy", "--ssa-enable")
+	args = replaceArg(args, "diff", "diff", "--ssa-enable")
+	return args
+}
+
+func replaceArg(s []string, elem string, replacement ...string) []string {
+	out := make([]string, 0, len(s))
+	for _, x := range s {
 		if x == elem {
-			s[i] = replacement
+			out = append(out, replacement...)
+		} else {
+			out = append(out, x)
 		}
 	}
+	return out
 }
 
 func (k Kapp) cmdDesc(args []string, opts RunOpts) string {

@@ -14,9 +14,9 @@ import (
 )
 
 func TestConfig(t *testing.T) {
-	env := BuildEnv(t)
+	env := BuildEnv(t, SSASkip)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env, logger}
 	kubectl := Kubectl{t, env.Namespace, logger}
 
 	config := `
@@ -126,9 +126,9 @@ data:
 }
 
 func TestYttRebaseRule_ServiceAccountRebaseTokenSecret(t *testing.T) {
-	env := BuildEnv(t)
+	env := BuildEnv(t, SSASkip)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env, logger}
 	kubectl := Kubectl{t, env.Namespace, logger}
 
 	// ServiceAccount controller appends secret named '${metadata.name}-token-${rand}'
@@ -249,9 +249,9 @@ secrets:
 }
 
 func TestYttRebaseRule_OverlayContractV1(t *testing.T) {
-	env := BuildEnv(t)
+	env := BuildEnv(t, SSASkip)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env, logger}
 	kubectl := Kubectl{t, env.Namespace, logger}
 
 	config := `
