@@ -59,7 +59,11 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 func (o *DeleteOptions) Run() error {
 	failingAPIServicesPolicy := o.ResourceTypesFlags.FailingAPIServicePolicy()
 
-	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger, nil)
+	// When orphan strategy used, delete operation issues Patch command, which passes field manager name to K8S API.
+	// This name is not persisted anywhere in managedFields and it's value doesn't really matter, therefore there
+	// is no need to expose --ssa-field-manager CLI flag in the delete command. Set it to something reasonable.
+	fieldManagerName := "kapp-shouldnt-be-seen-anywhere"
+	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger, &fieldManagerName)
 	if err != nil {
 		return err
 	}
