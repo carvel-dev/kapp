@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -25,13 +26,27 @@ func validateChanges(t *testing.T, respTable []ui.JSONUITableResp, expected []ma
 
 }
 
-// validateAppListChanges: validating actual and expected of kapp ls
-func validateAppListChanges(t *testing.T, respTable []ui.JSONUITableResp, expected []map[string]string, output string) {
-
-	//deleting last_change_age from response table rows as it is varying from 0s to 1s making test case fail
-	for _, row := range respTable[0].Rows {
-		delete(row, "last_change_age")
+func replaceAge(result []map[string]string) []map[string]string {
+	for i, row := range result {
+		if len(row["age"]) > 0 {
+			row["age"] = "<replaced>"
+		}
+		result[i] = row
 	}
+	return result
+}
 
-	require.Exactlyf(t, expected, respTable[0].Rows, "Expected to see correct changes, but did not: '%s'", output)
+func replaceLastChangeAge(result []map[string]string) []map[string]string {
+	for i, row := range result {
+		if len(row["last_change_age"]) > 0 {
+			row["last_change_age"] = "<replaced>"
+		}
+		result[i] = row
+	}
+	return result
+}
+
+func replaceAnnsLabels(in string) string {
+	replaceAnns := regexp.MustCompile("kapp\\.k14s\\.io\\/(app|association): .+")
+	return replaceAnns.ReplaceAllString(in, "-replaced-")
 }

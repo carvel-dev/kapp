@@ -4,7 +4,6 @@
 package e2e
 
 import (
-	"regexp"
 	"strings"
 	"testing"
 
@@ -384,19 +383,4 @@ data:
 `
 
 	require.Containsf(t, out, expectedOutput, "Did not find expected diff output")
-}
-
-func replaceAge(result []map[string]string) []map[string]string {
-	for i, row := range result {
-		if len(row["age"]) > 0 {
-			row["age"] = "<replaced>"
-		}
-		result[i] = row
-	}
-	return result
-}
-
-func replaceAnnsLabels(in string) string {
-	replaceAnns := regexp.MustCompile("kapp\\.k14s\\.io\\/(app|association): .+")
-	return replaceAnns.ReplaceAllString(in, "-replaced-")
 }

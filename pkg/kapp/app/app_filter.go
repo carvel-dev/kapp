@@ -18,7 +18,7 @@ func (f AppFilter) Apply(apps []App) ([]App, error) {
 	for _, app := range apps {
 		lastChange, err := app.LastChange()
 		if err != nil {
-			return []App{}, err
+			return nil, err
 		}
 
 		if f.Matches(lastChange) {
