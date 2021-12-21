@@ -56,8 +56,7 @@ data:
 		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name2,
 			"--labels", "a=b"}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
-		// Not giving consistent behaviour as second app is getting 5s+ older sometimes so checking for 10s+ to just get the first app (it can depend on the machine we are running on)
-		listedApps, _ := kapp.RunWithOpts([]string{"ls", "--filter-age", "10s+", "--json"}, RunOpts{Interactive: true})
+		listedApps, _ := kapp.RunWithOpts([]string{"ls", "--filter-age", "2s+", "--json"}, RunOpts{Interactive: true})
 
 		expectedAppsList := []map[string]string{{
 			"last_change_age":        "<replaced>",
