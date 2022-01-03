@@ -11,6 +11,7 @@ import (
 )
 
 type Meta struct {
+	AppName    string `json:"appName"`
 	LabelKey   string `json:"labelKey"`
 	LabelValue string `json:"labelValue"`
 

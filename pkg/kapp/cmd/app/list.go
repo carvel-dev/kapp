@@ -5,10 +5,12 @@ package app
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
+	"github.com/k14s/kapp/pkg/kapp/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
@@ -102,9 +104,11 @@ func (o *ListOptions) Run() error {
 			return err
 		}
 
+		appName := strings.TrimSuffix(item.Name(), app.AppSuffix)
+
 		row := []uitable.Value{
 			cmdcore.NewValueNamespace(item.Namespace()),
-			uitable.NewValueString(item.Name()),
+			uitable.NewValueString(appName),
 			uitable.NewValueString(sel.String()),
 		}
 
