@@ -184,7 +184,7 @@ func (a *RecordedApp) Rename(newName string, newNamespace string) error {
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("App '%s' (namespace: %s) does not exist: %s%s",
-				a.FullyQualifiedName(), a.nsName, err, a.appInDiffNsHintMsgFunc(a.Name()))
+				a.Name(), a.nsName, err, a.appInDiffNsHintMsgFunc(a.FullyQualifiedName()))
 		}
 		return fmt.Errorf("Getting app: %s", err)
 	}
@@ -249,7 +249,7 @@ func (a *RecordedApp) meta() (Meta, error) {
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return Meta{}, fmt.Errorf("App '%s' (namespace: %s) does not exist: %s%s",
-				a.Name(), a.nsName, err, a.appInDiffNsHintMsgFunc(a.Name()))
+				a.Name(), a.nsName, err, a.appInDiffNsHintMsgFunc(a.FullyQualifiedName()))
 		}
 		return Meta{}, fmt.Errorf("Getting app: %s", err)
 	}
