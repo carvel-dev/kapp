@@ -82,7 +82,7 @@ func (a Apps) list(additionalLabels map[string]string, nsName string) ([]App, er
 	}
 
 	for _, app := range apps.Items {
-		recordedApp := &RecordedApp{app.Name, app.Namespace, a.coreClient,
+		recordedApp := &RecordedApp{strings.TrimSuffix(app.Name, AppSuffix), app.Namespace, a.coreClient,
 			a.identifiedResources, a.appInDiffNsHintMsg, nil,
 			a.logger.NewPrefixed("RecordedApp")}
 
