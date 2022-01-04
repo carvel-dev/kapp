@@ -70,6 +70,11 @@ func (o *DescribeOptions) Run() error {
 		return fmt.Errorf("Unmarshalling app-change spec: %s", err.Error())
 	}
 
+	if configSpec.DiffChanges == "" {
+		o.ui.PrintLinef("Diff changes have not been stored for this app-change")
+		return nil
+	}
+
 	o.ui.PrintLinef(configSpec.DiffChanges)
 
 	return nil
