@@ -20,11 +20,11 @@ import (
 
 const (
 	kappAppLabelKey = "kapp.k14s.io/app"
-	AppSuffix       = ".apps.k14s.io"
 )
 
 type RecordedApp struct {
 	name   string
+	fqName string
 	nsName string
 
 	coreClient             kubernetes.Interface
@@ -38,7 +38,7 @@ type RecordedApp struct {
 var _ App = &RecordedApp{}
 
 func (a *RecordedApp) Name() string               { return a.name }
-func (a *RecordedApp) FullyQualifiedName() string { return a.name + AppSuffix }
+func (a *RecordedApp) FullyQualifiedName() string { return a.fqName }
 func (a *RecordedApp) Namespace() string          { return a.nsName }
 
 func (a *RecordedApp) Description() string {

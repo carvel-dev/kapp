@@ -18,6 +18,7 @@ import (
 const (
 	KappIsAppLabelKey   = "kapp.k14s.io/is-app"
 	kappIsAppLabelValue = ""
+	AppSuffix           = ".apps.k14s.io"
 )
 
 type Apps struct {
@@ -52,7 +53,7 @@ func (a Apps) Find(name string) (App, error) {
 		return nil, fmt.Errorf("Expected non-empty namespace")
 	}
 
-	return &RecordedApp{name, a.nsName, a.coreClient,
+	return &RecordedApp{name, name + AppSuffix, a.nsName, a.coreClient,
 		a.identifiedResources, a.appInDiffNsHintMsg, nil,
 		a.logger.NewPrefixed("RecordedApp")}, nil
 }
@@ -82,7 +83,7 @@ func (a Apps) list(additionalLabels map[string]string, nsName string) ([]App, er
 	}
 
 	for _, app := range apps.Items {
-		recordedApp := &RecordedApp{strings.TrimSuffix(app.Name, AppSuffix), app.Namespace, a.coreClient,
+		recordedApp := &RecordedApp{strings.TrimSuffix(app.Name, AppSuffix), app.Name, app.Namespace, a.coreClient,
 			a.identifiedResources, a.appInDiffNsHintMsg, nil,
 			a.logger.NewPrefixed("RecordedApp")}
 

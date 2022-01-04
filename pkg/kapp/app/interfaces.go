@@ -10,6 +10,7 @@ import (
 
 type App interface {
 	Name() string
+	FullyQualifiedName() string
 	Namespace() string
 	Description() string
 	Meta() (Meta, error)

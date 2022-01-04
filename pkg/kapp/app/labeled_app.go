@@ -27,6 +27,14 @@ func (a *LabeledApp) Name() string {
 	return str
 }
 
+func (a *LabeledApp) FullyQualifiedName() string {
+	str := a.labelSelector.String()
+	if len(str) == 0 {
+		return "?"
+	}
+	return str + AppSuffix
+}
+
 func (a *LabeledApp) Namespace() string { return "" }
 
 func (a *LabeledApp) Description() string {
