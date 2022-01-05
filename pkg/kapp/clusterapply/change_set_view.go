@@ -48,11 +48,6 @@ func (v *ChangeSetView) Print(ui ui.UI) {
 	}
 }
 
-const (
-	// 0.5 MB in bytes
-	diffChangesStringMaxSize = 524288
-)
-
 func (v *ChangeSetView) DiffChangesString() string {
 	var diffChangesBuffer strings.Builder
 	for _, view := range v.changeViews {
@@ -61,13 +56,7 @@ func (v *ChangeSetView) DiffChangesString() string {
 		diffChangesBuffer.WriteString(textDiffView.String())
 	}
 
-	diffChangesString := diffChangesBuffer.String()
-
-	if len(diffChangesString)*4 > diffChangesStringMaxSize {
-		diffChangesString = fmt.Sprintf("%s\n%s", diffChangesString[:130000], "Diff truncated as it exceeded max size (0.5 MB) ...")
-	}
-
-	return diffChangesString
+	return diffChangesBuffer.String()
 }
 
 func (v *ChangeSetView) Summary() string {

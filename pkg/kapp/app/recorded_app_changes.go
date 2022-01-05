@@ -89,7 +89,17 @@ func (a RecordedAppChanges) DeleteAll() error {
 	return nil
 }
 
+const (
+	// 0.5 MB in bytes
+	diffChangesStringMaxSize = 524288
+)
+
 func (a RecordedAppChanges) Begin(meta ChangeMeta) (*ChangeImpl, error) {
+	// Ensure that information stored with app-changes respects size limit
+	if len(meta.DiffChanges)*4 > diffChangesStringMaxSize {
+		meta.DiffChanges = fmt.Sprintf("%s\n%s", meta.DiffChanges[:130000], "Diff truncated as it exceeded max size (0.5 MB) ...")
+	}
+
 	newMeta := ChangeMeta{
 		StartedAt:   time.Now().UTC(),
 		Description: meta.Description,
