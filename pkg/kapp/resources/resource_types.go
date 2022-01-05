@@ -46,6 +46,10 @@ func NewResourceTypesImpl(coreClient kubernetes.Interface, opts ResourceTypesImp
 }
 
 func (g *ResourceTypesImpl) All() ([]ResourceType, error) {
+	return g.memoizedAll()
+}
+
+func (g *ResourceTypesImpl) all() ([]ResourceType, error) {
 	serverResources, err := g.serverResources()
 	if err != nil {
 		return nil, err
@@ -141,7 +145,7 @@ func (g *ResourceTypesImpl) memoizedAll() ([]ResourceType, error) {
 	g.memoizedResTypesLock.Lock()
 	defer g.memoizedResTypesLock.Unlock()
 
-	resTypes, err := g.All()
+	resTypes, err := g.all()
 	if err != nil {
 		return nil, err
 	}
