@@ -44,7 +44,7 @@ func (o *GCOptions) Run() error {
 	}
 
 	reviewFunc := func(changesToDelete []ctlapp.Change) error {
-		AppChangesTable{"App changes to delete", changesToDelete}.Print(o.ui)
+		AppChangesTable{"App changes to delete", changesToDelete, nil, nil}.Print(o.ui)
 
 		err = o.ui.AskForConfirmation()
 		if err != nil {

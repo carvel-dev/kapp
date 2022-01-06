@@ -4,8 +4,6 @@
 package appchange
 
 import (
-	"strings"
-
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
@@ -13,6 +11,7 @@ import (
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 type ListOptions struct {
@@ -20,7 +19,9 @@ type ListOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	AppFlags cmdapp.Flags
+	AppFlags  cmdapp.Flags
+	TimeFlags TimeFlags
+	SortFlag  SortFlag
 }
 
 func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ListOptions {
@@ -35,6 +36,8 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	o.AppFlags.Set(cmd, flagsFactory)
+	o.SortFlag.Set(cmd)
+	o.TimeFlags.Set(cmd)
 	return cmd
 }
 
@@ -49,7 +52,11 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
+	//dur, err := time.ParseDuration(o.TimeFlags.Duration)
+
 	AppChangesTable{"App changes", changes}.Print(o.ui)
+
+	//AppChangesTable{"App changes", changes, o.SortFlag, o.TimeFlags}.Print(o.ui)
 
 	return nil
 }
@@ -57,6 +64,8 @@ func (o *ListOptions) Run() error {
 type AppChangesTable struct {
 	Title   string
 	Changes []ctlapp.Change
+	SortFlag SortFlag
+	TimeFlags TimeFlags
 }
 
 func (t AppChangesTable) Print(ui ui.UI) {
@@ -82,7 +91,20 @@ func (t AppChangesTable) Print(ui ui.UI) {
 		},
 	}
 
+	//if t.SortFlag.IsSortByNewestFirst() {
+	//	table.SortBy = []uitable.ColumnSort{
+	//		{Column: 1, Asc: false},
+	//		{Column: 0, Asc: true},
+	//	}
+	//} else {
+	//	table.SortBy = []uitable.ColumnSort{
+	//		{Column: 1, Asc: true},
+	//		{Column: 0, Asc: false},
+	//	}
+	//}
+
 	for _, change := range t.Changes {
+		//if change.Meta().StartedAt > t.TimeFlags.Before {}
 		table.Rows = append(table.Rows, []uitable.Value{
 			uitable.NewValueString(change.Name()),
 			uitable.NewValueTime(change.Meta().StartedAt),
