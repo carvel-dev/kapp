@@ -11,6 +11,7 @@ import (
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -82,7 +83,22 @@ func (a *RecordedApp) UpdateUsedGVs(gvs []schema.GroupVersion) error {
 func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 	defer a.logger.DebugFunc("CreateOrUpdate").Finish()
 
-	configMap := &corev1.ConfigMap{
+	configMap, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.Name(), metav1.GetOptions{})
+	if err == nil {
+		a.RenameConfigMap(configMap, a.FullyQualifiedName(), a.nsName)
+
+		err = a.mergeAppUpdates(configMap, labels)
+		if err != nil {
+			return err
+		}
+
+		_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), configMap, metav1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("Updating app: %s", err)
+		}
+	}
+
+	configMap = &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      a.FullyQualifiedName(),
 			Namespace: a.nsName,
@@ -96,7 +112,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 		}.AsData(),
 	}
 
-	err := a.mergeAppUpdates(configMap, labels)
+	err = a.mergeAppUpdates(configMap, labels)
 	if err != nil {
 		return err
 	}
@@ -161,7 +177,7 @@ func (a *RecordedApp) Delete() error {
 		return err
 	}
 
-	err = NewRecordedAppChanges(a.nsName, a.name, a.coreClient).DeleteAll()
+	err = NewRecordedAppChanges(a.nsName, a.FullyQualifiedName(), a.coreClient).DeleteAll()
 	if err != nil {
 		return fmt.Errorf("Deleting app changes: %s", err)
 	}
@@ -189,20 +205,26 @@ func (a *RecordedApp) Rename(newName string, newNamespace string) error {
 		return fmt.Errorf("Getting app: %s", err)
 	}
 
+	return a.RenameConfigMap(app, a.FullyQualifiedName(), newNamespace)
+}
+
+func (a *RecordedApp) RenameConfigMap(app *v1.ConfigMap, name, ns string) error {
+	oldName := app.Name
+
 	// Clear out all existing meta fields
 	app.ObjectMeta = metav1.ObjectMeta{
-		Name:        newName + AppSuffix,
-		Namespace:   newNamespace,
+		Name:        name,
+		Namespace:   ns,
 		Labels:      app.ObjectMeta.Labels,
 		Annotations: app.ObjectMeta.Annotations,
 	}
 
-	_, err = a.coreClient.CoreV1().ConfigMaps(newNamespace).Create(context.TODO(), app, metav1.CreateOptions{})
+	_, err := a.coreClient.CoreV1().ConfigMaps(ns).Create(context.TODO(), app, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("Creating app: %s", err)
 	}
 
-	err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(context.TODO(), a.FullyQualifiedName(), metav1.DeleteOptions{})
+	err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(context.TODO(), oldName, metav1.DeleteOptions{})
 	if err != nil {
 		// TODO Do not clean up new config map as there is no gurantee it can be deleted either
 		return fmt.Errorf("Deleting app: %s", err)
