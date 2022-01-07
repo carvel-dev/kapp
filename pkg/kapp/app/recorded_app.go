@@ -158,23 +158,20 @@ func (a *RecordedApp) mergeAppUpdates(cm *corev1.ConfigMap, labels map[string]st
 
 func (a *RecordedApp) Exists() (bool, string, error) {
 	_, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
-			if err != nil {
-				if errors.IsNotFound(err) {
-					desc := fmt.Sprintf("App '%s' (namespace: %s) does not exist%s",
-						a.name, a.nsName, a.appInDiffNsHintMsgFunc(a.name))
-					return false, desc, nil
-				}
-				return false, "", fmt.Errorf("Getting app: %s", err)
-			}
+	if err == nil {
+		return true, "", nil
+	} else if errors.IsNotFound(err) {
+		_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
+		if err == nil {
 			return true, "", nil
+		} else if errors.IsNotFound(err) {
+			desc := fmt.Sprintf("App '%s' (namespace: %s) does not exist%s",
+				a.name, a.nsName, a.appInDiffNsHintMsgFunc(a.name))
+			return false, desc, nil
 		}
-		return false, "", fmt.Errorf("Getting app: %s", err)
 	}
 
-	return true, "", nil
+	return false, "", fmt.Errorf("Getting app: %s", err)
 }
 
 func (a *RecordedApp) Delete() error {
@@ -194,35 +191,33 @@ func (a *RecordedApp) Delete() error {
 	}
 
 	err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(context.TODO(), a.fqName, metav1.DeleteOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(context.TODO(), a.name, metav1.DeleteOptions{})
-			if err != nil {
-				return fmt.Errorf("Deleting app: %s", err)
-			}
+	if err == nil {
+		return nil
+	} else if errors.IsNotFound(err) {
+		err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(context.TODO(), a.name, metav1.DeleteOptions{})
+		if err == nil {
 			return nil
 		}
-		return fmt.Errorf("Deleting app: %s", err)
 	}
 
-	return nil
+	return fmt.Errorf("Deleting app: %s", err)
 }
 
 func (a *RecordedApp) Rename(newName string, newNamespace string) error {
 	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			app, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
-			if err != nil {
-				return fmt.Errorf("App '%s' (namespace: %s) does not exist: %s%s",
-					a.name, a.nsName, err, a.appInDiffNsHintMsgFunc(a.fqName))
-			}
+	if err == nil {
+		return a.renameConfigMap(app, newName+AppSuffix, newNamespace)
+	} else if errors.IsNotFound(err) {
+		app, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
+		if err == nil {
 			return a.renameConfigMap(app, newName+AppSuffix, newNamespace)
+		} else if errors.IsNotFound(err) {
+			return fmt.Errorf("App '%s' (namespace: %s) does not exist: %s%s",
+				a.name, a.nsName, err, a.appInDiffNsHintMsgFunc(a.fqName))
 		}
-		return fmt.Errorf("Getting app: %s", err)
 	}
 
-	return a.renameConfigMap(app, newName+AppSuffix, newNamespace)
+	return fmt.Errorf("Getting app: %s", err)
 }
 
 func (a *RecordedApp) renameConfigMap(app *v1.ConfigMap, name, ns string) error {
@@ -285,21 +280,19 @@ func (a *RecordedApp) meta() (Meta, error) {
 	}
 
 	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			app, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
-			if err != nil {
-				if errors.IsNotFound(err) {
-					return Meta{}, fmt.Errorf("App '%s' (namespace: %s) does not exist: %s%s",
-						a.name, a.nsName, err, a.appInDiffNsHintMsgFunc(a.fqName))
-				}
-			}
+	if err == nil {
+		return a.setMeta(*app)
+	} else if errors.IsNotFound(err) {
+		app, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
+		if err == nil {
 			return a.setMeta(*app)
+		} else if errors.IsNotFound(err) {
+			return Meta{}, fmt.Errorf("App '%s' (namespace: %s) does not exist: %s%s",
+				a.name, a.nsName, err, a.appInDiffNsHintMsgFunc(a.fqName))
 		}
-		return Meta{}, fmt.Errorf("Getting app: %s", err)
 	}
 
-	return a.setMeta(*app)
+	return Meta{}, fmt.Errorf("Getting app: %s", err)
 }
 
 func (a *RecordedApp) Changes() ([]Change, error) {
