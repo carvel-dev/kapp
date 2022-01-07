@@ -59,9 +59,21 @@ func (r IdentifiedResources) Update(resource Resource) (Resource, error) {
 	return WithIdentityAnnotation(resource, r.resources.Update)
 }
 
-func (r IdentifiedResources) Patch(resource Resource, patchType types.PatchType, data []byte) (Resource, error) {
+func (r IdentifiedResources) Patch(resource Resource, patchType types.PatchType, data []byte, opts PatchOpts) (Resource, error) {
 	defer r.logger.DebugFunc(fmt.Sprintf("Patch(%s)", resource.Description())).Finish()
-	return r.resources.Patch(resource, patchType, data, PatchOpts{DryRun: false})
+	resource, err := r.resources.Patch(resource, patchType, data, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create and Update strip identity annotation from returned resource.
+	// Do the same in Patch.
+	err = NewIdentityAnnotation(resource).RemoveMod().Apply(resource)
+	if err != nil {
+		return nil, err
+	}
+
+	return resource, nil
 }
 
 func (r IdentifiedResources) Delete(resource Resource) error {

@@ -60,7 +60,7 @@ func (o *DiffOptions) Run() error {
 		return err
 	}
 
-	changeFactory := ctldiff.NewChangeFactory(nil, nil, nil)
+	changeFactory := ctldiff.NewChangeFactory(nil, nil, ctlres.NewIdentifiedResources(nil, nil, nil, nil, nil))
 
 	changes, err := ctldiff.NewChangeSet(existingResources, newResources, o.DiffFlags.ChangeSetOpts, changeFactory).Calculate(ctx)
 	if err != nil {

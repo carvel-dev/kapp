@@ -305,7 +305,7 @@ func (c UpdatePlainStrategy) Apply() error {
 	if c.aou.opts.ServerSideApply {
 		updatedRes, err = ctlres.WithIdentityAnnotation(c.newRes, func(r ctlres.Resource) (ctlres.Resource, error) {
 			resBytes, _ := r.AsYAMLBytes()
-			return c.aou.identifiedResources.Patch(r, types.ApplyPatchType, resBytes)
+			return c.aou.identifiedResources.Patch(r, types.ApplyPatchType, resBytes, ctlres.PatchOpts{DryRun: false})
 		})
 	} else {
 		updatedRes, err = c.aou.identifiedResources.Update(c.newRes)
@@ -343,7 +343,7 @@ func (c UpdateOrFallbackOnReplaceStrategy) Apply() error {
 	if c.aou.opts.ServerSideApply {
 		updatedRes, err = ctlres.WithIdentityAnnotation(c.newRes, func(r ctlres.Resource) (ctlres.Resource, error) {
 			resBytes, _ := r.AsYAMLBytes()
-			return c.aou.identifiedResources.Patch(r, types.ApplyPatchType, resBytes)
+			return c.aou.identifiedResources.Patch(r, types.ApplyPatchType, resBytes, ctlres.PatchOpts{DryRun: false})
 		})
 	} else {
 		updatedRes, err = c.aou.identifiedResources.Update(c.newRes)
