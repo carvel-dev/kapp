@@ -46,7 +46,7 @@ func BuildEnv(t *testing.T, optFunc ...TestOptionfunc) Env {
 		KappBinaryPath: kappPath,
 	}
 
-	if os.Getenv("KAPP_E2E_SSA") != "" {
+	if os.Getenv("KAPP_E2E_SSA") == "1" {
 		if to.ServerSideSkip {
 			t.Skip("SSA incompatible test")
 		}
