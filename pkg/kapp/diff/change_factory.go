@@ -41,13 +41,13 @@ func (f ChangeFactory) NewChangeSSA(ctx context.Context, existingRes, newRes ctl
 			return nil, fmt.Errorf("SSA dry run: %s", err)
 		}
 		dryRunRes = dryRunResult
-	} else if newRes != nil {
+	} /* else if newRes != nil {
 		dryRunResult, err := f.resources.Create(newRes)
 		if err != nil {
 			return nil, fmt.Errorf("SSA dry run: %s", err)
 		}
 		dryRunRes = dryRunResult
-	}
+	}*/
 
 	return NewChangeSSA(existingRes, newRes, dryRunRes), nil
 }
