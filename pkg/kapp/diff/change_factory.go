@@ -13,7 +13,7 @@ import (
 type ChangeFactory struct {
 	rebaseMods                               []ctlres.ResourceModWithMultiple
 	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod
-	resources                                ctlres.Resources
+	resources                                ctlres.IdentifiedResources
 }
 
 type ChangeFactoryFunc func(ctx context.Context, existingRes, newRes ctlres.Resource) (Change, error)
@@ -23,7 +23,7 @@ var _ ChangeFactoryFunc = ChangeFactory{}.NewChangeAgainstLastApplied
 var _ ChangeFactoryFunc = ChangeFactory{}.NewExactChange
 
 func NewChangeFactory(rebaseMods []ctlres.ResourceModWithMultiple,
-	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod, resources ctlres.Resources) ChangeFactory {
+	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod, resources ctlres.IdentifiedResources) ChangeFactory {
 
 	return ChangeFactory{rebaseMods, diffAgainstLastAppliedFieldExclusionMods, resources}
 }
