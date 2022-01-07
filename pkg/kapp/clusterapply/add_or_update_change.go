@@ -11,7 +11,6 @@ import (
 
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	"github.com/k14s/kapp/pkg/kapp/util"
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -222,36 +221,14 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 		return fmt.Errorf("Calculating change after the save: %s", err)
 	}
 
-	// first time, try using memory copy
-	latestResWithHistory := &savedResWithHistory
+	// Record last applied change on the latest version of a resource
+	recordHistoryPatch, err := savedResWithHistory.RecordLastAppliedResource(applyChange)
+	if err != nil {
+		return fmt.Errorf("Recording last applied resource: %s", err)
+	}
 
-	return util.Retry(time.Second, time.Minute, func() (bool, error) {
-		// subsequent times try to retrieve latest copy,
-		// for example, ServiceAccount seems to change immediately
-		if latestResWithHistory == nil {
-			res, err := c.identifiedResources.Get(savedRes)
-			if err != nil {
-				return false, err
-			}
-
-			resWithHistory := c.changeFactory.NewResourceWithHistory(res)
-			latestResWithHistory = &resWithHistory
-		}
-
-		// Record last applied change on the latest version of a resource
-		latestResWithHistoryUpdated, err := latestResWithHistory.RecordLastAppliedResource(applyChange)
-		if err != nil {
-			return true, fmt.Errorf("Recording last applied resource: %s", err)
-		}
-
-		_, err = c.identifiedResources.Update(latestResWithHistoryUpdated)
-		if err != nil {
-			latestResWithHistory = nil // Get again
-			return false, fmt.Errorf("Saving record of last applied resource: %s", err)
-		}
-
-		return true, nil
-	})
+	_, err = c.identifiedResources.Patch(savedRes, types.StrategicMergePatchType, recordHistoryPatch, ctlres.PatchOpts{DryRun: false})
+	return err
 }
 
 type AddPlainStrategy struct {
