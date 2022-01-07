@@ -4,7 +4,9 @@
 package resources
 
 import (
+	"encoding/json"
 	"fmt"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 type StringMapAppendMod struct {
@@ -27,6 +29,17 @@ func (t StringMapAppendMod) Apply(res Resource) error {
 		return fmt.Errorf("StringMapAppendMod for path '%s' on resource '%s': %s", t.Path.AsString(), res.Description(), err)
 	}
 	return nil
+}
+
+func (t StringMapAppendMod) AsPatchBytes() []byte {
+	obj := map[string]interface{}{}
+	kvs := make(map[string]interface{}, len(t.KVs))
+	for k, v := range t.KVs {
+		kvs[k] = v
+	}
+	unstructured.SetNestedField(obj, kvs, t.Path.AsStrings()...)
+	b, _ := json.Marshal(obj)
+	return b
 }
 
 func (t StringMapAppendMod) apply(obj interface{}, path Path) error {

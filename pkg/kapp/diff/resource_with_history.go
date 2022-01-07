@@ -69,7 +69,7 @@ func (r ResourceWithHistory) AllowsRecordingLastApplied() bool {
 	return !found
 }
 
-func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ctlres.Resource, error) {
+func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) ([]byte, error) {
 	// Use compact representation to take as little space as possible
 	// because annotation value max length is 262144 characters
 	// (https://github.com/vmware-tanzu/carvel-kapp/issues/48).
@@ -108,14 +108,7 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ct
 		}
 	}
 
-	resultRes := r.resource.DeepCopy()
-
-	err = annsMod.Apply(resultRes)
-	if err != nil {
-		return nil, err
-	}
-
-	return resultRes, nil
+	return annsMod.AsPatchBytes(), nil
 }
 
 func (r ResourceWithHistory) CalculateChange(appliedRes ctlres.Resource) (Change, error) {
