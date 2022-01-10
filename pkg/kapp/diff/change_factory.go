@@ -40,6 +40,19 @@ func (f ChangeFactory) NewChangeSSA(ctx context.Context, existingRes, newRes ctl
 		if err != nil {
 			return nil, fmt.Errorf("SSA dry run: %s", err)
 		}
+
+		// Remove history from existing and dry run for a cleaner diff. Even with SSA apply
+		// there can be changes in managedField metadata when ownership changes
+		existingRes, err = f.NewResourceWithHistory(existingRes).HistorylessResource()
+		if err != nil {
+			return nil, err
+		}
+
+		dryRunResult, err = f.NewResourceWithHistory(dryRunResult).HistorylessResource()
+		if err != nil {
+			return nil, err
+		}
+
 		dryRunRes = dryRunResult
 	} /* else if newRes != nil {
 		dryRunResult, err := f.resources.Create(newRes)
