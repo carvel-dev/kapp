@@ -195,7 +195,7 @@ spec:
 }
 
 func TestUpdateRetryOnConflict_WithConflictRebasedAway(t *testing.T) {
-	env := BuildEnv(t)
+	env := BuildEnv(t, SSASkip)
 	logger := Logger{}
 	kapp := Kapp{t, env, logger}
 
