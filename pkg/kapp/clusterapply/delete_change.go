@@ -58,7 +58,7 @@ func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error)
 
 	if res.IsDeleting() && len(res.Finalizers()) > 0 {
 		return ctlresm.DoneApplyState{Done: false, Message: "waiting on finalizers being removed"},
-			[]string{fmt.Sprintf("Resource deletion step is waiting on following finalizers being removed: %s",
+			[]string{uiWaitMsgPrefix + fmt.Sprintf("Waiting on finalizers: %s",
 				strings.Join(res.Finalizers(), ","))}, nil
 	}
 
