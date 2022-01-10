@@ -62,7 +62,7 @@ func (f ChangeFactory) NewChangeSSA(ctx context.Context, existingRes, newRes ctl
 		dryRunRes = dryRunResult
 	}*/
 
-	return NewChangeSSA(existingRes, newRes, dryRunRes), nil
+	return NewChange(existingRes, dryRunRes, newRes), nil
 }
 
 func (f ChangeFactory) NewChangeAgainstLastApplied(ctx context.Context, existingRes, newRes ctlres.Resource) (Change, error) {
