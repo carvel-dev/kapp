@@ -160,11 +160,15 @@ func (a *RecordedApp) Exists() (bool, string, error) {
 	_, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
 	if err == nil {
 		return true, "", nil
-	} else if errors.IsNotFound(err) {
+	}
+
+	if errors.IsNotFound(err) {
 		_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 		if err == nil {
 			return true, "", nil
-		} else if errors.IsNotFound(err) {
+		}
+
+		if errors.IsNotFound(err) {
 			desc := fmt.Sprintf("App '%s' (namespace: %s) does not exist%s",
 				a.name, a.nsName, a.appInDiffNsHintMsgFunc(a.name))
 			return false, desc, nil
