@@ -227,7 +227,7 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 		return fmt.Errorf("Recording last applied resource: %s", err)
 	}
 
-	_, err = c.identifiedResources.Patch(savedRes, types.StrategicMergePatchType, recordHistoryPatch, ctlres.PatchOpts{DryRun: false})
+	_, err = c.identifiedResources.Patch(savedRes, types.MergePatchType, recordHistoryPatch, ctlres.PatchOpts{DryRun: false})
 	return err
 }
 
