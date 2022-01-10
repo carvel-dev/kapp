@@ -244,6 +244,26 @@ func (c AddPlainStrategy) Apply() error {
 		return err
 	}
 
+	// Create is recorded in the metadata.fieldManagers as
+	// Update operation creating distinct field manager from Apply operation,
+	// which means that these fields wont be updateable using SSA.
+	// To fix it, we change operation to be "Apply"
+	// See https://github.com/kubernetes/kubernetes/issues/107417 for details
+	if c.aou.opts.ServerSideApply {
+		createdRes, err = c.aou.identifiedResources.Patch(createdRes, types.JSONPatchType, []byte(`
+[
+	{ "op": "test", "path": "/metadata/managedFields/0/manager", "value": "kapp-server-side-apply" },
+	{ "op": "replace", "path": "/metadata/managedFields/0/operation", "value": "Apply" }
+]
+`), ctlres.PatchOpts{DryRun: false})
+		if err != nil {
+			// TODO: potentially patch can fail if '"op": "test"' fails, which can happen if another
+			// controller changes managedFields. We
+			return err
+		}
+
+	}
+
 	return c.aou.recordAppliedResource(createdRes)
 }
 
@@ -256,13 +276,27 @@ func (c AddOrFallbackOnUpdateStrategy) Op() ClusterChangeApplyStrategyOp {
 	return createStrategyFallbackOnUpdateAnnValue
 }
 
-func (c AddOrFallbackOnUpdateStrategy) Apply() error {
-	createdRes, err := c.aou.identifiedResources.Create(c.newRes)
-	if err != nil {
-		if errors.IsAlreadyExists(err) {
-			return c.aou.tryToUpdateAfterCreateConflict()
+func (c AddOrFallbackOnUpdateStrategy) Apply() (err error) {
+	var createdRes ctlres.Resource
+	if c.aou.opts.ServerSideApply {
+		resBytes, err := c.newRes.AsYAMLBytes()
+		if err != nil {
+			return err
 		}
-		return err
+
+		// Apply patch is like upsert, combining create + update, no need to fallback on error
+		createdRes, err = c.aou.identifiedResources.Patch(c.newRes, types.ApplyPatchType, resBytes, ctlres.PatchOpts{DryRun: false})
+		if err != nil {
+			return err
+		}
+	} else {
+		createdRes, err = c.aou.identifiedResources.Create(c.newRes)
+		if err != nil {
+			if errors.IsAlreadyExists(err) {
+				return c.aou.tryToUpdateAfterCreateConflict()
+			}
+			return err
+		}
 	}
 
 	return c.aou.recordAppliedResource(createdRes)
