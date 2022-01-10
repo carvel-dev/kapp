@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -33,11 +35,15 @@ func (f ChangeFactory) NewChangeSSA(ctx context.Context, existingRes, newRes ctl
 	if newRes != nil && existingRes != nil {
 		// When diffing versioned objects, newRes name might be different from existingRes name, which makes PATCH command
 		// bellow to fail. Non-SSA change ignores newRes name when generating Change, here we do the same by unsetting it
-		newRes := newRes.DeepCopy()
-		newRes.SetName("")
-		newResBytes, _ := newRes.AsYAMLBytes()
+		newResNoName := newRes.DeepCopy()
+		newResNoName.SetName("")
+		newResBytes, _ := newResNoName.AsYAMLBytes()
 		dryRunResult, err := f.resources.Patch(existingRes, types.ApplyPatchType, newResBytes, ctlres.PatchOpts{DryRun: true})
-		if err != nil {
+		if errors.HasStatusCause(err, v1.CauseTypeFieldValueInvalid) {
+			// this update will cause replace if strategy allows it. We don't have strategy plumbed to this level (yet?)
+			// so just do next best thing and pretend that replace succeeds
+			dryRunResult = newRes
+		} else if err != nil {
 			return nil, fmt.Errorf("SSA dry run: %s", err)
 		}
 
