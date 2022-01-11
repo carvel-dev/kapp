@@ -83,31 +83,26 @@ func (a *RecordedApp) UpdateUsedGVs(gvs []schema.GroupVersion) error {
 func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 	defer a.logger.DebugFunc("CreateOrUpdate").Finish()
 
-	if os.Getenv("USE_EXISTING_CONFIGMAP_NAME") != "True" {
-		configMap, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
-		if err == nil {
-			err = a.renameConfigMap(configMap, a.fqName, a.nsName)
-			if err != nil {
-				return err
-			}
-
-			err = a.mergeAppUpdates(configMap, labels)
-			if err != nil {
-				return err
-			}
-
-			_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), configMap, metav1.UpdateOptions{})
-			if err != nil {
-				return fmt.Errorf("Updating app: %s", err)
-			}
-
-			return nil
-		}
+	if os.Getenv("USE_EXISTING_CONFIGMAP_NAME") == "True" {
+		return a.createOrUpdate(a.name, labels)
 	}
 
+	configMap, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
+	if err == nil {
+		if _, ok := configMap.Labels[KappIsAppLabelKey]; !ok {
+			return fmt.Errorf("Unable to migrate, configmap '%s' is not marked as a kapp app", a.name)
+		}
+
+		return a.migrate(configMap, labels)
+	}
+
+	return a.createOrUpdate(a.fqName, labels)
+}
+
+func (a *RecordedApp) createOrUpdate(name string, labels map[string]string) error {
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      a.fqName,
+			Name:      name,
 			Namespace: a.nsName,
 			Labels: map[string]string{
 				KappIsAppLabelKey: kappIsAppLabelValue,
@@ -127,7 +122,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 	_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, metav1.CreateOptions{})
 	if err != nil {
 		if errors.IsAlreadyExists(err) {
-			existingConfigMap, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
+			existingConfigMap, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), name, metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("Getting app: %s", err)
 			}
@@ -146,6 +141,25 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 		}
 
 		return fmt.Errorf("Creating app: %s", err)
+	}
+
+	return nil
+}
+
+func (a *RecordedApp) migrate(c *v1.ConfigMap, labels map[string]string) error {
+	err := a.renameConfigMap(c, a.fqName, a.nsName)
+	if err != nil {
+		return err
+	}
+
+	err = a.mergeAppUpdates(c, labels)
+	if err != nil {
+		return err
+	}
+
+	_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), c, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("Updating app: %s", err)
 	}
 
 	return nil
