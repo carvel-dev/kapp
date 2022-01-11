@@ -49,7 +49,7 @@ metadata:
 		},
 	}
 
-	changeFactory := ctldiff.NewChangeFactory(mods, nil, nil)
+	changeFactory := ctldiff.NewChangeFactory(mods, nil, ctlres.IdentifiedResources{})
 	changeSet := ctldiff.NewChangeSet([]ctlres.Resource{existingRes}, []ctlres.Resource{newRes},
 		ctldiff.ChangeSetOpts{}, changeFactory)
 
@@ -107,7 +107,7 @@ metadata:
 		},
 	}
 
-	changeFactory := ctldiff.NewChangeFactory(mods, nil, nil)
+	changeFactory := ctldiff.NewChangeFactory(mods, nil, ctlres.IdentifiedResources{})
 	changeSet := ctldiff.NewChangeSet([]ctlres.Resource{existingRes}, []ctlres.Resource{newRes},
 		ctldiff.ChangeSetOpts{}, changeFactory)
 
@@ -175,7 +175,7 @@ metadata:
 		},
 	}
 
-	changeFactory := ctldiff.NewChangeFactory(rebaseMods, ignoreFieldsMods, nil)
+	changeFactory := ctldiff.NewChangeFactory(rebaseMods, ignoreFieldsMods, ctlres.IdentifiedResources{})
 	changeSet := ctldiff.NewChangeSet([]ctlres.Resource{existingRes}, []ctlres.Resource{newRes},
 		ctldiff.ChangeSetOpts{Mode: ctldiff.AgainstLastAppliedChangeSetMode}, changeFactory)
 
@@ -249,7 +249,7 @@ metadata:
 		},
 	}
 
-	changeFactory := ctldiff.NewChangeFactory(rebaseMods, ignoreFieldsMods, nil)
+	changeFactory := ctldiff.NewChangeFactory(rebaseMods, ignoreFieldsMods, ctlres.IdentifiedResources{})
 	changeSet := ctldiff.NewChangeSet([]ctlres.Resource{existingRes}, []ctlres.Resource{newRes},
 		ctldiff.ChangeSetOpts{Mode: ctldiff.AgainstLastAppliedChangeSetMode}, changeFactory)
 
