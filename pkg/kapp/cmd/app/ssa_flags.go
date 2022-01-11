@@ -10,4 +10,5 @@ import (
 func AdjustApplyFlags(ssa tools.SSAFlags, af *ApplyFlags) {
 	af.ServerSideApply = ssa.SSAEnable
 	af.ServerSideForceConflict = ssa.SSAConflict
+	af.FieldManagerName = ssa.FieldManagerName
 }

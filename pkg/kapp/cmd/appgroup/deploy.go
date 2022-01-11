@@ -67,7 +67,6 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 func (o *DeployOptions) ValidateAndAdjustFlags(cmd *cobra.Command) error {
 	cmdapp.AdjustApplyFlags(o.AppFlags.SSAFlags, &o.AppFlags.ApplyFlags)
 	return cmdtools.AdjustDiffFlags(o.AppFlags.SSAFlags, &o.AppFlags.DiffFlags, diffFlagsPrefix, cmd)
-	return nil
 }
 
 func (o *DeployOptions) Run() error {

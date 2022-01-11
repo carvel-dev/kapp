@@ -30,6 +30,7 @@ type AddOrUpdateChangeOpts struct {
 	DefaultUpdateStrategy   string
 	ServerSideApply         bool
 	ServerSideForceConflict bool
+	FieldManagerName        string
 }
 
 type AddOrUpdateChange struct {
@@ -252,7 +253,7 @@ func (c AddPlainStrategy) Apply() error {
 	if c.aou.opts.ServerSideApply {
 		createdRes, err = c.aou.identifiedResources.Patch(createdRes, types.JSONPatchType, []byte(`
 [
-	{ "op": "test", "path": "/metadata/managedFields/0/manager", "value": "kapp-server-side-apply" },
+	{ "op": "test", "path": "/metadata/managedFields/0/manager", "value": "`+c.aou.opts.FieldManagerName+`" },
 	{ "op": "replace", "path": "/metadata/managedFields/0/operation", "value": "Apply" }
 ]
 `), ctlres.PatchOpts{DryRun: false})
