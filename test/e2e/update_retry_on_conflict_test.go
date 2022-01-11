@@ -195,6 +195,7 @@ spec:
 }
 
 func TestUpdateRetryOnConflict_WithConflictRebasedAway(t *testing.T) {
+	// SSASkip: rebasing is not used with server side apply
 	env := BuildEnv(t, SSASkip)
 	logger := Logger{}
 	kapp := Kapp{t, env, logger}

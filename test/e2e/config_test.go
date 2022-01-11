@@ -126,6 +126,7 @@ data:
 }
 
 func TestYttRebaseRule_ServiceAccountRebaseTokenSecret(t *testing.T) {
+	// SSASkip: rebasing is not used with server side apply
 	env := BuildEnv(t, SSASkip)
 	logger := Logger{}
 	kapp := Kapp{t, env, logger}
@@ -249,6 +250,7 @@ secrets:
 }
 
 func TestYttRebaseRule_OverlayContractV1(t *testing.T) {
+	// SSASkip: rebasing is not used with server side apply
 	env := BuildEnv(t, SSASkip)
 	logger := Logger{}
 	kapp := Kapp{t, env, logger}
