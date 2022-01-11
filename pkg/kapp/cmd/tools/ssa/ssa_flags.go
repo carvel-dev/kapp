@@ -25,8 +25,6 @@ func (s SSAFlags) ForceParamValue(patchType types.PatchType) *bool {
 	if patchType == types.ApplyPatchType && s.SSAEnable {
 		var t = true
 		return &t
-	} else {
-		// nil cats like False for ApplyPatchType
-		return nil
 	}
+	return nil
 }
