@@ -12,6 +12,7 @@ import (
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
 	"strings"
+	"time"
 )
 
 type ListOptions struct {
@@ -52,19 +53,29 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
-	//dur, err := time.ParseDuration(o.TimeFlags.Duration)
+	if o.TimeFlags.Before != "" {
+		o.TimeFlags.BeforeTime, err = time.Parse(time.RFC3339, o.TimeFlags.Before)
+		if err != nil {
+			return err
+		}
+	}
 
-	AppChangesTable{"App changes", changes}.Print(o.ui)
+	if o.TimeFlags.After != "" {
+		o.TimeFlags.AfterTime, err = time.Parse(time.RFC3339, o.TimeFlags.After)
+		if err != nil {
+			return err
+		}
+	}
 
-	//AppChangesTable{"App changes", changes, o.SortFlag, o.TimeFlags}.Print(o.ui)
+	AppChangesTable{"App changes", changes, o.SortFlag, o.TimeFlags}.Print(o.ui)
 
 	return nil
 }
 
 type AppChangesTable struct {
-	Title   string
-	Changes []ctlapp.Change
-	SortFlag SortFlag
+	Title     string
+	Changes   []ctlapp.Change
+	SortFlag  SortFlag
 	TimeFlags TimeFlags
 }
 
@@ -84,27 +95,31 @@ func (t AppChangesTable) Print(ui ui.UI) {
 			uitable.NewHeader("Description"),
 			nsHeader,
 		},
-
-		SortBy: []uitable.ColumnSort{
-			{Column: 1, Asc: false},
-			{Column: 0, Asc: true}, // in case start time are same
-		},
 	}
 
-	//if t.SortFlag.IsSortByNewestFirst() {
-	//	table.SortBy = []uitable.ColumnSort{
-	//		{Column: 1, Asc: false},
-	//		{Column: 0, Asc: true},
-	//	}
-	//} else {
-	//	table.SortBy = []uitable.ColumnSort{
-	//		{Column: 1, Asc: true},
-	//		{Column: 0, Asc: false},
-	//	}
-	//}
+	if t.SortFlag.IsSortByNewestFirst() {
+		table.SortBy = []uitable.ColumnSort{
+			{Column: 1, Asc: false},
+			{Column: 0, Asc: true},
+		}
+	} else {
+		table.SortBy = []uitable.ColumnSort{
+			{Column: 1, Asc: true},
+			{Column: 0, Asc: true},
+		}
+	}
+
+	isFilterApplied := !t.TimeFlags.BeforeTime.IsZero() || !t.TimeFlags.AfterTime.IsZero()
 
 	for _, change := range t.Changes {
-		//if change.Meta().StartedAt > t.TimeFlags.Before {}
+
+		if isFilterApplied {
+			if (!t.TimeFlags.BeforeTime.IsZero() && !change.Meta().StartedAt.Before(t.TimeFlags.BeforeTime)) ||
+				(!t.TimeFlags.AfterTime.IsZero() && !change.Meta().StartedAt.After(t.TimeFlags.AfterTime)) {
+				continue
+			}
+		}
+
 		table.Rows = append(table.Rows, []uitable.Value{
 			uitable.NewValueString(change.Name()),
 			uitable.NewValueTime(change.Meta().StartedAt),

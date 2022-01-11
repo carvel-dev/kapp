@@ -1,10 +1,15 @@
 package appchange
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+	"time"
+)
 
 type TimeFlags struct {
-	Before string
-	After  string
+	Before     string
+	After      string
+	BeforeTime time.Time
+	AfterTime  time.Time
 
 	Duration string
 }
