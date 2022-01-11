@@ -274,7 +274,7 @@ metadata:
 		validateChanges(t, respVerKeepOrg.Tables, expectedVerKeepOrg, "Op:      4 create, 0 delete, 0 update, 0 noop, 0 exists",
 			"Wait to: 4 reconcile, 0 delete, 0 noop", verKeepOrgOut)
 
-		verOut, _ := kapp.RunEmbedded([]string{"deploy", "-f", "-", "-a", name, "--json"},
+		verOut, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 		respVer := uitest.JSONUIFromBytes(t, []byte(verOut))

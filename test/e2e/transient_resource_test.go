@@ -188,7 +188,7 @@ metadata:
 	})
 
 	logger.Section("deploy to change transient to non-transient", func() {
-		out, _ := kapp.RunEmbedded([]string{"deploy", "-f", "-", "-a", name, "--json"},
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
