@@ -4,7 +4,9 @@
 package tools
 
 import (
+	"fmt"
 	ctlcap "github.com/k14s/kapp/pkg/kapp/clusterapply"
+	"github.com/k14s/kapp/pkg/kapp/cmd/tools/ssa"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	"github.com/spf13/cobra"
 )
@@ -42,4 +44,18 @@ func (s *DiffFlags) SetWithPrefix(prefix string, cmd *cobra.Command) {
 	}
 
 	cmd.Flags().StringVar(&s.Filter, prefix+"filter", "", `Set changes filter (example: {"and":[{"ops":["update"]},{"existingResource":{"kinds":["Deployment"]}]})`)
+}
+
+func AdjustDiffFlags(ssa ssa.SSAFlags, df *DiffFlags, diffPrefix string, cmd *cobra.Command) error {
+	if len(diffPrefix) > 0 {
+		diffPrefix = diffPrefix + "-"
+	}
+	if ssa.SSAEnable {
+		alaFlagName := diffPrefix + "against-last-applied"
+		if cmd.Flag(alaFlagName).Changed {
+			return fmt.Errorf("--ssa-enable conflicts with --%s", alaFlagName)
+		}
+		df.ChangeSetOpts.Mode = ctldiff.ServerSideApplyChangeSetMode
+	}
+	return nil
 }

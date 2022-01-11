@@ -5,6 +5,7 @@ package appgroup
 
 import (
 	"fmt"
+	"github.com/k14s/kapp/pkg/kapp/cmd/tools/ssa"
 	"io/ioutil"
 	"math"
 	"path/filepath"
@@ -34,7 +35,7 @@ type DeployAppFlags struct {
 	DeleteApplyFlags    cmdapp.ApplyFlags
 	DeployFlags         cmdapp.DeployFlags
 	LabelFlags          cmdapp.LabelFlags
-	SSAFlags            cmdtools.SSAFlags
+	SSAFlags            ssa.SSAFlags
 }
 
 func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeployOptions {
@@ -94,7 +95,7 @@ func (o *DeployOptions) Run() error {
 		}
 	}
 
-	supportObjs, err := cmdapp.FactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger, &o.AppFlags.SSAFlags.FieldManagerName)
+	supportObjs, err := cmdapp.FactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger, &o.AppFlags.SSAFlags)
 	if err != nil {
 		return err
 	}

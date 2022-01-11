@@ -9,6 +9,7 @@ import (
 	ctlcap "github.com/k14s/kapp/pkg/kapp/clusterapply"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
+	"github.com/k14s/kapp/pkg/kapp/cmd/tools/ssa"
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
@@ -59,11 +60,14 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 func (o *DeleteOptions) Run() error {
 	failingAPIServicesPolicy := o.ResourceTypesFlags.FailingAPIServicePolicy()
 
-	// When orphan strategy used, delete operation issues Patch command, which passes field manager name to K8S API.
+	// When orphan strategy used, delete operation issues PATCH command to delete labels,
+	// which passes field manager name to K8S API.
 	// This name is not persisted anywhere in managedFields and it's value doesn't really matter, therefore there
 	// is no need to expose --ssa-field-manager CLI flag in the delete command. Set it to something reasonable.
-	fieldManagerName := "kapp-shouldnt-be-seen-anywhere"
-	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger, &fieldManagerName)
+	ssaFlags := ssa.SSAFlags{
+		FieldManagerName: "kapp-shouldnt-be-seen-anywhere",
+	}
+	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger, &ssaFlags)
 	if err != nil {
 		return err
 	}

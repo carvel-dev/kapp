@@ -14,7 +14,8 @@ import (
 )
 
 func TestSSAUpdateSimple(t *testing.T) {
-	env := BuildEnv(t)
+	//SSASkip: this test explicitly enables SSA and therefore can run as part of non-SSA test run
+	env := BuildEnv(t, SSASkip)
 	logger := Logger{}
 	kapp := Kapp{t, env, logger}
 

@@ -4,11 +4,11 @@
 package app
 
 import (
-	"github.com/k14s/kapp/pkg/kapp/cmd/tools"
+	"github.com/k14s/kapp/pkg/kapp/cmd/tools/ssa"
 )
 
-func AdjustApplyFlags(ssa tools.SSAFlags, af *ApplyFlags) {
+func AdjustApplyFlags(ssa ssa.SSAFlags, af *ApplyFlags) {
 	af.ServerSideApply = ssa.SSAEnable
-	af.ServerSideForceConflict = ssa.SSAConflict
+	af.ServerSideForceConflict = ssa.SSAForceConflict
 	af.FieldManagerName = ssa.FieldManagerName
 }

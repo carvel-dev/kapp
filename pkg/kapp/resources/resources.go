@@ -6,6 +6,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"github.com/k14s/kapp/pkg/kapp/cmd/tools/ssa"
 	"regexp"
 	"strings"
 	"sync"
@@ -74,9 +75,9 @@ type ResourcesImplOpts struct {
 	ScopeToFallbackAllowedNamespaces bool
 
 	//ResourcesImpl is instantiated in the Factory even for commands not making CREATE/UPDATE/PATCH calls
-	//and these commands don't have FieldManager CLI flag. Use pointer type here to force panic
+	//and these commands don't have SSA CLI flags. Use pointer type here to force panic
 	//in case such write operation sneak into these commands in the future
-	FieldManagerName *string
+	SSAFlags *ssa.SSAFlags
 }
 
 func NewResourcesImpl(resourceTypes ResourceTypes, coreClient kubernetes.Interface,
@@ -266,7 +267,7 @@ func (c *ResourcesImpl) Create(resource Resource) (Resource, error) {
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
 		createdUn, err = resClient.Create(context.TODO(), resource.unstructuredPtr(), metav1.CreateOptions{
-			FieldManager: *c.opts.FieldManagerName,
+			FieldManager: c.opts.SSAFlags.FieldManagerName,
 		})
 		return err
 	})
@@ -295,7 +296,7 @@ func (c *ResourcesImpl) Update(resource Resource) (Resource, error) {
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
 		updatedUn, err = resClient.Update(context.TODO(), resource.unstructuredPtr(), metav1.UpdateOptions{
-			FieldManager: *c.opts.FieldManagerName,
+			FieldManager: c.opts.SSAFlags.FieldManagerName,
 		})
 		return err
 	})
@@ -326,7 +327,8 @@ func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
 		patchedUn, err = resClient.Patch(context.TODO(), resource.Name(), patchType, data, metav1.PatchOptions{
-			FieldManager: *c.opts.FieldManagerName,
+			FieldManager: c.opts.SSAFlags.FieldManagerName,
+			Force:        c.opts.SSAFlags.ForceParamValue(patchType),
 			DryRun:       dryRunOpt,
 		})
 		return err

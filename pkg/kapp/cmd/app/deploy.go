@@ -6,6 +6,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/k14s/kapp/pkg/kapp/cmd/tools/ssa"
 	"sort"
 	"strings"
 
@@ -41,7 +42,7 @@ type DeployOptions struct {
 	DeployFlags         DeployFlags
 	ResourceTypesFlags  ResourceTypesFlags
 	LabelFlags          LabelFlags
-	SSAFlags            cmdtools.SSAFlags
+	SSAFlags            ssa.SSAFlags
 }
 
 func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeployOptions {
@@ -103,7 +104,7 @@ func (o *DeployOptions) Run() error {
 
 	failingAPIServicesPolicy := o.ResourceTypesFlags.FailingAPIServicePolicy()
 
-	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger, &o.SSAFlags.FieldManagerName)
+	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger, &o.SSAFlags)
 	if err != nil {
 		return err
 	}
