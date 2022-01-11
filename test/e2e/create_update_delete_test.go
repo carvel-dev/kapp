@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/k14s/kapp/pkg/kapp/app"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/stretchr/testify/require"
 )
@@ -69,12 +70,16 @@ data:
 
 		NewPresentClusterResource("service", "redis-primary", env.Namespace, kubectl)
 		NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
+
+		NewMissingClusterResource(t, "configmap", name, env.Namespace, kubectl)
+		NewPresentClusterResource("configmap", name+app.AppSuffix, env.Namespace, kubectl)
 	})
 
 	logger.Section("deploy update with 1 delete, 1 update, 1 create", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 		NewMissingClusterResource(t, "service", "redis-primary", env.Namespace, kubectl)
+		NewPresentClusterResource("configmap", name+app.AppSuffix, env.Namespace, kubectl)
 
 		config := NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
 		val := config.RawPath(ctlres.NewPathFromStrings([]string{"data", "key"}))
@@ -90,5 +95,6 @@ data:
 		NewMissingClusterResource(t, "service", "redis-primary", env.Namespace, kubectl)
 		NewMissingClusterResource(t, "configmap", "redis-config", env.Namespace, kubectl)
 		NewMissingClusterResource(t, "configmap", "redis-config2", env.Namespace, kubectl)
+		NewMissingClusterResource(t, "configmap", name+app.AppSuffix, env.Namespace, kubectl)
 	})
 }

@@ -6,6 +6,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/k14s/kapp/pkg/kapp/logger"
@@ -82,22 +83,29 @@ func (a *RecordedApp) UpdateUsedGVs(gvs []schema.GroupVersion) error {
 func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 	defer a.logger.DebugFunc("CreateOrUpdate").Finish()
 
-	configMap, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
-	if err == nil {
-		a.renameConfigMap(configMap, a.fqName, a.nsName)
+	if os.Getenv("USE_EXISTING_CONFIGMAP_NAME") != "True" {
+		configMap, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
+		if err == nil {
+			err = a.renameConfigMap(configMap, a.fqName, a.nsName)
+			if err != nil {
+				return err
+			}
 
-		err = a.mergeAppUpdates(configMap, labels)
-		if err != nil {
-			return err
-		}
+			err = a.mergeAppUpdates(configMap, labels)
+			if err != nil {
+				return err
+			}
 
-		_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), configMap, metav1.UpdateOptions{})
-		if err != nil {
-			return fmt.Errorf("Updating app: %s", err)
+			_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), configMap, metav1.UpdateOptions{})
+			if err != nil {
+				return fmt.Errorf("Updating app: %s", err)
+			}
+
+			return nil
 		}
 	}
 
-	configMap = &corev1.ConfigMap{
+	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      a.fqName,
 			Namespace: a.nsName,
@@ -111,7 +119,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 		}.AsData(),
 	}
 
-	err = a.mergeAppUpdates(configMap, labels)
+	err := a.mergeAppUpdates(configMap, labels)
 	if err != nil {
 		return err
 	}
@@ -286,7 +294,9 @@ func (a *RecordedApp) meta() (Meta, error) {
 	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
 	if err == nil {
 		return a.setMeta(*app)
-	} else if errors.IsNotFound(err) {
+	}
+
+	if errors.IsNotFound(err) {
 		app, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 		if err == nil {
 			return a.setMeta(*app)
