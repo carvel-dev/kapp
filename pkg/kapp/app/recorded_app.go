@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/k14s/kapp/pkg/kapp/logger"
@@ -83,7 +84,7 @@ func (a *RecordedApp) UpdateUsedGVs(gvs []schema.GroupVersion) error {
 func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 	defer a.logger.DebugFunc("CreateOrUpdate").Finish()
 
-	if os.Getenv("USE_EXISTING_CONFIGMAP_NAME") == "True" {
+	if strings.ToLower(os.Getenv("USE_OLD_CONFIGMAP_NAME")) == "true" {
 		return a.createOrUpdate(a.name, labels)
 	}
 

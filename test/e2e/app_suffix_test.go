@@ -65,7 +65,7 @@ func TestAppSuffix_AppExists_OldBehavior(t *testing.T) {
 	cleanUp()
 	defer cleanUp()
 
-	os.Setenv("USE_EXISTING_CONFIGMAP_NAME", "True")
+	os.Setenv("USE_OLD_CONFIGMAP_NAME", "True")
 
 	logger.Section("initial deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
@@ -93,7 +93,7 @@ func TestAppSuffix_AppExists_OldBehavior(t *testing.T) {
 		NewMissingClusterResource(t, "configmap", name, env.Namespace, kubectl)
 	})
 
-	os.Unsetenv("USE_EXISTING_CONFIGMAP_NAME")
+	os.Unsetenv("USE_OLD_CONFIGMAP_NAME")
 }
 
 func TestAppSuffix_AppExistsWithoutSuffix(t *testing.T) {
@@ -107,9 +107,9 @@ func TestAppSuffix_AppExistsWithoutSuffix(t *testing.T) {
 		kapp.Run([]string{"delete", "-a", name})
 	}
 	createExistingApp := func() {
-		os.Setenv("USE_EXISTING_CONFIGMAP_NAME", "True")
+		os.Setenv("USE_OLD_CONFIGMAP_NAME", "True")
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
-		os.Unsetenv("USE_EXISTING_CONFIGMAP_NAME")
+		os.Unsetenv("USE_OLD_CONFIGMAP_NAME")
 	}
 
 	cleanUp()
