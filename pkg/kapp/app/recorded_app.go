@@ -205,7 +205,9 @@ func (a *RecordedApp) Delete() error {
 	err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(context.TODO(), a.fqName, metav1.DeleteOptions{})
 	if err == nil {
 		return nil
-	} else if errors.IsNotFound(err) {
+	}
+
+	if errors.IsNotFound(err) {
 		err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(context.TODO(), a.name, metav1.DeleteOptions{})
 		if err == nil {
 			return nil
@@ -219,11 +221,15 @@ func (a *RecordedApp) Rename(newName string, newNamespace string) error {
 	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
 	if err == nil {
 		return a.renameConfigMap(app, newName+AppSuffix, newNamespace)
-	} else if errors.IsNotFound(err) {
+	}
+
+	if errors.IsNotFound(err) {
 		app, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 		if err == nil {
 			return a.renameConfigMap(app, newName+AppSuffix, newNamespace)
-		} else if errors.IsNotFound(err) {
+		}
+
+		if errors.IsNotFound(err) {
 			return fmt.Errorf("App '%s' (namespace: %s) does not exist: %s%s",
 				a.name, a.nsName, err, a.appInDiffNsHintMsgFunc(a.fqName))
 		}
@@ -300,7 +306,9 @@ func (a *RecordedApp) meta() (Meta, error) {
 		app, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 		if err == nil {
 			return a.setMeta(*app)
-		} else if errors.IsNotFound(err) {
+		}
+
+		if errors.IsNotFound(err) {
 			return Meta{}, fmt.Errorf("App '%s' (namespace: %s) does not exist: %s%s",
 				a.name, a.nsName, err, a.appInDiffNsHintMsgFunc(a.fqName))
 		}
