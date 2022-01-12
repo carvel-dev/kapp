@@ -6,13 +6,13 @@ package app
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
+	"strings"
+	"time"
 )
 
 const (
@@ -52,7 +52,7 @@ func (a Apps) Find(name string) (App, error) {
 		return nil, fmt.Errorf("Expected non-empty namespace")
 	}
 
-	return &RecordedApp{name, a.nsName, map[string]string{}, a.coreClient,
+	return &RecordedApp{name, a.nsName, time.Time{}, map[string]string{}, a.coreClient,
 		a.identifiedResources, a.appInDiffNsHintMsg, nil,
 		a.logger.NewPrefixed("RecordedApp")}, nil
 }
@@ -82,7 +82,7 @@ func (a Apps) list(additionalLabels map[string]string, nsName string) ([]App, er
 	}
 
 	for _, app := range apps.Items {
-		recordedApp := &RecordedApp{app.Name, app.Namespace, app.ObjectMeta.Labels, a.coreClient,
+		recordedApp := &RecordedApp{app.Name, app.Namespace, app.ObjectMeta.CreationTimestamp.Time, app.ObjectMeta.Labels, a.coreClient,
 			a.identifiedResources, a.appInDiffNsHintMsg, nil,
 			a.logger.NewPrefixed("RecordedApp")}
 

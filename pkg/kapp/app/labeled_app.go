@@ -6,6 +6,7 @@ package app
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"k8s.io/apimachinery/pkg/labels"
@@ -28,6 +29,8 @@ func (a *LabeledApp) Name() string {
 }
 
 func (a *LabeledApp) Namespace() string { return "" }
+
+func (a *LabeledApp) CreationTimestamp() *time.Time { return nil }
 
 func (a *LabeledApp) Description() string {
 	return fmt.Sprintf("labeled app '%s'", a.Name())

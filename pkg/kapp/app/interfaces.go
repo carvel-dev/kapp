@@ -6,11 +6,13 @@ package app
 import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"time"
 )
 
 type App interface {
 	Name() string
 	Namespace() string
+	CreationTimestamp() *time.Time
 	Description() string
 	Meta() (Meta, error)
 

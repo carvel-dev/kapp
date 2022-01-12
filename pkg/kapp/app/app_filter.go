@@ -16,28 +16,23 @@ func (f AppFilter) Apply(apps []App) ([]App, error) {
 	var result []App
 
 	for _, app := range apps {
-		lastChange, err := app.LastChange()
-		if err != nil {
-			return nil, err
-		}
-
-		if f.Matches(lastChange) {
+		if f.Matches(app) {
 			result = append(result, app)
 		}
 	}
 	return result, nil
 }
 
-func (f AppFilter) Matches(change Change) bool {
+func (f AppFilter) Matches(app App) bool {
 
 	if f.CreatedAtBeforeTime != nil {
-		if change.Meta().StartedAt.After(*f.CreatedAtBeforeTime) {
+		if app.CreationTimestamp().After(*f.CreatedAtBeforeTime) {
 			return false
 		}
 	}
 
 	if f.CreatedAtAfterTime != nil {
-		if change.Meta().StartedAt.Before(*f.CreatedAtAfterTime) {
+		if app.CreationTimestamp().Before(*f.CreatedAtAfterTime) {
 			return false
 		}
 	}

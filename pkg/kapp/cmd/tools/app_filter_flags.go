@@ -16,7 +16,7 @@ type AppFilterFlags struct {
 }
 
 func (s *AppFilterFlags) Set(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&s.age, "filter-age", "", "Set age filter (example: 5m, 500h+, 10m-)")
+	cmd.Flags().StringVar(&s.age, "filter-age", "", "Set age filter (example: 5m-, 500h+, 10m-)")
 	cmd.Flags().StringSliceVar(&s.af.Labels, "filter-labels", nil, "Set label filter (example: x=y)")
 }
 
@@ -49,8 +49,6 @@ func (s *AppFilterFlags) Times() (*time.Time, *time.Time, error) {
 		ageOlder = true
 	case "-":
 		ageStr = s.age[:lastIdx]
-	default:
-		ageStr = s.age
 	}
 
 	dur, err := time.ParseDuration(ageStr)
@@ -63,5 +61,5 @@ func (s *AppFilterFlags) Times() (*time.Time, *time.Time, error) {
 	}
 
 	return nil, nil, fmt.Errorf("Expected age filter to be either empty or " +
-		"parseable time.Duration (example: 5m; valid units: ns, us, ms, s, m, h)")
+		"parseable time.Duration (example: 5m+, 24h-; valid units: ns, us, ms, s, m, h)")
 }
