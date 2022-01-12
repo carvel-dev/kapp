@@ -11,6 +11,7 @@ import (
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/k14s/kapp/pkg/kapp/util"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type OwnershipLabelModsFunc func(kvs map[string]string) []StringMapAppendMod
@@ -82,6 +83,10 @@ func (a *LabeledResources) All(listOpts IdentifiedResourcesListOpts) ([]Resource
 	}
 
 	return resources, nil
+}
+
+func (a *LabeledResources) ScopeToGVKs(gvks []schema.GroupVersionKind) {
+	a.identifiedResources.ScopeToGVKs(gvks)
 }
 
 type AllAndMatchingOpts struct {

@@ -19,6 +19,7 @@ import (
 
 type Resource interface {
 	GroupVersionResource() schema.GroupVersionResource
+	GroupVersionKind() schema.GroupVersionKind
 	GroupVersion() schema.GroupVersion
 	Kind() string
 	APIVersion() string
@@ -136,6 +137,10 @@ func NewResourcesFromBytes(data []byte) ([]Resource, error) {
 
 func (r *ResourceImpl) GroupVersionResource() schema.GroupVersionResource {
 	return r.resType.GroupVersionResource
+}
+
+func (r *ResourceImpl) GroupVersionKind() schema.GroupVersionKind {
+	return r.un.GroupVersionKind()
 }
 
 func (r *ResourceImpl) GroupVersion() schema.GroupVersion {

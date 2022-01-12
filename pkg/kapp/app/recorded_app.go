@@ -80,6 +80,43 @@ func (a *RecordedApp) UpdateUsedGVs(gvs []schema.GroupVersion) error {
 	})
 }
 
+func (a *RecordedApp) UsedGVKs() ([]schema.GroupVersionKind, error) {
+	meta, err := a.meta()
+	if err != nil {
+		return nil, err
+	}
+
+	return meta.UsedGVKs, nil
+}
+
+func (a *RecordedApp) UpdateUsedGVKs(gvks []schema.GroupVersionKind) ([]schema.GroupVersionKind, error) {
+	gvksByGVK := map[schema.GroupVersionKind]struct{}{}
+	var uniqGVKs []schema.GroupVersionKind
+
+	usedGVKs, err := a.UsedGVKs()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, gvk := range usedGVKs {
+		if _, found := gvksByGVK[gvk]; !found {
+			gvksByGVK[gvk] = struct{}{}
+			uniqGVKs = append(uniqGVKs, gvk)
+		}
+	}
+
+	for _, gvk := range gvks {
+		if _, found := gvksByGVK[gvk]; !found {
+			gvksByGVK[gvk] = struct{}{}
+			uniqGVKs = append(uniqGVKs, gvk)
+		}
+	}
+
+	return usedGVKs, a.update(func(meta *Meta) {
+		meta.UsedGVKs = uniqGVKs
+	})
+}
+
 func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 	defer a.logger.DebugFunc("CreateOrUpdate").Finish()
 

@@ -133,6 +133,14 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
+	if o.ResourceTypesFlags.ScopeToUsedGVKs {
+		usedGVKs, err := app.UpdateUsedGVKs(NewUsedGVsScope(newResources).GVKs())
+		if err != nil {
+			return err
+		}
+		labeledResources.ScopeToGVKs(usedGVKs)
+	}
+
 	existingResources, existingPodRs, err := o.existingResources(
 		newResources, labeledResources, resourceFilter, supportObjs.Apps)
 	if err != nil {

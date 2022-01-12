@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/k14s/kapp/pkg/kapp/logger"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 )
@@ -17,13 +18,15 @@ type IdentifiedResources struct {
 	resources                 Resources
 	fallbackAllowedNamespaces []string
 	logger                    logger.Logger
+
+	GVKScope []schema.GroupVersionKind
 }
 
 func NewIdentifiedResources(coreClient kubernetes.Interface, resourceTypes ResourceTypes,
 	resources Resources, fallbackAllowedNamespaces []string, logger logger.Logger) IdentifiedResources {
 
 	return IdentifiedResources{coreClient, resourceTypes, resources,
-		fallbackAllowedNamespaces, logger.NewPrefixed("IdentifiedResources")}
+		fallbackAllowedNamespaces, logger.NewPrefixed("IdentifiedResources"), nil}
 }
 
 func (r IdentifiedResources) Create(resource Resource) (Resource, error) {
@@ -101,4 +104,8 @@ func (r IdentifiedResources) Get(resource Resource) (Resource, error) {
 func (r IdentifiedResources) Exists(resource Resource, existsOpts ExistsOpts) (Resource, bool, error) {
 	defer r.logger.DebugFunc(fmt.Sprintf("Exists(%s)", resource.Description())).Finish()
 	return r.resources.Exists(resource, existsOpts)
+}
+
+func (r *IdentifiedResources) ScopeToGVKs(gvks []schema.GroupVersionKind) {
+	r.GVKScope = gvks
 }

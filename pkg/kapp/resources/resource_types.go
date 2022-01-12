@@ -19,11 +19,14 @@ type ResourceTypes interface {
 	All(ignoreCachedResTypes bool) ([]ResourceType, error)
 	Find(Resource) (ResourceType, error)
 	CanIgnoreFailingGroupVersion(schema.GroupVersion) bool
+	ScopeToUsedGVKs() bool
 }
 
 type ResourceTypesImplOpts struct {
 	IgnoreFailingAPIServices   bool
 	CanIgnoreFailingAPIService func(schema.GroupVersion) bool
+
+	ScopeToUsedGVKs bool
 }
 
 type ResourceTypesImpl struct {
@@ -88,6 +91,10 @@ func (g *ResourceTypesImpl) all() ([]ResourceType, error) {
 	}
 
 	return pairs, nil
+}
+
+func (g *ResourceTypesImpl) ScopeToUsedGVKs() bool {
+	return g.opts.ScopeToUsedGVKs
 }
 
 func (g *ResourceTypesImpl) CanIgnoreFailingGroupVersion(groupVer schema.GroupVersion) bool {
@@ -265,6 +272,19 @@ func NonMatching(in []ResourceType, ref ResourceRef) []ResourceType {
 	for _, item := range in {
 		if !partResourceRef.Matches(item.GroupVersionResource) {
 			out = append(out, item)
+		}
+	}
+	return out
+}
+
+// TODO: Extend ResourceRef and PartialResourceRefd to allow GVK matching
+func MatchingAnyGVK(in []ResourceType, gvks []schema.GroupVersionKind) []ResourceType {
+	var out []ResourceType
+	for _, item := range in {
+		for _, gvk := range gvks {
+			if item.APIResource.Group == gvk.Group && item.APIResource.Version == item.APIResource.Version && item.Kind == gvk.Kind {
+				out = append(out, item)
+			}
 		}
 	}
 	return out

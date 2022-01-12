@@ -36,6 +36,10 @@ func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []Resou
 		schema.GroupVersionResource{Version: "v1", Resource: "componentstatuses"},
 	})
 
+	if r.resourceTypes.ScopeToUsedGVKs() {
+		resTypes = MatchingAnyGVK(resTypes, r.GVKScope)
+	}
+
 	if len(resRefs) > 0 {
 		resTypes = MatchingAny(resTypes, resRefs)
 	}
