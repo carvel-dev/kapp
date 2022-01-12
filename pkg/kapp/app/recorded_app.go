@@ -313,12 +313,14 @@ func (a *RecordedApp) meta() (Meta, error) {
 
 	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
 	if err == nil {
+		a.useOldConfigmapName = false
 		return a.setMeta(*app)
 	}
 
 	if errors.IsNotFound(err) {
 		app, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 		if err == nil {
+			a.useOldConfigmapName = true
 			return a.setMeta(*app)
 		}
 
@@ -373,14 +375,14 @@ func (a *RecordedApp) BeginChange(meta ChangeMeta) (Change, error) {
 }
 
 func (a *RecordedApp) update(doFunc func(*Meta)) error {
-	change, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
+	name := a.fqName
+	if a.useOldConfigmapName {
+		name = a.name
+	}
+
+	change, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			change, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
-			if err != nil {
-				return fmt.Errorf("Getting app: %s", err)
-			}
-		} else {
 			return fmt.Errorf("Getting app: %s", err)
 		}
 	}
