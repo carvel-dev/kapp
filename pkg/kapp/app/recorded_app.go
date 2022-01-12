@@ -299,7 +299,11 @@ func (a *RecordedApp) setMeta(app corev1.ConfigMap) (Meta, error) {
 	if err != nil {
 		errMsg := "App '%s' (namespace: %s) backed by ConfigMap '%s' did not contain parseable app metadata: %s"
 		hintText := " (hint: ConfigMap was overriden by another user?)"
-		return Meta{}, fmt.Errorf(errMsg+hintText, a.name, a.nsName, a.name, err)
+
+		if a.useOldConfigmapName {
+			return Meta{}, fmt.Errorf(errMsg+hintText, a.name, a.nsName, a.name, err)
+		}
+		return Meta{}, fmt.Errorf(errMsg+hintText, a.name, a.nsName, a.fqName, err)
 	}
 
 	a.memoizedMeta = &meta
