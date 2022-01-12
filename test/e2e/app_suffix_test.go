@@ -81,6 +81,10 @@ func TestAppSuffix_AppExists_OldBehavior(t *testing.T) {
 		NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
 	})
 
+	logger.Section("inspect", func() {
+		kapp.Run([]string{"inspect", "-a", name})
+	})
+
 	logger.Section("rename", func() {
 		kapp.Run([]string{"rename", "-a", name, "--new-name", newName})
 		NewPresentClusterResource("configmap", newName, env.Namespace, kubectl)
@@ -126,9 +130,12 @@ func TestAppSuffix_AppExistsWithoutSuffix(t *testing.T) {
 		cleanUp()
 	})
 
-	logger.Section("rename", func() {
+	logger.Section("inspect", func() {
 		createExistingApp()
+		kapp.Run([]string{"inspect", "-a", name})
+	})
 
+	logger.Section("rename", func() {
 		kapp.Run([]string{"rename", "-a", name, "--new-name", newName})
 		NewPresentClusterResource("configmap", newName+app.AppSuffix, env.Namespace, kubectl)
 	})
