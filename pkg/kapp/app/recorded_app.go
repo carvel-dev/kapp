@@ -249,6 +249,10 @@ func (a *RecordedApp) Rename(newName string, newNamespace string) error {
 		return fmt.Errorf("Getting app: %s", err)
 	}
 
+	if strings.ToLower(os.Getenv("USE_OLD_CONFIGMAP_NAME")) == "true" {
+		return a.renameConfigMap(app, newName, newNamespace)
+	}
+
 	return a.renameConfigMap(app, newName+AppSuffix, newNamespace)
 }
 

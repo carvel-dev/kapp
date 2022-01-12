@@ -85,6 +85,17 @@ func TestAppSuffix_AppExists_OldBehavior(t *testing.T) {
 		cleanUp()
 	})
 
+	logger.Section("rename", func() {
+		newName := "test-app-suffix-app-exists-new"
+
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		kapp.Run([]string{"rename", "-a", name, "--new-name", newName})
+		NewPresentClusterResource("configmap", newName, env.Namespace, kubectl)
+
+		kapp.Run([]string{"delete", "-a", newName})
+	})
+
 	logger.Section("delete", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 		NewPresentClusterResource("configmap", name, env.Namespace, kubectl)
