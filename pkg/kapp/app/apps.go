@@ -53,7 +53,7 @@ func (a Apps) Find(name string) (App, error) {
 		return nil, fmt.Errorf("Expected non-empty namespace")
 	}
 
-	return &RecordedApp{name, name + AppSuffix, a.nsName, a.coreClient,
+	return &RecordedApp{name, name + AppSuffix, a.nsName, false, a.coreClient,
 		a.identifiedResources, a.appInDiffNsHintMsg, nil,
 		a.logger.NewPrefixed("RecordedApp")}, nil
 }
@@ -83,7 +83,7 @@ func (a Apps) list(additionalLabels map[string]string, nsName string) ([]App, er
 	}
 
 	for _, app := range apps.Items {
-		recordedApp := &RecordedApp{strings.TrimSuffix(app.Name, AppSuffix), app.Name, app.Namespace, a.coreClient,
+		recordedApp := &RecordedApp{strings.TrimSuffix(app.Name, AppSuffix), app.Name, app.Namespace, false, a.coreClient,
 			a.identifiedResources, a.appInDiffNsHintMsg, nil,
 			a.logger.NewPrefixed("RecordedApp")}
 
