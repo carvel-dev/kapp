@@ -91,11 +91,9 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 
 	configMap, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 	if err == nil {
-		if _, ok := configMap.Labels[KappIsAppLabelKey]; !ok {
-			return fmt.Errorf("Unable to migrate, configmap '%s' is not marked as a kapp app", a.name)
+		if _, ok := configMap.Labels[KappIsAppLabelKey]; ok {
+			return a.migrate(configMap, labels)
 		}
-
-		return a.migrate(configMap, labels)
 	}
 
 	return a.createOrUpdate(a.fqName, labels)
