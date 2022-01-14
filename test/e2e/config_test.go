@@ -413,3 +413,89 @@ func asYAML(t *testing.T, val interface{}) string {
 	require.NoError(t, err)
 	return string(bs)
 }
+
+func TestDefaultConfig_PreserveExistingStatus(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+
+	yaml := `
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.8.0
+  creationTimestamp: null
+  name: tests.kapp.example
+spec:
+  group: kapp.example
+  names:
+    kind: Test
+    listKind: TestList
+    plural: tests
+    singular: test
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            type: string
+          kind:
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties: {}
+            type: object
+          status:
+            properties: {}
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+`
+
+	name := "test-default-config-preserve-existing-status"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	var crd ClusterResource
+
+	logger.Section("initial deploy", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml)})
+
+		crd = NewPresentClusterResource("customresourcedefinition", "tests.kapp.example", env.Namespace, kubectl)
+		kind := crd.RawPath(ctlres.NewPathFromStrings([]string{"status", "acceptedNames", "kind"})).(string)
+
+		require.Equal(t, "Test", kind)
+	})
+
+	logger.Section("second deploy (rebase runs)", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
+			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml)})
+
+		require.Errorf(t, err, "Expected to receive error")
+
+		require.Containsf(t, err.Error(), "Exiting after diffing with no pending changes (exit status 2)", "Expected to find stderr output")
+		require.Containsf(t, err.Error(), "exit code: '2'", "Expected to find exit code")
+	})
+}
