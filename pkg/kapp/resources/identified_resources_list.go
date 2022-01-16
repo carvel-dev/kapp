@@ -13,6 +13,7 @@ import (
 
 type IdentifiedResourcesListOpts struct {
 	IgnoreCachedResTypes bool
+	GVKsScope            []schema.GroupVersionKind
 }
 
 func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []ResourceRef, opts IdentifiedResourcesListOpts) ([]Resource, error) {
@@ -36,8 +37,8 @@ func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []Resou
 		schema.GroupVersionResource{Version: "v1", Resource: "componentstatuses"},
 	})
 
-	if r.resourceTypes.ScopeToUsedGVKs() {
-		resTypes = MatchingAnyGVK(resTypes, r.GVKScope)
+	if opts.GVKsScope != nil {
+		resTypes = MatchingAnyGVK(resTypes, opts.GVKsScope)
 	}
 
 	if len(resRefs) > 0 {

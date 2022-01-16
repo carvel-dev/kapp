@@ -39,7 +39,6 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 	resTypes := ctlres.NewResourceTypesImpl(coreClient, ctlres.ResourceTypesImplOpts{
 		IgnoreFailingAPIServices:   resTypesFlags.IgnoreFailingAPIServices,
 		CanIgnoreFailingAPIService: resTypesFlags.CanIgnoreFailingAPIService,
-		ScopeToUsedGVKs:            resTypesFlags.ScopeToUsedGVKs,
 	})
 
 	resourcesImplOpts := ctlres.ResourcesImplOpts{

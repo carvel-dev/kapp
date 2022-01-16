@@ -19,14 +19,11 @@ type ResourceTypes interface {
 	All(ignoreCachedResTypes bool) ([]ResourceType, error)
 	Find(Resource) (ResourceType, error)
 	CanIgnoreFailingGroupVersion(schema.GroupVersion) bool
-	ScopeToUsedGVKs() bool
 }
 
 type ResourceTypesImplOpts struct {
 	IgnoreFailingAPIServices   bool
 	CanIgnoreFailingAPIService func(schema.GroupVersion) bool
-
-	ScopeToUsedGVKs bool
 }
 
 type ResourceTypesImpl struct {
@@ -91,10 +88,6 @@ func (g *ResourceTypesImpl) all() ([]ResourceType, error) {
 	}
 
 	return pairs, nil
-}
-
-func (g *ResourceTypesImpl) ScopeToUsedGVKs() bool {
-	return g.opts.ScopeToUsedGVKs
 }
 
 func (g *ResourceTypesImpl) CanIgnoreFailingGroupVersion(groupVer schema.GroupVersion) bool {

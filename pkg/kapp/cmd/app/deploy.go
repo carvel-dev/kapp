@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -133,16 +134,16 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
+	var usedGVKs []schema.GroupVersionKind
 	if o.ResourceTypesFlags.ScopeToUsedGVKs {
-		usedGVKs, err := app.UpdateUsedGVKs(NewUsedGVsScope(newResources).GVKs())
+		usedGVKs, err = app.UpdateUsedGVKs(NewUsedGVsScope(newResources).GVKs())
 		if err != nil {
 			return err
 		}
-		labeledResources.ScopeToGVKs(usedGVKs)
 	}
 
 	existingResources, existingPodRs, err := o.existingResources(
-		newResources, labeledResources, resourceFilter, supportObjs.Apps)
+		newResources, labeledResources, resourceFilter, supportObjs.Apps, usedGVKs)
 	if err != nil {
 		return err
 	}
@@ -280,7 +281,7 @@ func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
 
 func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 	labeledResources *ctlres.LabeledResources, resourceFilter ctlres.ResourceFilter,
-	apps ctlapp.Apps) ([]ctlres.Resource, []ctlres.Resource, error) {
+	apps ctlapp.Apps, usedGVKs []schema.GroupVersionKind) ([]ctlres.Resource, []ctlres.Resource, error) {
 
 	labelErrorResolutionFunc := func(key string, val string) string {
 		items, _ := apps.List(nil)
@@ -301,6 +302,11 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 		// Prevent accidently overriding kapp state records
 		DisallowedResourcesByLabelKeys: []string{ctlapp.KappIsAppLabelKey},
 		LabelErrorResolutionFunc:       labelErrorResolutionFunc,
+
+		//Scope resource searching to UsedGVKs
+		IdentifiedResourcesListOpts: ctlres.IdentifiedResourcesListOpts{
+			GVKsScope: usedGVKs,
+		},
 	}
 
 	existingResources, err := labeledResources.AllAndMatching(newResources, matchingOpts)
