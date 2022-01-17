@@ -23,15 +23,11 @@ const (
 	kappAppLabelKey = "kapp.k14s.io/app"
 )
 
-type RecordedAppMeta struct {
+type RecordedApp struct {
 	name              string
 	nsName            string
 	creationTimestamp time.Time
 	labels            map[string]string
-}
-
-type RecordedApp struct {
-	appMeta  RecordedAppMeta
 
 	coreClient             kubernetes.Interface
 	identifiedResources    ctlres.IdentifiedResources
@@ -43,10 +39,10 @@ type RecordedApp struct {
 
 var _ App = &RecordedApp{}
 
-func (a *RecordedApp) Name() string      { return a.appMeta.name }
-func (a *RecordedApp) Namespace() string { return a.appMeta.nsName }
+func (a *RecordedApp) Name() string      { return a.name }
+func (a *RecordedApp) Namespace() string { return a.nsName }
 
-func (a *RecordedApp) CreationTimestamp() *time.Time { return &a.appMeta.creationTimestamp }
+func (a *RecordedApp) CreationTimestamp() *time.Time { return &a.creationTimestamp }
 
 func (a *RecordedApp) Description() string {
 	return fmt.Sprintf("app '%s' namespace: %s", a.Name(), a.Namespace())
@@ -227,7 +223,7 @@ func (a *RecordedApp) labeledApp() (*LabeledApp, error) {
 	}
 
 	appLabels := meta.Labels()
-	for key, val := range a.appMeta.labels {
+	for key, val := range a.labels {
 		appLabels[key] = val
 	}
 
