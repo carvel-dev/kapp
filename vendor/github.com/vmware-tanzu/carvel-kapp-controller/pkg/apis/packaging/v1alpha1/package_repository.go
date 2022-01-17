@@ -56,6 +56,8 @@ type PackageRepositoryFetch struct {
 	Git *v1alpha1.AppFetchGit `json:"git,omitempty"`
 	// +optional
 	ImgpkgBundle *v1alpha1.AppFetchImgpkgBundle `json:"imgpkgBundle,omitempty"`
+	// +optional
+	Inline *v1alpha1.AppFetchInline `json:"inline,omitempty"`
 }
 
 type PackageRepositoryStatus struct {
