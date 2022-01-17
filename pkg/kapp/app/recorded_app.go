@@ -111,7 +111,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 	_, err = a.coreClient.CoreV1().ConfigMaps(a.Namespace()).Create(context.TODO(), configMap, metav1.CreateOptions{})
 	if err != nil {
 		if errors.IsAlreadyExists(err) {
-			existingConfigMap, err := a.coreClient.CoreV1().ConfigMaps(a.Namespace()).Get(context.TODO(), a.appMeta.name, metav1.GetOptions{})
+			existingConfigMap, err := a.coreClient.CoreV1().ConfigMaps(a.Namespace()).Get(context.TODO(), a.Name(), metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("Getting app: %s", err)
 			}
