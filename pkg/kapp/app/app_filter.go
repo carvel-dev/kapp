@@ -36,5 +36,6 @@ func (f AppFilter) Matches(app App) bool {
 			return false
 		}
 	}
+
 	return true
 }
