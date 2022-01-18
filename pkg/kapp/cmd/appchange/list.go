@@ -4,15 +4,17 @@
 package appchange
 
 import (
+	"strings"
+	"time"
+
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
+	"github.com/spf13/cobra"
+
 	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	"github.com/k14s/kapp/pkg/kapp/logger"
-	"github.com/spf13/cobra"
-	"strings"
-	"time"
 )
 
 type ListOptions struct {
