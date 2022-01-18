@@ -13,8 +13,6 @@ type ResourceTypesFlags struct {
 	CanIgnoreFailingAPIService func(schema.GroupVersion) bool
 
 	ScopeToFallbackAllowedNamespaces bool
-
-	ScopeToUsedGVKs bool
 }
 
 func (s *ResourceTypesFlags) Set(cmd *cobra.Command) {
@@ -23,8 +21,6 @@ func (s *ResourceTypesFlags) Set(cmd *cobra.Command) {
 
 	cmd.Flags().BoolVar(&s.ScopeToFallbackAllowedNamespaces, "dangerous-scope-to-fallback-allowed-namespaces",
 		false, "Scope resource searching to fallback allowed namespaces")
-
-	cmd.Flags().BoolVar(&s.ScopeToUsedGVKs, "dangerous-scope-to-used-gvks", false, "Scope resource searching to group versions used in the app")
 }
 
 func (s *ResourceTypesFlags) FailingAPIServicePolicy() *FailingAPIServicesPolicy {
