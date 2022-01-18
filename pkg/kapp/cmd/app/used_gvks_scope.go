@@ -12,7 +12,7 @@ type UsedGVKsScope struct {
 	newResources []ctlres.Resource
 }
 
-func NewUsedGVsScope(newResources []ctlres.Resource) *UsedGVKsScope {
+func NewUsedGVKsScope(newResources []ctlres.Resource) *UsedGVKsScope {
 	return &UsedGVKsScope{newResources}
 }
 

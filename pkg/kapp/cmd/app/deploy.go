@@ -134,12 +134,9 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	var usedGVKs []schema.GroupVersionKind
-	if o.ResourceTypesFlags.ScopeToUsedGVKs {
-		usedGVKs, err = app.UpdateUsedGVKs(NewUsedGVsScope(newResources).GVKs())
-		if err != nil {
-			return err
-		}
+	usedGVKs, err := app.UpdateUsedGVKs(NewUsedGVKsScope(newResources).GVKs(), true)
+	if err != nil {
+		return err
 	}
 
 	existingResources, existingPodRs, err := o.existingResources(
@@ -183,6 +180,12 @@ func (o *DeployOptions) Run() error {
 	}
 
 	err = app.UpdateUsedGVs(failingAPIServicesPolicy.GVs(newResources, existingResources))
+	if err != nil {
+		return err
+	}
+
+	// Cache possibly untracked GVKs in existing resources (handles older apps)
+	_, err = app.UpdateUsedGVKs(NewUsedGVKsScope(append(newResources, existingResources...)).GVKs(), false)
 	if err != nil {
 		return err
 	}
