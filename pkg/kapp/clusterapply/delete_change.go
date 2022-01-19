@@ -8,10 +8,11 @@ import (
 	"fmt"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/types"
+
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -56,12 +57,6 @@ func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error)
 		return ctlresm.DoneApplyState{Done: true, Successful: true, Message: "Resource orphaned"}, nil, nil
 	}
 
-	if res.IsDeleting() && len(res.Finalizers()) > 0 {
-		return ctlresm.DoneApplyState{Done: false, Message: "waiting on finalizers being removed"},
-			[]string{uiWaitMsgPrefix + fmt.Sprintf("Waiting on finalizers: %s",
-				strings.Join(res.Finalizers(), ","))}, nil
-	}
-
 	// it should not matter if change is ignored or not
 	// because it should be deleted eventually anyway (thru GC)
 	// We should check for the UID check because of the following bug:
@@ -71,7 +66,7 @@ func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error)
 		return ctlresm.DoneApplyState{}, nil, err
 	}
 
-	return ctlresm.DoneApplyState{Done: !exists, Successful: true}, nil, nil
+	return ctlresm.DoneApplyState{Done: !exists, Successful: true}, c.buildDescMsg(res, !exists), nil
 }
 
 type DeletePlainStrategy struct {
@@ -115,4 +110,12 @@ func (c DeleteOrphanStrategy) Apply() error {
 
 	_, err = c.d.identifiedResources.Patch(c.res, types.JSONPatchType, patchJSON)
 	return err
+}
+
+func (c DeleteChange) buildDescMsg(res ctlres.Resource, doneApplying bool) []string {
+	if !doneApplying && len(res.Finalizers()) > 0 {
+		return []string{uiWaitMsgPrefix + fmt.Sprintf("Waiting on finalizers: %s",
+			strings.Join(res.Finalizers(), ","))}
+	}
+	return []string{}
 }
