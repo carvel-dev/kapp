@@ -56,12 +56,6 @@ func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error)
 		return ctlresm.DoneApplyState{Done: true, Successful: true, Message: "Resource orphaned"}, nil, nil
 	}
 
-	if res.IsDeleting() && len(res.Finalizers()) > 0 {
-		return ctlresm.DoneApplyState{Done: false, Message: "waiting on finalizers being removed"},
-			[]string{uiWaitMsgPrefix + fmt.Sprintf("Waiting on finalizers: %s",
-				strings.Join(res.Finalizers(), ","))}, nil
-	}
-
 	// it should not matter if change is ignored or not
 	// because it should be deleted eventually anyway (thru GC)
 	// We should check for the UID check because of the following bug:
