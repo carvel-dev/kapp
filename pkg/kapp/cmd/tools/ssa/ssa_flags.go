@@ -15,7 +15,7 @@ type SSAFlags struct {
 }
 
 func (s *SSAFlags) Set(cmd *cobra.Command) {
-	cmd.Flags().BoolVar(&s.SSAEnable, "ssa-enable", false, "Use server side apply")
+	cmd.Flags().BoolVar(&s.SSAEnable, "ssa", false, "Use server side apply")
 	cmd.Flags().StringVar(&s.FieldManagerName, "ssa-field-manager", "kapp-server-side-apply", "Name of the manager used to track field ownership")
 	cmd.Flags().BoolVar(&s.SSAForceConflict, "ssa-force-conflicts", false, "If true, server-side apply will force the changes against conflicts.")
 }

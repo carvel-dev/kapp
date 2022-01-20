@@ -126,5 +126,4 @@ spec:
 	require.NoError(t, err)
 
 	require.Equal(t, expectedObj, inClusterObj)
-
 }

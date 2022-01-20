@@ -106,7 +106,6 @@ func (k Kapp) RunEmbedded(args []string, opts RunOpts) (string, error) {
 		args = enableSSA(args)
 	}
 	var stdoutBuf bytes.Buffer
-	//var stdout io.Writer = bufio.NewWriter(&stdoutBuf)
 	var stdout io.Writer = &stdoutBuf
 
 	if opts.StdoutWriter != nil {
@@ -152,8 +151,8 @@ func (k Kapp) RunEmbedded(args []string, opts RunOpts) (string, error) {
 }
 
 func enableSSA(args []string) []string {
-	args = replaceArg(args, "deploy", "deploy", "--ssa-enable")
-	args = replaceArg(args, "diff", "diff", "--ssa-enable")
+	args = replaceArg(args, "deploy", "deploy", "--ssa")
+	args = replaceArg(args, "diff", "diff", "--ssa")
 	return args
 }
 

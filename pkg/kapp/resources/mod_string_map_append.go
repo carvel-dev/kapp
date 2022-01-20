@@ -38,7 +38,10 @@ func (t StringMapAppendMod) AsPatchBytes() []byte {
 		kvs[k] = v
 	}
 	unstructured.SetNestedField(obj, kvs, t.Path.AsStrings()...)
-	b, _ := json.Marshal(obj)
+	b, err := json.Marshal(obj)
+	if err != nil {
+		panic(fmt.Sprintf("Internal inconsistency: %s", err))
+	}
 	return b
 }
 

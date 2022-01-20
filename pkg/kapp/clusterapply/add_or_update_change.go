@@ -228,7 +228,7 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 		return fmt.Errorf("Recording last applied resource: %s", err)
 	}
 
-	_, err = c.identifiedResources.Patch(savedRes, types.MergePatchType, recordHistoryPatch, ctlres.PatchOpts{DryRun: false})
+	_, err = c.identifiedResources.Patch(savedRes, types.MergePatchType, recordHistoryPatch, ctlres.PatchOpts{})
 	return err
 }
 
@@ -256,7 +256,7 @@ func (c AddPlainStrategy) Apply() error {
 	{ "op": "test", "path": "/metadata/managedFields/0/manager", "value": "`+c.aou.opts.FieldManagerName+`" },
 	{ "op": "replace", "path": "/metadata/managedFields/0/operation", "value": "Apply" }
 ]
-`), ctlres.PatchOpts{DryRun: false})
+`), ctlres.PatchOpts{})
 		if err != nil {
 			// TODO: potentially patch can fail if '"op": "test"' fails, which can happen if another
 			// controller changes managedFields. We
@@ -286,7 +286,7 @@ func (c AddOrFallbackOnUpdateStrategy) Apply() (err error) {
 		}
 
 		// Apply patch is like upsert, combining create + update, no need to fallback on error
-		createdRes, err = c.aou.identifiedResources.Patch(c.newRes, types.ApplyPatchType, resBytes, ctlres.PatchOpts{DryRun: false})
+		createdRes, err = c.aou.identifiedResources.Patch(c.newRes, types.ApplyPatchType, resBytes, ctlres.PatchOpts{})
 		if err != nil {
 			return err
 		}
@@ -316,8 +316,11 @@ func (c UpdatePlainStrategy) Apply() error {
 
 	if c.aou.opts.ServerSideApply {
 		updatedRes, err = ctlres.WithIdentityAnnotation(c.newRes, func(r ctlres.Resource) (ctlres.Resource, error) {
-			resBytes, _ := r.AsYAMLBytes()
-			return c.aou.identifiedResources.Patch(r, types.ApplyPatchType, resBytes, ctlres.PatchOpts{DryRun: false})
+			resBytes, err := r.AsYAMLBytes()
+			if err != nil {
+				return nil, err
+			}
+			return c.aou.identifiedResources.Patch(r, types.ApplyPatchType, resBytes, ctlres.PatchOpts{})
 		})
 	} else {
 		updatedRes, err = c.aou.identifiedResources.Update(c.newRes)
@@ -355,7 +358,7 @@ func (c UpdateOrFallbackOnReplaceStrategy) Apply() error {
 	if c.aou.opts.ServerSideApply {
 		updatedRes, err = ctlres.WithIdentityAnnotation(c.newRes, func(r ctlres.Resource) (ctlres.Resource, error) {
 			resBytes, _ := r.AsYAMLBytes()
-			return c.aou.identifiedResources.Patch(r, types.ApplyPatchType, resBytes, ctlres.PatchOpts{DryRun: false})
+			return c.aou.identifiedResources.Patch(r, types.ApplyPatchType, resBytes, ctlres.PatchOpts{})
 		})
 	} else {
 		updatedRes, err = c.aou.identifiedResources.Update(c.newRes)

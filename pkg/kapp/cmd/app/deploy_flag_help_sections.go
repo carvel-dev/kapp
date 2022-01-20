@@ -18,7 +18,7 @@ var (
 		PrefixMatch: "diff",
 	}
 	SSAFlagGroup = cobrautil.FlagHelpSection{
-		Title:       "Server side apply Flags:",
+		Title:       "Server Side Apply Flags:",
 		PrefixMatch: "ssa",
 	}
 	ApplyFlagGroup = cobrautil.FlagHelpSection{
