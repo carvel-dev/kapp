@@ -16,7 +16,6 @@ type FactorySupportObjs struct {
 	CoreClient          kubernetes.Interface
 	ResourceTypes       *ctlres.ResourceTypesImpl
 	IdentifiedResources ctlres.IdentifiedResources
-	Resources           ctlres.Resources
 	Apps                ctlapp.Apps
 }
 
@@ -63,7 +62,6 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 		CoreClient:          coreClient,
 		ResourceTypes:       resTypes,
 		IdentifiedResources: identifiedResources,
-		Resources:           resources,
 		Apps:                ctlapp.NewApps(nsFlags.Name, coreClient, identifiedResources, logger),
 	}
 
