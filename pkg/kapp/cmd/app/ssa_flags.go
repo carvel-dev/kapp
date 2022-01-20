@@ -8,7 +8,7 @@ import (
 )
 
 func AdjustApplyFlags(ssa ssa.SSAFlags, af *ApplyFlags) {
-	af.ServerSideApply = ssa.SSAEnable
-	af.ServerSideForceConflict = ssa.SSAForceConflict
+	af.ServerSideApply = ssa.Enabled
+	af.ServerSideForceConflict = ssa.ForceConflict
 	af.FieldManagerName = ssa.FieldManagerName
 }

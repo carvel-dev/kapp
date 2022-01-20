@@ -326,9 +326,16 @@ func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data
 	}
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
+		var force *bool = nil
+		// force flag should only be present on ApplyPatchType requests
+		if patchType == types.ApplyPatchType && c.opts.SSAFlags.Enabled {
+			var t = true
+			force = &t
+		}
+
 		patchedUn, err = resClient.Patch(context.TODO(), resource.Name(), patchType, data, metav1.PatchOptions{
 			FieldManager: c.opts.SSAFlags.FieldManagerName,
-			Force:        c.opts.SSAFlags.ForceParamValue(patchType),
+			Force:        force,
 			DryRun:       dryRunOpt,
 		})
 		return err

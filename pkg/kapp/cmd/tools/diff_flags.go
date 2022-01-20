@@ -50,7 +50,7 @@ func AdjustDiffFlags(ssa ssa.SSAFlags, df *DiffFlags, diffPrefix string, cmd *co
 	if len(diffPrefix) > 0 {
 		diffPrefix = diffPrefix + "-"
 	}
-	if ssa.SSAEnable {
+	if ssa.Enabled {
 		alaFlagName := diffPrefix + "against-last-applied"
 		if cmd.Flag(alaFlagName).Changed {
 			return fmt.Errorf("--ssa-enable conflicts with --%s", alaFlagName)
