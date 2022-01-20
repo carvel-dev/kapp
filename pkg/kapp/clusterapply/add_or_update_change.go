@@ -324,11 +324,11 @@ func (c UpdatePlainStrategy) Apply() error {
 		})
 	} else {
 		updatedRes, err = c.aou.identifiedResources.Update(c.newRes)
-	}
-	if err != nil {
 		if errors.IsConflict(err) {
 			return c.aou.tryToResolveUpdateConflict(err, func(err error) error { return err })
 		}
+	}
+	if err != nil {
 		return err
 	}
 
