@@ -5,7 +5,6 @@ package appgroup
 
 import (
 	"fmt"
-	"github.com/k14s/kapp/pkg/kapp/cmd/tools/ssa"
 	"io/ioutil"
 	"math"
 	"path/filepath"
@@ -35,7 +34,7 @@ type DeployAppFlags struct {
 	DeleteApplyFlags    cmdapp.ApplyFlags
 	DeployFlags         cmdapp.DeployFlags
 	LabelFlags          cmdapp.LabelFlags
-	SSAFlags            ssa.SSAFlags
+	SSAFlags            cmdtools.SSAFlags
 }
 
 func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeployOptions {

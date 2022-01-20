@@ -6,7 +6,6 @@ package resources
 import (
 	"context"
 	"fmt"
-	"github.com/k14s/kapp/pkg/kapp/cmd/tools/ssa"
 	"regexp"
 	"strings"
 	"sync"
@@ -70,6 +69,12 @@ type ResourcesImpl struct {
 	logger logger.Logger
 }
 
+type SSAOpts struct {
+	Enabled          bool
+	ForceConflict    bool
+	FieldManagerName string
+}
+
 type ResourcesImplOpts struct {
 	FallbackAllowedNamespaces        []string
 	ScopeToFallbackAllowedNamespaces bool
@@ -77,7 +82,7 @@ type ResourcesImplOpts struct {
 	//ResourcesImpl is instantiated in the Factory even for commands not making CREATE/UPDATE/PATCH calls
 	//and these commands don't have SSA CLI flags. Use pointer type here to force panic
 	//in case such write operation sneak into these commands in the future
-	SSAFlags *ssa.SSAFlags
+	SSA *SSAOpts
 }
 
 func NewResourcesImpl(resourceTypes ResourceTypes, coreClient kubernetes.Interface,
@@ -267,7 +272,7 @@ func (c *ResourcesImpl) Create(resource Resource) (Resource, error) {
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
 		createdUn, err = resClient.Create(context.TODO(), resource.unstructuredPtr(), metav1.CreateOptions{
-			FieldManager: c.opts.SSAFlags.FieldManagerName,
+			FieldManager: c.opts.SSA.FieldManagerName,
 		})
 		return err
 	})
@@ -296,7 +301,7 @@ func (c *ResourcesImpl) Update(resource Resource) (Resource, error) {
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
 		updatedUn, err = resClient.Update(context.TODO(), resource.unstructuredPtr(), metav1.UpdateOptions{
-			FieldManager: c.opts.SSAFlags.FieldManagerName,
+			FieldManager: c.opts.SSA.FieldManagerName,
 		})
 		return err
 	})
@@ -328,13 +333,13 @@ func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
 		var force *bool = nil
 		// force flag should only be present on ApplyPatchType requests
-		if patchType == types.ApplyPatchType && c.opts.SSAFlags.Enabled {
+		if patchType == types.ApplyPatchType && c.opts.SSA.Enabled {
 			var t = true
 			force = &t
 		}
 
 		patchedUn, err = resClient.Patch(context.TODO(), resource.Name(), patchType, data, metav1.PatchOptions{
-			FieldManager: c.opts.SSAFlags.FieldManagerName,
+			FieldManager: c.opts.SSA.FieldManagerName,
 			Force:        force,
 			DryRun:       dryRunOpt,
 		})

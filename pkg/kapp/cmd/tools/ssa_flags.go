@@ -1,11 +1,6 @@
-// Copyright 2020 VMware, Inc.
-// SPDX-License-Identifier: Apache-2.0
+package tools
 
-package ssa
-
-import (
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
 type SSAFlags struct {
 	Enabled          bool

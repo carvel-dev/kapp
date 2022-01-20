@@ -6,7 +6,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/k14s/kapp/pkg/kapp/cmd/tools/ssa"
 	"sort"
 	"strings"
 
@@ -42,7 +41,7 @@ type DeployOptions struct {
 	DeployFlags         DeployFlags
 	ResourceTypesFlags  ResourceTypesFlags
 	LabelFlags          LabelFlags
-	SSAFlags            ssa.SSAFlags
+	SSAFlags            cmdtools.SSAFlags
 }
 
 func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeployOptions {

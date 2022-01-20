@@ -8,7 +8,6 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	ctlcap "github.com/k14s/kapp/pkg/kapp/clusterapply"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	"github.com/k14s/kapp/pkg/kapp/cmd/tools/ssa"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
@@ -21,7 +20,7 @@ type DiffOptions struct {
 	FileFlags  FileFlags
 	FileFlags2 FileFlags2
 	DiffFlags  DiffFlags
-	SSAFlags   ssa.SSAFlags
+	SSAFlags   SSAFlags
 }
 
 func NewDiffOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *DiffOptions {
