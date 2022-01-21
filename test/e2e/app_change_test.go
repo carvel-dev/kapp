@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -16,7 +17,7 @@ func TestAppChange(t *testing.T) {
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
 
-	yaml1 := `
+	yaml := `
 ---
 apiVersion: v1
 kind: Service
@@ -28,22 +29,7 @@ spec:
     targetPort: 6380
   selector:
     app: redis
-    tier: backend
-`
-
-	yaml2 := `
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: redis-primary
-spec:
-  ports:
-  - port: 6380
-    targetPort: 6380
-  selector:
-    app: redis
-    tier: frontend
+    tier: %s
 `
 
 	name := "test-app-change"
@@ -55,11 +41,11 @@ spec:
 	defer cleanUp()
 
 	logger.Section("deploy app", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(fmt.Sprintf(yaml, "backend"))})
 	})
 
 	logger.Section("deploy with changes", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(fmt.Sprintf(yaml, "frontend"))})
 	})
 
 	logger.Section("app change list", func() {

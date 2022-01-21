@@ -9,12 +9,11 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
-	"github.com/spf13/cobra"
-
 	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	"github.com/k14s/kapp/pkg/kapp/logger"
+	"github.com/spf13/cobra"
 )
 
 type ListOptions struct {
@@ -111,15 +110,11 @@ func (t AppChangesTable) Print(ui ui.UI) {
 		}
 	}
 
-	isFilterApplied := !t.TimeFlags.BeforeTime.IsZero() || !t.TimeFlags.AfterTime.IsZero()
-
 	for _, change := range t.Changes {
 
-		if isFilterApplied {
-			if (!t.TimeFlags.BeforeTime.IsZero() && !change.Meta().StartedAt.Before(t.TimeFlags.BeforeTime)) ||
-				(!t.TimeFlags.AfterTime.IsZero() && !change.Meta().StartedAt.After(t.TimeFlags.AfterTime)) {
-				continue
-			}
+		if (!t.TimeFlags.BeforeTime.IsZero() && !change.Meta().StartedAt.Before(t.TimeFlags.BeforeTime)) ||
+			(!t.TimeFlags.AfterTime.IsZero() && !change.Meta().StartedAt.After(t.TimeFlags.AfterTime)) {
+			continue
 		}
 
 		table.Rows = append(table.Rows, []uitable.Value{
