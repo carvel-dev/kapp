@@ -11,6 +11,7 @@ import (
 	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	"github.com/k14s/kapp/pkg/kapp/logger"
+	"github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
 )
 
@@ -73,7 +74,7 @@ func (o *InspectOptions) Run() error {
 		return err
 	}
 
-	resources, err := supportObjs.IdentifiedResources.List(labelSelector, nil)
+	resources, err := supportObjs.IdentifiedResources.List(labelSelector, nil, resources.IdentifiedResourcesListOpts{UseCached: true})
 	if err != nil {
 		return err
 	}

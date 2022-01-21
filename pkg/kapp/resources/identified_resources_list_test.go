@@ -21,7 +21,7 @@ func TestIdentifiedResourcesListReturnsLabeledResources(t *testing.T) {
 	identifiedResources := ctlres.NewIdentifiedResources(nil, fakeResourceTypes, fakeResources, []string{}, logger.NewUILogger(ui.NewNoopUI()))
 	sel := labels.Set(map[string]string{"some-label": "value"}).AsSelector()
 
-	resources, err := identifiedResources.List(sel, nil)
+	resources, err := identifiedResources.List(sel, nil, ctlres.IdentifiedResourcesListOpts{UseCached: true})
 	require.Nil(t, err)
 	require.NotNil(t, resources)
 
@@ -69,7 +69,7 @@ func (r *FakeResources) Create(ctlres.Resource) (ctlres.Resource, error) { retur
 
 type FakeResourceTypes struct{}
 
-func (r *FakeResourceTypes) All() ([]ctlres.ResourceType, error) { return nil, nil }
+func (r *FakeResourceTypes) All(useCached bool) ([]ctlres.ResourceType, error) { return nil, nil }
 func (r *FakeResourceTypes) Find(ctlres.Resource) (ctlres.ResourceType, error) {
 	return ctlres.ResourceType{}, nil
 }

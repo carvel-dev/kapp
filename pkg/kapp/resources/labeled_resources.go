@@ -70,13 +70,13 @@ func (a *LabeledResources) Prepare(resources []Resource, olmFunc OwnershipLabelM
 
 func (a *LabeledResources) GetAssociated(resource Resource, resRefs []ResourceRef) ([]Resource, error) {
 	defer a.logger.DebugFunc("GetAssociated").Finish()
-	return a.identifiedResources.List(NewAssociationLabel(resource).AsSelector(), resRefs)
+	return a.identifiedResources.List(NewAssociationLabel(resource).AsSelector(), resRefs, IdentifiedResourcesListOpts{UseCached: true})
 }
 
-func (a *LabeledResources) All() ([]Resource, error) {
+func (a *LabeledResources) All(listOpts IdentifiedResourcesListOpts) ([]Resource, error) {
 	defer a.logger.DebugFunc("All").Finish()
 
-	resources, err := a.identifiedResources.List(a.labelSelector, nil)
+	resources, err := a.identifiedResources.List(a.labelSelector, nil, listOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -91,6 +91,8 @@ type AllAndMatchingOpts struct {
 
 	DisallowedResourcesByLabelKeys []string
 	LabelErrorResolutionFunc       func(string, string) string
+
+	IdentifiedResourcesListOpts IdentifiedResourcesListOpts
 }
 
 // AllAndMatching returns set of all labeled resources
@@ -100,7 +102,7 @@ type AllAndMatchingOpts struct {
 func (a *LabeledResources) AllAndMatching(newResources []Resource, opts AllAndMatchingOpts) ([]Resource, error) {
 	defer a.logger.DebugFunc("AllAndMatching").Finish()
 
-	resources, err := a.All()
+	resources, err := a.All(opts.IdentifiedResourcesListOpts)
 	if err != nil {
 		return nil, err
 	}

@@ -49,7 +49,7 @@ func (a *LabeledApp) Delete() error {
 		return err
 	}
 
-	rs, err := a.identifiedResources.List(labelSelector, nil)
+	rs, err := a.identifiedResources.List(labelSelector, nil, ctlres.IdentifiedResourcesListOpts{UseCached: false})
 	if err != nil {
 		return fmt.Errorf("Relisting app resources: %s", err)
 	}

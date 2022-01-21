@@ -156,7 +156,7 @@ func (o *DeleteOptions) existingResources(app ctlapp.App,
 		return nil, false, err
 	}
 
-	existingResources, err := supportObjs.IdentifiedResources.List(labelSelector, nil)
+	existingResources, err := supportObjs.IdentifiedResources.List(labelSelector, nil, ctlres.IdentifiedResourcesListOpts{UseCached: true})
 	if err != nil {
 		return nil, false, err
 	}
