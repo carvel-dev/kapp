@@ -74,7 +74,7 @@ func (o *InspectOptions) Run() error {
 		return err
 	}
 
-	resources, err := supportObjs.IdentifiedResources.List(labelSelector, nil, resources.IdentifiedResourcesListOpts{UseCached: true})
+	resources, err := supportObjs.IdentifiedResources.List(labelSelector, nil, resources.IdentifiedResourcesListOpts{})
 	if err != nil {
 		return err
 	}

@@ -142,7 +142,7 @@ func (o *ListLabelsOptions) listResources() ([]ctlres.Resource, error) {
 		return nil, err
 	}
 
-	return ctlres.NewLabeledResources(labelSelector, identifiedResources, o.logger).All(ctlres.IdentifiedResourcesListOpts{UseCached: true})
+	return ctlres.NewLabeledResources(labelSelector, identifiedResources, o.logger).All(ctlres.IdentifiedResourcesListOpts{})
 }
 
 type resourceAccessor struct {

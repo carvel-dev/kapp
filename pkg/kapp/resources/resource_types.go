@@ -16,7 +16,7 @@ import (
 )
 
 type ResourceTypes interface {
-	All(useCached bool) ([]ResourceType, error)
+	All(ignoreCachedResTypes bool) ([]ResourceType, error)
 	Find(Resource) (ResourceType, error)
 	CanIgnoreFailingGroupVersion(schema.GroupVersion) bool
 }
@@ -45,11 +45,11 @@ func NewResourceTypesImpl(coreClient kubernetes.Interface, opts ResourceTypesImp
 	return &ResourceTypesImpl{coreClient: coreClient, opts: opts}
 }
 
-func (g *ResourceTypesImpl) All(useCached bool) ([]ResourceType, error) {
-	if useCached {
-		return g.memoizedAll()
+func (g *ResourceTypesImpl) All(ignoreCachedResTypes bool) ([]ResourceType, error) {
+	if ignoreCachedResTypes {
+		return g.all()
 	}
-	return g.all()
+	return g.memoizedAll()
 }
 
 func (g *ResourceTypesImpl) all() ([]ResourceType, error) {

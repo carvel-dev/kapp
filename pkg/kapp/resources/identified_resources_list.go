@@ -12,13 +12,13 @@ import (
 )
 
 type IdentifiedResourcesListOpts struct {
-	UseCached bool
+	IgnoreCachedResTypes bool
 }
 
 func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []ResourceRef, opts IdentifiedResourcesListOpts) ([]Resource, error) {
 	defer r.logger.DebugFunc("List").Finish()
 
-	resTypes, err := r.resourceTypes.All(opts.UseCached)
+	resTypes, err := r.resourceTypes.All(opts.IgnoreCachedResTypes)
 	if err != nil {
 		return nil, err
 	}

@@ -70,7 +70,7 @@ func (a *LabeledResources) Prepare(resources []Resource, olmFunc OwnershipLabelM
 
 func (a *LabeledResources) GetAssociated(resource Resource, resRefs []ResourceRef) ([]Resource, error) {
 	defer a.logger.DebugFunc("GetAssociated").Finish()
-	return a.identifiedResources.List(NewAssociationLabel(resource).AsSelector(), resRefs, IdentifiedResourcesListOpts{UseCached: true})
+	return a.identifiedResources.List(NewAssociationLabel(resource).AsSelector(), resRefs, IdentifiedResourcesListOpts{})
 }
 
 func (a *LabeledResources) All(listOpts IdentifiedResourcesListOpts) ([]Resource, error) {
