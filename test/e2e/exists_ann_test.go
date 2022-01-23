@@ -21,31 +21,30 @@ func TestExistsAnn(t *testing.T) {
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: kapp-ns
+  name: external
+  annotations:
+    kapp.k14s.io/exists: ""
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: external
-  namespace: kapp-ns
-  annotations:
-    kapp.k14s.io/exists: ""
+  name: kapp-config
+  namespace: external
 `
 
 	name := "app"
 	externalResourceName := "external"
-	externalResourceNamespace := "kapp-ns"
-	externalResourceKind := "configmap"
+	externalResourceKind := "namespace"
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
-		RemoveClusterResource(t, externalResourceKind, externalResourceName, externalResourceNamespace, kubectl)
+		RemoveClusterResource(t, externalResourceKind, externalResourceName, "", kubectl)
 	}
 	cleanUp()
 	defer cleanUp()
 
 	go func() {
 		time.Sleep(2 * time.Second)
-		NewClusterResource(t, externalResourceKind, externalResourceName, externalResourceNamespace, kubectl)
+		NewClusterResource(t, externalResourceKind, externalResourceName, "", kubectl)
 	}()
 
 	logger.Section("deploying app with exists annotation for a non existing resource", func() {
@@ -55,23 +54,23 @@ metadata:
 		expectedOutput := `
 Changes
 
-Namespace  Name      Kind       Conds.  Age  Op      Op st.  Wait to    Rs  Ri  $
-(cluster)  kapp-ns   Namespace  -       -    create  -       reconcile  -   -  $
-kapp-ns    external  ConfigMap  -       -    exists  -       reconcile  -   -  $
+Namespace  Name         Kind       Conds.  Age  Op      Op st.  Wait to    Rs  Ri  $
+(cluster)  external     Namespace  -       -    exists  -       reconcile  -   -  $
+external   kapp-config  ConfigMap  -       -    create  -       reconcile  -   -  $
 
 Op:      1 create, 0 delete, 0 update, 0 noop, 1 exists
 Wait to: 2 reconcile, 0 delete, 0 noop
 
 <replaced>: ---- applying 1 changes [0/2 done] ----
-<replaced>: create namespace/kapp-ns (v1) cluster
-<replaced>: ---- waiting on 1 changes [0/2 done] ----
-<replaced>: ok: reconcile namespace/kapp-ns (v1) cluster
-<replaced>: ---- applying 1 changes [1/2 done] ----
-<replaced>: exists configmap/external (v1) namespace: kapp-ns
+<replaced>: exists namespace/external (v1) cluster
 <replaced>:  ^ Retryable error: External resource doesn't exists
-<replaced>: exists configmap/external (v1) namespace: kapp-ns
+<replaced>: exists namespace/external (v1) cluster
+<replaced>: ---- waiting on 1 changes [0/2 done] ----
+<replaced>: ok: reconcile namespace/external (v1) cluster
+<replaced>: ---- applying 1 changes [1/2 done] ----
+<replaced>: create configmap/kapp-config (v1) namespace: external
 <replaced>: ---- waiting on 1 changes [1/2 done] ----
-<replaced>: ok: reconcile configmap/external (v1) namespace: kapp-ns
+<replaced>: ok: reconcile configmap/kapp-config (v1) namespace: external
 <replaced>: ---- applying complete [2/2 done] ----
 <replaced>: ---- waiting complete [2/2 done] ----
 
@@ -109,8 +108,8 @@ Succeeded`
 		expectedOutput := `
 Resources in app 'app'
 
-Namespace  Name     Kind       Owner  Conds.  Rs  Ri  Age  $
-(cluster)  kapp-ns  Namespace  kapp   -       ok  -   2s  $
+Namespace  Name         Kind       Owner  Conds.  Rs  Ri  Age  $
+external   kapp-config  ConfigMap  kapp   -       ok  -   <replaced>  $
 
 Rs: Reconcile state
 Ri: Reconcile information

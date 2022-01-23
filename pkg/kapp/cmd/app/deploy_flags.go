@@ -34,7 +34,7 @@ func (s *DeployFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&s.IntoNamespace, "into-ns", "", "Place resources into namespace")
 	cmd.Flags().StringSliceVar(&s.MapNamespaces, "map-ns", nil, "Map resources from one namespace into another (could be specified multiple times)")
 
-	cmd.Flags().BoolVarP(&s.Patch, "patch", "p", false, "Add or update provided resources")
+	cmd.Flags().BoolVarP(&s.Patch, "patch", "p", false, "Add or update existing resources only, never delete any")
 	cmd.Flags().BoolVar(&s.AllowEmpty, "dangerous-allow-empty-list-of-resources", false, "Allow to apply empty set of resources (same as running kapp delete)")
 
 	cmd.Flags().BoolVar(&s.ExistingNonLabeledResourcesCheck, "existing-non-labeled-resources-check",
