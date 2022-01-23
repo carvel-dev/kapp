@@ -44,11 +44,12 @@ func NewPodContainerLog(
 }
 
 func (l PodContainerLog) Tail(ui ui.UI, cancelCh chan struct{}) error {
+	linePrefix := ""
+	if len(l.opts.LinePrefix) > 0 {
+		linePrefix = l.opts.LinePrefix + " | "
+	}
+
 	for {
-		linePrefix := ""
-		if len(l.opts.LinePrefix) > 0 {
-			linePrefix = l.opts.LinePrefix + " | "
-		}
 		err := l.StartTail(ui, cancelCh)
 
 		if err == io.EOF {
@@ -99,9 +100,6 @@ func (l PodContainerLog) StartTail(ui ui.UI, cancelCh chan struct{}) error {
 	for {
 		line, err := reader.ReadBytes('\n')
 		if err != nil {
-			if err == io.EOF {
-				return err
-			}
 			typedCanceled, ok := streamCanceled.Load().(bool)
 			if ok && typedCanceled {
 				return nil // ignore error if stream was canceled
@@ -165,7 +163,6 @@ func (l PodContainerLog) readyToGetLogs() bool {
 	}
 	containerStatuses := pod.Status.ContainerStatuses
 	for _, containerStatus := range containerStatuses {
-		//We should focus only on the status of this particular container.
 		if l.container != containerStatus.Name {
 			continue
 		}
@@ -173,6 +170,6 @@ func (l PodContainerLog) readyToGetLogs() bool {
 			return true
 		}
 	}
-	return false
 
+	return false
 }
