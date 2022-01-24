@@ -363,13 +363,7 @@ func (a *RecordedApp) LastChange() (Change, error) {
 }
 
 func (a *RecordedApp) BeginChange(meta ChangeMeta) (Change, error) {
-	name := a.name
-
-	if strings.ToLower(os.Getenv("KAPP_MIGRATE_CONFIGMAP_NAMES")) == "true" {
-		name = a.fqName
-	}
-
-	change, err := NewRecordedAppChanges(a.nsName, name, a.coreClient).Begin(meta)
+	change, err := NewRecordedAppChanges(a.nsName, a.name, a.coreClient).Begin(meta)
 	if err != nil {
 		return nil, err
 	}
