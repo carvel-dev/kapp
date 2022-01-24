@@ -99,29 +99,30 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 		return err
 	}
 
-	_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, metav1.CreateOptions{})
+	existingConfigMap, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 	if err != nil {
-		if errors.IsAlreadyExists(err) {
-			existingConfigMap, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
+		if errors.IsNotFound(err) {
+			newConfigMap, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, metav1.CreateOptions{})
 			if err != nil {
-				return fmt.Errorf("Getting app: %s", err)
+				return fmt.Errorf("Creating app: %s", err)
 			}
-
-			err = a.mergeAppUpdates(existingConfigMap, labels)
-			if err != nil {
-				return err
-			}
-
-			_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), existingConfigMap, metav1.UpdateOptions{})
-			if err != nil {
-				return fmt.Errorf("Updating app: %s", err)
-			}
-
-			return nil
+			existingConfigMap = newConfigMap
+		} else {
+			return fmt.Errorf("Getting app: %s", err)
 		}
-
-		return fmt.Errorf("Creating app: %s", err)
 	}
+	
+	err = a.mergeAppUpdates(existingConfigMap, labels)
+	if err != nil {
+		return err
+	}
+
+	updatedConfigMap, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), existingConfigMap, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("Updating app: %s", err)
+	}
+
+	a.setMeta(*updatedConfigMap)
 
 	return nil
 }
