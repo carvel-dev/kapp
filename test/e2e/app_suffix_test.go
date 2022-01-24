@@ -51,55 +51,7 @@ data:
   key: value
 `
 
-func TestAppSuffix_AppExists_OldBehavior(t *testing.T) {
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
-
-	name := "test-app-suffix-app-exists"
-	newName := "test-app-suffix-app-exists-new"
-	cleanUp := func() {
-		kapp.Run([]string{"delete", "-a", name})
-		kapp.Run([]string{"delete", "-a", newName})
-	}
-
-	cleanUp()
-	defer cleanUp()
-
-	os.Setenv("USE_OLD_CONFIGMAP_NAME", "True")
-
-	logger.Section("initial deploy", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
-		NewPresentClusterResource("configmap", name, env.Namespace, kubectl)
-		NewMissingClusterResource(t, "configmap", name+app.AppSuffix, env.Namespace, kubectl)
-	})
-
-	logger.Section("deploy with 1 delete, 1 update, 1 create", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
-		NewPresentClusterResource("configmap", name, env.Namespace, kubectl)
-		NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
-	})
-
-	logger.Section("inspect", func() {
-		kapp.Run([]string{"inspect", "-a", name})
-	})
-
-	logger.Section("rename", func() {
-		kapp.Run([]string{"rename", "-a", name, "--new-name", newName})
-		NewPresentClusterResource("configmap", newName, env.Namespace, kubectl)
-	})
-
-	logger.Section("delete", func() {
-		cleanUp()
-		NewMissingClusterResource(t, "configmap", name, env.Namespace, kubectl)
-		NewMissingClusterResource(t, "configmap", newName, env.Namespace, kubectl)
-	})
-
-	os.Unsetenv("USE_OLD_CONFIGMAP_NAME")
-}
-
-func TestAppSuffix_AppExistsWithoutSuffix(t *testing.T) {
+func TestAppSuffix_AppExists_MigrationEnabled(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -110,19 +62,17 @@ func TestAppSuffix_AppExistsWithoutSuffix(t *testing.T) {
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
 	}
-	createExistingApp := func() {
-		os.Setenv("USE_OLD_CONFIGMAP_NAME", "True")
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
-		os.Unsetenv("USE_OLD_CONFIGMAP_NAME")
-	}
 
 	cleanUp()
 	defer cleanUp()
 
 	logger.Section("deploy with 1 delete, 1 update, 1 create", func() {
-		createExistingApp()
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
+		os.Setenv("KAPP_MIGRATE_CONFIGMAP_NAMES", "True")
+		// update and migrate
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
+
 		NewPresentClusterResource("configmap", name+app.AppSuffix, env.Namespace, kubectl)
 		NewMissingClusterResource(t, "configmap", name, env.Namespace, kubectl)
 		NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
@@ -131,7 +81,7 @@ func TestAppSuffix_AppExistsWithoutSuffix(t *testing.T) {
 	})
 
 	logger.Section("inspect", func() {
-		createExistingApp()
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 		kapp.Run([]string{"inspect", "-a", name})
 	})
 
@@ -147,9 +97,11 @@ func TestAppSuffix_AppExistsWithoutSuffix(t *testing.T) {
 		NewMissingClusterResource(t, "configmap", name, env.Namespace, kubectl)
 		NewMissingClusterResource(t, "configmap", newName, env.Namespace, kubectl)
 	})
+
+	os.Unsetenv("KAPP_MIGRATE_CONFIGMAP_NAMES")
 }
 
-func TestAppSuffix_ConfigmapExists(t *testing.T) {
+func TestAppSuffix_ConfigmapExists_MigrationEnabled(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -164,6 +116,8 @@ func TestAppSuffix_ConfigmapExists(t *testing.T) {
 
 	cleanUp()
 	defer cleanUp()
+
+	os.Setenv("KAPP_MIGRATE_CONFIGMAP_NAMES", "True")
 
 	logger.Section("with suffix and not marked as a kapp-app", func() {
 		NewClusterResource(t, "configmap", fqName, env.Namespace, kubectl)
@@ -189,4 +143,6 @@ func TestAppSuffix_ConfigmapExists(t *testing.T) {
 		cleanUp()
 		RemoveClusterResource(t, "configmap", name, env.Namespace, kubectl)
 	})
+
+	os.Unsetenv("KAPP_MIGRATE_CONFIGMAP_NAMES")
 }

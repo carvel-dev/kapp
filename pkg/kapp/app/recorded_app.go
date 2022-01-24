@@ -85,18 +85,17 @@ func (a *RecordedApp) UpdateUsedGVs(gvs []schema.GroupVersion) error {
 func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 	defer a.logger.DebugFunc("CreateOrUpdate").Finish()
 
-	if strings.ToLower(os.Getenv("USE_OLD_CONFIGMAP_NAME")) == "true" {
-		return a.createOrUpdate(a.name, labels)
-	}
-
-	configMap, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
-	if err == nil {
-		if _, ok := configMap.Labels[KappIsAppLabelKey]; ok {
-			return a.migrate(configMap, labels)
+	if strings.ToLower(os.Getenv("KAPP_MIGRATE_CONFIGMAP_NAMES")) == "true" {
+		configMap, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
+		if err == nil {
+			if _, ok := configMap.Labels[KappIsAppLabelKey]; ok {
+				return a.migrate(configMap, labels)
+			}
 		}
+		return a.createOrUpdate(a.fqName, labels)
 	}
 
-	return a.createOrUpdate(a.fqName, labels)
+	return a.createOrUpdate(a.name, labels)
 }
 
 func (a *RecordedApp) createOrUpdate(name string, labels map[string]string) error {
@@ -247,11 +246,11 @@ func (a *RecordedApp) Rename(newName string, newNamespace string) error {
 		return fmt.Errorf("Getting app: %s", err)
 	}
 
-	if strings.ToLower(os.Getenv("USE_OLD_CONFIGMAP_NAME")) == "true" {
-		return a.renameConfigMap(app, newName, newNamespace)
+	if strings.ToLower(os.Getenv("KAPP_MIGRATE_CONFIGMAP_NAMES")) == "true" {
+		return a.renameConfigMap(app, newName+AppSuffix, newNamespace)
 	}
 
-	return a.renameConfigMap(app, newName+AppSuffix, newNamespace)
+	return a.renameConfigMap(app, newName, newNamespace)
 }
 
 func (a *RecordedApp) renameConfigMap(app *v1.ConfigMap, name, ns string) error {
@@ -364,7 +363,13 @@ func (a *RecordedApp) LastChange() (Change, error) {
 }
 
 func (a *RecordedApp) BeginChange(meta ChangeMeta) (Change, error) {
-	change, err := NewRecordedAppChanges(a.nsName, a.fqName, a.coreClient).Begin(meta)
+	name := a.name
+
+	if strings.ToLower(os.Getenv("KAPP_MIGRATE_CONFIGMAP_NAMES")) == "true" {
+		name = a.fqName
+	}
+
+	change, err := NewRecordedAppChanges(a.nsName, name, a.coreClient).Begin(meta)
 	if err != nil {
 		return nil, err
 	}
