@@ -425,42 +425,20 @@ func TestDefaultConfig_PreserveExistingStatus(t *testing.T) {
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
   name: tests.kapp.example
 spec:
   group: kapp.example
   names:
     kind: Test
-    listKind: TestList
     plural: tests
-    singular: test
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        properties:
-          apiVersion:
-            type: string
-          kind:
-            type: string
-          metadata:
-            type: object
-          spec:
-            properties: {}
-            type: object
-          status:
-            properties: {}
-            type: object
-        required:
-        - spec
         type: object
     served: true
     storage: true
-    subresources:
-      status: {}
 status:
   acceptedNames:
     kind: ""
