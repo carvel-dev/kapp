@@ -111,7 +111,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 			return fmt.Errorf("Getting app: %s", err)
 		}
 	}
-	
+
 	err = a.mergeAppUpdates(existingConfigMap, labels)
 	if err != nil {
 		return err
