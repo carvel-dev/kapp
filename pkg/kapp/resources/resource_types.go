@@ -47,6 +47,7 @@ func NewResourceTypesImpl(coreClient kubernetes.Interface, opts ResourceTypesImp
 
 func (g *ResourceTypesImpl) All(ignoreCachedResTypes bool) ([]ResourceType, error) {
 	if ignoreCachedResTypes {
+		// TODO Update cache while doing a fresh fetch
 		return g.all()
 	}
 	return g.memoizedAll()
