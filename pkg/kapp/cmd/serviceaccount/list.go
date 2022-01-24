@@ -9,6 +9,7 @@ import (
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	"github.com/k14s/kapp/pkg/kapp/logger"
+	"github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
 )
 
@@ -49,7 +50,7 @@ func (o *ListOptions) Run() error {
 
 	rbacResources := &RBACResources{}
 
-	resources, err := supportObjs.IdentifiedResources.List(labelSelector, nil)
+	resources, err := supportObjs.IdentifiedResources.List(labelSelector, nil, resources.IdentifiedResourcesListOpts{})
 	if err != nil {
 		return err
 	}

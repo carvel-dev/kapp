@@ -11,10 +11,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []ResourceRef) ([]Resource, error) {
+type IdentifiedResourcesListOpts struct {
+	IgnoreCachedResTypes bool
+}
+
+func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []ResourceRef, opts IdentifiedResourcesListOpts) ([]Resource, error) {
 	defer r.logger.DebugFunc("List").Finish()
 
-	resTypes, err := r.resourceTypes.All()
+	resTypes, err := r.resourceTypes.All(opts.IgnoreCachedResTypes)
 	if err != nil {
 		return nil, err
 	}
