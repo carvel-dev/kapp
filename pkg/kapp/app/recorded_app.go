@@ -100,7 +100,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 	}
 
 	if strings.ToLower(os.Getenv("KAPP_MIGRATE_CONFIGMAP_NAMES")) == "true" {
-		migratedLabel := map[string]string{KappIsConfigmapMigratedLabelKey: ""}
+		migratedLabel := map[string]string{KappIsConfigmapMigratedLabelKey: KappIsConfigmapMigratedLabelKeyValue}
 
 		oldConfigMap, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 		if err == nil {
@@ -252,13 +252,9 @@ func (a *RecordedApp) Rename(newName string, newNamespace string) error {
 		return fmt.Errorf("Getting app: %s", err)
 	}
 
-<<<<<<< HEAD
 	_, isMigrated := app.Labels[KappIsConfigmapMigratedLabelKey]
 	if isMigrated || strings.ToLower(os.Getenv("KAPP_MIGRATE_CONFIGMAP_NAMES")) == "true" {
-=======
-	if strings.ToLower(os.Getenv("KAPP_MIGRATE_CONFIGMAP_NAMES")) == "true" {
->>>>>>> f69ed2cb4ec2dde46492f02e8f08a3123d9e7731
-		app.Labels[KappIsConfigmapMigratedLabelKey] = ""
+		app.Labels[KappIsConfigmapMigratedLabelKey] = KappIsConfigmapMigratedLabelKeyValue
 		return a.renameConfigMap(app, newName+AppSuffix, newNamespace)
 	}
 

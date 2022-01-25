@@ -16,10 +16,11 @@ import (
 )
 
 const (
-	KappIsAppLabelKey               = "kapp.k14s.io/is-app"
-	KappIsConfigmapMigratedLabelKey = "kapp.k14s.io/is-configmap-migrated"
-	kappIsAppLabelValue             = ""
-	AppSuffix                       = ".apps.k14s.io"
+	KappIsAppLabelKey                    = "kapp.k14s.io/is-app"
+	kappIsAppLabelValue                  = ""
+	KappIsConfigmapMigratedLabelKey      = "kapp.k14s.io/is-configmap-migrated"
+	KappIsConfigmapMigratedLabelKeyValue = ""
+	AppSuffix                            = ".apps.k14s.io"
 )
 
 type Apps struct {
