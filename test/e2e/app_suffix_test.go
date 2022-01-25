@@ -87,6 +87,7 @@ func TestAppSuffix_AppExists_MigrationEnabled(t *testing.T) {
 
 	logger.Section("rename", func() {
 		kapp.Run([]string{"rename", "-a", name, "--new-name", newName})
+		NewMissingClusterResource(t, "configmap", name, env.Namespace, kubectl)
 		NewPresentClusterResource("configmap", newName+app.AppSuffix, env.Namespace, kubectl)
 	})
 
@@ -106,11 +107,13 @@ func TestAppSuffix_AppExists_MigrationEnabled(t *testing.T) {
 		NewPresentClusterResource("configmap", existingName, env.Namespace, kubectl)
 
 		os.Setenv("KAPP_MIGRATE_CONFIGMAP_NAMES", "True")
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name + ".apps.k14s.io"}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
-		NewMissingClusterResource(t, "configmap", existingName, env.Namespace, kubectl)
-		NewPresentClusterResource("configmap", existingName+app.AppSuffix, env.Namespace, kubectl)
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", existingName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-		kapp.Run([]string{"delete", "-a", name + app.AppSuffix})
+		NewMissingClusterResource(t, "configmap", existingName, env.Namespace, kubectl)
+		c := NewPresentClusterResource("configmap", existingName+app.AppSuffix, env.Namespace, kubectl)
+		require.Contains(t, c.Labels(), app.KappIsConfigmapMigratedLabelKey)
+
+		kapp.Run([]string{"delete", "-a", existingName})
 	})
 
 	os.Unsetenv("KAPP_MIGRATE_CONFIGMAP_NAMES")
