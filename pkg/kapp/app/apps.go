@@ -16,9 +16,10 @@ import (
 )
 
 const (
-	KappIsAppLabelKey   = "kapp.k14s.io/is-app"
-	kappIsAppLabelValue = ""
-	AppSuffix           = ".apps.k14s.io"
+	KappIsAppLabelKey               = "kapp.k14s.io/is-app"
+	KappIsConfigmapMigratedLabelKey = "kapp.k14s.io/is-configmap-migrated"
+	kappIsAppLabelValue             = ""
+	AppSuffix                       = ".apps.k14s.io"
 )
 
 type Apps struct {
@@ -83,7 +84,13 @@ func (a Apps) list(additionalLabels map[string]string, nsName string) ([]App, er
 	}
 
 	for _, app := range apps.Items {
-		recordedApp := &RecordedApp{strings.TrimSuffix(app.Name, AppSuffix), app.Name, app.Namespace, false, a.coreClient,
+		name := app.Name
+
+		if _, ok := app.Labels[KappIsConfigmapMigratedLabelKey]; ok {
+			name = strings.TrimSuffix(app.Name, AppSuffix)
+		}
+
+		recordedApp := &RecordedApp{name, name + AppSuffix, app.Namespace, false, a.coreClient,
 			a.identifiedResources, a.appInDiffNsHintMsg, nil,
 			a.logger.NewPrefixed("RecordedApp")}
 
