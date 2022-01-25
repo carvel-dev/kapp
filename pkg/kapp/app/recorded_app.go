@@ -156,6 +156,8 @@ func (a *RecordedApp) migrate(c *v1.ConfigMap, labels map[string]string) error {
 		return err
 	}
 
+	c.Labels[KappIsConfigmapMigratedLabelKey] = ""
+
 	err = a.mergeAppUpdates(c, labels)
 	if err != nil {
 		return err
@@ -250,8 +252,12 @@ func (a *RecordedApp) Rename(newName string, newNamespace string) error {
 		return fmt.Errorf("Getting app: %s", err)
 	}
 
+<<<<<<< HEAD
 	_, isMigrated := app.Labels[KappIsConfigmapMigratedLabelKey]
 	if isMigrated || strings.ToLower(os.Getenv("KAPP_MIGRATE_CONFIGMAP_NAMES")) == "true" {
+=======
+	if strings.ToLower(os.Getenv("KAPP_MIGRATE_CONFIGMAP_NAMES")) == "true" {
+>>>>>>> f69ed2cb4ec2dde46492f02e8f08a3123d9e7731
 		app.Labels[KappIsConfigmapMigratedLabelKey] = ""
 		return a.renameConfigMap(app, newName+AppSuffix, newNamespace)
 	}
