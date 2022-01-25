@@ -26,10 +26,10 @@ const (
 )
 
 type RecordedApp struct {
-	name                string
-	fqName              string
-	nsName              string
-	useOldConfigmapName bool
+	name       string
+	fqName     string
+	nsName     string
+	isMigrated bool
 
 	coreClient             kubernetes.Interface
 	identifiedResources    ctlres.IdentifiedResources
@@ -151,6 +151,8 @@ func (a *RecordedApp) migrate(c *v1.ConfigMap, labels map[string]string) error {
 		return err
 	}
 
+	c.Labels[KappIsConfigmapMigratedLabelKey] = ""
+
 	err = a.mergeAppUpdates(c, labels)
 	if err != nil {
 		return err
@@ -178,16 +180,15 @@ func (a *RecordedApp) mergeAppUpdates(cm *corev1.ConfigMap, labels map[string]st
 }
 
 func (a *RecordedApp) Exists() (bool, string, error) {
-	_, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
+	_, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 	if err == nil {
-		a.useOldConfigmapName = false
 		return true, "", nil
 	}
 
 	if errors.IsNotFound(err) {
-		_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
+		_, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
 		if err == nil {
-			a.useOldConfigmapName = true
+			a.isMigrated = true
 			return true, "", nil
 		}
 
@@ -207,12 +208,7 @@ func (a *RecordedApp) Delete() error {
 		return err
 	}
 
-	name := a.fqName
-	if a.useOldConfigmapName {
-		name = a.name
-	}
-
-	err = NewRecordedAppChanges(a.nsName, name, a.coreClient).DeleteAll()
+	err = NewRecordedAppChanges(a.nsName, a.name, a.coreClient).DeleteAll()
 	if err != nil {
 		return fmt.Errorf("Deleting app changes: %s", err)
 	}
@@ -220,6 +216,11 @@ func (a *RecordedApp) Delete() error {
 	err = app.Delete()
 	if err != nil {
 		return err
+	}
+
+	name := a.name
+	if a.isMigrated {
+		name = a.fqName
 	}
 
 	err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(context.TODO(), name, metav1.DeleteOptions{})
@@ -231,9 +232,9 @@ func (a *RecordedApp) Delete() error {
 }
 
 func (a *RecordedApp) Rename(newName string, newNamespace string) error {
-	name := a.fqName
-	if a.useOldConfigmapName {
-		name = a.name
+	name := a.name
+	if a.isMigrated {
+		name = a.fqName
 	}
 
 	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), name, metav1.GetOptions{})
@@ -247,6 +248,7 @@ func (a *RecordedApp) Rename(newName string, newNamespace string) error {
 	}
 
 	if strings.ToLower(os.Getenv("KAPP_MIGRATE_CONFIGMAP_NAMES")) == "true" {
+		app.Labels[KappIsConfigmapMigratedLabelKey] = ""
 		return a.renameConfigMap(app, newName+AppSuffix, newNamespace)
 	}
 
@@ -299,10 +301,10 @@ func (a *RecordedApp) setMeta(app corev1.ConfigMap) (Meta, error) {
 		errMsg := "App '%s' (namespace: %s) backed by ConfigMap '%s' did not contain parseable app metadata: %s"
 		hintText := " (hint: ConfigMap was overriden by another user?)"
 
-		if a.useOldConfigmapName {
-			return Meta{}, fmt.Errorf(errMsg+hintText, a.name, a.nsName, a.name, err)
+		if a.isMigrated {
+			return Meta{}, fmt.Errorf(errMsg+hintText, a.name, a.nsName, a.fqName, err)
 		}
-		return Meta{}, fmt.Errorf(errMsg+hintText, a.name, a.nsName, a.fqName, err)
+		return Meta{}, fmt.Errorf(errMsg+hintText, a.name, a.nsName, a.name, err)
 	}
 
 	a.memoizedMeta = &meta
@@ -316,16 +318,15 @@ func (a *RecordedApp) meta() (Meta, error) {
 		return *a.memoizedMeta, nil
 	}
 
-	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
+	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 	if err == nil {
-		a.useOldConfigmapName = false
 		return a.setMeta(*app)
 	}
 
 	if errors.IsNotFound(err) {
-		app, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
+		app, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
 		if err == nil {
-			a.useOldConfigmapName = true
+			a.isMigrated = true
 			return a.setMeta(*app)
 		}
 
@@ -380,9 +381,9 @@ func (a *RecordedApp) BeginChange(meta ChangeMeta) (Change, error) {
 }
 
 func (a *RecordedApp) update(doFunc func(*Meta)) error {
-	name := a.fqName
-	if a.useOldConfigmapName {
-		name = a.name
+	name := a.name
+	if a.isMigrated {
+		name = a.fqName
 	}
 
 	change, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), name, metav1.GetOptions{})
