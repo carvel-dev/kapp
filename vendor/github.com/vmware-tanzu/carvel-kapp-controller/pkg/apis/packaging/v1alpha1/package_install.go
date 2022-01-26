@@ -12,7 +12,7 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:shortName=pkgi
+// +kubebuilder:resource:shortName=pkgi,categories={all,carvel}
 // +kubebuilder:printcolumn:name=Package name,JSONPath=.spec.packageRef.refName,description=PackageMetadata name,type=string
 // +kubebuilder:printcolumn:name=Package version,JSONPath=.status.version,description=PackageMetadata version,type=string
 // +kubebuilder:printcolumn:name=Description,JSONPath=.status.friendlyDescription,description=Friendly description,type=string

@@ -63,7 +63,6 @@ type AppFetchHTTP struct {
 	SubPath string `json:"subPath,omitempty" protobuf:"bytes,4,opt,name=subPath"`
 }
 
-// TODO implement git
 // +k8s:openapi-gen=true
 type AppFetchGit struct {
 	URL string `json:"url,omitempty" protobuf:"bytes,1,opt,name=url"`

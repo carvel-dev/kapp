@@ -10,6 +10,7 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:categories={all,carvel}
 // +kubebuilder:printcolumn:name=Description,JSONPath=.status.friendlyDescription,description=Friendly description,type=string
 // +kubebuilder:printcolumn:name=Since-Deploy,JSONPath=.status.deploy.startedAt,description=Last time app started being deployed. Does not mean anything was changed.,type=date
 // +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date

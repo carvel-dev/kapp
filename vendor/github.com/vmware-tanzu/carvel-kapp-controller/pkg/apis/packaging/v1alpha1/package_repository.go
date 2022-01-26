@@ -11,7 +11,7 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:shortName=pkgr
+// +kubebuilder:resource:shortName=pkgr,categories={all,carvel}
 // +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date
 // +kubebuilder:printcolumn:name=Description,JSONPath=.status.friendlyDescription,description=Friendly description,type=string
 type PackageRepository struct {
@@ -56,6 +56,8 @@ type PackageRepositoryFetch struct {
 	Git *v1alpha1.AppFetchGit `json:"git,omitempty"`
 	// +optional
 	ImgpkgBundle *v1alpha1.AppFetchImgpkgBundle `json:"imgpkgBundle,omitempty"`
+	// +optional
+	Inline *v1alpha1.AppFetchInline `json:"inline,omitempty"`
 }
 
 type PackageRepositoryStatus struct {
