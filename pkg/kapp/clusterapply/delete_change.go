@@ -8,11 +8,10 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/types"
-
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -112,10 +111,6 @@ func (c DeleteOrphanStrategy) Apply() error {
 	return err
 }
 
-func (c DeleteChange) buildDescMsg(res ctlres.Resource, doneApplying bool) []string {
-	if !doneApplying && len(res.Finalizers()) > 0 {
-		return []string{uiWaitMsgPrefix + fmt.Sprintf("Waiting on finalizers: %s",
-			strings.Join(res.Finalizers(), ","))}
-	}
-	return []string{}
+func (c DeleteChange) buildDescMsg(res ctlres.Resource, isDoneApplying bool) []string {
+	return ctlresm.NewDeleting(res).BuildDescMsg(isDoneApplying)
 }
