@@ -1,4 +1,4 @@
-# cloud.google.com/go v0.65.0
+# cloud.google.com/go v0.81.0
 ## explicit; go 1.11
 cloud.google.com/go/compute/metadata
 # github.com/Azure/go-autorest v14.2.0+incompatible
@@ -20,6 +20,10 @@ github.com/Azure/go-autorest/logger
 # github.com/Azure/go-autorest/tracing v0.6.0
 ## explicit; go 1.12
 github.com/Azure/go-autorest/tracing
+# github.com/BurntSushi/toml v0.4.1
+## explicit; go 1.16
+github.com/BurntSushi/toml
+github.com/BurntSushi/toml/internal
 # github.com/cppforlife/cobrautil v0.0.0-20200514214827-bb86e6965d72
 ## explicit
 github.com/cppforlife/cobrautil
@@ -98,14 +102,15 @@ github.com/k14s/starlark-go/resolve
 github.com/k14s/starlark-go/starlark
 github.com/k14s/starlark-go/starlarkstruct
 github.com/k14s/starlark-go/syntax
-# github.com/k14s/ytt v0.36.0
-## explicit; go 1.16
+# github.com/k14s/ytt v0.38.0
+## explicit; go 1.17
 github.com/k14s/ytt/pkg/cmd/template
 github.com/k14s/ytt/pkg/cmd/ui
 github.com/k14s/ytt/pkg/filepos
 github.com/k14s/ytt/pkg/files
 github.com/k14s/ytt/pkg/orderedmap
 github.com/k14s/ytt/pkg/schema
+github.com/k14s/ytt/pkg/spell
 github.com/k14s/ytt/pkg/template
 github.com/k14s/ytt/pkg/template/core
 github.com/k14s/ytt/pkg/texttemplate
@@ -135,8 +140,8 @@ github.com/modern-go/reflect2
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/spf13/cobra v1.1.3
-## explicit; go 1.12
+# github.com/spf13/cobra v1.2.1
+## explicit; go 1.14
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 ## explicit; go 1.12
@@ -196,7 +201,7 @@ golang.org/x/text/unicode/norm
 # golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
 ## explicit
 golang.org/x/time/rate
-# google.golang.org/appengine v1.6.6
+# google.golang.org/appengine v1.6.7
 ## explicit; go 1.11
 google.golang.org/appengine
 google.golang.org/appengine/internal

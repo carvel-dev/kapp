@@ -16,7 +16,7 @@ import (
 type DocumentSchema struct {
 	Source     *yamlmeta.Document
 	defaultDVs *yamlmeta.Document
-	DocType    yamlmeta.Type
+	DocType    *DocumentType
 }
 
 type DocumentSchemaEnvelope struct {
@@ -38,7 +38,7 @@ func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
 	return &DocumentSchema{
 		Source:     doc,
 		defaultDVs: schemaDVs.(*yamlmeta.Document),
-		DocType:    docType,
+		DocType:    docType.(*DocumentType),
 	}, nil
 }
 
@@ -75,7 +75,14 @@ func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 		return nil, err
 	}
 
-	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: typeOfValue.GetDefaultValue()}, nil
+	defaultValue, err := getValue(doc, typeOfValue)
+	if err != nil {
+		return nil, err
+	}
+
+	typeOfValue.SetDefaultValue(defaultValue)
+
+	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: defaultValue}, nil
 }
 
 func NewMapType(m *yamlmeta.Map) (*MapType, error) {
@@ -98,7 +105,14 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 		return nil, err
 	}
 
-	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: typeOfValue.GetDefaultValue(), Position: item.Position}, nil
+	defaultValue, err := getValue(item, typeOfValue)
+	if err != nil {
+		return nil, err
+	}
+
+	typeOfValue.SetDefaultValue(defaultValue)
+
+	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: defaultValue, Position: item.Position}, nil
 }
 
 func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
@@ -125,31 +139,87 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 
-	return &ArrayItemType{ValueType: typeOfValue, defaultValue: typeOfValue.GetDefaultValue(), Position: item.GetPosition()}, nil
+	defaultValue, err := getValue(item, typeOfValue)
+	if err != nil {
+		return nil, err
+	}
+
+	typeOfValue.SetDefaultValue(defaultValue)
+
+	return &ArrayItemType{ValueType: typeOfValue, defaultValue: defaultValue, Position: item.GetPosition()}, nil
 }
 
-func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {
+func getType(node yamlmeta.Node) (yamlmeta.Type, error) {
 	var typeOfValue yamlmeta.Type
 
-	anns, err := collectAnnotations(node)
+	anns, err := collectTypeAnnotations(node)
 	if err != nil {
 		return nil, NewSchemaError("Invalid schema", err)
 	}
-	typeOfValue = getTypeFromAnnotations(anns)
+	typeOfValue, err = getTypeFromAnnotations(anns, node.GetPosition())
+	if err != nil {
+		return nil, NewSchemaError("Invalid schema", err)
+	}
 
 	if typeOfValue == nil {
-		typeOfValue, err = inferTypeFromValue(node.Val(), node.GetPosition())
+		typeOfValue, err = inferTypeFromValue(node.GetValues()[0], node.GetPosition())
 		if err != nil {
 			return nil, err
 		}
 	}
+	docAnns, err := collectDocumentationAnnotations(node)
+	if err != nil {
+		return nil, NewSchemaError("Invalid schema", err)
+	}
+	for _, ann := range docAnns {
+		if desc, ok := ann.(*DescriptionAnnotation); ok {
+			typeOfValue.SetDescription(desc.description)
+		}
+	}
 
-	err = valueTypeAllowsItemValue(typeOfValue, node.Val(), node.GetPosition())
+	err = valueTypeAllowsItemValue(typeOfValue, node.GetValues()[0], node.GetPosition())
 	if err != nil {
 		return nil, err
 	}
 
 	return typeOfValue, nil
+}
+
+func getValue(node yamlmeta.Node, t yamlmeta.Type) (interface{}, error) {
+	anns, err := collectValueAnnotations(node, t)
+	if err != nil {
+		return nil, NewSchemaError("Invalid schema", err)
+	}
+
+	for _, ann := range anns {
+		if defaultAnn, ok := ann.(*DefaultAnnotation); ok {
+			return getValueFromAnn(defaultAnn, t)
+		}
+	}
+
+	if _, ok := t.(*AnyType); ok {
+		return node.GetValues()[0], nil
+	}
+
+	return t.GetDefaultValue(), nil
+}
+
+// getValueFromAnn extracts the value from the annotation and validates its type
+func getValueFromAnn(defaultAnn *DefaultAnnotation, t yamlmeta.Type) (interface{}, error) {
+	var typeCheck yamlmeta.TypeCheck
+
+	defaultValue := defaultAnn.Val()
+	if node, ok := defaultValue.(yamlmeta.Node); ok {
+		defaultValue = node.DeepCopyAsInterface()
+		typeCheck = t.AssignTypeTo(defaultValue.(yamlmeta.Typeable))
+	} else {
+		typeCheck = t.CheckType(&yamlmeta.Scalar{Value: defaultValue, Position: t.GetDefinitionPosition()})
+	}
+	if typeCheck.HasViolations() {
+		return nil, NewSchemaError(fmt.Sprintf("Invalid schema - @%v is wrong type", AnnotationDefault), typeCheck.Violations...)
+	}
+
+	return defaultValue, nil
 }
 
 func inferTypeFromValue(value interface{}, position *filepos.Position) (yamlmeta.Type, error) {
@@ -225,16 +295,17 @@ func (s *DocumentSchema) DefaultDataValues() *yamlmeta.Document {
 	return s.defaultDVs
 }
 
+// GetDocumentType returns a reference to the DocumentType that is the root of this Schema.
+func (s *DocumentSchema) GetDocumentType() *DocumentType {
+	return s.DocType
+}
+
 func (s *DocumentSchema) deepCopy() *DocumentSchema {
 	return &DocumentSchema{
 		Source:     s.Source.DeepCopy(),
 		defaultDVs: s.defaultDVs.DeepCopy(),
 		DocType:    s.DocType,
 	}
-}
-
-func (s *DocumentSchema) ValidateWithValues(valuesFilesCount int) error {
-	return nil
 }
 
 func (e *DocumentSchemaEnvelope) Source() *yamlmeta.Document {

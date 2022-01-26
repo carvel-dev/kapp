@@ -1,13 +1,14 @@
-// Copyright 2020 VMware, Inc.
+// Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 package yttlibrary
 
 import (
-	"encoding/json"
+	"bytes"
 	"fmt"
 	"strings"
 
+	"github.com/BurntSushi/toml"
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
 	"github.com/k14s/ytt/pkg/orderedmap"
@@ -16,22 +17,22 @@ import (
 )
 
 var (
-	// JSONAPI contains the definition of the @ytt:json module
-	JSONAPI = starlark.StringDict{
-		"json": &starlarkstruct.Module{
-			Name: "json",
+	// TOMLAPI contains the definition of the @ytt:toml module
+	TOMLAPI = starlark.StringDict{
+		"toml": &starlarkstruct.Module{
+			Name: "toml",
 			Members: starlark.StringDict{
-				"encode": starlark.NewBuiltin("json.encode", core.ErrWrapper(jsonModule{}.Encode)),
-				"decode": starlark.NewBuiltin("json.decode", core.ErrWrapper(jsonModule{}.Decode)),
+				"encode": starlark.NewBuiltin("toml.encode", core.ErrWrapper(tomlModule{}.Encode)),
+				"decode": starlark.NewBuiltin("toml.decode", core.ErrWrapper(tomlModule{}.Decode)),
 			},
 		},
 	}
 )
 
-type jsonModule struct{}
+type tomlModule struct{}
 
-// Encode is a core.StarlarkFunc that renders the provided input into a JSON formatted string
-func (b jsonModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+// Encode is a core.StarlarkFunc that renders the provided input into a TOML formatted string
+func (b tomlModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
@@ -46,9 +47,9 @@ func (b jsonModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 	if err != nil {
 		return starlark.None, err
 	}
+
 	val = orderedmap.Conversion{yamlmeta.NewGoFromAST(val)}.AsUnorderedStringMaps()
 
-	var valBs []byte
 	indent, err := core.Int64Arg(kwargs, "indent")
 	if err != nil {
 		return starlark.None, err
@@ -59,20 +60,22 @@ func (b jsonModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 		return starlark.None, fmt.Errorf("indent value must be between 0 and 8")
 	}
 
+	var buffer bytes.Buffer
+	encoder := toml.NewEncoder(&buffer)
 	if indent > 0 {
-		valBs, err = json.MarshalIndent(val, "", strings.Repeat(" ", int(indent)))
-	} else {
-		valBs, err = json.Marshal(val)
+		encoder.Indent = strings.Repeat(" ", int(indent))
 	}
+
+	err = encoder.Encode(val)
 	if err != nil {
 		return starlark.None, err
 	}
 
-	return starlark.String(string(valBs)), nil
+	return starlark.String(buffer.String()), nil
 }
 
-// Decode is a core.StarlarkFunc that parses the provided input from JSON format into dicts, lists, and scalars
-func (b jsonModule) Decode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+// Decode is a core.StarlarkFunc that parses the provided input from TOML format into dicts, lists, and scalars
+func (b tomlModule) Decode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
@@ -84,7 +87,7 @@ func (b jsonModule) Decode(thread *starlark.Thread, f *starlark.Builtin, args st
 
 	var valDecoded interface{}
 
-	err = json.Unmarshal([]byte(valEncoded), &valDecoded)
+	err = toml.Unmarshal([]byte(valEncoded), &valDecoded)
 	if err != nil {
 		return starlark.None, err
 	}

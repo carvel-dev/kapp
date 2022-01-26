@@ -27,16 +27,13 @@ type Node interface {
 
 	Check() TypeCheck
 
-	sealed() // limit the concrete types of Node to map directly only to types allowed in YAML spec.
-}
+	DisplayName() string
 
-type ValueHoldingNode interface {
-	Node
-	Val() interface{}
+	sealed() // limit the concrete types of Node to map directly only to types allowed in YAML spec.
+
 }
 
 var _ = []Node{&DocumentSet{}, &Map{}, &Array{}}
-var _ = []ValueHoldingNode{&Document{}, &MapItem{}, &ArrayItem{}}
 
 type DocumentSet struct {
 	Comments    []*Comment
