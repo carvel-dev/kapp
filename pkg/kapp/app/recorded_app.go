@@ -8,15 +8,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/k14s/kapp/pkg/kapp/logger"
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
-
-	"github.com/k14s/kapp/pkg/kapp/logger"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
 const (
@@ -222,12 +221,7 @@ func (a *RecordedApp) labeledApp() (*LabeledApp, error) {
 		return nil, err
 	}
 
-	appLabels := meta.Labels()
-	for key, val := range a.labels {
-		appLabels[key] = val
-	}
-
-	sel := labels.Set(appLabels).AsSelector()
+	sel := labels.Set(meta.Labels()).AsSelector()
 
 	return &LabeledApp{sel, a.identifiedResources}, nil
 }
