@@ -17,4 +17,7 @@ time kapp delete -y -a knative
 time kapp deploy -y -a cf -f examples/cf-for-k8s-v0.2.0-custom/
 time kapp delete -y -a cf
 
+time kapp deploy -y -a gk -f examples/gatekeeper-v3.7.0/config.yml
+time kapp delete -y -a gk
+
 echo EXTERNAL SUCCESS
