@@ -103,43 +103,39 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 		migratedLabel := map[string]string{KappIsConfigmapMigratedLabelKey: KappIsConfigmapMigratedLabelKeyValue}
 
 		configMapWithSuffix, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
-		if err == nil {
-			_, isKappApp := configMapWithSuffix.Labels[KappIsAppLabelKey]
-			if isKappApp {
-				err = a.mergeAppUpdates(configMapWithSuffix, labels)
-				if err != nil {
-					return err
-				}
-
-				_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), configMapWithSuffix, metav1.UpdateOptions{})
-				if err != nil {
-					return fmt.Errorf("Updating app: %s", err)
-				}
-
-				return nil
+		if err == nil && a.isKappApp(configMapWithSuffix) {
+			err = a.mergeAppUpdates(configMapWithSuffix, labels)
+			if err != nil {
+				return err
 			}
-			return fmt.Errorf("Getting app: %s", err)
+
+			_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), configMapWithSuffix, metav1.UpdateOptions{})
+			if err != nil {
+				return fmt.Errorf("Updating app: %s", err)
+			}
+
+			return nil
 		} else if !errors.IsNotFound(err) {
-			return err
+			return fmt.Errorf("Getting app: %s", err)
 		}
 
 		configmapWithoutSuffix, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
-		if err == nil {
-			_, isKappApp := configmapWithoutSuffix.Labels[KappIsAppLabelKey]
-			if isKappApp {
-				err = a.mergeAppUpdates(configmapWithoutSuffix, migratedLabel)
-				if err != nil {
-					return err
-				}
-
-				return a.migrate(configmapWithoutSuffix, labels)
+		if err == nil && a.isKappApp(configmapWithoutSuffix) {
+			err = a.mergeAppUpdates(configmapWithoutSuffix, migratedLabel)
+			if err != nil {
+				return err
 			}
-			return fmt.Errorf("Getting app: %s", err)
+
+			return a.migrate(configmapWithoutSuffix, labels)
 		} else if !errors.IsNotFound(err) {
+			return fmt.Errorf("Getting app: %s", err)
+		}
+
+		err = a.mergeAppUpdates(configMap, migratedLabel)
+		if err != nil {
 			return err
 		}
 
-		a.mergeAppUpdates(configMap, migratedLabel)
 		configMap.ObjectMeta.Name = a.fqName
 		_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, metav1.CreateOptions{})
 		if err != nil {
@@ -218,26 +214,26 @@ func (a *RecordedApp) mergeAppUpdates(cm *corev1.ConfigMap, labels map[string]st
 }
 
 func (a *RecordedApp) Exists() (bool, string, error) {
+	if strings.ToLower(os.Getenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES")) == "true" {
+		_, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
+		if err == nil {
+			a.isMigrated = true
+			return true, "", nil
+		}
+	}
+
 	_, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 	if err == nil {
 		return true, "", nil
 	}
 
 	if errors.IsNotFound(err) {
-		_, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
-		if err == nil {
-			a.isMigrated = true
-			return true, "", nil
-		}
-
-		if errors.IsNotFound(err) {
-			desc := fmt.Sprintf("App '%s' (namespace: %s) does not exist%s",
-				a.name, a.nsName, a.appInDiffNsHintMsgFunc(a.name))
-			return false, desc, nil
-		}
+		desc := fmt.Sprintf("App '%s' (namespace: %s) does not exist%s",
+			a.name, a.nsName, a.appInDiffNsHintMsgFunc(a.name))
+		return false, desc, nil
 	}
 
-	return false, "", fmt.Errorf("Getting app: %s", err)
+	return true, "", nil
 }
 
 func (a *RecordedApp) Delete() error {
@@ -329,6 +325,11 @@ func (a *RecordedApp) labeledApp() (*LabeledApp, error) {
 	sel := labels.Set(meta.Labels()).AsSelector()
 
 	return &LabeledApp{sel, a.identifiedResources}, nil
+}
+
+func (a *RecordedApp) isKappApp(app *v1.ConfigMap) bool {
+	_, ok := app.Labels[KappIsAppLabelKey]
+	return ok
 }
 
 func (a *RecordedApp) Meta() (Meta, error) { return a.meta() }
