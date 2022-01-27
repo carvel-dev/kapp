@@ -258,11 +258,11 @@ func (a *RecordedApp) Delete() error {
 	}
 
 	err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(context.TODO(), name, metav1.DeleteOptions{})
-	if err == nil {
-		return nil
+	if err != nil {
+		return fmt.Errorf("Deleting app: %s", err)
 	}
 
-	return fmt.Errorf("Deleting app: %s", err)
+	return nil
 }
 
 func (a *RecordedApp) Rename(newName string, newNamespace string) error {
