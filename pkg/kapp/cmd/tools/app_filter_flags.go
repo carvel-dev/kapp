@@ -5,9 +5,10 @@ package tools
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/k14s/kapp/pkg/kapp/app"
 	"github.com/spf13/cobra"
-	"time"
 )
 
 type AppFilterFlags struct {

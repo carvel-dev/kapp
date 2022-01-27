@@ -4,11 +4,12 @@
 package e2e
 
 import (
-	uitest "github.com/cppforlife/go-cli-ui/ui/test"
-	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
 	"time"
+
+	uitest "github.com/cppforlife/go-cli-ui/ui/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAppFilter(t *testing.T) {
