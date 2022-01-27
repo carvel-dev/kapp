@@ -281,6 +281,7 @@ func (a *RecordedApp) Rename(newName string, newNamespace string) error {
 		return fmt.Errorf("Getting app: %s", err)
 	}
 
+	// use fully qualified name if app had been previously migrated
 	if a.isMigrated || strings.ToLower(os.Getenv("KAPP_USE_CONFIGMAP_SUFFIX")) == "true" {
 		a.mergeAppUpdates(app, map[string]string{KappIsConfigmapMigratedLabelKey: KappIsConfigmapMigratedLabelKeyValue})
 		return a.renameConfigMap(app, newName+AppSuffix, newNamespace)
