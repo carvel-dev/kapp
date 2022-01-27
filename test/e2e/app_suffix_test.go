@@ -69,11 +69,13 @@ func TestAppSuffix_AppExists_MigrationEnabled(t *testing.T) {
 	logger.Section("deploy with 1 delete, 1 update, 1 create", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-		os.Setenv("KAPP_MIGRATE_CONFIGMAP_NAMES", "True")
+		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "True")
 		// update and migrate
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
-		NewPresentClusterResource("configmap", name+app.AppSuffix, env.Namespace, kubectl)
+		c := NewPresentClusterResource("configmap", name+app.AppSuffix, env.Namespace, kubectl)
+		require.Contains(t, c.Labels(), app.KappIsConfigmapMigratedLabelKey)
+
 		NewMissingClusterResource(t, "configmap", name, env.Namespace, kubectl)
 		NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
 
@@ -102,11 +104,11 @@ func TestAppSuffix_AppExists_MigrationEnabled(t *testing.T) {
 	logger.Section("name already contains app suffix", func() {
 		existingName := name + app.AppSuffix
 
-		os.Setenv("KAPP_MIGRATE_CONFIGMAP_NAMES", "False")
+		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "False")
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", existingName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 		NewPresentClusterResource("configmap", existingName, env.Namespace, kubectl)
 
-		os.Setenv("KAPP_MIGRATE_CONFIGMAP_NAMES", "True")
+		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "True")
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", existingName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
 		NewMissingClusterResource(t, "configmap", existingName, env.Namespace, kubectl)
@@ -116,7 +118,39 @@ func TestAppSuffix_AppExists_MigrationEnabled(t *testing.T) {
 		kapp.Run([]string{"delete", "-a", existingName})
 	})
 
-	os.Unsetenv("KAPP_MIGRATE_CONFIGMAP_NAMES")
+	logger.Section("app exists with suffix", func() {
+		existingName := name + app.AppSuffix
+
+		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "False")
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", existingName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "True")
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", existingName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		NewMissingClusterResource(t, "configmap", existingName, env.Namespace, kubectl)
+		c := NewPresentClusterResource("configmap", existingName+app.AppSuffix, env.Namespace, kubectl)
+		require.Contains(t, c.Labels(), app.KappIsConfigmapMigratedLabelKey)
+	})
+
+	// if a user has disabled the migration on an app that was already migrated
+	// the error we expect is that the app belongs to a different app
+	// - there will be a documented way to recover from this if desired
+	logger.Section("migration disabled with already migrated app", func() {
+		existingName := name + app.AppSuffix
+
+		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "False")
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", existingName}, RunOpts{IntoNs: true,
+			AllowError: true, StdinReader: strings.NewReader(yaml1)})
+		require.Containsf(t, err.Error(), "kapp: Error: Ownership errors:", "already associated with a different app")
+
+		// the old name configmap is created
+		NewPresentClusterResource("configmap", existingName, env.Namespace, kubectl)
+
+		RemoveClusterResource(t, "configmap", existingName, env.Namespace, kubectl)
+		kapp.Run([]string{"delete", "-a", existingName})
+	})
+
+	os.Unsetenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES")
 }
 
 func TestAppSuffix_ConfigmapExists_MigrationEnabled(t *testing.T) {
@@ -135,7 +169,7 @@ func TestAppSuffix_ConfigmapExists_MigrationEnabled(t *testing.T) {
 	cleanUp()
 	defer cleanUp()
 
-	os.Setenv("KAPP_MIGRATE_CONFIGMAP_NAMES", "True")
+	os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "True")
 
 	logger.Section("with suffix and not marked as a kapp-app", func() {
 		NewClusterResource(t, "configmap", fqName, env.Namespace, kubectl)
@@ -149,5 +183,5 @@ func TestAppSuffix_ConfigmapExists_MigrationEnabled(t *testing.T) {
 		RemoveClusterResource(t, "configmap", fqName, env.Namespace, kubectl)
 	})
 
-	os.Unsetenv("KAPP_MIGRATE_CONFIGMAP_NAMES")
+	os.Unsetenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES")
 }
