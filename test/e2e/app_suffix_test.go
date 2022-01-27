@@ -118,36 +118,28 @@ func TestAppSuffix_AppExists_MigrationEnabled(t *testing.T) {
 		kapp.Run([]string{"delete", "-a", existingName})
 	})
 
-	logger.Section("app exists with suffix", func() {
-		existingName := name + app.AppSuffix
-
-		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "False")
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", existingName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
-
-		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "True")
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", existingName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
-
-		NewMissingClusterResource(t, "configmap", existingName, env.Namespace, kubectl)
-		c := NewPresentClusterResource("configmap", existingName+app.AppSuffix, env.Namespace, kubectl)
-		require.Contains(t, c.Labels(), app.KappIsConfigmapMigratedLabelKey)
-	})
-
 	// if a user has disabled the migration on an app that was already migrated
 	// the error we expect is that the app belongs to a different app
 	// - there will be a documented way to recover from this if desired
 	logger.Section("migration disabled with already migrated app", func() {
-		existingName := name + app.AppSuffix
+		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "False")
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "True")
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
 		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "False")
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", existingName}, RunOpts{IntoNs: true,
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true,
 			AllowError: true, StdinReader: strings.NewReader(yaml1)})
+
 		require.Containsf(t, err.Error(), "kapp: Error: Ownership errors:", "already associated with a different app")
-
 		// the old name configmap is created
-		NewPresentClusterResource("configmap", existingName, env.Namespace, kubectl)
+		NewPresentClusterResource("configmap", name, env.Namespace, kubectl)
 
-		RemoveClusterResource(t, "configmap", existingName, env.Namespace, kubectl)
-		kapp.Run([]string{"delete", "-a", existingName})
+		RemoveClusterResource(t, "configmap", name, env.Namespace, kubectl)
+
+		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "True")
+		cleanUp()
 	})
 
 	os.Unsetenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES")
