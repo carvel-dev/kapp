@@ -112,5 +112,8 @@ func (c DeleteOrphanStrategy) Apply() error {
 }
 
 func (c DeleteChange) buildDescMsg(res ctlres.Resource, isDoneApplying bool) []string {
-	return ctlresm.NewDeleting(res).BuildDescMsg(isDoneApplying)
+	if res.IsDeleting() {
+		return ctlresm.NewDeleting(res).BuildDescMsg(isDoneApplying)
+	}
+	return []string{}
 }
