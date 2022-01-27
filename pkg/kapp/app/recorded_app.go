@@ -137,12 +137,6 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 		}
 
 		configMap.ObjectMeta.Name = a.fqName
-		_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, metav1.CreateOptions{})
-		if err != nil {
-			return err
-		}
-
-		return nil
 	}
 
 	return a.createOrUpdate(configMap, labels)
