@@ -20,4 +20,7 @@ time kapp delete -y -a cf
 time kapp deploy -y -a gk -f examples/gatekeeper-v3.7.0/config.yml
 time kapp delete -y -a gk
 
+time kapp deploy -y -a pinniped -f examples/pinniped-v0.13.0/
+time kapp delete -y -a pinniped
+
 echo EXTERNAL SUCCESS
