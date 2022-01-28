@@ -39,8 +39,10 @@ func (s *AppFilterFlags) Times() (*time.Time, *time.Time, error) {
 		return nil, nil, nil
 	}
 
-	var ageStr string
-	var ageOlder bool
+	var (
+		ageStr string
+		ageOlder bool
+	)
 
 	lastIdx := len(s.age) - 1
 

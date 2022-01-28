@@ -52,6 +52,7 @@ data:
 		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
 			"--labels", "x=y"}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
+		// added sleep here to filter by age with 2+ seconds
 		time.Sleep(2 * time.Second)
 
 		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name2,
@@ -70,12 +71,12 @@ data:
 
 		require.Equalf(t, expectedAppsList, replaceLastChangeAge(resp.Tables[0].Rows), "Expected to match")
 
-		filteredApps, _ := kapp.RunWithOpts([]string{"ls", "--filter-labels", "x=y", "--json"}, RunOpts{Interactive: true})
+		filteredApps, _ := kapp.RunWithOpts([]string{"ls", "--filter-labels", "a=b", "--json"}, RunOpts{Interactive: true})
 
 		expectedFilteredApps := []map[string]string{{
 			"last_change_age":        "<replaced>",
 			"last_change_successful": "true",
-			"name":                   "test-app-1",
+			"name":                   "test-app-2",
 			"namespaces":             "kapp-test",
 		}}
 

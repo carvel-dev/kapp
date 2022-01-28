@@ -30,7 +30,7 @@ func (a *LabeledApp) Name() string {
 
 func (a *LabeledApp) Namespace() string { return "" }
 
-func (a *LabeledApp) CreationTimestamp() *time.Time { return nil }
+func (a *LabeledApp) CreationTimestamp() time.Time { return time.Time{} }
 
 func (a *LabeledApp) Description() string {
 	return fmt.Sprintf("labeled app '%s'", a.Name())

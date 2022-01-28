@@ -24,7 +24,6 @@ func (f AppFilter) Apply(apps []App) ([]App, error) {
 }
 
 func (f AppFilter) Matches(app App) bool {
-
 	if f.CreatedAtBeforeTime != nil {
 		if app.CreationTimestamp().After(*f.CreatedAtBeforeTime) {
 			return false
