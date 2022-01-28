@@ -40,7 +40,7 @@ func (s *AppFilterFlags) Times() (*time.Time, *time.Time, error) {
 	}
 
 	var (
-		ageStr string
+		ageStr   string
 		ageOlder bool
 	)
 
