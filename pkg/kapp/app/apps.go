@@ -86,12 +86,14 @@ func (a Apps) list(additionalLabels map[string]string, nsName string) ([]App, er
 
 	for _, app := range apps.Items {
 		name := app.Name
+		isMigrated := false
 
 		if _, ok := app.Labels[KappIsConfigmapMigratedLabelKey]; ok {
 			name = strings.TrimSuffix(app.Name, AppSuffix)
+			isMigrated = true
 		}
 
-		recordedApp := &RecordedApp{name, name + AppSuffix, app.Namespace, false, a.coreClient,
+		recordedApp := &RecordedApp{name, name + AppSuffix, app.Namespace, isMigrated, a.coreClient,
 			a.identifiedResources, a.appInDiffNsHintMsg, nil,
 			a.logger.NewPrefixed("RecordedApp")}
 

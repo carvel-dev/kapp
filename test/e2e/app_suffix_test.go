@@ -119,7 +119,7 @@ func TestAppSuffix_AppExists_MigrationEnabled(t *testing.T) {
 	})
 
 	// if a user has disabled the migration on an app that was already migrated
-	// the error we expect is that the app belongs to a different app
+	// the error we expect is that the resources belong to a different app
 	// - there will be a documented way to recover from this if desired
 	logger.Section("migration disabled with already migrated app", func() {
 		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "False")
@@ -132,7 +132,7 @@ func TestAppSuffix_AppExists_MigrationEnabled(t *testing.T) {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true,
 			AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
-		require.Containsf(t, err.Error(), "kapp: Error: Ownership errors:", "already associated with a different app")
+		require.Containsf(t, err.Error(), "kapp: Error: Ownership errors:", "Expected resources to be associated with a different app")
 		// the old name configmap is created
 		NewPresentClusterResource("configmap", name, env.Namespace, kubectl)
 
@@ -155,7 +155,7 @@ func TestAppSuffix_ConfigmapExists_MigrationEnabled(t *testing.T) {
 	fqName := name + app.AppSuffix
 
 	cleanUp := func() {
-		kapp.Run([]string{"delete", "-a", name})
+		RemoveClusterResource(t, "configmap", fqName, env.Namespace, kubectl)
 	}
 
 	cleanUp()
@@ -170,9 +170,7 @@ func TestAppSuffix_ConfigmapExists_MigrationEnabled(t *testing.T) {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
-		require.Containsf(t, err.Error(), "kapp: Error:", "did not contain parseable app metadata")
-
-		RemoveClusterResource(t, "configmap", fqName, env.Namespace, kubectl)
+		require.Containsf(t, err.Error(), "did not contain parseable app metadata", "Expected app to not be parsable")
 	})
 
 	os.Unsetenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES")
