@@ -148,7 +148,7 @@ func (a *RecordedApp) Exists() (bool, string, error) {
 	if err != nil {
 		if errors.IsNotFound(err) {
 			desc := fmt.Sprintf("App '%s' (namespace: %s) does not exist%s",
-				a.name, a.nsName, a.appInDiffNsHintMsgFunc(a.Name()))
+				a.name, a.nsName, a.appInDiffNsHintMsgFunc(a.name))
 			return false, desc, nil
 		}
 		return false, "", fmt.Errorf("Getting app: %s", err)
@@ -186,7 +186,7 @@ func (a *RecordedApp) Rename(newName string, newNamespace string) error {
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("App '%s' (namespace: %s) does not exist: %s%s",
-				a.name, a.nsName, err, a.appInDiffNsHintMsgFunc(a.Name()))
+				a.name, a.nsName, err, a.appInDiffNsHintMsgFunc(a.name))
 		}
 		return fmt.Errorf("Getting app: %s", err)
 	}

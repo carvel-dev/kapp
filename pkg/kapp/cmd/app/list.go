@@ -66,18 +66,19 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
-	labelFlags := &LabelFlags{Labels: appFilter.Labels}
-	additionalLabels, err := labelFlags.AsMap()
+	filterLabelFlags := &LabelFlags{Labels: appFilter.Labels}
+	filterLabelsMap, err := filterLabelFlags.AsMap()
 	if err != nil {
 		return err
 	}
 
-	items, err := supportObjs.Apps.List(additionalLabels)
+	labelFilteredApps, err := supportObjs.Apps.List(filterLabelsMap)
 	if err != nil {
 		return err
 	}
 
-	items, err = appFilter.Apply(items)
+	// filtering apps by age
+	items, err := appFilter.Apply(labelFilteredApps)
 	if err != nil {
 		return err
 	}

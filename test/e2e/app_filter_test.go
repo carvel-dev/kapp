@@ -28,7 +28,6 @@ spec:
     targetPort: 6380
   selector:
     app: redis
-    tier: backend
 `
 	yaml2 := `
 apiVersion: v1
