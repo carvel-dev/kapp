@@ -170,6 +170,7 @@ func TestAppSuffix_ConfigmapExists_MigrationEnabled(t *testing.T) {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
+		require.Errorf(t, err, "Expected to receive error")
 		require.Containsf(t, err.Error(), "did not contain parseable app metadata", "Expected app to not be parsable")
 	})
 
