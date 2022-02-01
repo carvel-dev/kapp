@@ -66,7 +66,7 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
-	filterLabelFlags := &LabelFlags{Labels: appFilter.Labels}
+	filterLabelFlags := &LabelFlags{Labels: o.AppFilterFlags.Labels()}
 	filterLabelsMap, err := filterLabelFlags.AsMap()
 	if err != nil {
 		return err

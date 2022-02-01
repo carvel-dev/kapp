@@ -26,7 +26,6 @@ type RecordedApp struct {
 	name              string
 	nsName            string
 	creationTimestamp time.Time
-	labels            map[string]string
 
 	coreClient             kubernetes.Interface
 	identifiedResources    ctlres.IdentifiedResources

@@ -8,8 +8,6 @@ import "time"
 type AppFilter struct {
 	CreatedAtBeforeTime *time.Time
 	CreatedAtAfterTime  *time.Time
-
-	Labels []string
 }
 
 func (f AppFilter) Apply(apps []App) ([]App, error) {

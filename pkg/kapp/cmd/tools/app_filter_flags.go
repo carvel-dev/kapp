@@ -12,13 +12,15 @@ import (
 )
 
 type AppFilterFlags struct {
-	age string
-	af  app.AppFilter
+	age    string
+	labels []string
+
+	af app.AppFilter
 }
 
 func (s *AppFilterFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&s.age, "filter-age", "", "Set age filter (example: 5m-, 500h+, 10m-)")
-	cmd.Flags().StringSliceVar(&s.af.Labels, "filter-labels", nil, "Set label filter (example: x=y)")
+	cmd.Flags().StringSliceVar(&s.labels, "filter-labels", nil, "Set label filter (example: x=y)")
 }
 
 func (s *AppFilterFlags) AppFilter() (app.AppFilter, error) {
@@ -32,6 +34,10 @@ func (s *AppFilterFlags) AppFilter() (app.AppFilter, error) {
 	af.CreatedAtBeforeTime = createdAtBeforeTime
 
 	return af, nil
+}
+
+func (s *AppFilterFlags) Labels() []string {
+	return s.labels
 }
 
 func (s *AppFilterFlags) Times() (*time.Time, *time.Time, error) {
