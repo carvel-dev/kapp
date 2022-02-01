@@ -217,18 +217,19 @@ func (a *RecordedApp) Exists() (bool, string, error) {
 		if err == nil {
 			a.isMigrated = true
 			return true, "", nil
+		} else if !errors.IsNotFound(err) {
+			return false, "", fmt.Errorf("Getting app: %s", err)
 		}
 	}
 
 	_, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
-	if err == nil {
-		return true, "", nil
-	}
-
-	if errors.IsNotFound(err) {
-		desc := fmt.Sprintf("App '%s' (namespace: %s) does not exist%s",
-			a.name, a.nsName, a.appInDiffNsHintMsgFunc(a.name))
-		return false, desc, nil
+	if err != nil {
+		if errors.IsNotFound(err) {
+			desc := fmt.Sprintf("App '%s' (namespace: %s) does not exist%s",
+				a.name, a.nsName, a.appInDiffNsHintMsgFunc(a.name))
+			return false, desc, nil
+		}
+		return false, "", fmt.Errorf("Getting app: %s", err)
 	}
 
 	return true, "", nil
