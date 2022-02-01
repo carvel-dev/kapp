@@ -4,6 +4,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -40,18 +41,26 @@ type DeployOptions struct {
 	DeployFlags         DeployFlags
 	ResourceTypesFlags  ResourceTypesFlags
 	LabelFlags          LabelFlags
+	SSAFlags            cmdtools.SSAFlags
 }
 
 func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeployOptions {
 	return &DeployOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
 
+const diffFlagsPrefix = "diff"
+
 func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deploy",
 		Aliases: []string{"d", "dep"},
 		Short:   "Deploy app",
-		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return o.Run()
+		},
+		PreRunE: func(cmd *cobra.Command, _ []string) error {
+			return o.ValidateAndAdjustFlags(cmd)
+		},
 		Annotations: map[string]string{
 			cmdcore.AppHelpGroup.Key: cmdcore.AppHelpGroup.Value,
 		},
@@ -72,20 +81,29 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 
 	o.AppFlags.Set(cmd, flagsFactory)
 	o.FileFlags.Set(cmd)
-	o.DiffFlags.SetWithPrefix("diff", cmd)
 	o.ResourceFilterFlags.Set(cmd)
 	o.ApplyFlags.SetWithDefaults("", ApplyFlagsDeployDefaults, cmd)
+	o.DiffFlags.SetWithPrefix(diffFlagsPrefix, cmd)
+
 	o.DeployFlags.Set(cmd)
 	o.ResourceTypesFlags.Set(cmd)
 	o.LabelFlags.Set(cmd)
+	o.SSAFlags.Set(cmd)
 
 	return cmd
 }
 
+func (o *DeployOptions) ValidateAndAdjustFlags(cmd *cobra.Command) error {
+	AdjustApplyFlags(o.SSAFlags, &o.ApplyFlags)
+	return cmdtools.AdjustDiffFlags(o.SSAFlags, &o.DiffFlags, diffFlagsPrefix, cmd)
+}
+
 func (o *DeployOptions) Run() error {
+	ctx := context.Background()
+
 	failingAPIServicesPolicy := o.ResourceTypesFlags.FailingAPIServicePolicy()
 
-	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
+	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger, &o.SSAFlags)
 	if err != nil {
 		return err
 	}
@@ -140,7 +158,7 @@ func (o *DeployOptions) Run() error {
 	}
 
 	clusterChangeSet, clusterChangesGraph, hasNoChanges, changeSummary, err :=
-		o.calculateAndPresentChanges(existingResources, newResources, conf, supportObjs)
+		o.calculateAndPresentChanges(ctx, existingResources, newResources, conf, supportObjs)
 	if err != nil {
 		if o.DiffFlags.UI && clusterChangesGraph != nil {
 			return o.presentDiffUI(clusterChangesGraph)
@@ -315,19 +333,19 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 	return resourceFilter.Apply(existingResources), o.existingPodResources(existingResources), nil
 }
 
-func (o *DeployOptions) calculateAndPresentChanges(existingResources,
+func (o *DeployOptions) calculateAndPresentChanges(ctx context.Context, existingResources,
 	newResources []ctlres.Resource, conf ctlconf.Conf, supportObjs FactorySupportObjs) (
 	ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, bool, string, error) {
 
 	var clusterChangeSet ctlcap.ClusterChangeSet
 
 	{ // Figure out changes for X existing resources -> X new resources
-		changeFactory := ctldiff.NewChangeFactory(conf.RebaseMods(), conf.DiffAgainstLastAppliedFieldExclusionMods())
+		changeFactory := ctldiff.NewChangeFactory(conf.RebaseMods(), conf.DiffAgainstLastAppliedFieldExclusionMods(), supportObjs.IdentifiedResources)
 		changeSetFactory := ctldiff.NewChangeSetFactory(o.DiffFlags.ChangeSetOpts, changeFactory)
 
 		changes, err := ctldiff.NewChangeSetWithVersionedRs(
 			existingResources, newResources, conf.TemplateRules(),
-			o.DiffFlags.ChangeSetOpts, changeFactory).Calculate()
+			o.DiffFlags.ChangeSetOpts, changeFactory).Calculate(ctx)
 		if err != nil {
 			return clusterChangeSet, nil, false, "", err
 		}

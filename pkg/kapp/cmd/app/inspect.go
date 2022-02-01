@@ -57,7 +57,7 @@ func NewInspectCmd(o *InspectOptions, flagsFactory cmdcore.FlagsFactory) *cobra.
 func (o *InspectOptions) Run() error {
 	failingAPIServicesPolicy := o.ResourceTypesFlags.FailingAPIServicePolicy()
 
-	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
+	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger, nil)
 	if err != nil {
 		return err
 	}

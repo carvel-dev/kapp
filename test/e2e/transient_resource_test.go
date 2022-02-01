@@ -14,7 +14,7 @@ import (
 func TestTransientResourceInspectDelete(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env, logger}
 
 	yaml1 := `
 ---
@@ -53,7 +53,7 @@ spec:
 			"conditions":      "",
 			"kind":            "Endpoints",
 			"name":            "redis-svc",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"owner":           "cluster",
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
@@ -62,7 +62,7 @@ spec:
 			"conditions":      "",
 			"kind":            "Service",
 			"name":            "redis-svc",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"owner":           "kapp",
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
@@ -75,7 +75,7 @@ spec:
 				"conditions":      "",
 				"kind":            "EndpointSlice",
 				"name":            "redis-svc",
-				"namespace":       "kapp-test",
+				"namespace":       env.Namespace,
 				"owner":           "cluster",
 				"reconcile_info":  "",
 				"reconcile_state": "ok",
@@ -98,7 +98,7 @@ spec:
 			"conditions":      "",
 			"kind":            "Endpoints",
 			"name":            "redis-svc",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}, {
@@ -109,7 +109,7 @@ spec:
 			"conditions":      "",
 			"kind":            "Service",
 			"name":            "redis-svc",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}}
@@ -124,7 +124,7 @@ spec:
 				"conditions":      "",
 				"kind":            "EndpointSlice",
 				"name":            "redis-svc",
-				"namespace":       "kapp-test",
+				"namespace":       env.Namespace,
 				"reconcile_info":  "",
 				"reconcile_state": "ok",
 			})
@@ -135,9 +135,22 @@ spec:
 }
 
 func TestTransientResourceSwitchToNonTransient(t *testing.T) {
-	env := BuildEnv(t)
+	/*
+		SSASkip - transient resources inherit v1.association label from parent resource.
+		These fields are managed (== recorded in metadata.managedFields) by K8S controller, not us.
+		When we apply transient resources explicitly, we also set v1.association label, but to
+		the resource's own value, which causes conflict. So for now adopting transient result
+		is likely to be incompatible, unless force is used.
+	*/
+	/*
+		TODO: In a future version it can be resolved by splitting apply into multiple operations.
+		One does JSON patch to force labels to have our values and be managed by us and another does regular
+		SSA for the rest of the object. This granular conflict resolution better be configurable and exposed
+		to users, not hardcoded just for transient object labels.
+	*/
+	env := BuildEnv(t, SSASkip)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env, logger}
 
 	yaml1 := `
 ---
@@ -189,7 +202,7 @@ metadata:
 			"conditions":      "",
 			"kind":            "Endpoints",
 			"name":            "redis-svc",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}}
@@ -210,7 +223,7 @@ metadata:
 			"conditions":      "",
 			"kind":            "Endpoints",
 			"name":            "redis-svc",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}, {
@@ -221,7 +234,7 @@ metadata:
 			"conditions":      "",
 			"kind":            "Service",
 			"name":            "redis-svc",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}}
@@ -236,7 +249,7 @@ metadata:
 				"conditions":      "",
 				"kind":            "EndpointSlice",
 				"name":            "redis-svc",
-				"namespace":       "kapp-test",
+				"namespace":       env.Namespace,
 				"reconcile_info":  "",
 				"reconcile_state": "ok",
 			})

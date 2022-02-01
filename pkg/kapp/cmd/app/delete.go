@@ -59,7 +59,14 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 func (o *DeleteOptions) Run() error {
 	failingAPIServicesPolicy := o.ResourceTypesFlags.FailingAPIServicePolicy()
 
-	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
+	// When orphan strategy used, delete operation issues PATCH command to delete labels,
+	// which passes field manager name to K8S API.
+	// This name is not persisted anywhere in managedFields and it's value doesn't really matter, therefore there
+	// is no need to expose --ssa-field-manager CLI flag in the delete command. Set it to something reasonable.
+	ssaFlags := cmdtools.SSAFlags{
+		FieldManagerName: "kapp-shouldnt-be-seen-anywhere",
+	}
+	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger, &ssaFlags)
 	if err != nil {
 		return err
 	}
@@ -189,10 +196,10 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 	)
 
 	{ // Figure out changes for X existing resources -> 0 new resources
-		changeFactory := ctldiff.NewChangeFactory(nil, nil)
+		changeFactory := ctldiff.NewChangeFactory(nil, nil, supportObjs.IdentifiedResources)
 		changeSetFactory := ctldiff.NewChangeSetFactory(o.DiffFlags.ChangeSetOpts, changeFactory)
 
-		changes, err := changeSetFactory.New(existingResources, nil).Calculate()
+		changes, err := changeSetFactory.New(existingResources, nil).Calculate(nil)
 		if err != nil {
 			return ctlcap.ClusterChangeSet{}, nil, changesSummary{}, err
 		}

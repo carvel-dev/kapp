@@ -109,3 +109,11 @@ func (r ClusterResource) RawPath(path ctlres.Path) interface{} {
 	}
 	return result
 }
+
+func removeHistory(raw map[string]interface{}) {
+	metadata := raw["metadata"].(map[string]interface{})
+	delete(metadata, "managedFields")
+	anns := metadata["annotations"].(map[string]interface{})
+	delete(anns, "kapp.k14s.io/original")
+	delete(anns, "kapp.k14s.io/original-diff-md5")
+}

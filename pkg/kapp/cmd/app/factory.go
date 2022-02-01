@@ -6,6 +6,7 @@ package app
 import (
 	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	"github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"k8s.io/client-go/kubernetes"
@@ -19,7 +20,7 @@ type FactorySupportObjs struct {
 }
 
 func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFlags,
-	resTypesFlags ResourceTypesFlags, logger logger.Logger) (FactorySupportObjs, error) {
+	resTypesFlags ResourceTypesFlags, logger logger.Logger, ssaFlags *tools.SSAFlags) (FactorySupportObjs, error) {
 
 	coreClient, err := depsFactory.CoreClient()
 	if err != nil {
@@ -44,6 +45,11 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 	resourcesImplOpts := ctlres.ResourcesImplOpts{
 		FallbackAllowedNamespaces:        []string{nsFlags.Name},
 		ScopeToFallbackAllowedNamespaces: resTypesFlags.ScopeToFallbackAllowedNamespaces,
+		SSA: &ctlres.SSAOpts{
+			Enabled:          ssaFlags.Enabled,
+			ForceConflict:    ssaFlags.ForceConflict,
+			FieldManagerName: ssaFlags.FieldManagerName,
+		},
 	}
 
 	resources := ctlres.NewResourcesImpl(
@@ -63,9 +69,9 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 }
 
 func Factory(depsFactory cmdcore.DepsFactory, appFlags Flags,
-	resTypesFlags ResourceTypesFlags, logger logger.Logger) (ctlapp.App, FactorySupportObjs, error) {
+	resTypesFlags ResourceTypesFlags, logger logger.Logger, ssaFlags *tools.SSAFlags) (ctlapp.App, FactorySupportObjs, error) {
 
-	supportingObjs, err := FactoryClients(depsFactory, appFlags.NamespaceFlags, resTypesFlags, logger)
+	supportingObjs, err := FactoryClients(depsFactory, appFlags.NamespaceFlags, resTypesFlags, logger, ssaFlags)
 	if err != nil {
 		return nil, FactorySupportObjs{}, err
 	}

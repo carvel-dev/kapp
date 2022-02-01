@@ -107,6 +107,6 @@ func (c DeleteOrphanStrategy) Apply() error {
 		return err
 	}
 
-	_, err = c.d.identifiedResources.Patch(c.res, types.JSONPatchType, patchJSON)
+	_, err = c.d.identifiedResources.Patch(c.res, types.JSONPatchType, patchJSON, ctlres.PatchOpts{})
 	return err
 }

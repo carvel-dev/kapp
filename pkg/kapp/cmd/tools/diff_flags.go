@@ -4,6 +4,7 @@
 package tools
 
 import (
+	"fmt"
 	ctlcap "github.com/k14s/kapp/pkg/kapp/clusterapply"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	"github.com/spf13/cobra"
@@ -35,7 +36,25 @@ func (s *DiffFlags) SetWithPrefix(prefix string, cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&s.LineNumbers, prefix+"line-numbers", true, "Show line numbers")
 	cmd.Flags().BoolVar(&s.Mask, prefix+"mask", true, "Apply masking rules")
 
-	cmd.Flags().BoolVar(&s.AgainstLastApplied, prefix+"against-last-applied", true, "Show changes against last applied copy when possible")
+	if *cmd.Flags().Bool(prefix+"against-last-applied", true, "Show changes against last applied copy when possible. (Conflicts with server-side apply)") {
+		s.ChangeSetOpts.Mode = ctldiff.AgainstLastAppliedChangeSetMode
+	} else {
+		s.ChangeSetOpts.Mode = ctldiff.ExactChangeSetMode
+	}
 
 	cmd.Flags().StringVar(&s.Filter, prefix+"filter", "", `Set changes filter (example: {"and":[{"ops":["update"]},{"existingResource":{"kinds":["Deployment"]}]})`)
+}
+
+func AdjustDiffFlags(ssa SSAFlags, df *DiffFlags, diffPrefix string, cmd *cobra.Command) error {
+	if len(diffPrefix) > 0 {
+		diffPrefix = diffPrefix + "-"
+	}
+	if ssa.Enabled {
+		alaFlagName := diffPrefix + "against-last-applied"
+		if cmd.Flag(alaFlagName).Changed {
+			return fmt.Errorf("--ssa-enable conflicts with --%s", alaFlagName)
+		}
+		df.ChangeSetOpts.Mode = ctldiff.ServerSideApplyChangeSetMode
+	}
+	return nil
 }

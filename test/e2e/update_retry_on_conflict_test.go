@@ -17,7 +17,7 @@ import (
 func TestUpdateRetryOnConflict_WithoutConflict(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env, logger}
 
 	yaml1 := `
 ---
@@ -111,7 +111,7 @@ spec:
 func TestUpdateRetryOnConflict_WithConflict(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env, logger}
 
 	yaml1 := `
 ---
@@ -195,9 +195,10 @@ spec:
 }
 
 func TestUpdateRetryOnConflict_WithConflictRebasedAway(t *testing.T) {
-	env := BuildEnv(t)
+	// SSASkip: rebasing is not used with server side apply
+	env := BuildEnv(t, SSASkip)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env, logger}
 
 	yaml1 := `
 ---

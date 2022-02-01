@@ -15,7 +15,7 @@ import (
 func TestDiff(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env, logger}
 
 	yaml1 := `
 ---
@@ -87,7 +87,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "",
 		}, {
@@ -98,7 +98,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config1",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "",
 		}, {
@@ -109,7 +109,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config2",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "",
 		}}
@@ -145,7 +145,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}, {
@@ -156,7 +156,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config1",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}, {
@@ -167,7 +167,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config3",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "",
 		}}
@@ -190,7 +190,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config1",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}, {
@@ -201,7 +201,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config2",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}, {
@@ -212,7 +212,7 @@ data:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config3",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}}
@@ -225,7 +225,7 @@ data:
 
 func TestDiffExitStatus(t *testing.T) {
 	env := BuildEnv(t)
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, Logger{}}
+	kapp := Kapp{t, env, Logger{}}
 
 	name := "test-diff-exit-status"
 	cleanUp := func() {
@@ -263,7 +263,7 @@ metadata:
 
 func TestDiffMaskRules(t *testing.T) {
 	env := BuildEnv(t)
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, Logger{}}
+	kapp := Kapp{t, env, Logger{}}
 
 	yaml1 := `
 apiVersion: v1

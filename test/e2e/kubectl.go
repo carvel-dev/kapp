@@ -5,6 +5,7 @@ package e2e
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -63,6 +64,16 @@ func (k Kubectl) RunWithOpts(args []string, opts RunOpts) (string, error) {
 	}
 
 	return stdout.String(), err
+}
+
+func (k Kubectl) RunWithOptsIntoJSON(args []string, opts RunOpts, in interface{}) error {
+	jsonArgs := append(args, "-o", "json")
+	out, err := k.RunWithOpts(jsonArgs, opts)
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal([]byte(out), in)
 }
 
 func (k Kubectl) cmdDesc(args []string) string {

@@ -38,12 +38,16 @@ const (
 	resourcesDebug = false
 )
 
+type PatchOpts struct {
+	DryRun bool
+}
+
 type Resources interface {
 	All([]ResourceType, AllOpts) ([]Resource, error)
 	Delete(Resource) error
 	Exists(Resource, ExistsOpts) (Resource, bool, error)
 	Get(Resource) (Resource, error)
-	Patch(Resource, types.PatchType, []byte) (Resource, error)
+	Patch(Resource, types.PatchType, []byte, PatchOpts) (Resource, error)
 	Update(Resource) (Resource, error)
 	Create(resource Resource) (Resource, error)
 }
@@ -65,9 +69,20 @@ type ResourcesImpl struct {
 	logger logger.Logger
 }
 
+type SSAOpts struct {
+	Enabled          bool
+	ForceConflict    bool
+	FieldManagerName string
+}
+
 type ResourcesImplOpts struct {
 	FallbackAllowedNamespaces        []string
 	ScopeToFallbackAllowedNamespaces bool
+
+	//ResourcesImpl is instantiated in the Factory even for commands not making CREATE/UPDATE/PATCH calls
+	//and these commands don't have SSA CLI flags. Use pointer type here to force panic
+	//in case such write operation sneak into these commands in the future
+	SSA *SSAOpts
 }
 
 func NewResourcesImpl(resourceTypes ResourceTypes, coreClient kubernetes.Interface,
@@ -256,7 +271,9 @@ func (c *ResourcesImpl) Create(resource Resource) (Resource, error) {
 	var createdUn *unstructured.Unstructured
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
-		createdUn, err = resClient.Create(context.TODO(), resource.unstructuredPtr(), metav1.CreateOptions{})
+		createdUn, err = resClient.Create(context.TODO(), resource.unstructuredPtr(), metav1.CreateOptions{
+			FieldManager: c.opts.SSA.FieldManagerName,
+		})
 		return err
 	})
 	if err != nil {
@@ -283,7 +300,9 @@ func (c *ResourcesImpl) Update(resource Resource) (Resource, error) {
 	var updatedUn *unstructured.Unstructured
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
-		updatedUn, err = resClient.Update(context.TODO(), resource.unstructuredPtr(), metav1.UpdateOptions{})
+		updatedUn, err = resClient.Update(context.TODO(), resource.unstructuredPtr(), metav1.UpdateOptions{
+			FieldManager: c.opts.SSA.FieldManagerName,
+		})
 		return err
 	})
 	if err != nil {
@@ -293,7 +312,7 @@ func (c *ResourcesImpl) Update(resource Resource) (Resource, error) {
 	return NewResourceUnstructured(*updatedUn, resType), nil
 }
 
-func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data []byte) (Resource, error) {
+func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data []byte, opts PatchOpts) (Resource, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { c.logger.Debug("patch %s", time.Now().UTC().Sub(t1)) }()
@@ -305,9 +324,25 @@ func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data
 	}
 
 	var patchedUn *unstructured.Unstructured
+	var dryRunOpt []string
+
+	if opts.DryRun {
+		dryRunOpt = []string{"All"}
+	}
 
 	err = util.Retry2(time.Second, 5*time.Second, c.isGeneralRetryableErr, func() error {
-		patchedUn, err = resClient.Patch(context.TODO(), resource.Name(), patchType, data, metav1.PatchOptions{})
+		var force *bool = nil
+		// force flag should only be present on ApplyPatchType requests
+		if patchType == types.ApplyPatchType && c.opts.SSA.Enabled {
+			var t = true
+			force = &t
+		}
+
+		patchedUn, err = resClient.Patch(context.TODO(), resource.Name(), patchType, data, metav1.PatchOptions{
+			FieldManager: c.opts.SSA.FieldManagerName,
+			Force:        force,
+			DryRun:       dryRunOpt,
+		})
 		return err
 	})
 	if err != nil {

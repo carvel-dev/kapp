@@ -15,7 +15,7 @@ import (
 func TestOrder(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env, logger}
 
 	name := "test-order"
 	cleanUp := func() {

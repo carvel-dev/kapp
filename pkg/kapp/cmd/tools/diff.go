@@ -4,6 +4,7 @@
 package tools
 
 import (
+	"context"
 	"github.com/cppforlife/go-cli-ui/ui"
 	ctlcap "github.com/k14s/kapp/pkg/kapp/clusterapply"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
@@ -19,6 +20,7 @@ type DiffOptions struct {
 	FileFlags  FileFlags
 	FileFlags2 FileFlags2
 	DiffFlags  DiffFlags
+	SSAFlags   SSAFlags
 }
 
 func NewDiffOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *DiffOptions {
@@ -30,14 +32,24 @@ func NewDiffCmd(o *DiffOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		Use:   "diff",
 		Short: "Diff files against files2",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
+		PreRunE: func(cmd *cobra.Command, _ []string) error {
+			return o.ValidateAndAdjustFlags(cmd)
+		},
 	}
 	o.FileFlags.Set(cmd)
 	o.FileFlags2.Set(cmd)
+
 	o.DiffFlags.SetWithPrefix("", cmd)
+	o.SSAFlags.Set(cmd)
 	return cmd
+}
+func (o *DiffOptions) ValidateAndAdjustFlags(cmd *cobra.Command) error {
+	return AdjustDiffFlags(o.SSAFlags, &o.DiffFlags, "", cmd)
 }
 
 func (o *DiffOptions) Run() error {
+	ctx := context.Background()
+
 	newResources, err := o.fileResources(o.FileFlags.Files)
 	if err != nil {
 		return err
@@ -48,9 +60,9 @@ func (o *DiffOptions) Run() error {
 		return err
 	}
 
-	changeFactory := ctldiff.NewChangeFactory(nil, nil)
+	changeFactory := ctldiff.NewChangeFactory(nil, nil, ctlres.NewIdentifiedResources(nil, nil, nil, nil, nil))
 
-	changes, err := ctldiff.NewChangeSet(existingResources, newResources, o.DiffFlags.ChangeSetOpts, changeFactory).Calculate()
+	changes, err := ctldiff.NewChangeSet(existingResources, newResources, o.DiffFlags.ChangeSetOpts, changeFactory).Calculate(ctx)
 	if err != nil {
 		return err
 	}

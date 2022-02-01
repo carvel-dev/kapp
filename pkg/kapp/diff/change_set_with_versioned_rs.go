@@ -4,6 +4,7 @@
 package diff
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
@@ -28,10 +29,14 @@ type ChangeSetWithVersionedRs struct {
 func NewChangeSetWithVersionedRs(existingRs, newRs []ctlres.Resource,
 	rules []ctlconf.TemplateRule, opts ChangeSetOpts, changeFactory ChangeFactory) *ChangeSetWithVersionedRs {
 
+	if opts.Mode == "" {
+		opts.Mode = ExactChangeSetMode
+	}
+
 	return &ChangeSetWithVersionedRs{existingRs, newRs, rules, opts, changeFactory}
 }
 
-func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
+func (d ChangeSetWithVersionedRs) Calculate(ctx context.Context) ([]Change, error) {
 	existingRs := existingVersionedResources(d.existingRs)
 	existingRsGrouped := d.groupResources(existingRs.Versioned)
 
@@ -42,14 +47,14 @@ func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 
 	// First try to calculate changes will update references on all resources
 	// (which includes versioned and non-versioned resources)
-	_, _, err := d.addChanges(newRs, existingRsGrouped)
+	_, _, err := d.addChanges(ctx, newRs, existingRsGrouped)
 	if err != nil {
 		return nil, err
 	}
 
 	// Since there might have been circular dependencies;
 	// second try catches ones that werent changed during first run
-	addChanges, alreadyAdded, err := d.addChanges(newRs, existingRsGrouped)
+	addChanges, alreadyAdded, err := d.addChanges(ctx, newRs, existingRsGrouped)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +71,7 @@ func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 	nonVersionedChangeSet := NewChangeSet(
 		existingRs.NonVersioned, newRs.NonVersioned, d.opts, d.changeFactory)
 
-	nonVersionedChanges, err := nonVersionedChangeSet.Calculate()
+	nonVersionedChanges, err := nonVersionedChangeSet.Calculate(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +119,7 @@ func (d ChangeSetWithVersionedRs) assignNewNames(
 }
 
 func (d ChangeSetWithVersionedRs) addChanges(
-	newRs versionedResources, existingRsGrouped map[string][]ctlres.Resource) (
+	ctx context.Context, newRs versionedResources, existingRsGrouped map[string][]ctlres.Resource) (
 	[]Change, map[string]ctlres.Resource, error) {
 
 	changes := []Change{}
@@ -128,7 +133,7 @@ func (d ChangeSetWithVersionedRs) addChanges(
 			existingRes := existingRs[len(existingRs)-1]
 
 			// Calculate update change to determine if anything changed
-			updateChange, err := d.newChange(existingRes, newRes)
+			updateChange, err := d.newChange(ctx, existingRes, newRes)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -144,7 +149,7 @@ func (d ChangeSetWithVersionedRs) addChanges(
 			}
 		} else {
 			// Since there no existing resource, create change for new resource
-			addChange, err := d.newChange(nil, newRes)
+			addChange, err := d.newChange(ctx, nil, newRes)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -205,7 +210,7 @@ func (d ChangeSetWithVersionedRs) keepAndDeleteChanges(
 
 		// Create changes to delete all or extra resources
 		for _, existingRes := range existingRs[0 : len(existingRs)-numToKeep] {
-			change, err := d.newChange(existingRes, nil)
+			change, err := d.newChange(nil, existingRes, nil)
 			if err != nil {
 				return nil, err
 			}
@@ -249,12 +254,16 @@ func (ChangeSetWithVersionedRs) numOfResourcesToKeep(res ctlres.Resource) (int, 
 	return numToKeep, nil
 }
 
-func (d ChangeSetWithVersionedRs) newChange(existingRes, newRes ctlres.Resource) (Change, error) {
-	changeFactoryFunc := d.changeFactory.NewExactChange
-	if d.opts.AgainstLastApplied {
-		changeFactoryFunc = d.changeFactory.NewChangeAgainstLastApplied
+func (d ChangeSetWithVersionedRs) newChange(ctx context.Context, existingRes, newRes ctlres.Resource) (Change, error) {
+	switch d.opts.Mode {
+	case ExactChangeSetMode:
+		return d.changeFactory.NewExactChange(ctx, existingRes, newRes)
+	case AgainstLastAppliedChangeSetMode:
+		return d.changeFactory.NewChangeAgainstLastApplied(ctx, existingRes, newRes)
+	case ServerSideApplyChangeSetMode:
+		return d.changeFactory.NewChangeSSA(ctx, existingRes, newRes)
 	}
-	return changeFactoryFunc(existingRes, newRes)
+	panic("!unreachable")
 }
 
 type versionedResources struct {

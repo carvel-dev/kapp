@@ -4,12 +4,13 @@
 package clusterapply
 
 import (
+	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/types"
 	"time"
 
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	"github.com/k14s/kapp/pkg/kapp/util"
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -26,7 +27,10 @@ const (
 )
 
 type AddOrUpdateChangeOpts struct {
-	DefaultUpdateStrategy string
+	DefaultUpdateStrategy   string
+	ServerSideApply         bool
+	ServerSideForceConflict bool
+	FieldManagerName        string
 }
 
 type AddOrUpdateChange struct {
@@ -131,7 +135,7 @@ func (c AddOrUpdateChange) tryToResolveUpdateConflict(
 		changeSet := c.changeSetFactory.New([]ctlres.Resource{latestExistingRes},
 			[]ctlres.Resource{c.change.AppliedResource()})
 
-		recalcChanges, err := changeSet.Calculate()
+		recalcChanges, err := changeSet.Calculate(context.TODO())
 		if err != nil {
 			return err
 		}
@@ -172,7 +176,7 @@ func (c AddOrUpdateChange) tryToUpdateAfterCreateConflict() error {
 		changeSet := c.changeSetFactory.New([]ctlres.Resource{latestExistingRes},
 			[]ctlres.Resource{c.change.AppliedResource()})
 
-		recalcChanges, err := changeSet.Calculate()
+		recalcChanges, err := changeSet.Calculate(context.TODO())
 		if err != nil {
 			return err
 		}
@@ -218,36 +222,14 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 		return fmt.Errorf("Calculating change after the save: %s", err)
 	}
 
-	// first time, try using memory copy
-	latestResWithHistory := &savedResWithHistory
+	// Record last applied change on the latest version of a resource
+	recordHistoryPatch, err := savedResWithHistory.RecordLastAppliedResource(applyChange)
+	if err != nil {
+		return fmt.Errorf("Recording last applied resource: %s", err)
+	}
 
-	return util.Retry(time.Second, time.Minute, func() (bool, error) {
-		// subsequent times try to retrieve latest copy,
-		// for example, ServiceAccount seems to change immediately
-		if latestResWithHistory == nil {
-			res, err := c.identifiedResources.Get(savedRes)
-			if err != nil {
-				return false, err
-			}
-
-			resWithHistory := c.changeFactory.NewResourceWithHistory(res)
-			latestResWithHistory = &resWithHistory
-		}
-
-		// Record last applied change on the latest version of a resource
-		latestResWithHistoryUpdated, err := latestResWithHistory.RecordLastAppliedResource(applyChange)
-		if err != nil {
-			return true, fmt.Errorf("Recording last applied resource: %s", err)
-		}
-
-		_, err = c.identifiedResources.Update(latestResWithHistoryUpdated)
-		if err != nil {
-			latestResWithHistory = nil // Get again
-			return false, fmt.Errorf("Saving record of last applied resource: %s", err)
-		}
-
-		return true, nil
-	})
+	_, err = c.identifiedResources.Patch(savedRes, types.MergePatchType, recordHistoryPatch, ctlres.PatchOpts{})
+	return err
 }
 
 type AddPlainStrategy struct {
@@ -263,6 +245,26 @@ func (c AddPlainStrategy) Apply() error {
 		return err
 	}
 
+	// Create is recorded in the metadata.fieldManagers as
+	// Update operation creating distinct field manager from Apply operation,
+	// which means that these fields wont be updateable using SSA.
+	// To fix it, we change operation to be "Apply"
+	// See https://github.com/kubernetes/kubernetes/issues/107417 for details
+	if c.aou.opts.ServerSideApply {
+		createdRes, err = c.aou.identifiedResources.Patch(createdRes, types.JSONPatchType, []byte(`
+[
+	{ "op": "test", "path": "/metadata/managedFields/0/manager", "value": "`+c.aou.opts.FieldManagerName+`" },
+	{ "op": "replace", "path": "/metadata/managedFields/0/operation", "value": "Apply" }
+]
+`), ctlres.PatchOpts{})
+		if err != nil {
+			// TODO: potentially patch can fail if '"op": "test"' fails, which can happen if another
+			// controller changes managedFields. We
+			return err
+		}
+
+	}
+
 	return c.aou.recordAppliedResource(createdRes)
 }
 
@@ -275,13 +277,27 @@ func (c AddOrFallbackOnUpdateStrategy) Op() ClusterChangeApplyStrategyOp {
 	return createStrategyFallbackOnUpdateAnnValue
 }
 
-func (c AddOrFallbackOnUpdateStrategy) Apply() error {
-	createdRes, err := c.aou.identifiedResources.Create(c.newRes)
-	if err != nil {
-		if errors.IsAlreadyExists(err) {
-			return c.aou.tryToUpdateAfterCreateConflict()
+func (c AddOrFallbackOnUpdateStrategy) Apply() (err error) {
+	var createdRes ctlres.Resource
+	if c.aou.opts.ServerSideApply {
+		resBytes, err := c.newRes.AsYAMLBytes()
+		if err != nil {
+			return err
 		}
-		return err
+
+		// Apply patch is like upsert, combining create + update, no need to fallback on error
+		createdRes, err = c.aou.identifiedResources.Patch(c.newRes, types.ApplyPatchType, resBytes, ctlres.PatchOpts{})
+		if err != nil {
+			return err
+		}
+	} else {
+		createdRes, err = c.aou.identifiedResources.Create(c.newRes)
+		if err != nil {
+			if errors.IsAlreadyExists(err) {
+				return c.aou.tryToUpdateAfterCreateConflict()
+			}
+			return err
+		}
 	}
 
 	return c.aou.recordAppliedResource(createdRes)
@@ -295,11 +311,24 @@ type UpdatePlainStrategy struct {
 func (c UpdatePlainStrategy) Op() ClusterChangeApplyStrategyOp { return updateStrategyPlainAnnValue }
 
 func (c UpdatePlainStrategy) Apply() error {
-	updatedRes, err := c.aou.identifiedResources.Update(c.newRes)
-	if err != nil {
+	var updatedRes ctlres.Resource
+	var err error
+
+	if c.aou.opts.ServerSideApply {
+		updatedRes, err = ctlres.WithIdentityAnnotation(c.newRes, func(r ctlres.Resource) (ctlres.Resource, error) {
+			resBytes, err := r.AsYAMLBytes()
+			if err != nil {
+				return nil, err
+			}
+			return c.aou.identifiedResources.Patch(r, types.ApplyPatchType, resBytes, ctlres.PatchOpts{})
+		})
+	} else {
+		updatedRes, err = c.aou.identifiedResources.Update(c.newRes)
 		if errors.IsConflict(err) {
 			return c.aou.tryToResolveUpdateConflict(err, func(err error) error { return err })
 		}
+	}
+	if err != nil {
 		return err
 	}
 
@@ -323,8 +352,20 @@ func (c UpdateOrFallbackOnReplaceStrategy) Apply() error {
 		return err
 	}
 
-	updatedRes, err := c.aou.identifiedResources.Update(c.newRes)
+	var updatedRes ctlres.Resource
+	var err error
+
+	if c.aou.opts.ServerSideApply {
+		updatedRes, err = ctlres.WithIdentityAnnotation(c.newRes, func(r ctlres.Resource) (ctlres.Resource, error) {
+			resBytes, _ := r.AsYAMLBytes()
+			return c.aou.identifiedResources.Patch(r, types.ApplyPatchType, resBytes, ctlres.PatchOpts{})
+		})
+	} else {
+		updatedRes, err = c.aou.identifiedResources.Update(c.newRes)
+	}
+
 	if err != nil {
+		//TODO: find out if SSA conflicts worth retrying
 		if errors.IsConflict(err) {
 			return c.aou.tryToResolveUpdateConflict(err, replaceIfIsInvalidErrFunc)
 		}

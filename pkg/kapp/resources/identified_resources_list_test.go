@@ -61,7 +61,7 @@ func (r *FakeResources) Exists(ctlres.Resource, ctlres.ExistsOpts) (ctlres.Resou
 	return nil, true, nil
 }
 func (r *FakeResources) Get(ctlres.Resource) (ctlres.Resource, error) { return nil, nil }
-func (r *FakeResources) Patch(ctlres.Resource, types.PatchType, []byte) (ctlres.Resource, error) {
+func (r *FakeResources) Patch(ctlres.Resource, types.PatchType, []byte, ctlres.PatchOpts) (ctlres.Resource, error) {
 	return nil, nil
 }
 func (r *FakeResources) Update(ctlres.Resource) (ctlres.Resource, error) { return nil, nil }

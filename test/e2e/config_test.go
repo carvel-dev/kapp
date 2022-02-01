@@ -14,9 +14,9 @@ import (
 )
 
 func TestConfig(t *testing.T) {
-	env := BuildEnv(t)
+	env := BuildEnv(t, SSASkip)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env, logger}
 	kubectl := Kubectl{t, env.Namespace, logger}
 
 	config := `
@@ -126,9 +126,10 @@ data:
 }
 
 func TestYttRebaseRule_ServiceAccountRebaseTokenSecret(t *testing.T) {
-	env := BuildEnv(t)
+	// SSASkip: rebasing is not used with server side apply
+	env := BuildEnv(t, SSASkip)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env, logger}
 	kubectl := Kubectl{t, env.Namespace, logger}
 
 	// ServiceAccount controller appends secret named '${metadata.name}-token-${rand}'
@@ -249,9 +250,10 @@ secrets:
 }
 
 func TestYttRebaseRule_OverlayContractV1(t *testing.T) {
-	env := BuildEnv(t)
+	// SSASkip: rebasing is not used with server side apply
+	env := BuildEnv(t, SSASkip)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env, logger}
 	kubectl := Kubectl{t, env.Namespace, logger}
 
 	config := `
@@ -313,6 +315,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: test-cm
+  annotations:
+    ann1: val1
 data:
   key1: val1`
 
@@ -351,6 +355,7 @@ data:
 			"values": asYAML(t, map[string]interface{}{
 				"existing": func() interface{} {
 					raw := cm.Raw()
+					removeHistory(raw)
 					metadata := raw["metadata"].(map[string]interface{})
 					anns := metadata["annotations"].(map[string]interface{})
 					delete(anns, "kapp.k14s.io/identity")
@@ -358,8 +363,10 @@ data:
 				}(),
 				"_current": func() interface{} {
 					raw := cm.Raw()
+					removeHistory(raw)
 					metadata := raw["metadata"].(map[string]interface{})
-					delete(metadata, "annotations")
+					anns := metadata["annotations"].(map[string]interface{})
+					delete(anns, "kapp.k14s.io/identity")
 					data := raw["data"].(map[string]interface{})
 					data["changed_in_rebase_rule"] = "1"
 					return raw
@@ -375,6 +382,9 @@ data:
 						"labels": map[string]interface{}{
 							"kapp.k14s.io/app":         cm.Labels()["kapp.k14s.io/app"],
 							"kapp.k14s.io/association": cm.Labels()["kapp.k14s.io/association"],
+						},
+						"annotations": map[string]string{
+							"ann1": "val1",
 						},
 					},
 					"data": map[string]interface{}{

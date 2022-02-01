@@ -14,9 +14,28 @@ import (
 type Env struct {
 	Namespace      string
 	KappBinaryPath string
+	SSAEnabled     bool
 }
 
-func BuildEnv(t *testing.T) Env {
+type TestOption struct {
+	ServerSideSkip bool
+}
+
+// Skip this test when server-side testing mode enabled
+// Tests testing rebaseRules should be skipped as rebase
+// is completely bypassed in server side mode
+func SSASkip(o *TestOption) {
+	o.ServerSideSkip = true
+}
+
+type TestOptionfunc func(*TestOption)
+
+func BuildEnv(t *testing.T, optFunc ...TestOptionfunc) Env {
+	to := TestOption{}
+	for _, f := range optFunc {
+		f(&to)
+	}
+
 	kappPath := os.Getenv("KAPP_BINARY_PATH")
 	if kappPath == "" {
 		kappPath = "kapp"
@@ -26,6 +45,14 @@ func BuildEnv(t *testing.T) Env {
 		Namespace:      os.Getenv("KAPP_E2E_NAMESPACE"),
 		KappBinaryPath: kappPath,
 	}
+
+	if os.Getenv("KAPP_E2E_SSA") == "1" {
+		if to.ServerSideSkip {
+			t.Skip("SSA incompatible test")
+		}
+		env.SSAEnabled = true
+	}
+
 	env.Validate(t)
 	return env
 }
@@ -38,4 +65,5 @@ func (e Env) Validate(t *testing.T) {
 	}
 
 	require.Lenf(t, errStrs, 0, "%s", strings.Join(errStrs, "\n"))
+
 }

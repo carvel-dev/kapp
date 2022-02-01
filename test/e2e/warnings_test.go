@@ -22,7 +22,7 @@ func TestWarningsFlag(t *testing.T) {
 	}
 	env := BuildEnv(t)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, Logger{}}
+	kapp := Kapp{t, env, Logger{}}
 	crdName := "test-no-warnings-crd"
 	crName1 := "test-no-warnings-cr1"
 	crName2 := "test-no-warnings-cr2"
@@ -96,9 +96,9 @@ Wait to: 1 reconcile, 0 delete, 0 noop
 
 <replaced>: ---- applying 1 changes [0/1 done] ----
 Warning: <custom-warning>
-<replaced>: create crontab/cr-1 (stable.example.com/v1alpha1) namespace: kapp-test
+<replaced>: create crontab/cr-1 (stable.example.com/v1alpha1) namespace: ` + env.Namespace + `
 <replaced>: ---- waiting on 1 changes [0/1 done] ----
-<replaced>: ok: reconcile crontab/cr-1 (stable.example.com/v1alpha1) namespace: kapp-test
+<replaced>: ok: reconcile crontab/cr-1 (stable.example.com/v1alpha1) namespace: ` + env.Namespace + `
 <replaced>: ---- applying complete [1/1 done] ----
 <replaced>: ---- waiting complete [1/1 done] ----
 
@@ -127,9 +127,9 @@ Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 1 reconcile, 0 delete, 0 noop
 
 <replaced>: ---- applying 1 changes [0/1 done] ----
-<replaced>: create crontab/cr-2 (stable.example.com/v1alpha1) namespace: kapp-test
+<replaced>: create crontab/cr-2 (stable.example.com/v1alpha1) namespace: ` + env.Namespace + `
 <replaced>: ---- waiting on 1 changes [0/1 done] ----
-<replaced>: ok: reconcile crontab/cr-2 (stable.example.com/v1alpha1) namespace: kapp-test
+<replaced>: ok: reconcile crontab/cr-2 (stable.example.com/v1alpha1) namespace: ` + env.Namespace + `
 <replaced>: ---- applying complete [1/1 done] ----
 <replaced>: ---- waiting complete [1/1 done] ----
 

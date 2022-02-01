@@ -14,7 +14,7 @@ import (
 func TestIgnoreFailingAPIServices(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env, logger}
 
 	yaml1 := `
 ---
@@ -31,7 +31,7 @@ spec:
   insecureSkipTLSVerify: true
   service:
     name: redis-primary
-    namespace: kapp-test
+    namespace: ` + env.Namespace + `
   version: v1
   versionPriority: 100
 ---
@@ -116,7 +116,7 @@ metadata:
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "test-ignore-failing-api-service",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"owner":           "kapp",
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
@@ -128,8 +128,6 @@ metadata:
 	logger.Section("deploy app that uses failing api service", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name3}, RunOpts{
 			AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml3)})
-		require.Errorf(t, err, "Expected error when deploying with failing api service")
-
 		require.Contains(t, err.Error(), "unable to retrieve the complete list of server APIs: dummykapptest.com/v1: the server is currently unable to handle the request",
 			"Expected api retrieval error")
 	})
@@ -156,7 +154,7 @@ metadata:
 func TestIgnoreFailingGroupVersion(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env, logger}
 
 	yaml1 := `
 ---
@@ -211,7 +209,7 @@ spec:
       conversionReviewVersions: ["v1","v1beta1"]
       clientConfig:
         service:
-          namespace: kapp-test
+          namespace: ` + env.Namespace + `
           name: failing-group-version-webhook
           path: /convert
 `
@@ -266,7 +264,7 @@ spec: {}
 			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "test-ignore-failing-group-version",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"owner":           "kapp",
 			"reconcile_info":  "",
 			"reconcile_state": "ok",

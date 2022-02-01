@@ -6,7 +6,10 @@ package e2e
 import (
 	"bytes"
 	"fmt"
+	"github.com/cppforlife/go-cli-ui/ui"
+	"github.com/k14s/kapp/pkg/kapp/cmd"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -16,10 +19,9 @@ import (
 )
 
 type Kapp struct {
-	t         *testing.T
-	namespace string
-	kappPath  string
-	l         Logger
+	t *testing.T
+	Env
+	l Logger
 }
 
 type RunOpts struct {
@@ -40,11 +42,14 @@ func (k Kapp) Run(args []string) string {
 }
 
 func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
+	if k.SSAEnabled {
+		args = enableSSA(args)
+	}
 	if !opts.NoNamespace {
-		args = append(args, []string{"-n", k.namespace}...)
+		args = append(args, []string{"-n", k.Namespace}...)
 	}
 	if opts.IntoNs {
-		args = append(args, []string{"--into-ns", k.namespace}...)
+		args = append(args, []string{"--into-ns", k.Namespace}...)
 	}
 	if !opts.Interactive {
 		args = append(args, "--yes")
@@ -52,7 +57,7 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 
 	k.l.Debugf("Running '%s'...\n", k.cmdDesc(args, opts))
 
-	cmd := exec.Command(k.kappPath, args...)
+	cmd := exec.Command(k.KappBinaryPath, args...)
 	cmd.Stdin = opts.StdinReader
 
 	var stderr, stdout bytes.Buffer
@@ -96,10 +101,96 @@ func (k Kapp) RunWithOpts(args []string, opts RunOpts) (string, error) {
 	return stdoutStr, err
 }
 
+func (k Kapp) RunEmbedded(args []string, opts RunOpts) (string, error) {
+	if k.SSAEnabled {
+		args = enableSSA(args)
+	}
+	var stdoutBuf bytes.Buffer
+	var stdout io.Writer = &stdoutBuf
+
+	if opts.StdoutWriter != nil {
+		stdout = opts.StdoutWriter
+	}
+
+	confUI := ui.NewWrappingConfUI(ui.NewWriterUI(stdout, os.Stderr, ui.NewNoopLogger()), ui.NewNoopLogger())
+	defer confUI.Flush()
+
+	if !opts.NoNamespace {
+		args = append(args, []string{"-n", k.Namespace}...)
+	}
+	if opts.IntoNs {
+		args = append(args, []string{"--into-ns", k.Namespace}...)
+	}
+	if !opts.Interactive {
+		args = append(args, "--yes")
+	}
+
+	if opts.StdinReader != nil {
+		stdin, err := ioutil.ReadAll(opts.StdinReader)
+		if err != nil {
+			return "", fmt.Errorf("stdin err: %s", err)
+		}
+		tmpFile, err := newTmpFileSimple(string(stdin))
+		if err != nil {
+			return "", fmt.Errorf("tmpfile err: %s", err)
+		}
+		defer os.Remove(tmpFile.Name())
+		args = replaceArg(args, "-", tmpFile.Name())
+	}
+
+	command := cmd.NewDefaultKappCmd(confUI)
+	command.SetArgs(args)
+
+	err := command.Execute()
+	confUI.Flush()
+
+	if err != nil {
+		require.Truef(k.t, opts.AllowError, "Failed to successfully execute '%s': %v", k.cmdDesc(args, opts), err)
+	}
+	return stdoutBuf.String(), err
+}
+
+func enableSSA(args []string) []string {
+	args = replaceArg(args, "deploy", "deploy", "--ssa")
+	args = replaceArg(args, "diff", "diff", "--ssa")
+	return args
+}
+
+func replaceArg(s []string, elem string, replacement ...string) []string {
+	out := make([]string, 0, len(s))
+	for _, x := range s {
+		if x == elem {
+			out = append(out, replacement...)
+		} else {
+			out = append(out, x)
+		}
+	}
+	return out
+}
+
 func (k Kapp) cmdDesc(args []string, opts RunOpts) string {
 	prefix := "kapp"
 	if opts.Redact {
 		return prefix + " -redacted-"
 	}
 	return fmt.Sprintf("%s %s", prefix, strings.Join(args, " "))
+}
+
+func newTmpFileSimple(content string) (*os.File, error) {
+	file, err := ioutil.TempFile("", "kapp-e2e")
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = file.Write([]byte(content))
+	if err != nil {
+		return nil, err
+	}
+
+	err = file.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
 }
