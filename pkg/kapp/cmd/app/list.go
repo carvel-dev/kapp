@@ -10,6 +10,7 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
 )
@@ -20,6 +21,7 @@ type ListOptions struct {
 	logger      logger.Logger
 
 	NamespaceFlags cmdcore.NamespaceFlags
+	AppFilterFlags cmdtools.AppFilterFlags
 	AllNamespaces  bool
 }
 
@@ -38,6 +40,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		},
 	}
 	o.NamespaceFlags.Set(cmd, flagsFactory)
+	o.AppFilterFlags.Set(cmd)
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", false, "List apps in all namespaces")
 	return cmd
 }
@@ -58,7 +61,24 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
-	items, err := supportObjs.Apps.List(nil)
+	appFilter, err := o.AppFilterFlags.AppFilter()
+	if err != nil {
+		return err
+	}
+
+	filterLabelFlags := &LabelFlags{Labels: o.AppFilterFlags.Labels()}
+	filterLabelsMap, err := filterLabelFlags.AsMap()
+	if err != nil {
+		return err
+	}
+
+	labelFilteredApps, err := supportObjs.Apps.List(filterLabelsMap)
+	if err != nil {
+		return err
+	}
+
+	// filtering apps by age
+	items, err := appFilter.Apply(labelFilteredApps)
 	if err != nil {
 		return err
 	}
