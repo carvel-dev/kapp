@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cppforlife/color"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
@@ -23,17 +22,9 @@ func NewDeleting(resource ctlres.Resource) *Deleting {
 }
 
 func (s Deleting) IsDoneApplying() DoneApplyState {
-	return DoneApplyState{Done: false, Message: "Deleting"}
-}
-
-var (
-	uiWaitMsgPrefix = color.New(color.Faint).Sprintf(" ^ ")
-)
-
-func (s Deleting) BuildDescMsg(doneApplying bool) []string {
-	if !doneApplying && len(s.resource.Finalizers()) > 0 {
-		return []string{uiWaitMsgPrefix + fmt.Sprintf("Waiting on finalizers: %s",
+	if len(s.resource.Finalizers()) > 0 {
+		return DoneApplyState{Done: false, Message: fmt.Sprintf("Waiting on finalizers: %s",
 			strings.Join(s.resource.Finalizers(), ", "))}
 	}
-	return []string{}
+	return DoneApplyState{Done: false, Message: "Deleting"}
 }
