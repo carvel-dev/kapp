@@ -112,8 +112,8 @@ func (c DeleteOrphanStrategy) Apply() error {
 }
 
 func buildDescMsg(res ctlres.Resource, isDoneApplying bool) []string {
-	if deletingObj := ctlresm.NewDeleting(res); deletingObj != nil && !isDoneApplying{
-			return []string{uiWaitMsgPrefix + deletingObj.IsDoneApplying().Message}
+	if deletingObj := ctlresm.NewDeleting(res); deletingObj != nil && !isDoneApplying {
+		return []string{uiWaitMsgPrefix + deletingObj.IsDoneApplying().Message}
 	}
 	return []string{}
 }
