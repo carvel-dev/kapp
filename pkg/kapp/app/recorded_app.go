@@ -80,48 +80,48 @@ func (a *RecordedApp) UpdateUsedGVs(gvs []schema.GroupVersion) error {
 	})
 }
 
-func (a *RecordedApp) UsedGVKs() ([]schema.GroupVersionKind, error) {
+func (a *RecordedApp) UsedGKs() ([]schema.GroupKind, error) {
 	meta, err := a.meta()
 	if err != nil {
 		return nil, err
 	}
 
-	return meta.UsedGVKs, nil
+	return meta.UsedGKs, nil
 }
 
-func (a *RecordedApp) UpdateUsedGVKs(gvks []schema.GroupVersionKind, merge bool) ([]schema.GroupVersionKind, error) {
-	gvksByGVK := map[schema.GroupVersionKind]struct{}{}
-	var uniqGVKs []schema.GroupVersionKind
+func (a *RecordedApp) UpdateUsedGKs(gvks []schema.GroupKind, merge bool) ([]schema.GroupKind, error) {
+	gksByGK := map[schema.GroupKind]struct{}{}
+	var uniqGKs []schema.GroupKind
 
 	if merge {
-		usedGVKs, err := a.UsedGVKs()
+		usedGKs, err := a.UsedGKs()
 		if err != nil {
 			return nil, err
 		}
 
 		// Handle existing apps without cached GVKs
 		// These apps can cache and scope to GVKs in subsequent deploys
-		if usedGVKs == nil && len(a.memoizedMeta.LastChangeName) > 0 {
+		if usedGKs == nil && len(a.memoizedMeta.LastChangeName) > 0 {
 			return nil, nil
 		}
 
-		for _, gvk := range usedGVKs {
-			if _, found := gvksByGVK[gvk]; !found {
-				gvksByGVK[gvk] = struct{}{}
-				uniqGVKs = append(uniqGVKs, gvk)
+		for _, gk := range usedGKs {
+			if _, found := gksByGK[gk]; !found {
+				gksByGK[gk] = struct{}{}
+				uniqGKs = append(uniqGKs, gk)
 			}
 		}
 	}
 
-	for _, gvk := range gvks {
-		if _, found := gvksByGVK[gvk]; !found {
-			gvksByGVK[gvk] = struct{}{}
-			uniqGVKs = append(uniqGVKs, gvk)
+	for _, gk := range gvks {
+		if _, found := gksByGK[gk]; !found {
+			gksByGK[gk] = struct{}{}
+			uniqGKs = append(uniqGKs, gk)
 		}
 	}
 
-	return uniqGVKs, a.update(func(meta *Meta) {
-		meta.UsedGVKs = uniqGVKs
+	return uniqGKs, a.update(func(meta *Meta) {
+		meta.UsedGKs = uniqGKs
 	})
 }
 

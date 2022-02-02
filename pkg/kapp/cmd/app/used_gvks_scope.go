@@ -8,19 +8,19 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-type UsedGVKsScope struct {
+type UsedGKsScope struct {
 	newResources []ctlres.Resource
 }
 
-func NewUsedGVKsScope(newResources []ctlres.Resource) *UsedGVKsScope {
-	return &UsedGVKsScope{newResources}
+func NewUsedGKsScope(newResources []ctlres.Resource) *UsedGKsScope {
+	return &UsedGKsScope{newResources}
 }
 
-func (s *UsedGVKsScope) GVKs() []schema.GroupVersionKind {
-	var result []schema.GroupVersionKind
+func (s *UsedGKsScope) GKs() []schema.GroupKind {
+	var result []schema.GroupKind
 
 	for _, res := range s.newResources {
-		result = append(result, res.GroupVersionKind())
+		result = append(result, res.GroupKind())
 	}
 
 	return result

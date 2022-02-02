@@ -134,13 +134,13 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	usedGVKs, err := app.UpdateUsedGVKs(NewUsedGVKsScope(newResources).GVKs(), true)
+	usedGKs, err := app.UpdateUsedGKs(NewUsedGKsScope(newResources).GKs(), true)
 	if err != nil {
 		return err
 	}
 
 	existingResources, existingPodRs, err := o.existingResources(
-		newResources, labeledResources, resourceFilter, supportObjs.Apps, usedGVKs)
+		newResources, labeledResources, resourceFilter, supportObjs.Apps, usedGKs)
 	if err != nil {
 		return err
 	}
@@ -185,7 +185,7 @@ func (o *DeployOptions) Run() error {
 	}
 
 	// Cache possibly untracked GVKs in existing resources (handles older apps)
-	_, err = app.UpdateUsedGVKs(NewUsedGVKsScope(append(newResources, existingResources...)).GVKs(), false)
+	_, err = app.UpdateUsedGKs(NewUsedGKsScope(append(newResources, existingResources...)).GKs(), false)
 	if err != nil {
 		return err
 	}
@@ -284,7 +284,7 @@ func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
 
 func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 	labeledResources *ctlres.LabeledResources, resourceFilter ctlres.ResourceFilter,
-	apps ctlapp.Apps, usedGVKs []schema.GroupVersionKind) ([]ctlres.Resource, []ctlres.Resource, error) {
+	apps ctlapp.Apps, usedGKs []schema.GroupKind) ([]ctlres.Resource, []ctlres.Resource, error) {
 
 	labelErrorResolutionFunc := func(key string, val string) string {
 		items, _ := apps.List(nil)
@@ -308,7 +308,7 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 
 		//Scope resource searching to UsedGVKs
 		IdentifiedResourcesListOpts: ctlres.IdentifiedResourcesListOpts{
-			GVKsScope: usedGVKs,
+			GKsScope: usedGKs,
 		},
 	}
 

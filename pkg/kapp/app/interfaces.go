@@ -20,8 +20,8 @@ type App interface {
 	LabelSelector() (labels.Selector, error)
 	UsedGVs() ([]schema.GroupVersion, error)
 	UpdateUsedGVs([]schema.GroupVersion) error
-	UsedGVKs() ([]schema.GroupVersionKind, error)
-	UpdateUsedGVKs([]schema.GroupVersionKind, bool) ([]schema.GroupVersionKind, error)
+	UsedGKs() ([]schema.GroupKind, error)
+	UpdateUsedGKs([]schema.GroupKind, bool) ([]schema.GroupKind, error)
 
 	CreateOrUpdate(map[string]string) error
 	Exists() (bool, string, error)

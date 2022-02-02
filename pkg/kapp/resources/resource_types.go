@@ -271,11 +271,11 @@ func NonMatching(in []ResourceType, ref ResourceRef) []ResourceType {
 }
 
 // TODO: Extend ResourceRef and PartialResourceRefd to allow GVK matching
-func MatchingAnyGVK(in []ResourceType, gvks []schema.GroupVersionKind) []ResourceType {
+func MatchingAnyGK(in []ResourceType, gks []schema.GroupKind) []ResourceType {
 	var out []ResourceType
 	for _, item := range in {
-		for _, gvk := range gvks {
-			if item.APIResource.Group == gvk.Group && item.APIResource.Version == item.APIResource.Version && item.Kind == gvk.Kind {
+		for _, gk := range gks {
+			if item.APIResource.Group == gk.Group && item.Kind == gk.Kind {
 				out = append(out, item)
 			}
 		}

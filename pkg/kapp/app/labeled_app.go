@@ -42,8 +42,8 @@ func (a *LabeledApp) LabelSelector() (labels.Selector, error) {
 
 func (a *LabeledApp) UsedGVs() ([]schema.GroupVersion, error)       { return nil, nil }
 func (a *LabeledApp) UpdateUsedGVs(gvs []schema.GroupVersion) error { return nil }
-func (a *LabeledApp) UsedGVKs() ([]schema.GroupVersionKind, error)  { return nil, nil }
-func (a *LabeledApp) UpdateUsedGVKs([]schema.GroupVersionKind, bool) ([]schema.GroupVersionKind, error) {
+func (a *LabeledApp) UsedGKs() ([]schema.GroupKind, error)          { return nil, nil }
+func (a *LabeledApp) UpdateUsedGKs([]schema.GroupKind, bool) ([]schema.GroupKind, error) {
 	return nil, nil
 }
 

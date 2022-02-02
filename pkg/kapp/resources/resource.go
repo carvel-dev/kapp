@@ -21,6 +21,7 @@ type Resource interface {
 	GroupVersionResource() schema.GroupVersionResource
 	GroupVersionKind() schema.GroupVersionKind
 	GroupVersion() schema.GroupVersion
+	GroupKind() schema.GroupKind
 	Kind() string
 	APIVersion() string
 	APIGroup() string
@@ -141,6 +142,13 @@ func (r *ResourceImpl) GroupVersionResource() schema.GroupVersionResource {
 
 func (r *ResourceImpl) GroupVersionKind() schema.GroupVersionKind {
 	return r.un.GroupVersionKind()
+}
+
+func (r *ResourceImpl) GroupKind() schema.GroupKind {
+	return schema.GroupKind{
+		Group: r.APIGroup(),
+		Kind:  r.Kind(),
+	}
 }
 
 func (r *ResourceImpl) GroupVersion() schema.GroupVersion {
