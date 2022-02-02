@@ -275,7 +275,7 @@ func MatchingAnyGK(in []ResourceType, gks []schema.GroupKind) []ResourceType {
 	var out []ResourceType
 	for _, item := range in {
 		for _, gk := range gks {
-			if item.APIResource.Group == gk.Group && item.Kind == gk.Kind {
+			if (GKResourceRef{gk}).Matches(item) {
 				out = append(out, item)
 			}
 		}

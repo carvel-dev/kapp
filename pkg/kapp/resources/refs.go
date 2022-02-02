@@ -34,3 +34,11 @@ func (r PartialResourceRef) Matches(other schema.GroupVersionResource) bool {
 		return false
 	}
 }
+
+type GKResourceRef struct {
+	schema.GroupKind
+}
+
+func (r GKResourceRef) Matches(other ResourceType) bool {
+	return r.Group == other.APIResource.Group && r.Kind == other.Kind
+}
