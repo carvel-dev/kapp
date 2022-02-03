@@ -80,7 +80,7 @@ func (a *RecordedApp) UpdateUsedGVs(gvs []schema.GroupVersion) error {
 	})
 }
 
-func (a *RecordedApp) UsedGKs() ([]schema.GroupKind, error) {
+func (a *RecordedApp) usedGKs() ([]schema.GroupKind, error) {
 	meta, err := a.meta()
 	if err != nil {
 		return nil, err
@@ -89,20 +89,22 @@ func (a *RecordedApp) UsedGKs() ([]schema.GroupKind, error) {
 	return meta.UsedGKs, nil
 }
 
-func (a *RecordedApp) UpdateUsedGKs(gks []schema.GroupKind, merge bool) ([]schema.GroupKind, error) {
+func (a *RecordedApp) UsedGKs() ([]schema.GroupKind, error) { return a.usedGKs() }
+
+func (a *RecordedApp) UpdateUsedGKs(gks []schema.GroupKind, merge bool) error {
 	gksByGK := map[schema.GroupKind]struct{}{}
 	var uniqGKs []schema.GroupKind
 
 	if merge {
-		usedGKs, err := a.UsedGKs()
+		usedGKs, err := a.usedGKs()
 		if err != nil {
-			return nil, err
+			return nil
 		}
 
 		// Handle existing apps without cached GKs
 		// These apps can cache and scope to GKs in subsequent deploys
 		if usedGKs == nil && len(a.memoizedMeta.LastChangeName) > 0 {
-			return nil, nil
+			return nil
 		}
 
 		for _, gk := range usedGKs {
@@ -120,7 +122,7 @@ func (a *RecordedApp) UpdateUsedGKs(gks []schema.GroupKind, merge bool) ([]schem
 		}
 	}
 
-	return uniqGKs, a.update(func(meta *Meta) {
+	return a.update(func(meta *Meta) {
 		meta.UsedGKs = uniqGKs
 	})
 }
@@ -359,9 +361,15 @@ func (a *RecordedApp) update(doFunc func(*Meta)) error {
 
 	change.Data = meta.AsData()
 
-	_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), change, metav1.UpdateOptions{})
+	updatedMeta, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), change, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("Updating app: %s", err)
+	}
+
+	// Update memoized meta
+	_, err = a.setMeta(*updatedMeta)
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -134,7 +134,12 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	usedGKs, err := app.UpdateUsedGKs(NewUsedGKsScope(newResources).GKs(), true)
+	err = app.UpdateUsedGKs(NewUsedGKsScope(newResources).GKs(), true)
+	if err != nil {
+		return err
+	}
+
+	usedGKs, err := app.UsedGKs()
 	if err != nil {
 		return err
 	}
@@ -185,7 +190,7 @@ func (o *DeployOptions) Run() error {
 	}
 
 	// Cache possibly untracked GKs in existing resources (handles older apps)
-	_, err = app.UpdateUsedGKs(NewUsedGKsScope(append(newResources, existingResources...)).GKs(), false)
+	err = app.UpdateUsedGKs(NewUsedGKsScope(append(newResources, existingResources...)).GKs(), false)
 	if err != nil {
 		return err
 	}

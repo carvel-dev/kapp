@@ -21,7 +21,7 @@ type App interface {
 	UsedGVs() ([]schema.GroupVersion, error)
 	UpdateUsedGVs([]schema.GroupVersion) error
 	UsedGKs() ([]schema.GroupKind, error)
-	UpdateUsedGKs([]schema.GroupKind, bool) ([]schema.GroupKind, error)
+	UpdateUsedGKs([]schema.GroupKind, bool) error
 
 	CreateOrUpdate(map[string]string) error
 	Exists() (bool, string, error)
