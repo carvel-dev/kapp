@@ -361,16 +361,12 @@ func (a *RecordedApp) update(doFunc func(*Meta)) error {
 
 	change.Data = meta.AsData()
 
-	updatedMeta, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), change, metav1.UpdateOptions{})
+	_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), change, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("Updating app: %s", err)
 	}
 
-	// Update memoized meta
-	_, err = a.setMeta(*updatedMeta)
-	if err != nil {
-		return err
-	}
+	a.memoizedMeta = &meta
 
 	return nil
 }
