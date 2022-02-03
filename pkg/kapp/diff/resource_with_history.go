@@ -69,16 +69,7 @@ func (r ResourceWithHistory) AllowsRecordingLastApplied() bool {
 	return !found
 }
 
-func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ctlres.Resource, error) {
-	// Use compact representation to take as little space as possible
-	// because annotation value max length is 262144 characters
-	// (https://github.com/vmware-tanzu/carvel-kapp/issues/48).
-	appliedResBytes, err := appliedChange.AppliedResource().AsCompactBytes()
-	if err != nil {
-		return nil, err
-	}
-
-	diff := appliedChange.OpsDiff()
+func (r ResourceWithHistory) RecordLastAppliedResource(appliedResBytes []byte, diff OpsDiff) (ctlres.Resource, error) {
 
 	if resourceWithHistoryDebug {
 		fmt.Printf("%s: recording md5 %s\n---> \n%s\n",
@@ -98,19 +89,9 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ct
 		},
 	}
 
-	const annValMaxLen = 262144
-
-	for annKey, annVal := range annsMod.KVs {
-		if len(annVal) > annValMaxLen {
-			return nil, fmt.Errorf("Expected annotation '%s' value length %d to be <= max length %d "+
-				"(hint: consider using annotation '%s')",
-				annKey, len(annVal), annValMaxLen, disableOriginalAnnKey)
-		}
-	}
-
 	resultRes := r.resource.DeepCopy()
 
-	err = annsMod.Apply(resultRes)
+	err := annsMod.Apply(resultRes)
 	if err != nil {
 		return nil, err
 	}
