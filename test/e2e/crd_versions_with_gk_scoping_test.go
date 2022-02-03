@@ -60,6 +60,7 @@ spec:
 `
 
 	crdWithV1beta1Served := fmt.Sprintf(crdYamlTemplate, "true")
+	crdWithV1beta1NotServed := fmt.Sprintf(crdYamlTemplate, "false")
 
 	crYaml := `
 ---
@@ -77,8 +78,7 @@ spec:
 	yaml1 := fmt.Sprintf("%s\n%s", crdWithV1beta1Served, crYaml)
 
 	// Updating CRD to stop serving version v1beta1
-	// Removing CR from the manifest
-	yaml2 := fmt.Sprintf(crdYamlTemplate, "false")
+	yaml2 := fmt.Sprintf("%s\n%s", crdWithV1beta1NotServed, crYaml)
 
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
@@ -121,7 +121,7 @@ spec:
 		require.Exactlyf(t, expected, respRows, "Expected to see correct changes")
 	})
 
-	logger.Section("stop serving CRD on v1beta1 and remove cr from manifest", func() {
+	logger.Section("stop serving CRD on v1beta1", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-", "--json"}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
@@ -140,6 +140,18 @@ spec:
 				"reconcile_state": "ok",
 				"wait_to":         "reconcile",
 			},
+		}
+
+		require.Exactlyf(t, expected, replaceAge(respRows), "Expected to see correct changes")
+	})
+
+	logger.Section("remove cr from manifest", func() {
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-", "--json"}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(crdWithV1beta1NotServed)})
+
+		resp := uitest.JSONUIFromBytes(t, []byte(out))
+		respRows := resp.Tables[0].Rows
+
+		expected := []map[string]string{
 			{
 				"age":             "<replaced>",
 				"conditions":      "",
