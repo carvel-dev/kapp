@@ -24,7 +24,9 @@ func (r PartialResourceRef) Matches(other schema.GroupVersionResource) bool {
 	switch {
 	case len(s.Version) > 0 && len(s.Resource) > 0:
 		return s == other
-	case len(s.Version) > 0 && len(s.Resource) == 0:
+	case len(s.Resource) > 0:
+		return s.Group == other.Group && s.Resource == other.Resource
+	case len(s.Version) > 0:
 		return s.Group == other.Group && s.Version == other.Version
 	case len(s.Version) == 0 && len(s.Resource) == 0:
 		return s.Group == other.Group
