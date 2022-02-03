@@ -76,4 +76,3 @@ func (r *FakeResourceTypes) Find(ctlres.Resource) (ctlres.ResourceType, error) {
 	return ctlres.ResourceType{}, nil
 }
 func (r *FakeResourceTypes) CanIgnoreFailingGroupVersion(schema.GroupVersion) bool { return true }
-func (r *FakeResourceTypes) ScopeToUsedGVKs() bool                                 { return false }

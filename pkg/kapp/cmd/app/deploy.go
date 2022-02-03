@@ -184,7 +184,7 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	// Cache possibly untracked GVKs in existing resources (handles older apps)
+	// Cache possibly untracked GKs in existing resources (handles older apps)
 	_, err = app.UpdateUsedGKs(NewUsedGKsScope(append(newResources, existingResources...)).GKs(), false)
 	if err != nil {
 		return err
@@ -306,7 +306,7 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 		DisallowedResourcesByLabelKeys: []string{ctlapp.KappIsAppLabelKey},
 		LabelErrorResolutionFunc:       labelErrorResolutionFunc,
 
-		//Scope resource searching to UsedGVKs
+		//Scope resource searching to UsedGKs
 		IdentifiedResourcesListOpts: ctlres.IdentifiedResourcesListOpts{
 			GKsScope: usedGKs,
 		},
