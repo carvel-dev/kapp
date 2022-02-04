@@ -13,6 +13,7 @@ import (
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	"github.com/k14s/kapp/pkg/kapp/logger"
+	"github.com/k14s/kapp/pkg/kapp/util"
 	"github.com/spf13/cobra"
 )
 
@@ -23,8 +24,9 @@ type ListOptions struct {
 
 	AppFlags  cmdapp.Flags
 	TimeFlags TimeFlags
-	SortFlag  SortFlag
 }
+
+const dateFormat = "2006-01-02"
 
 func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ListOptions {
 	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger}
@@ -38,7 +40,6 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	o.AppFlags.Set(cmd, flagsFactory)
-	o.SortFlag.Set(cmd)
 	o.TimeFlags.Set(cmd)
 	return cmd
 }
@@ -54,21 +55,23 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
+	formats := []string{time.RFC3339, dateFormat}
+
 	if o.TimeFlags.Before != "" {
-		o.TimeFlags.BeforeTime, err = time.Parse(time.RFC3339, o.TimeFlags.Before)
+		o.TimeFlags.BeforeTime, err = util.ParseTime(o.TimeFlags.Before, formats)
 		if err != nil {
 			return err
 		}
 	}
 
 	if o.TimeFlags.After != "" {
-		o.TimeFlags.AfterTime, err = time.Parse(time.RFC3339, o.TimeFlags.After)
+		o.TimeFlags.AfterTime, err = util.ParseTime(o.TimeFlags.After, formats)
 		if err != nil {
 			return err
 		}
 	}
 
-	AppChangesTable{"App changes", changes, o.SortFlag, o.TimeFlags}.Print(o.ui)
+	AppChangesTable{"App changes", changes, o.TimeFlags}.Print(o.ui)
 
 	return nil
 }
@@ -76,7 +79,6 @@ func (o *ListOptions) Run() error {
 type AppChangesTable struct {
 	Title     string
 	Changes   []ctlapp.Change
-	SortFlag  SortFlag
 	TimeFlags TimeFlags
 }
 
@@ -96,18 +98,10 @@ func (t AppChangesTable) Print(ui ui.UI) {
 			uitable.NewHeader("Description"),
 			nsHeader,
 		},
-	}
-
-	if t.SortFlag.IsSortByNewestFirst() {
-		table.SortBy = []uitable.ColumnSort{
+		SortBy: []uitable.ColumnSort{
 			{Column: 1, Asc: false},
-			{Column: 0, Asc: true},
-		}
-	} else {
-		table.SortBy = []uitable.ColumnSort{
-			{Column: 1, Asc: true},
-			{Column: 0, Asc: true},
-		}
+			{Column: 0, Asc: true}, // in case start time are same
+		},
 	}
 
 	for _, change := range t.Changes {
