@@ -22,9 +22,8 @@ type EvaluationCtx struct {
 
 var _ template.EvaluationCtxDialect = EvaluationCtx{}
 
-func (e EvaluationCtx) PrepareNode(
-	parentNode template.EvaluationNode, val template.EvaluationNode) error {
-
+// PrepareNode pre-processes the template.EvaluationNode so that the resulting AST fully reflects having been evaluated.
+func (e EvaluationCtx) PrepareNode(parentNode template.EvaluationNode, val template.EvaluationNode) error {
 	if typedMap, ok := parentNode.(*yamlmeta.Map); ok {
 		if typedMapItem, ok := val.(*yamlmeta.MapItem); ok {
 			return MapItemOverride{e.implicitMapKeyOverrides}.Apply(typedMap, typedMapItem, true)
@@ -39,7 +38,7 @@ func (e EvaluationCtx) SetMapItemKey(node template.EvaluationNode, val interface
 		return nil
 	}
 
-	panic(fmt.Sprintf("expected node '%T' to be MapItem", node))
+	panic(fmt.Sprintf("expected node '%T' to be '%T'", node, &yamlmeta.MapItem{}))
 }
 
 func (e EvaluationCtx) Replace(
@@ -54,7 +53,7 @@ func (e EvaluationCtx) Replace(
 		parentNode := parentNodes[len(parentNodes)-2]
 		typedParentNode, ok := parentNode.(*yamlmeta.DocumentSet)
 		if !ok {
-			return fmt.Errorf("expected to find document set, but was %T", parentNode)
+			return fmt.Errorf("expected to find document set, but was %s", yamlmeta.TypeName(parentNode))
 		}
 
 		return e.replaceItemInDocSet(typedParentNode, typedCurrNode, val)
@@ -67,7 +66,7 @@ func (e EvaluationCtx) Replace(
 		parentNode := parentNodes[len(parentNodes)-2]
 		typedParentNode, ok := parentNode.(*yamlmeta.Map)
 		if !ok {
-			return fmt.Errorf("expected parent of map item to be map, but was %T", parentNode)
+			return fmt.Errorf("expected parent of map item to be a map, but was a %s", yamlmeta.TypeName(parentNode))
 		}
 
 		return e.replaceItemInMap(typedParentNode, typedCurrNode, val)
@@ -80,13 +79,13 @@ func (e EvaluationCtx) Replace(
 		parentNode := parentNodes[len(parentNodes)-2]
 		typedParentNode, ok := parentNode.(*yamlmeta.Array)
 		if !ok {
-			return fmt.Errorf("expected parent of array item to be array, but was %T", parentNode)
+			return fmt.Errorf("expected parent of array item to be an array, but was a %s", yamlmeta.TypeName(parentNode))
 		}
 
 		return e.replaceItemInArray(typedParentNode, typedCurrNode, val)
 
 	default:
-		return fmt.Errorf("expected to replace document value, map item or array item, but found %T", typedCurrNode)
+		return fmt.Errorf("expected to replace document value, map item or array item, but found %s", yamlmeta.TypeName(typedCurrNode))
 	}
 }
 
@@ -106,7 +105,7 @@ func (e EvaluationCtx) replaceItemInDocSet(dstDocSet *yamlmeta.DocumentSet, plac
 		}
 	}
 
-	return fmt.Errorf("expected to find placeholder doc in docset")
+	return fmt.Errorf("expected to find placeholder document in document set")
 }
 
 func (e EvaluationCtx) convertValToDocSetItems(val interface{}) ([]*yamlmeta.Document, error) {
@@ -122,7 +121,7 @@ func (e EvaluationCtx) convertValToDocSetItems(val interface{}) ([]*yamlmeta.Doc
 		result = typedVal.Items
 
 	default:
-		return nil, fmt.Errorf("expected value to be docset, but was %T", val)
+		return nil, fmt.Errorf("expected value to be document set, but was %s", yamlmeta.TypeName(val))
 	}
 
 	return result, nil
@@ -172,7 +171,7 @@ func (e EvaluationCtx) convertValToMapItems(val interface{}, position *filepos.P
 		return typedVal.Items, true, nil
 
 	default:
-		return nil, false, fmt.Errorf("expected value to be map, but was %T", val)
+		return nil, false, fmt.Errorf("expected value to be map, but was %s", yamlmeta.TypeName(val))
 	}
 }
 
@@ -208,7 +207,7 @@ func (e EvaluationCtx) convertValToArrayItems(val interface{}, position *filepos
 		result = typedVal.Items
 
 	default:
-		return nil, fmt.Errorf("expected value to be array, but was %T", val)
+		return nil, fmt.Errorf("expected value to be array, but was %s", yamlmeta.TypeName(val))
 	}
 
 	return result, nil

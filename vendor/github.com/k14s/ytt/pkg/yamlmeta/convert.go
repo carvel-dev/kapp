@@ -59,11 +59,8 @@ func convertToLowYAML(val interface{}) interface{} {
 
 func convertToGo(val interface{}) interface{} {
 	switch typedVal := val.(type) {
-	case *DocumentSet:
-		panic("Unexpected docset value within document")
-
-	case *Document:
-		panic("Unexpected document within document")
+	case *DocumentSet, *Document:
+		panic(fmt.Sprintf("Unexpected %T value within %T", val, &Document{}))
 
 	case *Map:
 		result := orderedmap.NewMap()
@@ -149,7 +146,7 @@ func convertToAST(val interface{}, defaultPosition *filepos.Position) interface{
 		return typedVal
 
 	case []interface{}:
-		result := &Array{}
+		result := &Array{Position: defaultPosition}
 		for _, item := range typedVal {
 			result.Items = append(result.Items, &ArrayItem{
 				Value:    convertToAST(item, defaultPosition),

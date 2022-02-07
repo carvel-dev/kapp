@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
+	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
@@ -169,6 +170,7 @@ func (b urlModule) QueryParamsDecode(thread *starlark.Thread, f *starlark.Builti
 		return starlark.None, err
 	}
 
+	encodedVal = b.allowQuerySemicolons(encodedVal)
 	urlVals, err := url.ParseQuery(encodedVal)
 	if err != nil {
 		return starlark.None, err
@@ -185,6 +187,19 @@ func (b urlModule) QueryParamsDecode(thread *starlark.Thread, f *starlark.Builti
 	}
 
 	return core.NewGoValue(result).AsStarlarkValue(), nil
+}
+
+// allowQuerySemicolons restores pre-Go 1.17 handling of query parameters.
+// Doing so defers making a breaking change as we upgrade from Go 1.16 to 1.17.
+// We expect to pass along this breaking change to end-users at some point, but not at this time (circa v0.37.x).
+// Shamelessly stolen from https://cs.opensource.google/go/go/+/refs/tags/go1.17.2:src/net/http/server.go;l=2892-2908
+// See also:
+// - https://golang.org/doc/go1.17#semicolons
+// - https://github.com/golang/go/issues/25192
+//   - particularly https://github.com/golang/go/issues/25192#issuecomment-789799446 which spells-out the vulnerability
+//     specifically.
+func (b urlModule) allowQuerySemicolons(encodedVal string) string {
+	return strings.ReplaceAll(encodedVal, ";", "&")
 }
 
 func (b urlModule) sortedKeys(vals url.Values) []string {
@@ -214,20 +229,23 @@ func (b urlModule) ParseURL(thread *starlark.Thread, f *starlark.Builtin, args s
 	return (&URLValue{parsedURL, nil}).AsStarlarkValue(), nil
 }
 
-func (uv *URLValue) Type() string { return "@ytt:url.value" }
+const urlValueTypeName = "url.value"
+
+// Type reports the fully-qualified name of type of this custom struct.
+func (uv *URLValue) Type() string { return "@ytt:" + urlValueTypeName }
 
 func (uv *URLValue) AsStarlarkValue() starlark.Value {
 	m := orderedmap.NewMap()
 	m.Set("user", uv.User())
-	m.Set("without_user", starlark.NewBuiltin("url.without_user", core.ErrWrapper(uv.WithoutUser)))
-	m.Set("string", starlark.NewBuiltin("url.string", core.ErrWrapper(uv.string)))
-	m.Set("hostname", starlark.NewBuiltin("url.hostname", core.ErrWrapper(uv.Hostname)))
+	m.Set("without_user", starlark.NewBuiltin(urlValueTypeName+".without_user", core.ErrWrapper(uv.WithoutUser)))
+	m.Set("string", starlark.NewBuiltin(urlValueTypeName+".string", core.ErrWrapper(uv.string)))
+	m.Set("hostname", starlark.NewBuiltin(urlValueTypeName+".hostname", core.ErrWrapper(uv.Hostname)))
 	uv.StarlarkStruct = core.NewStarlarkStruct(m)
 	return uv
 }
 
 func (uv *URLValue) ConversionHint() string {
-	return "URLValue does not automatically encode (hint: use .string())"
+	return uv.Type() + " does not automatically encode (hint: use .string())"
 }
 
 func (uv *URLValue) Hostname(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
@@ -258,10 +276,13 @@ func (uv *URLValue) User() starlark.Value {
 	return uu
 }
 
-func (uu *URLUser) Type() string { return "@ytt:url.user" }
+const urlUserTypeName = "url.user"
+
+// Type reports the fully-qualified name of type of this custom struct.
+func (uu *URLUser) Type() string { return "@ytt:" + urlUserTypeName }
 
 func (uu *URLUser) ConversionHint() string {
-	return "URLUser does not automatically encode (hint: use .string())"
+	return uu.Type() + " does not automatically encode (hint: use .string())"
 }
 
 func (uu *URLUser) password() starlark.Value {

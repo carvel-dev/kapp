@@ -17,26 +17,22 @@ type Node interface {
 	ResetValue()
 
 	GetComments() []*Comment
+	SetComments([]*Comment)
 	addComments(*Comment)
 
+	GetMeta(name string) interface{}
+	SetMeta(name string, data interface{})
 	GetAnnotations() interface{}
 	SetAnnotations(interface{})
 
 	DeepCopyAsInterface() interface{}
 	DeepCopyAsNode() Node
 
-	Check() TypeCheck
-
 	sealed() // limit the concrete types of Node to map directly only to types allowed in YAML spec.
-}
 
-type ValueHoldingNode interface {
-	Node
-	Val() interface{}
 }
 
 var _ = []Node{&DocumentSet{}, &Map{}, &Array{}}
-var _ = []ValueHoldingNode{&Document{}, &MapItem{}, &ArrayItem{}}
 
 type DocumentSet struct {
 	Comments    []*Comment
@@ -45,60 +41,56 @@ type DocumentSet struct {
 	Items    []*Document
 	Position *filepos.Position
 
+	meta          map[string]interface{}
 	annotations   interface{}
 	originalBytes *[]byte
 }
 
 type Document struct {
-	Type     Type
 	Comments []*Comment
 	Value    interface{}
 	Position *filepos.Position
 
+	meta        map[string]interface{}
 	annotations interface{}
 	injected    bool // indicates that Document was not present in the parsed content
 }
 
 type Map struct {
-	Type     Type
 	Comments []*Comment
 	Items    []*MapItem
 	Position *filepos.Position
 
+	meta        map[string]interface{}
 	annotations interface{}
 }
 
 type MapItem struct {
-	Type     Type
 	Comments []*Comment
 	Key      interface{}
 	Value    interface{}
 	Position *filepos.Position
 
+	meta        map[string]interface{}
 	annotations interface{}
 }
 
 type Array struct {
-	Type     Type
 	Comments []*Comment
 	Items    []*ArrayItem
 	Position *filepos.Position
 
+	meta        map[string]interface{}
 	annotations interface{}
 }
 
 type ArrayItem struct {
-	Type     Type
 	Comments []*Comment
 	Value    interface{}
 	Position *filepos.Position
 
+	meta        map[string]interface{}
 	annotations interface{}
-}
-
-type Scalar struct {
-	Position *filepos.Position
-	Value    interface{}
 }
 
 type Comment struct {

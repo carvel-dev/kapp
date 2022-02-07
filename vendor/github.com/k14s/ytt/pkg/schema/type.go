@@ -10,82 +10,135 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-var _ yamlmeta.Type = (*DocumentType)(nil)
-var _ yamlmeta.Type = (*MapType)(nil)
-var _ yamlmeta.Type = (*MapItemType)(nil)
-var _ yamlmeta.Type = (*ArrayType)(nil)
-var _ yamlmeta.Type = (*ArrayItemType)(nil)
-var _ yamlmeta.Type = (*AnyType)(nil)
-var _ yamlmeta.Type = (*NullType)(nil)
+// Type encapsulates a schema that describes a yamlmeta.Node.
+type Type interface {
+	AssignTypeTo(node yamlmeta.Node) TypeCheck
+	CheckType(node yamlmeta.Node) TypeCheck
+
+	GetValueType() Type
+	GetDefaultValue() interface{}
+	SetDefaultValue(interface{})
+	GetDefinitionPosition() *filepos.Position
+
+	GetDescription() string
+	SetDescription(string)
+	GetTitle() string
+	SetTitle(string)
+	GetExamples() []Example
+	SetExamples([]Example)
+	IsDeprecated() (bool, string)
+	SetDeprecated(bool, string)
+	String() string
+}
+
+var _ Type = (*DocumentType)(nil)
+var _ Type = (*MapType)(nil)
+var _ Type = (*MapItemType)(nil)
+var _ Type = (*ArrayType)(nil)
+var _ Type = (*ArrayItemType)(nil)
+var _ Type = (*ScalarType)(nil)
+var _ Type = (*AnyType)(nil)
+var _ Type = (*NullType)(nil)
 
 type DocumentType struct {
 	Source       *yamlmeta.Document
-	ValueType    yamlmeta.Type // typically one of: MapType, ArrayType, ScalarType
+	ValueType    Type // typically one of: MapType, ArrayType, ScalarType
 	Position     *filepos.Position
 	defaultValue interface{}
 }
 type MapType struct {
-	Items    []*MapItemType
-	Position *filepos.Position
+	Items         []*MapItemType
+	Position      *filepos.Position
+	documentation documentation
 }
 type MapItemType struct {
 	Key          interface{} // usually a string
-	ValueType    yamlmeta.Type
+	ValueType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
 }
 type ArrayType struct {
-	ItemsType    yamlmeta.Type
-	Position     *filepos.Position
-	defaultValue interface{}
+	ItemsType     Type
+	Position      *filepos.Position
+	defaultValue  interface{}
+	documentation documentation
 }
 type ArrayItemType struct {
-	ValueType    yamlmeta.Type
+	ValueType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
 }
 type ScalarType struct {
-	ValueType    interface{}
-	Position     *filepos.Position
-	defaultValue interface{}
+	ValueType     interface{}
+	Position      *filepos.Position
+	defaultValue  interface{}
+	documentation documentation
 }
 type AnyType struct {
-	ValueType yamlmeta.Type
-	Position  *filepos.Position
+	defaultValue  interface{}
+	Position      *filepos.Position
+	documentation documentation
 }
 type NullType struct {
-	ValueType yamlmeta.Type
-	Position  *filepos.Position
+	ValueType     Type
+	Position      *filepos.Position
+	documentation documentation
 }
 
-func (n NullType) GetDefaultValue() interface{} {
-	return nil
+// The total set of supported scalars.
+const (
+	FloatType  = float64(0)
+	StringType = ""
+	IntType    = int64(0)
+	BoolType   = false
+)
+
+// GetValueType provides the type of the value
+func (t *DocumentType) GetValueType() Type {
+	return t.ValueType
 }
 
-func (a AnyType) GetDefaultValue() interface{} {
-	if a.ValueType == nil {
-		return nil
-	}
-	return a.ValueType.GetDefaultValue() // delegate GetDefaultValue() functions will make defensive copy 👍
+// GetValueType provides the type of the value
+func (m MapType) GetValueType() Type {
+	panic("Not implemented because it is unreachable")
 }
 
-func (m ScalarType) GetDefaultValue() interface{} {
-	return m.defaultValue // scalar values are copied (even through an interface{} reference)
+// GetValueType provides the type of the value
+func (t MapItemType) GetValueType() Type {
+	return t.ValueType
 }
 
-func (a ArrayItemType) GetDefaultValue() interface{} {
-	panic(fmt.Sprintf("Unexpected call to GetDefaultValue() on %+v", a))
+// GetValueType provides the type of the value
+func (a ArrayType) GetValueType() Type {
+	return a.ItemsType
 }
 
-func (a ArrayType) GetDefaultValue() interface{} {
-	defaultValues := &yamlmeta.Array{Position: a.Position}
-	return defaultValues
+// GetValueType provides the type of the value
+func (a ArrayItemType) GetValueType() Type {
+	return a.ValueType
 }
 
-func (t MapItemType) GetDefaultValue() interface{} {
-	return &yamlmeta.MapItem{Key: t.Key, Value: t.ValueType.GetDefaultValue(), Position: t.Position}
+// GetValueType provides the type of the value
+func (s ScalarType) GetValueType() Type {
+	panic("Not implemented because it is unreachable")
 }
 
+// GetValueType provides the type of the value
+func (a AnyType) GetValueType() Type {
+	return &a
+}
+
+// GetValueType provides the type of the value
+func (n NullType) GetValueType() Type {
+	return n.ValueType
+}
+
+// GetDefaultValue provides the default value
+func (t DocumentType) GetDefaultValue() interface{} {
+	return &yamlmeta.Document{Value: t.defaultValue, Position: t.Position}
+}
+
+// GetDefaultValue provides the default value
 func (m MapType) GetDefaultValue() interface{} {
 	defaultValues := &yamlmeta.Map{Position: m.Position}
 	for _, item := range m.Items {
@@ -95,318 +148,458 @@ func (m MapType) GetDefaultValue() interface{} {
 	return defaultValues
 }
 
-func (t DocumentType) GetDefaultValue() interface{} {
-	return &yamlmeta.Document{Value: t.ValueType.GetDefaultValue(), Position: t.Position}
+// GetDefaultValue provides the default value
+func (t MapItemType) GetDefaultValue() interface{} {
+	return &yamlmeta.MapItem{Key: t.Key, Value: t.defaultValue, Position: t.Position}
 }
 
-func (n NullType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	childCheck := n.ValueType.AssignTypeTo(typeable)
-	chk.Violations = append(chk.Violations, childCheck.Violations...)
-	return
+// GetDefaultValue provides the default value
+func (a ArrayType) GetDefaultValue() interface{} {
+	return a.defaultValue
 }
 
-func (n NullType) GetValueType() yamlmeta.Type {
-	return n.ValueType
+// GetDefaultValue provides the default value
+func (a ArrayItemType) GetDefaultValue() interface{} {
+	panic(fmt.Sprintf("Unexpected call to GetDefaultValue() on %+v", a))
 }
 
-func (n NullType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
-	if len(node.GetValues()) == 1 && node.GetValues()[0] == nil {
-		return
+// GetDefaultValue provides the default value
+func (s ScalarType) GetDefaultValue() interface{} {
+	return s.defaultValue // scalar values are copied (even through an interface{} reference)
+}
+
+// GetDefaultValue provides the default value
+func (a AnyType) GetDefaultValue() interface{} {
+	if node, ok := a.defaultValue.(yamlmeta.Node); ok {
+		return node.DeepCopyAsInterface()
 	}
+	return a.defaultValue
+}
 
-	check := n.GetValueType().CheckType(node)
-	chk.Violations = check.Violations
+// GetDefaultValue provides the default value
+func (n NullType) GetDefaultValue() interface{} {
+	return nil
+}
 
+// SetDefaultValue sets the default value of the entire document to `val`
+func (t *DocumentType) SetDefaultValue(val interface{}) {
+	t.defaultValue = val
+}
+
+// SetDefaultValue is ignored as default values should be set on each MapItemType, individually.
+func (m *MapType) SetDefaultValue(val interface{}) {
+	// TODO: determine if we should set the contents of a MapType by setting the given Map...?
 	return
 }
 
-func (n NullType) GetDefinitionPosition() *filepos.Position {
-	return n.Position
+// SetDefaultValue sets the default value to `val`
+func (t *MapItemType) SetDefaultValue(val interface{}) {
+	t.defaultValue = val
 }
 
-func (n NullType) String() string {
-	return "null"
+// SetDefaultValue sets the default value to `val`
+func (a *ArrayType) SetDefaultValue(val interface{}) {
+	a.defaultValue = val
 }
 
-func (t *DocumentType) GetValueType() yamlmeta.Type {
-	panic("Not implemented because it is unreachable")
-}
-func (m MapType) GetValueType() yamlmeta.Type {
-	panic("Not implemented because it is unreachable")
-}
-func (t MapItemType) GetValueType() yamlmeta.Type {
-	return t.ValueType
-}
-func (a ArrayType) GetValueType() yamlmeta.Type {
-	panic("Not implemented because it is unreachable")
-}
-func (a ArrayItemType) GetValueType() yamlmeta.Type {
-	return a.ValueType
-}
-func (m ScalarType) GetValueType() yamlmeta.Type {
-	panic("Not implemented because it is unreachable")
-}
-func (a AnyType) GetValueType() yamlmeta.Type {
-	return a
+// SetDefaultValue sets the default value to `val`
+func (a *ArrayItemType) SetDefaultValue(val interface{}) {
+	a.defaultValue = val
 }
 
+// SetDefaultValue sets the default value to `val`
+func (s *ScalarType) SetDefaultValue(val interface{}) {
+	s.defaultValue = val
+}
+
+// SetDefaultValue does nothing
+func (a *AnyType) SetDefaultValue(val interface{}) {
+	a.defaultValue = val
+}
+
+// SetDefaultValue sets the default value of the wrapped type to `val`
+func (n *NullType) SetDefaultValue(val interface{}) {
+	n.GetValueType().SetDefaultValue(val)
+}
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (t *DocumentType) GetDefinitionPosition() *filepos.Position {
 	return t.Position
 }
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (m MapType) GetDefinitionPosition() *filepos.Position {
 	return m.Position
 }
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (t MapItemType) GetDefinitionPosition() *filepos.Position {
 	return t.Position
 }
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (a ArrayType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
 }
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (a ArrayItemType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
 }
-func (m ScalarType) GetDefinitionPosition() *filepos.Position {
-	return m.Position
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
+func (s ScalarType) GetDefinitionPosition() *filepos.Position {
+	return s.Position
 }
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (a AnyType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
 }
 
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
+func (n NullType) GetDefinitionPosition() *filepos.Position {
+	return n.Position
+}
+
+// GetDescription provides descriptive information
+func (t *DocumentType) GetDescription() string {
+	return ""
+}
+
+// GetDescription provides descriptive information
+func (m *MapType) GetDescription() string {
+	return m.documentation.description
+}
+
+// GetDescription provides descriptive information
+func (t *MapItemType) GetDescription() string {
+	return ""
+}
+
+// GetDescription provides descriptive information
+func (a *ArrayType) GetDescription() string {
+	return a.documentation.description
+}
+
+// GetDescription provides descriptive information
+func (a *ArrayItemType) GetDescription() string {
+	return ""
+}
+
+// GetDescription provides descriptive information
+func (s *ScalarType) GetDescription() string {
+	return s.documentation.description
+}
+
+// GetDescription provides descriptive information
+func (a *AnyType) GetDescription() string {
+	return a.documentation.description
+}
+
+// GetDescription provides descriptive information
+func (n *NullType) GetDescription() string {
+	return n.documentation.description
+}
+
+// SetDescription sets the description of the type
+func (t *DocumentType) SetDescription(desc string) {}
+
+// SetDescription sets the description of the type
+func (m *MapType) SetDescription(desc string) {
+	m.documentation.description = desc
+}
+
+// SetDescription sets the description of the type
+func (t *MapItemType) SetDescription(desc string) {}
+
+// SetDescription sets the description of the type
+func (a *ArrayType) SetDescription(desc string) {
+	a.documentation.description = desc
+}
+
+// SetDescription sets the description of the type
+func (a *ArrayItemType) SetDescription(desc string) {}
+
+// SetDescription sets the description of the type
+func (s *ScalarType) SetDescription(desc string) {
+	s.documentation.description = desc
+}
+
+// SetDescription sets the description of the type
+func (a *AnyType) SetDescription(desc string) {
+	a.documentation.description = desc
+}
+
+// SetDescription sets the description of the type
+func (n *NullType) SetDescription(desc string) {
+	n.documentation.description = desc
+}
+
+// GetTitle provides title information
+func (t *DocumentType) GetTitle() string {
+	return ""
+}
+
+// GetTitle provides title information
+func (m *MapType) GetTitle() string {
+	return m.documentation.title
+}
+
+// GetTitle provides title information
+func (t *MapItemType) GetTitle() string {
+	return ""
+}
+
+// GetTitle provides title information
+func (a *ArrayType) GetTitle() string {
+	return a.documentation.title
+}
+
+// GetTitle provides title information
+func (a *ArrayItemType) GetTitle() string {
+	return ""
+}
+
+// GetTitle provides title information
+func (s *ScalarType) GetTitle() string {
+	return s.documentation.title
+}
+
+// GetTitle provides title information
+func (a *AnyType) GetTitle() string {
+	return a.documentation.title
+}
+
+// GetTitle provides title information
+func (n *NullType) GetTitle() string {
+	return n.documentation.title
+}
+
+// SetTitle sets the title of the type
+func (t *DocumentType) SetTitle(title string) {}
+
+// SetTitle sets the title of the type
+func (m *MapType) SetTitle(title string) {
+	m.documentation.title = title
+}
+
+// SetTitle sets the title of the type
+func (t *MapItemType) SetTitle(title string) {}
+
+// SetTitle sets the title of the type
+func (a *ArrayType) SetTitle(title string) {
+	a.documentation.title = title
+}
+
+// SetTitle sets the title of the type
+func (a *ArrayItemType) SetTitle(title string) {}
+
+// SetTitle sets the title of the type
+func (s *ScalarType) SetTitle(title string) {
+	s.documentation.title = title
+}
+
+// SetTitle sets the title of the type
+func (a *AnyType) SetTitle(title string) {
+	a.documentation.title = title
+}
+
+// SetTitle sets the title of the type
+func (n *NullType) SetTitle(title string) {
+	n.documentation.title = title
+}
+
+// GetExamples provides descriptive example information
+func (t *DocumentType) GetExamples() []Example {
+	return nil
+}
+
+// GetExamples provides descriptive example information
+func (m *MapType) GetExamples() []Example {
+	return m.documentation.examples
+}
+
+// GetExamples provides descriptive example information
+func (t *MapItemType) GetExamples() []Example {
+	return nil
+}
+
+// GetExamples provides descriptive example information
+func (a *ArrayType) GetExamples() []Example {
+	return a.documentation.examples
+}
+
+// GetExamples provides descriptive example information
+func (a *ArrayItemType) GetExamples() []Example {
+	return nil
+}
+
+// GetExamples provides descriptive example information
+func (s *ScalarType) GetExamples() []Example {
+	return s.documentation.examples
+}
+
+// GetExamples provides descriptive example information
+func (a *AnyType) GetExamples() []Example {
+	return a.documentation.examples
+}
+
+// GetExamples provides descriptive example information
+func (n *NullType) GetExamples() []Example {
+	return n.documentation.examples
+}
+
+// SetExamples sets the description and example of the type
+func (t *DocumentType) SetExamples(data []Example) {}
+
+// SetExamples sets the description and example of the type
+func (m *MapType) SetExamples(exs []Example) {
+	m.documentation.examples = exs
+}
+
+// SetExamples sets the description and example of the type
+func (t *MapItemType) SetExamples(exs []Example) {}
+
+// SetExamples sets the description and example of the type
+func (a *ArrayType) SetExamples(exs []Example) {
+	a.documentation.examples = exs
+}
+
+// SetExamples sets the description and example of the type
+func (a *ArrayItemType) SetExamples(exs []Example) {}
+
+// SetExamples sets the description and example of the type
+func (s *ScalarType) SetExamples(exs []Example) {
+	s.documentation.examples = exs
+}
+
+// SetExamples sets the description and example of the type
+func (a *AnyType) SetExamples(exs []Example) {
+	a.documentation.examples = exs
+}
+
+// SetExamples sets the description and example of the type
+func (n *NullType) SetExamples(exs []Example) {
+	n.documentation.examples = exs
+}
+
+// IsDeprecated provides deprecated field information
+func (t *DocumentType) IsDeprecated() (bool, string) {
+	return false, ""
+}
+
+// IsDeprecated provides deprecated field information
+func (m *MapType) IsDeprecated() (bool, string) {
+	return m.documentation.deprecated, m.documentation.deprecationNotice
+
+}
+
+// IsDeprecated provides deprecated field information
+func (t *MapItemType) IsDeprecated() (bool, string) {
+	return false, ""
+}
+
+// IsDeprecated provides deprecated field information
+func (a *ArrayType) IsDeprecated() (bool, string) {
+	return a.documentation.deprecated, a.documentation.deprecationNotice
+}
+
+// IsDeprecated provides deprecated field information
+func (a *ArrayItemType) IsDeprecated() (bool, string) {
+	return false, ""
+}
+
+// IsDeprecated provides deprecated field information
+func (s *ScalarType) IsDeprecated() (bool, string) {
+	return s.documentation.deprecated, s.documentation.deprecationNotice
+}
+
+// IsDeprecated provides deprecated field information
+func (a *AnyType) IsDeprecated() (bool, string) {
+	return a.documentation.deprecated, a.documentation.deprecationNotice
+}
+
+// IsDeprecated provides deprecated field information
+func (n *NullType) IsDeprecated() (bool, string) {
+	return n.documentation.deprecated, n.documentation.deprecationNotice
+}
+
+// SetDeprecated sets the deprecated field value
+func (t *DocumentType) SetDeprecated(deprecated bool, notice string) {}
+
+// SetDeprecated sets the deprecated field value
+func (m *MapType) SetDeprecated(deprecated bool, notice string) {
+	m.documentation.deprecationNotice = notice
+	m.documentation.deprecated = deprecated
+}
+
+// SetDeprecated sets the deprecated field value
+func (t *MapItemType) SetDeprecated(deprecated bool, notice string) {}
+
+// SetDeprecated sets the deprecated field value
+func (a *ArrayType) SetDeprecated(deprecated bool, notice string) {
+	a.documentation.deprecationNotice = notice
+	a.documentation.deprecated = deprecated
+}
+
+// SetDeprecated sets the deprecated field value
+func (a *ArrayItemType) SetDeprecated(deprecated bool, notice string) {}
+
+// SetDeprecated sets the deprecated field value
+func (s *ScalarType) SetDeprecated(deprecated bool, notice string) {
+	s.documentation.deprecationNotice = notice
+	s.documentation.deprecated = deprecated
+}
+
+// SetDeprecated sets the deprecated field value
+func (a *AnyType) SetDeprecated(deprecated bool, notice string) {
+	a.documentation.deprecationNotice = notice
+	a.documentation.deprecated = deprecated
+}
+
+// SetDeprecated sets the deprecated field value
+func (n *NullType) SetDeprecated(deprecated bool, notice string) {
+	n.documentation.deprecationNotice = notice
+	n.documentation.deprecated = deprecated
+}
+
+// String produces a user-friendly name of the expected type.
 func (t *DocumentType) String() string {
-	return "document"
+	return yamlmeta.TypeName(&yamlmeta.Document{})
 }
+
+// String produces a user-friendly name of the expected type.
 func (m MapType) String() string {
-	return "map"
+	return yamlmeta.TypeName(&yamlmeta.Map{})
 }
+
+// String produces a user-friendly name of the expected type.
 func (t MapItemType) String() string {
 	return fmt.Sprintf("%s: %s", t.Key, t.ValueType.String())
 }
+
+// String produces a user-friendly name of the expected type.
 func (a ArrayType) String() string {
-	return "array"
+	return yamlmeta.TypeName(&yamlmeta.Array{})
 }
+
+// String produces a user-friendly name of the expected type.
 func (a ArrayItemType) String() string {
 	return fmt.Sprintf("- %s", a.ValueType.String())
 }
-func (m ScalarType) String() string {
-	switch m.ValueType.(type) {
-	case float64:
-		return "float"
-	case int:
-		return "integer"
-	case bool:
-		return "boolean"
-	default:
-		return fmt.Sprintf("%T", m.ValueType)
-	}
+
+// String produces a user-friendly name of the expected type.
+func (s ScalarType) String() string {
+	return yamlmeta.TypeName(s.ValueType)
 }
+
+// String produces a user-friendly name of the expected type.
 func (a AnyType) String() string {
 	return "any"
 }
 
-func (t *DocumentType) CheckType(_ yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
-	return
-}
-
-func (m *MapType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
-	nodeMap, ok := node.(*yamlmeta.Map)
-	if !ok {
-		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeAssertionError(node, m))
-		return
-	}
-
-	for _, item := range nodeMap.Items {
-		if !m.AllowsKey(item.Key) {
-			chk.Violations = append(chk.Violations,
-				NewUnexpectedKeyAssertionError(item, m.Position))
-		}
-	}
-	return
-}
-
-func (t *MapItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
-	_, ok := node.(*yamlmeta.MapItem)
-	if !ok {
-		// A Map must've yielded a non-MapItem which is not valid YAML
-		panic(fmt.Sprintf("MapItem type check was called on a non-MapItem: %#v", node))
-	}
-
-	return
-}
-
-func (a *ArrayType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
-	_, ok := node.(*yamlmeta.Array)
-	if !ok {
-		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeAssertionError(node, a))
-	}
-	return
-}
-
-func (a *ArrayItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
-	_, ok := node.(*yamlmeta.ArrayItem)
-	if !ok {
-		// An Array must've yielded a non-ArrayItem which is not valid YAML
-		panic(fmt.Sprintf("ArrayItem type check was called on a non-ArrayItem: %#v", node))
-	}
-	return
-}
-
-func (m *ScalarType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
-	value := node.GetValues()[0]
-	switch value.(type) {
-	case string:
-		if _, ok := m.ValueType.(string); !ok {
-			chk.Violations = append(chk.Violations,
-				NewMismatchedTypeAssertionError(node, m))
-		}
-	case float64:
-		if _, ok := m.ValueType.(float64); !ok {
-			chk.Violations = append(chk.Violations,
-				NewMismatchedTypeAssertionError(node, m))
-		}
-	case int, int64, uint64:
-		if _, ok := m.ValueType.(int); !ok {
-			if _, ok = m.ValueType.(float64); !ok {
-				chk.Violations = append(chk.Violations,
-					NewMismatchedTypeAssertionError(node, m))
-			}
-		}
-	case bool:
-		if _, ok := m.ValueType.(bool); !ok {
-			chk.Violations = append(chk.Violations,
-				NewMismatchedTypeAssertionError(node, m))
-		}
-	default:
-		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeAssertionError(node, m))
-	}
-	return
-}
-
-func (a AnyType) CheckType(_ yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
-	return
-}
-
-func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	doc, ok := typeable.(*yamlmeta.Document)
-	if !ok {
-		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeAssertionError(typeable, t))
-		return
-	}
-	doc.SetType(t)
-	typeableValue, isNode := doc.Value.(yamlmeta.Typeable)
-	if isNode {
-		childCheck := t.ValueType.AssignTypeTo(typeableValue)
-		chk.Violations = append(chk.Violations, childCheck.Violations...)
-	} // else, is a scalar
-	return chk
-}
-
-func (m *MapType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	mapNode, ok := typeable.(*yamlmeta.Map)
-	if !ok {
-		chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(typeable, m))
-		return
-	}
-	var foundKeys []interface{}
-	typeable.SetType(m)
-	for _, mapItem := range mapNode.Items {
-		for _, itemType := range m.Items {
-			if mapItem.Key == itemType.Key {
-				foundKeys = append(foundKeys, itemType.Key)
-				childCheck := itemType.AssignTypeTo(mapItem)
-				chk.Violations = append(chk.Violations, childCheck.Violations...)
-				break
-			}
-		}
-	}
-
-	m.applySchemaDefaults(foundKeys, chk, mapNode)
-	return
-}
-
-func (m *MapType) applySchemaDefaults(foundKeys []interface{}, chk yamlmeta.TypeCheck, mapNode *yamlmeta.Map) {
-	for _, item := range m.Items {
-		if contains(foundKeys, item.Key) {
-			continue
-		}
-
-		val := item.GetDefaultValue()
-		childCheck := item.AssignTypeTo(val.(*yamlmeta.MapItem))
-		chk.Violations = append(chk.Violations, childCheck.Violations...)
-		err := mapNode.AddValue(val)
-		if err != nil {
-			panic(fmt.Sprintf("Internal inconsistency: adding map item: %s", err))
-		}
-	}
-}
-
-func contains(haystack []interface{}, needle interface{}) bool {
-	for _, key := range haystack {
-		if key == needle {
-			return true
-		}
-	}
-	return false
-}
-
-func (t *MapItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	mapItem, ok := typeable.(*yamlmeta.MapItem)
-	if !ok {
-		panic(fmt.Sprintf("Attempt to assign type to a non-map-item (children of Maps can only be MapItems). type=%#v; typeable=%#v", t, typeable))
-	}
-	typeable.SetType(t)
-	typeableValue, isNode := mapItem.Value.(yamlmeta.Typeable)
-	if isNode {
-		childCheck := t.ValueType.AssignTypeTo(typeableValue)
-		chk.Violations = append(chk.Violations, childCheck.Violations...)
-	} // else, is scalar
-	return
-}
-
-func (a *ArrayType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	arrayNode, ok := typeable.(*yamlmeta.Array)
-	if !ok {
-		chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(typeable, a))
-		return
-	}
-	typeable.SetType(a)
-	for _, arrayItem := range arrayNode.Items {
-		childCheck := a.ItemsType.AssignTypeTo(arrayItem)
-		chk.Violations = append(chk.Violations, childCheck.Violations...)
-	}
-	return
-}
-
-func (a *ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	arrayItem, ok := typeable.(*yamlmeta.ArrayItem)
-	if !ok {
-		panic(fmt.Sprintf("Attempt to assign type to a non-array-item (children of Arrays can only be ArrayItems). type=%#v; typeable=%#v", a, typeable))
-	}
-	typeable.SetType(a)
-	typeableValue, isNode := arrayItem.Value.(yamlmeta.Typeable)
-	if isNode {
-		childCheck := a.ValueType.AssignTypeTo(typeableValue)
-		chk.Violations = append(chk.Violations, childCheck.Violations...)
-	} // else, is scalar
-	return
-}
-
-func (m *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
-	return yamlmeta.TypeCheck{[]error{NewMismatchedTypeAssertionError(typeable, m)}}
-}
-
-func (a AnyType) AssignTypeTo(yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	return
-}
-
-func (m *MapType) AllowsKey(key interface{}) bool {
-	for _, item := range m.Items {
-		if item.Key == key {
-			return true
-		}
-	}
-	return false
+// String produces a user-friendly name of the expected type.
+func (n NullType) String() string {
+	return "null"
 }

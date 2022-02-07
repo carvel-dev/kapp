@@ -7,10 +7,12 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 	"text/template"
 
 	"github.com/k14s/ytt/pkg/filepos"
+	"github.com/k14s/ytt/pkg/spell"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
@@ -18,23 +20,26 @@ const schemaErrorReportTemplate = `
 {{- if .Summary}}
 {{.Summary}}
 {{addBreak .Summary}}
-{{- end}}
+{{ end}}
 {{- range .AssertionFailures}}
 {{- if .Description}}
 {{.Description}}
 {{- end}}
 
 {{- if .FromMemory}}
-
 {{.SourceName}}:
 {{pad "#" ""}}
 {{pad "#" ""}} {{.Source}}
 {{pad "#" ""}}
 {{- else}}
-
 {{.FileName}}:
 {{pad "|" ""}}
-{{pad "|" .FilePos}} {{.Source}}
+{{- range .Positions}}
+{{- if .SkipLines}}
+{{pad "|" ""}} {{"..."}}
+{{- end}}
+{{pad "|" .Pos}} {{.Source}}
+{{- end}}
 {{pad "|" ""}}
 {{- end}}
 
@@ -43,8 +48,8 @@ const schemaErrorReportTemplate = `
 {{- range .Hints}}
 {{pad "=" ""}} hint: {{.}}
 {{- end}}
-{{- end}}
-{{.MiscErrorMessage}}
+{{end}}
+{{- .MiscErrorMessage}}
 `
 
 func NewSchemaError(summary string, errs ...error) error {
@@ -55,6 +60,7 @@ func NewSchemaError(summary string, errs ...error) error {
 			failures = append(failures, assertionFailure{
 				Description: typeCheckAssertionErr.description,
 				FileName:    typeCheckAssertionErr.position.GetFile(),
+				Positions:   createPosInfo(typeCheckAssertionErr.annPositions, typeCheckAssertionErr.position),
 				FilePos:     typeCheckAssertionErr.position.AsIntString(),
 				FromMemory:  typeCheckAssertionErr.position.FromMemory(),
 				SourceName:  "Data value calculated",
@@ -75,7 +81,8 @@ func NewSchemaError(summary string, errs ...error) error {
 	}
 }
 
-func NewMismatchedTypeAssertionError(foundType yamlmeta.TypeWithValues, expectedType yamlmeta.Type) error {
+// NewMismatchedTypeAssertionError generates an error given that `foundNode` is not of the `expectedType`.
+func NewMismatchedTypeAssertionError(foundNode yamlmeta.Node, expectedType Type) error {
 	var expectedTypeString string
 	if expectedType.GetDefinitionPosition().IsKnown() {
 		switch expectedType.(type) {
@@ -87,19 +94,43 @@ func NewMismatchedTypeAssertionError(foundType yamlmeta.TypeWithValues, expected
 	}
 
 	return schemaAssertionError{
-		position: foundType.GetPosition(),
+		position: foundNode.GetPosition(),
 		expected: fmt.Sprintf("%s (by %s)", expectedTypeString, expectedType.GetDefinitionPosition().AsCompactString()),
-		found:    foundType.ValueTypeAsString(),
+		found:    nodeValueTypeAsString(foundNode),
 	}
 }
 
-func NewUnexpectedKeyAssertionError(found *yamlmeta.MapItem, definition *filepos.Position) error {
-	return schemaAssertionError{
-		position: found.GetPosition(),
-		expected: fmt.Sprintf("(a key defined in map) (by %s)", definition.AsCompactString()),
-		found:    fmt.Sprintf("%v", found.Key),
-		hints:    []string{"declare data values in schema and override them in a data values document"},
+func nodeValueTypeAsString(n yamlmeta.Node) string {
+	switch typed := n.(type) {
+	case *yamlmeta.DocumentSet, *yamlmeta.Map, *yamlmeta.Array:
+		return yamlmeta.TypeName(typed)
+	default:
+		return yamlmeta.TypeName(typed.GetValues()[0])
 	}
+}
+
+// NewUnexpectedKeyAssertionError generates a schema assertion error including the context (and hints) needed to report it to the user
+func NewUnexpectedKeyAssertionError(found *yamlmeta.MapItem, definition *filepos.Position, allowedKeys []string) error {
+	key := fmt.Sprintf("%v", found.Key)
+	err := schemaAssertionError{
+		description: "Given data value is not declared in schema",
+		position:    found.GetPosition(),
+		found:       key,
+	}
+	sort.Strings(allowedKeys)
+	switch numKeys := len(allowedKeys); {
+	case numKeys == 1:
+		err.expected = fmt.Sprintf(`a %s with the key named "%s" (from %s)`, yamlmeta.TypeName(found), allowedKeys[0], definition.AsCompactString())
+	case numKeys > 1 && numKeys <= 9: // Miller's Law
+		err.expected = fmt.Sprintf("one of { %s } (from %s)", strings.Join(allowedKeys, ", "), definition.AsCompactString())
+	default:
+		err.expected = fmt.Sprintf("a key declared in map (from %s)", definition.AsCompactString())
+	}
+	mostSimilarKey := spell.Nearest(key, allowedKeys)
+	if mostSimilarKey != "" {
+		err.hints = append(err.hints, fmt.Sprintf(`did you mean "%s"?`, mostSimilarKey))
+	}
+	return err
 }
 
 type schemaError struct {
@@ -111,6 +142,7 @@ type schemaError struct {
 type assertionFailure struct {
 	Description string
 	FileName    string
+	Positions   []posInfo
 	Source      string
 	FilePos     string
 	FromMemory  bool
@@ -122,11 +154,41 @@ type assertionFailure struct {
 
 type schemaAssertionError struct {
 	error
-	position    *filepos.Position
-	description string
-	expected    string
-	found       string
-	hints       []string
+	annPositions []*filepos.Position
+	position     *filepos.Position
+	description  string
+	expected     string
+	found        string
+	hints        []string
+}
+
+type posInfo struct {
+	Pos       string
+	Source    string
+	SkipLines bool
+}
+
+func createPosInfo(annPosList []*filepos.Position, nodePos *filepos.Position) []posInfo {
+	sort.SliceStable(annPosList, func(i, j int) bool {
+		if !annPosList[i].IsKnown() {
+			return true
+		}
+		if !annPosList[j].IsKnown() {
+			return false
+		}
+		return annPosList[i].LineNum() < annPosList[j].LineNum()
+	})
+
+	allPositions := append(annPosList, nodePos)
+	var positionsInfo []posInfo
+	for i, p := range allPositions {
+		skipLines := false
+		if i > 0 {
+			skipLines = !p.IsNextTo(allPositions[i-1])
+		}
+		positionsInfo = append(positionsInfo, posInfo{Pos: p.AsIntString(), Source: p.GetLine(), SkipLines: skipLines})
+	}
+	return positionsInfo
 }
 
 func (e schemaError) Error() string {

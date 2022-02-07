@@ -12,13 +12,40 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
+// TypeName returns the user-friendly name of the type of `val`
+func TypeName(val interface{}) string {
+	switch val.(type) {
+	case *DocumentSet:
+		return "document set"
+	case *Document:
+		return "document"
+	case *Map:
+		return "map"
+	case *MapItem:
+		return "map item"
+	case *Array:
+		return "array"
+	case *ArrayItem:
+		return "array item"
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		return "integer"
+	case float32, float64:
+		return "float"
+	case bool:
+		return "boolean"
+	case nil:
+		return "null"
+	default:
+		return fmt.Sprintf("%T", val)
+	}
+}
+
 func (ds *DocumentSet) GetPosition() *filepos.Position { return ds.Position }
 func (d *Document) GetPosition() *filepos.Position     { return d.Position }
 func (m *Map) GetPosition() *filepos.Position          { return m.Position }
 func (mi *MapItem) GetPosition() *filepos.Position     { return mi.Position }
 func (a *Array) GetPosition() *filepos.Position        { return a.Position }
 func (ai *ArrayItem) GetPosition() *filepos.Position   { return ai.Position }
-func (s *Scalar) GetPosition() *filepos.Position       { return s.Position }
 
 func (ds *DocumentSet) SetPosition(position *filepos.Position) { ds.Position = position }
 func (d *Document) SetPosition(position *filepos.Position)     { d.Position = position }
@@ -27,34 +54,8 @@ func (mi *MapItem) SetPosition(position *filepos.Position)     { mi.Position = p
 func (a *Array) SetPosition(position *filepos.Position)        { a.Position = position }
 func (ai *ArrayItem) SetPosition(position *filepos.Position)   { ai.Position = position }
 
-func (ds *DocumentSet) ValueTypeAsString() string { return "documentSet" }
-func (d *Document) ValueTypeAsString() string     { return typeToString(d.Value) }
-func (m *Map) ValueTypeAsString() string          { return "map" }
-func (mi *MapItem) ValueTypeAsString() string     { return typeToString(mi.Value) }
-func (a *Array) ValueTypeAsString() string        { return "array" }
-func (ai *ArrayItem) ValueTypeAsString() string   { return typeToString(ai.Value) }
-func (s *Scalar) ValueTypeAsString() string       { return typeToString(s.Value) }
-
-func typeToString(value interface{}) string {
-	switch value.(type) {
-	case float64:
-		return "float"
-	case int, int64, uint64:
-		return "integer"
-	case bool:
-		return "boolean"
-	case nil:
-		return "null"
-	default:
-		if t, ok := value.(TypeWithValues); ok {
-			return t.ValueTypeAsString()
-		}
-		return fmt.Sprintf("%T", value)
-	}
-}
-
 func (ds *DocumentSet) SetValue(val interface{}) error {
-	return fmt.Errorf("cannot set value on a documentset")
+	return fmt.Errorf("cannot set value on a %s", TypeName(ds))
 }
 
 func (d *Document) SetValue(val interface{}) error {
@@ -63,7 +64,7 @@ func (d *Document) SetValue(val interface{}) error {
 }
 
 func (m *Map) SetValue(val interface{}) error {
-	return fmt.Errorf("cannot set value on a map")
+	return fmt.Errorf("cannot set value on a %s", TypeName(m))
 }
 
 func (mi *MapItem) SetValue(val interface{}) error {
@@ -72,7 +73,7 @@ func (mi *MapItem) SetValue(val interface{}) error {
 }
 
 func (a *Array) SetValue(val interface{}) error {
-	return fmt.Errorf("cannot set value on an array")
+	return fmt.Errorf("cannot set value on an %s", TypeName(a))
 }
 
 func (ai *ArrayItem) SetValue(val interface{}) error {
@@ -108,12 +109,12 @@ func (ds *DocumentSet) AddValue(val interface{}) error {
 		ds.Items = append(ds.Items, item)
 		return nil
 	}
-	return fmt.Errorf("cannot add non-document value (%T) into documentset", val)
+	return fmt.Errorf("document sets can only contain documents; this is a %s", TypeName(val))
 }
 
 func (d *Document) AddValue(val interface{}) error {
 	if !isValidValue(val) {
-		return fmt.Errorf("documents can only contain arrays, maps, or scalars; this is a %T", val)
+		return fmt.Errorf("documents can only contain arrays, maps, or scalars; this is a %s", TypeName(val))
 	}
 	d.Value = val
 	return nil
@@ -124,12 +125,12 @@ func (m *Map) AddValue(val interface{}) error {
 		m.Items = append(m.Items, item)
 		return nil
 	}
-	return fmt.Errorf("cannot add non-map-item value (%T) into map", val)
+	return fmt.Errorf("maps can only contain map items; this is a %s", TypeName(val))
 }
 
 func (mi *MapItem) AddValue(val interface{}) error {
 	if !isValidValue(val) {
-		return fmt.Errorf("mapitems can only contain arrays, maps, or scalars; this is a %T", val)
+		return fmt.Errorf("map items can only contain arrays, maps, or scalars; this is a %s", TypeName(val))
 	}
 	mi.Value = val
 	return nil
@@ -140,12 +141,12 @@ func (a *Array) AddValue(val interface{}) error {
 		a.Items = append(a.Items, item)
 		return nil
 	}
-	return fmt.Errorf("cannot add non-array-item value (%T) into array", val)
+	return fmt.Errorf("arrays can only contain array items; this is a %s", TypeName(val))
 }
 
 func (ai *ArrayItem) AddValue(val interface{}) error {
 	if !isValidValue(val) {
-		return fmt.Errorf("arrayitems can only contain maps, arrays, or scalars; this is a %T", val)
+		return fmt.Errorf("array items can only contain maps, arrays, or scalars; this is a %s", TypeName(val))
 	}
 	ai.Value = val
 	return nil
@@ -180,7 +181,6 @@ func (a *Array) GetValues() []interface{} {
 }
 
 func (ai *ArrayItem) GetValues() []interface{} { return []interface{}{ai.Value} }
-func (s *Scalar) GetValues() []interface{}     { return []interface{}{s.Value} }
 
 func (ds *DocumentSet) GetComments() []*Comment { return ds.Comments }
 func (d *Document) GetComments() []*Comment     { return d.Comments }
@@ -189,14 +189,32 @@ func (mi *MapItem) GetComments() []*Comment     { return mi.Comments }
 func (a *Array) GetComments() []*Comment        { return a.Comments }
 func (ai *ArrayItem) GetComments() []*Comment   { return ai.Comments }
 
+// SetComments replaces comments with "c"
+func (ds *DocumentSet) SetComments(c []*Comment) { ds.Comments = c }
+
+// SetComments replaces comments with "c"
+func (d *Document) SetComments(c []*Comment) { d.Comments = c }
+
+// SetComments replaces comments with "c"
+func (m *Map) SetComments(c []*Comment) { m.Comments = c }
+
+// SetComments replaces comments with "c"
+func (mi *MapItem) SetComments(c []*Comment) { mi.Comments = c }
+
+// SetComments replaces comments with "c"
+func (a *Array) SetComments(c []*Comment) { a.Comments = c }
+
+// SetComments replaces comments with "c"
+func (ai *ArrayItem) SetComments(c []*Comment) { ai.Comments = c }
+
 func (ds *DocumentSet) addComments(comment *Comment) { ds.Comments = append(ds.Comments, comment) }
 func (d *Document) addComments(comment *Comment)     { d.Comments = append(d.Comments, comment) }
 func (m *Map) addComments(comment *Comment) {
-	panic(fmt.Sprintf("Attempted to attach comment (%s) to Map (%v); maps cannot carry comments", comment.Data, m))
+	panic(fmt.Sprintf("Attempted to attach (%#v) to (%#v)", comment, m))
 }
 func (mi *MapItem) addComments(comment *Comment) { mi.Comments = append(mi.Comments, comment) }
 func (a *Array) addComments(comment *Comment) {
-	panic(fmt.Sprintf("Attempted to attach comment (%s) to Array (%v); arrays cannot carry comments", comment.Data, a))
+	panic(fmt.Sprintf("Attempted to attach (%#v) to (%#v)", comment, a))
 }
 func (ai *ArrayItem) addComments(comment *Comment) { ai.Comments = append(ai.Comments, comment) }
 
@@ -214,131 +232,67 @@ func (mi *MapItem) SetAnnotations(anns interface{})     { mi.annotations = anns 
 func (a *Array) SetAnnotations(anns interface{})        { a.annotations = anns }
 func (ai *ArrayItem) SetAnnotations(anns interface{})   { ai.annotations = anns }
 
-type TypeCheck struct {
-	Violations []error
-}
-
-func (tc TypeCheck) Error() string {
-	if !tc.HasViolations() {
-		return ""
-	}
-
-	msg := ""
-	for _, err := range tc.Violations {
-		msg += err.Error() + "\n"
-	}
-	return msg
-}
-
-func (tc *TypeCheck) HasViolations() bool {
-	return len(tc.Violations) > 0
-}
-
-func (ds *DocumentSet) Check() TypeCheck { return TypeCheck{} }
-func (d *Document) Check() (chk TypeCheck) {
-	switch typedContents := d.Value.(type) {
-	case Node:
-		chk = typedContents.Check()
-	}
-
-	return chk
-}
-func (m *Map) Check() (chk TypeCheck) {
-	if m.Type == nil {
-		return
-	}
-	check := m.Type.CheckType(m)
-	if check.HasViolations() {
-		chk.Violations = append(chk.Violations, check.Violations...)
-		return
-	}
-
-	for _, item := range m.Items {
-		check = item.Check()
-		if check.HasViolations() {
-			chk.Violations = append(chk.Violations, check.Violations...)
-		}
-	}
-	return
-}
-func (mi *MapItem) Check() (chk TypeCheck) {
-	check := mi.Type.CheckType(mi)
-	if check.HasViolations() {
-		chk.Violations = check.Violations
-		return
-	}
-
-	check = checkCollectionItem(mi.Value, mi.Type.GetValueType(), mi.Position)
-	if check.HasViolations() {
-		chk.Violations = append(chk.Violations, check.Violations...)
-	}
-	return
-}
-func (a *Array) Check() (chk TypeCheck) {
-	for _, item := range a.Items {
-		check := item.Check()
-		if check.HasViolations() {
-			chk.Violations = append(chk.Violations, check.Violations...)
-		}
-	}
-	return
-}
-func (ai *ArrayItem) Check() (chk TypeCheck) {
-	if ai.Type == nil {
-		return
-	}
-	// TODO: This check only ensures that the ai is of ArrayItem type
-	//       which we know because if it was not we would not assign
-	//       the type to it.
-	//       Given this maybe we can completely remove this check
-	//       Lets not forget that the check of the type of the item
-	//       is done by checkCollectionItem
-	chk = ai.Type.CheckType(ai)
-	if chk.HasViolations() {
-		return
-	}
-
-	check := checkCollectionItem(ai.Value, ai.Type.GetValueType(), ai.Position)
-	if check.HasViolations() {
-		chk.Violations = append(chk.Violations, check.Violations...)
-	}
-	return chk
-}
-
-// is it possible to enter this function with valueType=NullType or AnyType?
-func checkCollectionItem(value interface{}, valueType Type, position *filepos.Position) (chk TypeCheck) {
-	switch typedValue := value.(type) {
-	case *Map:
-		check := typedValue.Check()
-		chk.Violations = append(chk.Violations, check.Violations...)
-	case *Array:
-		check := typedValue.Check()
-		chk.Violations = append(chk.Violations, check.Violations...)
-	default:
-		chk = valueType.CheckType(&Scalar{Value: value, Position: position})
-	}
-	return chk
-}
-
 // Below methods disallow marshaling of nodes directly
 var _ []yaml.Marshaler = []yaml.Marshaler{&DocumentSet{}, &Document{}, &Map{}, &MapItem{}, &Array{}, &ArrayItem{}}
 
-func (ds *DocumentSet) MarshalYAML() (interface{}, error) { panic("Unexpected marshaling of docset") }
-func (d *Document) MarshalYAML() (interface{}, error)     { panic("Unexpected marshaling of doc") }
-func (m *Map) MarshalYAML() (interface{}, error)          { panic("Unexpected marshaling of map") }
-func (mi *MapItem) MarshalYAML() (interface{}, error)     { panic("Unexpected marshaling of mapitem") }
-func (a *Array) MarshalYAML() (interface{}, error)        { panic("Unexpected marshaling of array") }
-func (ai *ArrayItem) MarshalYAML() (interface{}, error)   { panic("Unexpected marshaling of arrayitem") }
+// MarshalYAML panics because Nodes cannot be marshalled directly.
+func (ds *DocumentSet) MarshalYAML() (interface{}, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", ds))
+}
+
+// MarshalYAML panics because Nodes cannot be marshalled directly.
+func (d *Document) MarshalYAML() (interface{}, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", d))
+}
+
+// MarshalYAML panics because Nodes cannot be marshalled directly.
+func (m *Map) MarshalYAML() (interface{}, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", m))
+}
+
+// MarshalYAML panics because Nodes cannot be marshalled directly.
+func (mi *MapItem) MarshalYAML() (interface{}, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", mi))
+}
+
+// MarshalYAML panics because Nodes cannot be marshalled directly.
+func (a *Array) MarshalYAML() (interface{}, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", a))
+}
+
+// MarshalYAML panics because Nodes cannot be marshalled directly.
+func (ai *ArrayItem) MarshalYAML() (interface{}, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", ai))
+}
 
 // Below methods disallow marshaling of nodes directly
 var _ []json.Marshaler = []json.Marshaler{&DocumentSet{}, &Document{}, &Map{}, &MapItem{}, &Array{}, &ArrayItem{}}
 
-func (ds *DocumentSet) MarshalJSON() ([]byte, error) { panic("Unexpected marshaling of docset") }
-func (d *Document) MarshalJSON() ([]byte, error)     { panic("Unexpected marshaling of doc") }
-func (m *Map) MarshalJSON() ([]byte, error)          { panic("Unexpected marshaling of map") }
-func (mi *MapItem) MarshalJSON() ([]byte, error)     { panic("Unexpected marshaling of mapitem") }
-func (a *Array) MarshalJSON() ([]byte, error)        { panic("Unexpected marshaling of array") }
-func (ai *ArrayItem) MarshalJSON() ([]byte, error)   { panic("Unexpected marshaling of arrayitem") }
+// MarshalJSON panics because Nodes cannot be marshalled directly.
+func (ds *DocumentSet) MarshalJSON() ([]byte, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", ds))
+}
+
+// MarshalJSON panics because Nodes cannot be marshalled directly.
+func (d *Document) MarshalJSON() ([]byte, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", d))
+}
+
+// MarshalJSON panics because Nodes cannot be marshalled directly.
+func (m *Map) MarshalJSON() ([]byte, error) { panic(fmt.Sprintf("Unexpected marshaling of %T", m)) }
+
+// MarshalJSON panics because Nodes cannot be marshalled directly.
+func (mi *MapItem) MarshalJSON() ([]byte, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", mi))
+}
+
+// MarshalJSON panics because Nodes cannot be marshalled directly.
+func (a *Array) MarshalJSON() ([]byte, error) { panic(fmt.Sprintf("Unexpected marshaling of %T", a)) }
+
+// MarshalJSON panics because Nodes cannot be marshalled directly.
+func (ai *ArrayItem) MarshalJSON() ([]byte, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", ai))
+}
 
 func (ds *DocumentSet) sealed() {}
 func (d *Document) sealed()     {}
@@ -346,3 +300,99 @@ func (m *Map) sealed()          {}
 func (mi *MapItem) sealed()     {}
 func (a *Array) sealed()        {}
 func (ai *ArrayItem) sealed()   {}
+
+// GetMeta returns the metadata named `name` that was previously attached via SetMeta()
+func (ds *DocumentSet) GetMeta(name string) interface{} {
+	if ds.meta == nil {
+		ds.meta = make(map[string]interface{})
+	}
+	return ds.meta[name]
+}
+
+// SetMeta attaches metadata identified by `name` than can later be retrieved via GetMeta()
+func (ds *DocumentSet) SetMeta(name string, data interface{}) {
+	if ds.meta == nil {
+		ds.meta = make(map[string]interface{})
+	}
+	ds.meta[name] = data
+}
+
+// GetMeta returns the metadata named `name` that was previously attached via SetMeta()
+func (d *Document) GetMeta(name string) interface{} {
+	if d.meta == nil {
+		d.meta = make(map[string]interface{})
+	}
+	return d.meta[name]
+}
+
+// SetMeta attaches metadata identified by `name` than can later be retrieved via GetMeta()
+func (d *Document) SetMeta(name string, data interface{}) {
+	if d.meta == nil {
+		d.meta = make(map[string]interface{})
+	}
+	d.meta[name] = data
+}
+
+// GetMeta returns the metadata named `name` that was previously attached via SetMeta()
+func (m *Map) GetMeta(name string) interface{} {
+	if m.meta == nil {
+		m.meta = make(map[string]interface{})
+	}
+	return m.meta[name]
+}
+
+// SetMeta attaches metadata identified by `name` than can later be retrieved via GetMeta()
+func (m *Map) SetMeta(name string, data interface{}) {
+	if m.meta == nil {
+		m.meta = make(map[string]interface{})
+	}
+	m.meta[name] = data
+}
+
+// GetMeta returns the metadata named `name` that was previously attached via SetMeta()
+func (mi *MapItem) GetMeta(name string) interface{} {
+	if mi.meta == nil {
+		mi.meta = make(map[string]interface{})
+	}
+	return mi.meta[name]
+}
+
+// SetMeta attaches metadata identified by `name` than can later be retrieved via GetMeta()
+func (mi *MapItem) SetMeta(name string, data interface{}) {
+	if mi.meta == nil {
+		mi.meta = make(map[string]interface{})
+	}
+	mi.meta[name] = data
+}
+
+// GetMeta returns the metadata named `name` that was previously attached via SetMeta()
+func (a *Array) GetMeta(name string) interface{} {
+	if a.meta == nil {
+		a.meta = make(map[string]interface{})
+	}
+	return a.meta[name]
+}
+
+// SetMeta attaches metadata identified by `name` than can later be retrieved via GetMeta()
+func (a *Array) SetMeta(name string, data interface{}) {
+	if a.meta == nil {
+		a.meta = make(map[string]interface{})
+	}
+	a.meta[name] = data
+}
+
+// GetMeta returns the metadata named `name` that was previously attached via SetMeta()
+func (ai *ArrayItem) GetMeta(name string) interface{} {
+	if ai.meta == nil {
+		ai.meta = make(map[string]interface{})
+	}
+	return ai.meta[name]
+}
+
+// SetMeta attaches metadata identified by `name` than can later be retrieved via GetMeta()
+func (ai *ArrayItem) SetMeta(name string, data interface{}) {
+	if ai.meta == nil {
+		ai.meta = make(map[string]interface{})
+	}
+	ai.meta[name] = data
+}

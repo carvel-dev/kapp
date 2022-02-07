@@ -10,10 +10,9 @@ import (
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
-	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/template"
+	"github.com/k14s/ytt/pkg/workspace/datavalues"
 	"github.com/k14s/ytt/pkg/yamlmeta"
-	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
 )
 
 type LibraryExecution struct {
@@ -46,91 +45,34 @@ func NewLibraryExecution(libraryCtx LibraryExecutionContext,
 	}
 }
 
-func (ll *LibraryExecution) Schemas(schemaOverlays []*schema.DocumentSchemaEnvelope) (Schema, []*schema.DocumentSchemaEnvelope, error) {
-	loader := NewTemplateLoader(NewEmptyDataValues(), nil, nil, ll.templateLoaderOpts, ll.libraryExecFactory, ll.ui)
+// Schemas calculates the final schema for the Data Values in this library by combining/overlaying the schema file(s)
+// in the library and the passed-in overlays.
+//
+// Returns this library's Schema and a slice of Schema intended for child libraries.
+func (ll *LibraryExecution) Schemas(overlays []*datavalues.SchemaEnvelope) (*datavalues.Schema, []*datavalues.SchemaEnvelope, error) {
+	loader := NewTemplateLoader(datavalues.NewEmptyEnvelope(), nil, nil, ll.templateLoaderOpts, ll.libraryExecFactory, ll.ui)
 
-	schemaFiles, err := ll.schemaFiles(loader)
+	files, err := ll.schemaFiles(loader)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	documentSchemas, err := collectSchemaDocs(schemaFiles, loader)
-	if err != nil {
-		return nil, nil, err
+	spp := DataValuesSchemaPreProcessing{
+		schemaFiles:    files,
+		schemaOverlays: overlays,
+		loader:         loader,
 	}
 
-	documentSchemas = append(documentSchemas, schemaOverlays...)
-
-	var resultSchemasDoc *yamlmeta.Document
-	var childLibrarySchemas []*schema.DocumentSchemaEnvelope
-	for _, docSchema := range documentSchemas {
-		if docSchema.IntendedForAnotherLibrary() {
-			childLibrarySchemas = append(childLibrarySchemas, docSchema)
-			continue
-		}
-		if resultSchemasDoc == nil {
-			resultSchemasDoc = docSchema.Source()
-		} else {
-			resultSchemasDoc, err = ll.overlay(resultSchemasDoc, docSchema.Source())
-			if err != nil {
-				return nil, nil, err
-			}
-		}
-	}
-	if resultSchemasDoc != nil {
-		currentLibrarySchema, err := schema.NewDocumentSchema(resultSchemasDoc)
-		if err != nil {
-			return nil, nil, err
-		}
-		return currentLibrarySchema, childLibrarySchemas, nil
-	}
-	return schema.NewNullSchema(), childLibrarySchemas, nil
+	return spp.Apply()
 }
 
-func collectSchemaDocs(schemaFiles []*FileInLibrary, loader *TemplateLoader) ([]*schema.DocumentSchemaEnvelope, error) {
-	var documentSchemas []*schema.DocumentSchemaEnvelope
-	for _, file := range schemaFiles {
-		libraryCtx := LibraryExecutionContext{Current: file.Library, Root: NewRootLibrary(nil)}
-
-		_, resultDocSet, err := loader.EvalYAML(libraryCtx, file.File)
-		if err != nil {
-			return nil, err
-		}
-
-		docs, _, err := DocExtractor{resultDocSet}.Extract(AnnotationDataValuesSchema)
-		if err != nil {
-			return nil, err
-		}
-		for _, doc := range docs {
-			newSchema, err := schema.NewDocumentSchemaEnvelope(doc)
-			if err != nil {
-				return nil, err
-			}
-			documentSchemas = append(documentSchemas, newSchema)
-		}
-	}
-	return documentSchemas, nil
-}
-
-func (ll *LibraryExecution) overlay(schema, overlay *yamlmeta.Document) (*yamlmeta.Document, error) {
-	op := yttoverlay.Op{
-		Left:   &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{schema}},
-		Right:  &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{overlay}},
-		Thread: &starlark.Thread{Name: "schema-pre-processing"},
-
-		ExactMatch: true,
-	}
-
-	newLeft, err := op.Apply()
-	if err != nil {
-		return nil, err
-	}
-
-	return newLeft.(*yamlmeta.DocumentSet).Items[0], nil
-}
-
-func (ll *LibraryExecution) Values(valuesOverlays []*DataValues, schema Schema) (*DataValues, []*DataValues, error) {
-	loader := NewTemplateLoader(NewEmptyDataValues(), nil, nil, ll.templateLoaderOpts, ll.libraryExecFactory, ll.ui)
+// Values calculates the final Data Values for this library by combining/overlaying defaults from the schema, the Data
+// Values file(s) in the library, and the passed-in Data Values overlays.
+//
+// Returns this library's Data Values and a collection of Data Values addressed to child libraries.
+// Returns an error if the overlay operation fails or the result over an overlay fails a schema check.
+func (ll *LibraryExecution) Values(valuesOverlays []*datavalues.Envelope, schema *datavalues.Schema) (*datavalues.Envelope, []*datavalues.Envelope, error) {
+	loader := NewTemplateLoader(datavalues.NewEmptyEnvelope(), nil, nil, ll.templateLoaderOpts, ll.libraryExecFactory, ll.ui)
 
 	valuesFiles, err := ll.valuesFiles(loader)
 	if err != nil {
@@ -138,22 +80,21 @@ func (ll *LibraryExecution) Values(valuesOverlays []*DataValues, schema Schema) 
 	}
 
 	dvpp := DataValuesPreProcessing{
-		valuesFiles:           valuesFiles,
-		valuesOverlays:        valuesOverlays,
-		schema:                schema,
-		loader:                loader,
-		IgnoreUnknownComments: ll.templateLoaderOpts.IgnoreUnknownComments,
+		valuesFiles:    valuesFiles,
+		valuesOverlays: valuesOverlays,
+		schema:         schema,
+		loader:         loader,
 	}
 
 	return dvpp.Apply()
 }
 
 func (ll *LibraryExecution) schemaFiles(loader *TemplateLoader) ([]*FileInLibrary, error) {
-	return ll.filesByAnnotation(AnnotationDataValuesSchema, loader)
+	return ll.filesByAnnotation(datavalues.AnnotationDataValuesSchema, loader)
 }
 
 func (ll *LibraryExecution) valuesFiles(loader *TemplateLoader) ([]*FileInLibrary, error) {
-	return ll.filesByAnnotation(AnnotationDataValues, loader)
+	return ll.filesByAnnotation(datavalues.AnnotationDataValues, loader)
 
 }
 
@@ -182,7 +123,13 @@ func (ll *LibraryExecution) filesByAnnotation(annName template.AnnotationName, l
 	return valuesFiles, nil
 }
 
-func (ll *LibraryExecution) Eval(values *DataValues, libraryValues []*DataValues, librarySchemas []*schema.DocumentSchemaEnvelope) (*EvalResult, error) {
+// Eval runs this LibraryExecution, evaluating all templates in this library and then applying overlays over that
+// result.
+//
+// Returns the final set of Documents and output files.
+// Returns an error if any template fails to evaluate, any overlay fails to apply, or if one or more "Envelopes" were
+// not delivered/used.
+func (ll *LibraryExecution) Eval(values *datavalues.Envelope, libraryValues []*datavalues.Envelope, librarySchemas []*datavalues.SchemaEnvelope) (*EvalResult, error) {
 	exports, docSets, outputFiles, err := ll.eval(values, libraryValues, librarySchemas)
 	if err != nil {
 		return nil, err
@@ -215,7 +162,7 @@ func (ll *LibraryExecution) Eval(values *DataValues, libraryValues []*DataValues
 	return result, nil
 }
 
-func (ll *LibraryExecution) eval(values *DataValues, libraryValues []*DataValues, librarySchemas []*schema.DocumentSchemaEnvelope) ([]EvalExport, map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, error) {
+func (ll *LibraryExecution) eval(values *datavalues.Envelope, libraryValues []*datavalues.Envelope, librarySchemas []*datavalues.SchemaEnvelope) ([]EvalExport, map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, error) {
 
 	loader := NewTemplateLoader(values, libraryValues, librarySchemas, ll.templateLoaderOpts, ll.libraryExecFactory, ll.ui)
 
@@ -304,7 +251,7 @@ func (*LibraryExecution) sortedOutputDocSets(outputDocSets map[*FileInLibrary]*y
 	return files
 }
 
-func (LibraryExecution) checkUnusedDVsOrSchemas(libraryValues []*DataValues, librarySchemas []*schema.DocumentSchemaEnvelope) error {
+func (LibraryExecution) checkUnusedDVsOrSchemas(libraryValues []*datavalues.Envelope, librarySchemas []*datavalues.SchemaEnvelope) error {
 	var unusedValuesDescs []string
 	var unusedDocTypes []string
 	numDVNotUsed := 0

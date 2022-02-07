@@ -29,8 +29,10 @@ func NewAPI(replaceNodeFunc tplcore.StarlarkFunc, dataMod DataModule,
 		// Serializations
 		"base64": Base64API,
 		"json":   JSONAPI,
+		"toml":   TOMLAPI,
 		"yaml":   YAMLAPI,
 		"url":    URLAPI,
+		"ip":     IPAPI,
 
 		// Templating
 		"template": NewTemplateModule(replaceNodeFunc).AsModule(),
