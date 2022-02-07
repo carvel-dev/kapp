@@ -16,7 +16,7 @@ import (
 )
 
 type ResourceTypes interface {
-	All() ([]ResourceType, error)
+	All(ignoreCachedResTypes bool) ([]ResourceType, error)
 	Find(Resource) (ResourceType, error)
 	CanIgnoreFailingGroupVersion(schema.GroupVersion) bool
 }
@@ -45,7 +45,15 @@ func NewResourceTypesImpl(coreClient kubernetes.Interface, opts ResourceTypesImp
 	return &ResourceTypesImpl{coreClient: coreClient, opts: opts}
 }
 
-func (g *ResourceTypesImpl) All() ([]ResourceType, error) {
+func (g *ResourceTypesImpl) All(ignoreCachedResTypes bool) ([]ResourceType, error) {
+	if ignoreCachedResTypes {
+		// TODO Update cache while doing a fresh fetch
+		return g.all()
+	}
+	return g.memoizedAll()
+}
+
+func (g *ResourceTypesImpl) all() ([]ResourceType, error) {
 	serverResources, err := g.serverResources()
 	if err != nil {
 		return nil, err
@@ -141,7 +149,7 @@ func (g *ResourceTypesImpl) memoizedAll() ([]ResourceType, error) {
 	g.memoizedResTypesLock.Lock()
 	defer g.memoizedResTypesLock.Unlock()
 
-	resTypes, err := g.All()
+	resTypes, err := g.all()
 	if err != nil {
 		return nil, err
 	}

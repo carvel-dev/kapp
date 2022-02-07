@@ -32,7 +32,7 @@ jobs:
           brew install aquasecurity/trivy/trivy
           
           # Create trivy binary file
-          git clone --depth 1 https://github.com/aquasecurity/trivy
+          git clone --depth 1 -b "v0.22.0" https://github.com/aquasecurity/trivy
         
       - name: Run trivy to generate reports
         run: |  

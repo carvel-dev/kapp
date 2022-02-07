@@ -64,20 +64,20 @@ func (f ConvergedResourceFactory) New(res ctlres.Resource,
 		func(res ctlres.Resource, aRs []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			// Use newly provided associated resources as they may be modified by ConvergedResource
 			return ctlresm.NewAppsV1Deployment(res, aRs), []ctlres.ResourceRef{
-				{schema.GroupVersionResource{Group: "apps"}}, // for ReplicaSets
-				{schema.GroupVersionResource{Group: ""}},     // for Pods
+				{schema.GroupVersionResource{Group: "apps", Resource: "replicasets"}},
+				{schema.GroupVersionResource{Group: "", Resource: "pods"}},
 			}
 		},
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			return ctlresm.NewAppsV1DaemonSet(res), []ctlres.ResourceRef{
-				{schema.GroupVersionResource{Group: "apps"}},
-				{schema.GroupVersionResource{Group: ""}}, // for Pods
+				{schema.GroupVersionResource{Group: "apps", Resource: "replicasets"}},
+				{schema.GroupVersionResource{Group: "", Resource: "pods"}},
 			}
 		},
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			return ctlresm.NewBatchV1Job(res), []ctlres.ResourceRef{
-				{schema.GroupVersionResource{Group: "batch"}},
-				{schema.GroupVersionResource{Group: ""}}, // for Pods
+				{schema.GroupVersionResource{Group: "batch", Resource: "jobs"}},
+				{schema.GroupVersionResource{Group: "", Resource: "pods"}},
 			}
 		},
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
@@ -85,7 +85,8 @@ func (f ConvergedResourceFactory) New(res ctlres.Resource,
 		},
 		func(res ctlres.Resource, aRs []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			return ctlresm.NewAppsV1StatefulSet(res, aRs), []ctlres.ResourceRef{
-				{schema.GroupVersionResource{Group: ""}}, // for Pods
+				{schema.GroupVersionResource{Group: "", Resource: "persistentvolumeclaims"}},
+				{schema.GroupVersionResource{Group: "", Resource: "pods"}},
 				// omit ControllerRevisions: we'll rarely (if ever) wait on them; reporting on them is noise
 			}
 		},

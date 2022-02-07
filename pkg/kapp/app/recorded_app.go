@@ -30,6 +30,7 @@ type RecordedApp struct {
 	fqName     string
 	nsName     string
 	isMigrated bool
+	creationTimestamp time.Time
 
 	coreClient             kubernetes.Interface
 	identifiedResources    ctlres.IdentifiedResources
@@ -43,6 +44,8 @@ var _ App = &RecordedApp{}
 
 func (a *RecordedApp) Name() string      { return a.name }
 func (a *RecordedApp) Namespace() string { return a.nsName }
+
+func (a *RecordedApp) CreationTimestamp() time.Time { return a.creationTimestamp }
 
 func (a *RecordedApp) Description() string {
 	return fmt.Sprintf("app '%s' namespace: %s", a.name, a.nsName)

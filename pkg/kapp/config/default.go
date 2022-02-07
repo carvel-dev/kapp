@@ -44,7 +44,7 @@ rebaseRules:
 # Copy over all status, since cluster owns that
 - path: [status]
   type: copy
-  sources: [new, existing]
+  sources: [existing]
   resourceMatchers:
   - allMatcher: {}
 

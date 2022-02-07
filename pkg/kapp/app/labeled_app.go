@@ -6,6 +6,7 @@ package app
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"k8s.io/apimachinery/pkg/labels"
@@ -29,6 +30,8 @@ func (a *LabeledApp) Name() string {
 
 func (a *LabeledApp) Namespace() string { return "" }
 
+func (a *LabeledApp) CreationTimestamp() time.Time { return time.Time{} }
+
 func (a *LabeledApp) Description() string {
 	return fmt.Sprintf("labeled app '%s'", a.Name())
 }
@@ -49,7 +52,7 @@ func (a *LabeledApp) Delete() error {
 		return err
 	}
 
-	rs, err := a.identifiedResources.List(labelSelector, nil)
+	rs, err := a.identifiedResources.List(labelSelector, nil, ctlres.IdentifiedResourcesListOpts{IgnoreCachedResTypes: true})
 	if err != nil {
 		return fmt.Errorf("Relisting app resources: %s", err)
 	}

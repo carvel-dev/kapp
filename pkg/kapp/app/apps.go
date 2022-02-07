@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
@@ -55,7 +56,7 @@ func (a Apps) Find(name string) (App, error) {
 		return nil, fmt.Errorf("Expected non-empty namespace")
 	}
 
-	return &RecordedApp{name, name + AppSuffix, a.nsName, false, a.coreClient,
+	return &RecordedApp{name, name + AppSuffix, a.nsName, false, time.Time{}, a.coreClient,
 		a.identifiedResources, a.appInDiffNsHintMsg, nil,
 		a.logger.NewPrefixed("RecordedApp")}, nil
 }
@@ -93,7 +94,7 @@ func (a Apps) list(additionalLabels map[string]string, nsName string) ([]App, er
 			isMigrated = true
 		}
 
-		recordedApp := &RecordedApp{name, name + AppSuffix, app.Namespace, isMigrated, a.coreClient,
+		recordedApp := &RecordedApp{name, name + AppSuffix, app.Namespace, isMigrated, app.ObjectMeta.CreationTimestamp.Time, a.coreClient,
 			a.identifiedResources, a.appInDiffNsHintMsg, nil,
 			a.logger.NewPrefixed("RecordedApp")}
 
