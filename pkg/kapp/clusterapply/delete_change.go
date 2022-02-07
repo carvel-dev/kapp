@@ -60,12 +60,18 @@ func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error)
 	// because it should be deleted eventually anyway (thru GC)
 	// We should check for the UID check because of the following bug:
 	// https://github.com/vmware-tanzu/carvel-kapp/issues/229
-	_, exists, err := c.identifiedResources.Exists(res, ctlres.ExistsOpts{SameUID: true})
+	existingRes, exists, err := c.identifiedResources.Exists(res, ctlres.ExistsOpts{SameUID: true})
 	if err != nil {
 		return ctlresm.DoneApplyState{}, nil, err
 	}
 
-	return ctlresm.DoneApplyState{Done: !exists, Successful: true}, buildDescMsg(res, !exists), nil
+	if !exists {
+		return ctlresm.DoneApplyState{Done: true, Successful: true}, nil, nil
+	}
+
+	state := ctlresm.NewDeleting(existingRes).IsDoneApplying()
+
+	return state, []string{uiWaitMsgPrefix + state.Message}, nil
 }
 
 type DeletePlainStrategy struct {
@@ -109,11 +115,4 @@ func (c DeleteOrphanStrategy) Apply() error {
 
 	_, err = c.d.identifiedResources.Patch(c.res, types.JSONPatchType, patchJSON)
 	return err
-}
-
-func buildDescMsg(res ctlres.Resource, isDoneApplying bool) []string {
-	if deletingObj := ctlresm.NewDeleting(res); deletingObj != nil && !isDoneApplying {
-		return []string{uiWaitMsgPrefix + deletingObj.IsDoneApplying().Message}
-	}
-	return []string{}
 }
