@@ -99,7 +99,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 		}.AsData(),
 	}
 
-	if strings.ToLower(os.Getenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES")) == "true" {
+	if a.isMigrationEnabled() {
 		migratedLabel := map[string]string{KappIsConfigmapMigratedLabelKey: KappIsConfigmapMigratedLabelKeyValue}
 
 		configMapWithSuffix, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
@@ -118,6 +118,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 				return nil
 			}
 		} else if !errors.IsNotFound(err) {
+			// return if error is anything other than configmap not found
 			return fmt.Errorf("Getting app: %s", err)
 		}
 
@@ -132,6 +133,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 				return a.migrate(configmapWithoutSuffix, labels)
 			}
 		} else if !errors.IsNotFound(err) {
+			// return if error is anything other than configmap not found
 			return fmt.Errorf("Getting app: %s", err)
 		}
 
@@ -212,12 +214,13 @@ func (a *RecordedApp) mergeAppUpdates(cm *corev1.ConfigMap, labels map[string]st
 }
 
 func (a *RecordedApp) Exists() (bool, string, error) {
-	if strings.ToLower(os.Getenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES")) == "true" {
+	if a.isMigrationEnabled() {
 		_, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
 		if err == nil {
 			a.isMigrated = true
 			return true, "", nil
 		} else if !errors.IsNotFound(err) {
+			// return if error is anything other than configmap not found
 			return false, "", fmt.Errorf("Getting app: %s", err)
 		}
 	}
@@ -281,7 +284,7 @@ func (a *RecordedApp) Rename(newName string, newNamespace string) error {
 	}
 
 	// use fully qualified name if app had been previously migrated
-	if a.isMigrated || strings.ToLower(os.Getenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES")) == "true" {
+	if a.isMigrated || a.isMigrationEnabled() {
 		a.mergeAppUpdates(app, map[string]string{KappIsConfigmapMigratedLabelKey: KappIsConfigmapMigratedLabelKeyValue})
 		return a.renameConfigMap(app, newName+AppSuffix, newNamespace)
 	}
@@ -332,6 +335,10 @@ func (a *RecordedApp) isKappApp(app *v1.ConfigMap) bool {
 	return ok
 }
 
+func (a *RecordedApp) isMigrationEnabled() bool {
+	return strings.ToLower(os.Getenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES")) == "true"
+}
+
 func (a *RecordedApp) Meta() (Meta, error) { return a.meta() }
 
 func (a *RecordedApp) setMeta(app corev1.ConfigMap) (Meta, error) {
@@ -357,25 +364,28 @@ func (a *RecordedApp) meta() (Meta, error) {
 		return *a.memoizedMeta, nil
 	}
 
-	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
-	if err == nil {
-		return a.setMeta(*app)
-	}
-
-	if errors.IsNotFound(err) {
-		app, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
+	if a.isMigrationEnabled() {
+		app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
 		if err == nil {
+			fmt.Println("ismigrated")
 			a.isMigrated = true
 			return a.setMeta(*app)
+		} else if !errors.IsNotFound(err) {
+			// return if error is anything other than configmap not found
+			return Meta{}, fmt.Errorf("Getting app: %s", err)
 		}
+	}
 
+	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
+	if err != nil {
 		if errors.IsNotFound(err) {
 			return Meta{}, fmt.Errorf("App '%s' (namespace: %s) does not exist: %s%s",
 				a.name, a.nsName, err, a.appInDiffNsHintMsgFunc(a.fqName))
 		}
+		return Meta{}, fmt.Errorf("Getting app: %s", err)
 	}
 
-	return Meta{}, fmt.Errorf("Getting app: %s", err)
+	return a.setMeta(*app)
 }
 
 func (a *RecordedApp) Changes() ([]Change, error) {

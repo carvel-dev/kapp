@@ -155,6 +155,7 @@ func TestAppSuffix_ConfigmapExists_MigrationEnabled(t *testing.T) {
 	fqName := name + app.AppSuffix
 
 	cleanUp := func() {
+		RemoveClusterResource(t, "configmap", name, env.Namespace, kubectl)
 		RemoveClusterResource(t, "configmap", fqName, env.Namespace, kubectl)
 	}
 
@@ -162,6 +163,17 @@ func TestAppSuffix_ConfigmapExists_MigrationEnabled(t *testing.T) {
 	defer cleanUp()
 
 	os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "True")
+
+	logger.Section("without suffix and not marked as a kapp-app", func() {
+		NewClusterResource(t, "configmap", name, env.Namespace, kubectl)
+		NewPresentClusterResource("configmap", name, env.Namespace, kubectl)
+
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
+
+		require.NoError(t, err)
+		cleanUp()
+	})
 
 	logger.Section("with suffix and not marked as a kapp-app", func() {
 		NewClusterResource(t, "configmap", fqName, env.Namespace, kubectl)
