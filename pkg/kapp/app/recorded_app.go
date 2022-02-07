@@ -26,10 +26,10 @@ const (
 )
 
 type RecordedApp struct {
-	name       string
-	fqName     string
-	nsName     string
-	isMigrated bool
+	name              string
+	fqName            string
+	nsName            string
+	isMigrated        bool
 	creationTimestamp time.Time
 
 	coreClient             kubernetes.Interface
