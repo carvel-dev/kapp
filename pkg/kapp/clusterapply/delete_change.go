@@ -69,9 +69,7 @@ func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error)
 		return ctlresm.DoneApplyState{Done: true, Successful: true}, nil, nil
 	}
 
-	state := ctlresm.NewDeleting(existingRes).IsDoneApplying()
-
-	return state, []string{uiWaitMsgPrefix + state.Message}, nil
+	return ctlresm.DoneApplyState{Done: false, Successful: true}, descMessage(existingRes), nil
 }
 
 type DeletePlainStrategy struct {
@@ -115,4 +113,12 @@ func (c DeleteOrphanStrategy) Apply() error {
 
 	_, err = c.d.identifiedResources.Patch(c.res, types.JSONPatchType, patchJSON)
 	return err
+}
+
+func descMessage(res ctlres.Resource) []string {
+	if res.IsDeleting() {
+		return []string{uiWaitMsgPrefix +
+			ctlresm.NewDeleting(res).IsDoneApplying().Message}
+	}
+	return []string{}
 }
