@@ -370,7 +370,6 @@ func (a *RecordedApp) meta() (Meta, error) {
 	if a.isMigrationEnabled() {
 		app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
 		if err == nil {
-			fmt.Println("ismigrated")
 			a.isMigrated = true
 			return a.setMeta(*app)
 		} else if !errors.IsNotFound(err) {
