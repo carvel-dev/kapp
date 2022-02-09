@@ -173,8 +173,8 @@ func TestAppSuffix_ConfigmapExists_MigrationEnabled(t *testing.T) {
 
 		require.NoError(t, err)
 
+		kapp.Run([]string{"delete", "-a", fqName})
 		cleanUp()
-		kapp.Run([]string{"delete", "-a", name})
 	})
 
 	logger.Section("with suffix and not marked as a kapp-app", func() {
