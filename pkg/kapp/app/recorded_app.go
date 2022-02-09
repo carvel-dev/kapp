@@ -91,29 +91,9 @@ func (a *RecordedApp) usedGKs() ([]schema.GroupKind, error) {
 
 func (a *RecordedApp) UsedGKs() ([]schema.GroupKind, error) { return a.usedGKs() }
 
-func (a *RecordedApp) UpdateUsedGKs(gks []schema.GroupKind, merge bool) error {
+func (a *RecordedApp) UpdateUsedGKs(gks []schema.GroupKind) error {
 	gksByGK := map[schema.GroupKind]struct{}{}
 	var uniqGKs []schema.GroupKind
-
-	if merge {
-		usedGKs, err := a.usedGKs()
-		if err != nil {
-			return nil
-		}
-
-		// Handle existing apps without cached GKs
-		// These apps can cache and scope to GKs in subsequent deploys
-		if usedGKs == nil && len(a.memoizedMeta.LastChangeName) > 0 {
-			return nil
-		}
-
-		for _, gk := range usedGKs {
-			if _, found := gksByGK[gk]; !found {
-				gksByGK[gk] = struct{}{}
-				uniqGKs = append(uniqGKs, gk)
-			}
-		}
-	}
 
 	for _, gk := range gks {
 		if _, found := gksByGK[gk]; !found {
@@ -365,8 +345,6 @@ func (a *RecordedApp) update(doFunc func(*Meta)) error {
 	if err != nil {
 		return fmt.Errorf("Updating app: %s", err)
 	}
-
-	a.memoizedMeta = &meta
 
 	return nil
 }
