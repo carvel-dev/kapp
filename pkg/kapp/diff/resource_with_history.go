@@ -69,7 +69,29 @@ func (r ResourceWithHistory) AllowsRecordingLastApplied() bool {
 	return !found
 }
 
-func (r ResourceWithHistory) RecordLastAppliedResource(appliedResBytes []byte, diff OpsDiff) (ctlres.Resource, error) {
+func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ctlres.Resource, error) {
+	// Use compact representation to take as little space as possible
+	// because annotation value max length is 262144 characters
+	// (https://github.com/vmware-tanzu/carvel-kapp/issues/48).
+	appliedResBytes, err := appliedChange.AppliedResource().AsCompactBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	diff := appliedChange.OpsDiff()
+
+	const resourceSizeMaxLen = 262144
+
+	// kapp deploy should work without adding disable annotation when resource size exceed
+	// (https://github.com/vmware-tanzu/carvel-kapp/issues/410)
+	if len(appliedResBytes) > resourceSizeMaxLen || len(diff.MinimalMD5()) > resourceSizeMaxLen {
+		if resourceWithHistoryDebug {
+			fmt.Printf("Unable to record resource, exceed limit of %d bytes "+
+				"(this might result in the diff showing deletion of fields applied by external agents) \n",
+				resourceSizeMaxLen)
+		}
+		return nil, fmt.Errorf("unable to record resource, limit exceed")
+	}
 
 	if resourceWithHistoryDebug {
 		fmt.Printf("%s: recording md5 %s\n---> \n%s\n",
@@ -91,7 +113,7 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedResBytes []byte, d
 
 	resultRes := r.resource.DeepCopy()
 
-	err := annsMod.Apply(resultRes)
+	err = annsMod.Apply(resultRes)
 	if err != nil {
 		return nil, err
 	}

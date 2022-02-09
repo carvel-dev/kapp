@@ -5,7 +5,7 @@ package clusterapply
 
 import (
 	"fmt"
-	"os"
+	"strings"
 	"time"
 
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
@@ -24,10 +24,6 @@ const (
 	updateStrategyFallbackOnReplaceAnnValue ClusterChangeApplyStrategyOp = "fallback-on-replace"
 	updateStrategyAlwaysReplaceAnnValue     ClusterChangeApplyStrategyOp = "always-replace"
 	updateStrategySkipAnnValue              ClusterChangeApplyStrategyOp = "skip"
-)
-
-var (
-	resourceWithHistoryDebug = os.Getenv("KAPP_DEBUG_RESOURCE_WITH_HISTORY") == "true"
 )
 
 type AddOrUpdateChangeOpts struct {
@@ -223,28 +219,6 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 		return fmt.Errorf("Calculating change after the save: %s", err)
 	}
 
-	// Use compact representation to take as little space as possible
-	// because annotation value max length is 262144 characters
-	// (https://github.com/vmware-tanzu/carvel-kapp/issues/48).
-	appliedResBytes, err := applyChange.AppliedResource().AsCompactBytes()
-	if err != nil {
-		return fmt.Errorf("Compact representation of applied resource: %s", err)
-	}
-
-	diff := applyChange.OpsDiff()
-
-	const resourceSizeMaxLen = 262144
-
-	// kapp deploy should work without adding disable annotation when resource size exceed
-	// (https://github.com/vmware-tanzu/carvel-kapp/issues/410)
-	if len(appliedResBytes) > resourceSizeMaxLen || len(diff.MinimalMD5()) > resourceSizeMaxLen {
-		if resourceWithHistoryDebug {
-			fmt.Printf("Unable to record resource, exceed limit of %d bytes (this can result in dumb diffing) \n",
-				resourceSizeMaxLen)
-		}
-		return nil
-	}
-
 	// first time, try using memory copy
 	latestResWithHistory := &savedResWithHistory
 
@@ -262,8 +236,11 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 		}
 
 		// Record last applied change on the latest version of a resource
-		latestResWithHistoryUpdated, err := latestResWithHistory.RecordLastAppliedResource(appliedResBytes, diff)
+		latestResWithHistoryUpdated, err := latestResWithHistory.RecordLastAppliedResource(applyChange)
 		if err != nil {
+			if strings.Contains(err.Error(), "unable to record resource, limit exceed") {
+				return true, nil
+			}
 			return true, fmt.Errorf("Recording last applied resource: %s", err)
 		}
 
