@@ -4,6 +4,7 @@
 package appchange
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -68,6 +69,10 @@ func (o *ListOptions) Run() error {
 		o.TimeFlags.AfterTime, err = util.ParseTime(o.TimeFlags.After, formats)
 		if err != nil {
 			return err
+		}
+
+		if !o.TimeFlags.BeforeTime.IsZero() && o.TimeFlags.BeforeTime.Before(o.TimeFlags.AfterTime) {
+			return fmt.Errorf("After time %s should be less than before time %s", o.TimeFlags.After, o.TimeFlags.Before)
 		}
 	}
 
