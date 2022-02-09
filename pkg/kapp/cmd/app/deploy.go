@@ -249,8 +249,8 @@ func (o *DeployOptions) newAndUsedGKs(newGKs []schema.GroupKind, app ctlapp.App)
 	if err != nil {
 		return nil, err
 	}
-	if usedGKs == nil && lastChange != nil {
-		return nil, nil
+	if len(usedGKs) == 0 && lastChange != nil {
+		return []schema.GroupKind{}, nil
 	}
 
 	for _, gk := range usedGKs {

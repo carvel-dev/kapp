@@ -37,7 +37,7 @@ func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []Resou
 		schema.GroupVersionResource{Version: "v1", Resource: "componentstatuses"},
 	})
 
-	if opts.GKsScope != nil {
+	if len(opts.GKsScope) > 0 {
 		resTypes = MatchingAnyGK(resTypes, opts.GKsScope)
 	}
 
