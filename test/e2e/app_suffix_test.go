@@ -69,7 +69,7 @@ func TestAppSuffix_AppExists_MigrationEnabled(t *testing.T) {
 	logger.Section("deploy with 1 delete, 1 update, 1 create", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "True")
+		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
 		// update and migrate
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
@@ -104,11 +104,11 @@ func TestAppSuffix_AppExists_MigrationEnabled(t *testing.T) {
 	logger.Section("name already contains app suffix", func() {
 		existingName := name + app.AppSuffix
 
-		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "False")
+		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "False")
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", existingName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 		NewPresentClusterResource("configmap", existingName, env.Namespace, kubectl)
 
-		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "True")
+		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", existingName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
 		NewMissingClusterResource(t, "configmap", existingName, env.Namespace, kubectl)
@@ -122,13 +122,13 @@ func TestAppSuffix_AppExists_MigrationEnabled(t *testing.T) {
 	// the error we expect is that the resources belong to a different app
 	// - there will be a documented way to recover from this if desired
 	logger.Section("migration disabled with already migrated app", func() {
-		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "False")
+		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "False")
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "True")
+		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "False")
+		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "False")
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true,
 			AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
@@ -138,11 +138,11 @@ func TestAppSuffix_AppExists_MigrationEnabled(t *testing.T) {
 
 		RemoveClusterResource(t, "configmap", name, env.Namespace, kubectl)
 
-		os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "True")
+		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
 		cleanUp()
 	})
 
-	os.Unsetenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES")
+	os.Unsetenv("KAPP_FQ_CONFIGMAP_NAMES")
 }
 
 func TestAppSuffix_ConfigmapExists_MigrationEnabled(t *testing.T) {
@@ -162,7 +162,7 @@ func TestAppSuffix_ConfigmapExists_MigrationEnabled(t *testing.T) {
 	cleanUp()
 	defer cleanUp()
 
-	os.Setenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES", "True")
+	os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
 
 	logger.Section("without suffix and not marked as a kapp-app", func() {
 		NewClusterResource(t, "configmap", name, env.Namespace, kubectl)
@@ -188,5 +188,5 @@ func TestAppSuffix_ConfigmapExists_MigrationEnabled(t *testing.T) {
 		require.Containsf(t, err.Error(), "did not contain parseable app metadata", "Expected app to not be parsable")
 	})
 
-	os.Unsetenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES")
+	os.Unsetenv("KAPP_FQ_CONFIGMAP_NAMES")
 }

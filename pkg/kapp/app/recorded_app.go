@@ -339,7 +339,7 @@ func (a *RecordedApp) isKappApp(app *v1.ConfigMap) bool {
 }
 
 func (a *RecordedApp) isMigrationEnabled() bool {
-	return strings.ToLower(os.Getenv("KAPP_EXPERIMENTAL_FQ_CONFIGMAP_NAMES")) == "true"
+	return strings.ToLower(os.Getenv("KAPP_FQ_CONFIGMAP_NAMES")) == "true"
 }
 
 func (a *RecordedApp) Meta() (Meta, error) { return a.meta() }
