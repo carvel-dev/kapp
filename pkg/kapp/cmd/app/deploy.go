@@ -129,17 +129,12 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	newResources, conf, nsNames, err := o.newResources(prep, labeledResources, resourceFilter)
+	newResources, conf, nsNames, newGKs, err := o.newResources(prep, labeledResources, resourceFilter)
 	if err != nil {
 		return err
 	}
 
-	err = app.UpdateUsedGKs(NewUsedGKsScope(newResources).GKs(), true)
-	if err != nil {
-		return err
-	}
-
-	usedGKs, err := app.UsedGKs()
+	usedGKs, err := o.newAndUsedGKs(newGKs, app)
 	if err != nil {
 		return err
 	}
@@ -220,6 +215,13 @@ func (o *DeployOptions) Run() error {
 		if err != nil {
 			return err
 		}
+
+		// Prunes unused GKs
+		err = app.UpdateUsedGKs(NewUsedGKsScope(newResources).GKs(), false)
+		if err != nil {
+			return err
+		}
+
 		return app.UpdateUsedGVs(failingAPIServicesPolicy.GVs(newResources, nil))
 	})
 	if err != nil {
@@ -232,35 +234,73 @@ func (o *DeployOptions) Run() error {
 	return nil
 }
 
+func (o *DeployOptions) newAndUsedGKs(newGKs []schema.GroupKind, app ctlapp.App) ([]schema.GroupKind, error) {
+	gksByGK := map[schema.GroupKind]struct{}{}
+	var uniqGKs []schema.GroupKind
+
+	usedGKs, err := app.UsedGKs()
+	if err != nil {
+		return nil, err
+	}
+
+	// Handle existing apps without cached GKs
+	// These apps can cache and scope to GKs in subsequent deploys
+	lastChange, err := app.LastChange()
+	if err != nil {
+		return nil, err
+	}
+	if usedGKs == nil && lastChange != nil {
+		return nil, nil
+	}
+
+	for _, gk := range usedGKs {
+		if _, found := gksByGK[gk]; !found {
+			gksByGK[gk] = struct{}{}
+			uniqGKs = append(uniqGKs, gk)
+		}
+	}
+
+	for _, gk := range newGKs {
+		if _, found := gksByGK[gk]; !found {
+			gksByGK[gk] = struct{}{}
+			uniqGKs = append(uniqGKs, gk)
+		}
+	}
+
+	return uniqGKs, nil
+}
+
 func (o *DeployOptions) newResources(
 	prep ctlapp.Preparation, labeledResources *ctlres.LabeledResources,
-	resourceFilter ctlres.ResourceFilter) ([]ctlres.Resource, ctlconf.Conf, []string, error) {
+	resourceFilter ctlres.ResourceFilter) ([]ctlres.Resource, ctlconf.Conf, []string, []schema.GroupKind, error) {
 
 	newResources, err := o.newResourcesFromFiles()
 	if err != nil {
-		return nil, ctlconf.Conf{}, nil, err
+		return nil, ctlconf.Conf{}, nil, nil, err
 	}
 
 	newResources, conf, err := ctlconf.NewConfFromResourcesWithDefaults(newResources)
 	if err != nil {
-		return nil, ctlconf.Conf{}, nil, err
+		return nil, ctlconf.Conf{}, nil, nil, err
 	}
 
 	newResources, err = prep.PrepareResources(newResources)
 	if err != nil {
-		return nil, ctlconf.Conf{}, nil, err
+		return nil, ctlconf.Conf{}, nil, nil, err
 	}
 
 	err = labeledResources.Prepare(newResources, conf.OwnershipLabelMods(),
 		conf.LabelScopingMods(), conf.AdditionalLabels())
 	if err != nil {
-		return nil, ctlconf.Conf{}, nil, err
+		return nil, ctlconf.Conf{}, nil, nil, err
 	}
+
+	newGKs := NewUsedGKsScope(newResources).GKs()
 
 	// Grab ns names before resource filtering is applied
 	nsNames := o.nsNames(newResources)
 
-	return resourceFilter.Apply(newResources), conf, nsNames, nil
+	return resourceFilter.Apply(newResources), conf, nsNames, newGKs, nil
 }
 
 func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
