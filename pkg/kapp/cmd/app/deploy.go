@@ -235,6 +235,10 @@ func (o *DeployOptions) Run() error {
 }
 
 func (o *DeployOptions) newAndUsedGKs(newGKs []schema.GroupKind, app ctlapp.App) ([]schema.GroupKind, error) {
+	if o.ResourceTypesFlags.DisableGKScoping {
+		return []schema.GroupKind{}, nil
+	}
+
 	gksByGK := map[schema.GroupKind]struct{}{}
 	var uniqGKs []schema.GroupKind
 
