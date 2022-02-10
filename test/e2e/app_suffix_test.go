@@ -96,7 +96,6 @@ func TestAppSuffix_AppExists_MigrationEnabled(t *testing.T) {
 	logger.Section("delete", func() {
 		kapp.Run([]string{"delete", "-a", newName})
 
-		cleanUp()
 		NewMissingClusterResource(t, "configmap", name, env.Namespace, kubectl)
 		NewMissingClusterResource(t, "configmap", newName, env.Namespace, kubectl)
 	})
@@ -155,6 +154,7 @@ func TestAppSuffix_ConfigmapExists_MigrationEnabled(t *testing.T) {
 	fqName := name + app.AppSuffix
 
 	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
 		RemoveClusterResource(t, "configmap", name, env.Namespace, kubectl)
 		RemoveClusterResource(t, "configmap", fqName, env.Namespace, kubectl)
 	}
@@ -166,7 +166,6 @@ func TestAppSuffix_ConfigmapExists_MigrationEnabled(t *testing.T) {
 
 	logger.Section("without suffix and not marked as a kapp-app", func() {
 		NewClusterResource(t, "configmap", name, env.Namespace, kubectl)
-		NewPresentClusterResource("configmap", name, env.Namespace, kubectl)
 
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
@@ -174,12 +173,11 @@ func TestAppSuffix_ConfigmapExists_MigrationEnabled(t *testing.T) {
 		require.NoError(t, err)
 
 		kapp.Run([]string{"delete", "-a", fqName})
-		cleanUp()
+		RemoveClusterResource(t, "configmap", name, env.Namespace, kubectl)
 	})
 
 	logger.Section("with suffix and not marked as a kapp-app", func() {
 		NewClusterResource(t, "configmap", fqName, env.Namespace, kubectl)
-		NewPresentClusterResource("configmap", fqName, env.Namespace, kubectl)
 
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
