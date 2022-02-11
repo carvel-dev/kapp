@@ -6,6 +6,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/k14s/kapp/pkg/kapp/logger"
@@ -101,6 +102,10 @@ func (a *RecordedApp) UpdateUsedGKs(gks []schema.GroupKind) error {
 			uniqGKs = append(uniqGKs, gk)
 		}
 	}
+
+	sort.Slice(uniqGKs, func(i int, j int) bool {
+		return uniqGKs[i].Group+uniqGKs[i].Kind < uniqGKs[j].Group+uniqGKs[j].Kind
+	})
 
 	return a.update(func(meta *Meta) {
 		meta.UsedGKs = uniqGKs
