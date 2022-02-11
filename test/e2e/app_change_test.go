@@ -61,6 +61,7 @@ spec:
 	})
 
 	logger.Section("app change list filter with before flag", func() {
+		// testing with RFC3339 time format
 		out, _ := kapp.RunWithOpts([]string{"app-change", "ls", "-a", name, "--before", time.Now().Add(2 * time.Second).Format(time.RFC3339), "--json"}, RunOpts{})
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
@@ -72,6 +73,7 @@ spec:
 	})
 
 	logger.Section("app change list filter with after flag", func() {
+		// testing with just date based format
 		out, _ := kapp.RunWithOpts([]string{"app-change", "ls", "-a", name, "--after", time.Now().Add(24 * time.Hour).Format("2006-01-02"), "--json"}, RunOpts{})
 
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
