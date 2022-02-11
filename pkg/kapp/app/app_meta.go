@@ -18,7 +18,7 @@ type Meta struct {
 	LastChange     ChangeMeta `json:"lastChange,omitempty"`
 
 	UsedGVs []schema.GroupVersion `json:"usedGVs,omitempty"`
-	UsedGKs []schema.GroupKind    `json:"usedGKs,omitempty"`
+	UsedGKs *[]schema.GroupKind   `json:"usedGKs,omitempty"`
 }
 
 func NewAppMetaFromData(data map[string]string) (Meta, error) {

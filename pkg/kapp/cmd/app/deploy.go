@@ -249,11 +249,7 @@ func (o *DeployOptions) newAndUsedGKs(newGKs []schema.GroupKind, app ctlapp.App)
 
 	// Handle existing apps without cached GKs
 	// These apps can cache and scope to GKs in subsequent deploys
-	lastChange, err := app.LastChange()
-	if err != nil {
-		return nil, err
-	}
-	if len(usedGKs) == 0 && lastChange != nil {
+	if usedGKs == nil {
 		return []schema.GroupKind{}, nil
 	}
 

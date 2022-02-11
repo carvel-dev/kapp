@@ -87,7 +87,11 @@ func (a *RecordedApp) usedGKs() ([]schema.GroupKind, error) {
 		return nil, err
 	}
 
-	return meta.UsedGKs, nil
+	if meta.UsedGKs == nil {
+		return nil, nil
+	}
+
+	return *meta.UsedGKs, nil
 }
 
 func (a *RecordedApp) UsedGKs() ([]schema.GroupKind, error) { return a.usedGKs() }
@@ -108,7 +112,7 @@ func (a *RecordedApp) UpdateUsedGKs(gks []schema.GroupKind) error {
 	})
 
 	return a.update(func(meta *Meta) {
-		meta.UsedGKs = uniqGKs
+		meta.UsedGKs = &uniqGKs
 	})
 }
 
@@ -126,6 +130,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 		Data: Meta{
 			LabelKey:   kappAppLabelKey,
 			LabelValue: fmt.Sprintf("%d", time.Now().UTC().UnixNano()),
+			UsedGKs:    &[]schema.GroupKind{},
 		}.AsData(),
 	}
 
