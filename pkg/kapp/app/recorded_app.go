@@ -81,20 +81,16 @@ func (a *RecordedApp) UpdateUsedGVs(gvs []schema.GroupVersion) error {
 	})
 }
 
-func (a *RecordedApp) usedGKs() ([]schema.GroupKind, error) {
+func (a *RecordedApp) usedGKs() (*[]schema.GroupKind, error) {
 	meta, err := a.meta()
 	if err != nil {
 		return nil, err
 	}
 
-	if meta.UsedGKs == nil {
-		return nil, nil
-	}
-
-	return *meta.UsedGKs, nil
+	return meta.UsedGKs, nil
 }
 
-func (a *RecordedApp) UsedGKs() ([]schema.GroupKind, error) { return a.usedGKs() }
+func (a *RecordedApp) UsedGKs() (*[]schema.GroupKind, error) { return a.usedGKs() }
 
 func (a *RecordedApp) UpdateUsedGKs(gks []schema.GroupKind) error {
 	gksByGK := map[schema.GroupKind]struct{}{}

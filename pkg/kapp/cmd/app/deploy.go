@@ -253,7 +253,7 @@ func (o *DeployOptions) newAndUsedGKs(newGKs []schema.GroupKind, app ctlapp.App)
 		return []schema.GroupKind{}, nil
 	}
 
-	for _, gk := range usedGKs {
+	for _, gk := range *usedGKs {
 		if _, found := gksByGK[gk]; !found {
 			gksByGK[gk] = struct{}{}
 			uniqGKs = append(uniqGKs, gk)
