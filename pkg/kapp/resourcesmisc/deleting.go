@@ -4,6 +4,9 @@
 package resourcesmisc
 
 import (
+	"fmt"
+	"strings"
+
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
@@ -19,5 +22,9 @@ func NewDeleting(resource ctlres.Resource) *Deleting {
 }
 
 func (s Deleting) IsDoneApplying() DoneApplyState {
+	if len(s.resource.Finalizers()) > 0 {
+		return DoneApplyState{Done: false, Message: fmt.Sprintf("Waiting on finalizers: %s",
+			strings.Join(s.resource.Finalizers(), ", "))}
+	}
 	return DoneApplyState{Done: false, Message: "Deleting"}
 }

@@ -34,6 +34,7 @@ type Resource interface {
 
 	Annotations() map[string]string
 	Labels() map[string]string
+	Finalizers() []string
 	OwnerRefs() []metav1.OwnerReference
 	Status() map[string]interface{}
 
@@ -207,6 +208,7 @@ func (r *ResourceImpl) Transient() bool              { return r.transient }
 func (r *ResourceImpl) Annotations() map[string]string     { return r.un.GetAnnotations() }
 func (r *ResourceImpl) Labels() map[string]string          { return r.un.GetLabels() }
 func (r *ResourceImpl) OwnerRefs() []metav1.OwnerReference { return r.un.GetOwnerReferences() }
+func (r *ResourceImpl) Finalizers() []string               { return r.un.GetFinalizers() }
 
 func (r *ResourceImpl) Status() map[string]interface{} {
 	if r.un.Object != nil {

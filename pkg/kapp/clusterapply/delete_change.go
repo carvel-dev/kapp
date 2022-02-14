@@ -60,12 +60,16 @@ func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error)
 	// because it should be deleted eventually anyway (thru GC)
 	// We should check for the UID check because of the following bug:
 	// https://github.com/vmware-tanzu/carvel-kapp/issues/229
-	_, exists, err := c.identifiedResources.Exists(res, ctlres.ExistsOpts{SameUID: true})
+	existingRes, exists, err := c.identifiedResources.Exists(res, ctlres.ExistsOpts{SameUID: true})
 	if err != nil {
 		return ctlresm.DoneApplyState{}, nil, err
 	}
 
-	return ctlresm.DoneApplyState{Done: !exists, Successful: true}, nil, nil
+	if !exists {
+		return ctlresm.DoneApplyState{Done: true, Successful: true}, nil, nil
+	}
+
+	return ctlresm.DoneApplyState{Done: false, Successful: true}, descMessage(existingRes), nil
 }
 
 type DeletePlainStrategy struct {
@@ -109,4 +113,12 @@ func (c DeleteOrphanStrategy) Apply() error {
 
 	_, err = c.d.identifiedResources.Patch(c.res, types.JSONPatchType, patchJSON)
 	return err
+}
+
+func descMessage(res ctlres.Resource) []string {
+	if res.IsDeleting() {
+		return []string{uiWaitMsgPrefix +
+			ctlresm.NewDeleting(res).IsDoneApplying().Message}
+	}
+	return []string{}
 }
