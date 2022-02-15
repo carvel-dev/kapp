@@ -13,7 +13,6 @@ import (
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -103,7 +102,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 	}
 
 	if a.isMigrationEnabled() {
-		migratedLabel := map[string]string{KappIsConfigmapMigratedLabelKey: KappIsConfigmapMigratedLabelKeyValue}
+		migratedAnnotation := map[string]string{KappIsConfigmapMigratedAnnotationKey: KappIsConfigmapMigratedAnnotationValue}
 
 		configMapWithSuffix, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
 		if err == nil {
@@ -128,7 +127,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 		configmapWithoutSuffix, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 		if err == nil {
 			if a.isKappApp(configmapWithoutSuffix) {
-				err = a.mergeAppUpdates(configmapWithoutSuffix, migratedLabel)
+				err = a.mergeAppAnnotationUpdates(configmapWithoutSuffix, migratedAnnotation)
 				if err != nil {
 					return err
 				}
@@ -140,7 +139,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 			return fmt.Errorf("Getting app: %s", err)
 		}
 
-		err = a.mergeAppUpdates(configMap, migratedLabel)
+		err = a.mergeAppAnnotationUpdates(configMap, migratedAnnotation)
 		if err != nil {
 			return err
 		}
@@ -151,7 +150,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 	return a.createOrUpdate(configMap, labels)
 }
 
-func (a *RecordedApp) createOrUpdate(c *v1.ConfigMap, labels map[string]string) error {
+func (a *RecordedApp) createOrUpdate(c *corev1.ConfigMap, labels map[string]string) error {
 	err := a.mergeAppUpdates(c, labels)
 	if err != nil {
 		return err
@@ -184,7 +183,7 @@ func (a *RecordedApp) createOrUpdate(c *v1.ConfigMap, labels map[string]string) 
 	return nil
 }
 
-func (a *RecordedApp) migrate(c *v1.ConfigMap, labels map[string]string) error {
+func (a *RecordedApp) migrate(c *corev1.ConfigMap, labels map[string]string) error {
 	err := a.renameConfigMap(c, a.fqName, a.nsName)
 	if err != nil {
 		return err
@@ -211,6 +210,23 @@ func (a *RecordedApp) mergeAppUpdates(cm *corev1.ConfigMap, labels map[string]st
 			}
 		}
 		cm.ObjectMeta.Labels[key] = val
+	}
+
+	return nil
+}
+
+func (a *RecordedApp) mergeAppAnnotationUpdates(cm *corev1.ConfigMap, annotations map[string]string) error {
+	if cm.ObjectMeta.Annotations == nil && len(annotations) > 0 {
+		cm.ObjectMeta.Annotations = map[string]string{}
+	}
+
+	for key, val := range annotations {
+		if prevVal, found := cm.ObjectMeta.Annotations[key]; found {
+			if prevVal != val {
+				return fmt.Errorf("Expected annotation '%s' value to remain same", key)
+			}
+		}
+		cm.ObjectMeta.Annotations[key] = val
 	}
 
 	return nil
@@ -288,14 +304,14 @@ func (a *RecordedApp) Rename(newName string, newNamespace string) error {
 
 	// use fully qualified name if app had been previously migrated
 	if a.isMigrated || a.isMigrationEnabled() {
-		a.mergeAppUpdates(app, map[string]string{KappIsConfigmapMigratedLabelKey: KappIsConfigmapMigratedLabelKeyValue})
+		a.mergeAppAnnotationUpdates(app, map[string]string{KappIsConfigmapMigratedAnnotationKey: KappIsConfigmapMigratedAnnotationValue})
 		return a.renameConfigMap(app, newName+AppSuffix, newNamespace)
 	}
 
 	return a.renameConfigMap(app, newName, newNamespace)
 }
 
-func (a *RecordedApp) renameConfigMap(app *v1.ConfigMap, name, ns string) error {
+func (a *RecordedApp) renameConfigMap(app *corev1.ConfigMap, name, ns string) error {
 	oldName := app.Name
 
 	// Clear out all existing meta fields
@@ -333,7 +349,7 @@ func (a *RecordedApp) labeledApp() (*LabeledApp, error) {
 	return &LabeledApp{sel, a.identifiedResources}, nil
 }
 
-func (a *RecordedApp) isKappApp(app *v1.ConfigMap) bool {
+func (a *RecordedApp) isKappApp(app *corev1.ConfigMap) bool {
 	_, ok := app.Labels[KappIsAppLabelKey]
 	return ok
 }

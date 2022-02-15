@@ -74,7 +74,7 @@ func TestAppSuffix_AppExists_MigrationEnabled(t *testing.T) {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 		c := NewPresentClusterResource("configmap", name+app.AppSuffix, env.Namespace, kubectl)
-		require.Contains(t, c.Labels(), app.KappIsConfigmapMigratedLabelKey)
+		require.Contains(t, c.res.Annotations(), app.KappIsConfigmapMigratedAnnotationKey)
 
 		NewMissingClusterResource(t, "configmap", name, env.Namespace, kubectl)
 		NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
@@ -112,7 +112,7 @@ func TestAppSuffix_AppExists_MigrationEnabled(t *testing.T) {
 
 		NewMissingClusterResource(t, "configmap", existingName, env.Namespace, kubectl)
 		c := NewPresentClusterResource("configmap", existingName+app.AppSuffix, env.Namespace, kubectl)
-		require.Contains(t, c.Labels(), app.KappIsConfigmapMigratedLabelKey)
+		require.Contains(t, c.res.Annotations(), app.KappIsConfigmapMigratedAnnotationKey)
 
 		kapp.Run([]string{"delete", "-a", existingName})
 	})
