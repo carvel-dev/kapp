@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -84,6 +85,37 @@ func (a *RecordedApp) UpdateUsedGVs(gvs []schema.GroupVersion) error {
 	})
 }
 
+func (a *RecordedApp) usedGKs() (*[]schema.GroupKind, error) {
+	meta, err := a.meta()
+	if err != nil {
+		return nil, err
+	}
+
+	return meta.UsedGKs, nil
+}
+
+func (a *RecordedApp) UsedGKs() (*[]schema.GroupKind, error) { return a.usedGKs() }
+
+func (a *RecordedApp) UpdateUsedGKs(gks []schema.GroupKind) error {
+	gksByGK := map[schema.GroupKind]struct{}{}
+	var uniqGKs []schema.GroupKind
+
+	for _, gk := range gks {
+		if _, found := gksByGK[gk]; !found {
+			gksByGK[gk] = struct{}{}
+			uniqGKs = append(uniqGKs, gk)
+		}
+	}
+
+	sort.Slice(uniqGKs, func(i int, j int) bool {
+		return uniqGKs[i].Group+uniqGKs[i].Kind < uniqGKs[j].Group+uniqGKs[j].Kind
+	})
+
+	return a.update(func(meta *Meta) {
+		meta.UsedGKs = &uniqGKs
+	})
+}
+
 func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 	defer a.logger.DebugFunc("CreateOrUpdate").Finish()
 
@@ -98,6 +130,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 		Data: Meta{
 			LabelKey:   kappAppLabelKey,
 			LabelValue: fmt.Sprintf("%d", time.Now().UTC().UnixNano()),
+			UsedGKs:    &[]schema.GroupKind{},
 		}.AsData(),
 	}
 

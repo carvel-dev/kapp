@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -128,13 +129,18 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	newResources, conf, nsNames, err := o.newResources(prep, labeledResources, resourceFilter)
+	newResources, conf, nsNames, newGKs, err := o.newResources(prep, labeledResources, resourceFilter)
+	if err != nil {
+		return err
+	}
+
+	usedGKs, err := o.newAndUsedGKs(newGKs, app)
 	if err != nil {
 		return err
 	}
 
 	existingResources, existingPodRs, err := o.existingResources(
-		newResources, labeledResources, resourceFilter, supportObjs.Apps)
+		newResources, labeledResources, resourceFilter, supportObjs.Apps, usedGKs)
 	if err != nil {
 		return err
 	}
@@ -178,6 +184,12 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
+	// Cache possibly untracked GKs in existing resources (handles older apps)
+	err = app.UpdateUsedGKs(NewUsedGKsScope(append(newResources, existingResources...)).GKs())
+	if err != nil {
+		return err
+	}
+
 	if o.DeployFlags.Logs {
 		cancelLogsCh := make(chan struct{})
 		defer func() { close(cancelLogsCh) }()
@@ -203,6 +215,13 @@ func (o *DeployOptions) Run() error {
 		if err != nil {
 			return err
 		}
+
+		// Prunes unused GKs
+		err = app.UpdateUsedGKs(NewUsedGKsScope(newResources).GKs())
+		if err != nil {
+			return err
+		}
+
 		return app.UpdateUsedGVs(failingAPIServicesPolicy.GVs(newResources, nil))
 	})
 	if err != nil {
@@ -215,35 +234,73 @@ func (o *DeployOptions) Run() error {
 	return nil
 }
 
+func (o *DeployOptions) newAndUsedGKs(newGKs []schema.GroupKind, app ctlapp.App) ([]schema.GroupKind, error) {
+	if o.ResourceTypesFlags.DisableGKScoping {
+		return []schema.GroupKind{}, nil
+	}
+
+	gksByGK := map[schema.GroupKind]struct{}{}
+	var uniqGKs []schema.GroupKind
+
+	usedGKs, err := app.UsedGKs()
+	if err != nil {
+		return nil, err
+	}
+
+	// Handle existing apps without cached GKs
+	// These apps can cache and scope to GKs in subsequent deploys
+	if usedGKs == nil {
+		return []schema.GroupKind{}, nil
+	}
+
+	for _, gk := range *usedGKs {
+		if _, found := gksByGK[gk]; !found {
+			gksByGK[gk] = struct{}{}
+			uniqGKs = append(uniqGKs, gk)
+		}
+	}
+
+	for _, gk := range newGKs {
+		if _, found := gksByGK[gk]; !found {
+			gksByGK[gk] = struct{}{}
+			uniqGKs = append(uniqGKs, gk)
+		}
+	}
+
+	return uniqGKs, nil
+}
+
 func (o *DeployOptions) newResources(
 	prep ctlapp.Preparation, labeledResources *ctlres.LabeledResources,
-	resourceFilter ctlres.ResourceFilter) ([]ctlres.Resource, ctlconf.Conf, []string, error) {
+	resourceFilter ctlres.ResourceFilter) ([]ctlres.Resource, ctlconf.Conf, []string, []schema.GroupKind, error) {
 
 	newResources, err := o.newResourcesFromFiles()
 	if err != nil {
-		return nil, ctlconf.Conf{}, nil, err
+		return nil, ctlconf.Conf{}, nil, nil, err
 	}
 
 	newResources, conf, err := ctlconf.NewConfFromResourcesWithDefaults(newResources)
 	if err != nil {
-		return nil, ctlconf.Conf{}, nil, err
+		return nil, ctlconf.Conf{}, nil, nil, err
 	}
 
 	newResources, err = prep.PrepareResources(newResources)
 	if err != nil {
-		return nil, ctlconf.Conf{}, nil, err
+		return nil, ctlconf.Conf{}, nil, nil, err
 	}
 
 	err = labeledResources.Prepare(newResources, conf.OwnershipLabelMods(),
 		conf.LabelScopingMods(), conf.AdditionalLabels())
 	if err != nil {
-		return nil, ctlconf.Conf{}, nil, err
+		return nil, ctlconf.Conf{}, nil, nil, err
 	}
+
+	newGKs := NewUsedGKsScope(newResources).GKs()
 
 	// Grab ns names before resource filtering is applied
 	nsNames := o.nsNames(newResources)
 
-	return resourceFilter.Apply(newResources), conf, nsNames, nil
+	return resourceFilter.Apply(newResources), conf, nsNames, newGKs, nil
 }
 
 func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
@@ -272,7 +329,7 @@ func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
 
 func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 	labeledResources *ctlres.LabeledResources, resourceFilter ctlres.ResourceFilter,
-	apps ctlapp.Apps) ([]ctlres.Resource, []ctlres.Resource, error) {
+	apps ctlapp.Apps, usedGKs []schema.GroupKind) ([]ctlres.Resource, []ctlres.Resource, error) {
 
 	labelErrorResolutionFunc := func(key string, val string) string {
 		items, _ := apps.List(nil)
@@ -293,6 +350,11 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 		// Prevent accidently overriding kapp state records
 		DisallowedResourcesByLabelKeys: []string{ctlapp.KappIsAppLabelKey},
 		LabelErrorResolutionFunc:       labelErrorResolutionFunc,
+
+		//Scope resource searching to UsedGKs
+		IdentifiedResourcesListOpts: ctlres.IdentifiedResourcesListOpts{
+			GKsScope: usedGKs,
+		},
 	}
 
 	existingResources, err := labeledResources.AllAndMatching(newResources, matchingOpts)

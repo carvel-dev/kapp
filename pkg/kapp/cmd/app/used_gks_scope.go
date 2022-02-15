@@ -1,0 +1,27 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
+package app
+
+import (
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+)
+
+type UsedGKsScope struct {
+	newResources []ctlres.Resource
+}
+
+func NewUsedGKsScope(newResources []ctlres.Resource) *UsedGKsScope {
+	return &UsedGKsScope{newResources}
+}
+
+func (s *UsedGKsScope) GKs() []schema.GroupKind {
+	var result []schema.GroupKind
+
+	for _, res := range s.newResources {
+		result = append(result, res.GroupKind())
+	}
+
+	return result
+}
