@@ -97,6 +97,10 @@ func (a *RecordedApp) UpdateUsedGVsAndGKs(gvs []schema.GroupVersion, gks []schem
 		}
 	}
 
+	sort.Slice(uniqGVs, func(i int, j int) bool {
+		return uniqGVs[i].Group+uniqGVs[i].Version < uniqGVs[j].Group+uniqGVs[j].Version
+	})
+
 	sort.Slice(uniqGKs, func(i int, j int) bool {
 		return uniqGKs[i].Group+uniqGKs[i].Kind < uniqGKs[j].Group+uniqGKs[j].Kind
 	})
