@@ -75,7 +75,7 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ct
 	// (https://github.com/vmware-tanzu/carvel-kapp/issues/48).
 	appliedResBytes, err := appliedChange.AppliedResource().AsCompactBytes()
 	if err != nil {
-		return nil, false, err
+		return nil, true, err
 	}
 
 	diff := appliedChange.OpsDiff()
@@ -104,7 +104,7 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ct
 	// (https://github.com/vmware-tanzu/carvel-kapp/issues/410)
 	for _, annVal := range annsMod.KVs {
 		if len(annVal) > annValMaxLen {
-			return nil, true, nil
+			return nil, false, nil
 		}
 	}
 
@@ -112,10 +112,10 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ct
 
 	err = annsMod.Apply(resultRes)
 	if err != nil {
-		return nil, false, err
+		return nil, true, err
 	}
 
-	return resultRes, false, nil
+	return resultRes, true, nil
 }
 
 func (r ResourceWithHistory) CalculateChange(appliedRes ctlres.Resource) (Change, error) {

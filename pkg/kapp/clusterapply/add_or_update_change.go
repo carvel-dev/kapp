@@ -5,7 +5,6 @@ package clusterapply
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
@@ -236,16 +235,13 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 		}
 
 		// Record last applied change on the latest version of a resource
-		latestResWithHistoryUpdated, isAnnValueMaxLengthExceeded, err := latestResWithHistory.RecordLastAppliedResource(applyChange)
+		latestResWithHistoryUpdated, madeAnyModifications, err := latestResWithHistory.RecordLastAppliedResource(applyChange)
 		if err != nil {
-			if strings.Contains(err.Error(), "unable to record resource, limit exceed") {
-				return true, nil
-			}
 			return true, fmt.Errorf("Recording last applied resource: %s", err)
 		}
 
-		// exceed annotation value max length then don't record the resource
-		if isAnnValueMaxLengthExceeded {
+		// when annotation value max length exceed then don't record the resource hence not making any modification
+		if !madeAnyModifications {
 			return true, nil
 		}
 
