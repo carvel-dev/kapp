@@ -65,22 +65,6 @@ func (a *RecordedApp) UsedGVs() ([]schema.GroupVersion, error) {
 	return meta.UsedGVs, nil
 }
 
-func (a *RecordedApp) UpdateUsedGVs(gvs []schema.GroupVersion) error {
-	gvsByGV := map[schema.GroupVersion]struct{}{}
-	var uniqGVs []schema.GroupVersion
-
-	for _, gv := range gvs {
-		if _, found := gvsByGV[gv]; !found {
-			gvsByGV[gv] = struct{}{}
-			uniqGVs = append(uniqGVs, gv)
-		}
-	}
-
-	return a.update(func(meta *Meta) {
-		meta.UsedGVs = uniqGVs
-	})
-}
-
 func (a *RecordedApp) usedGKs() (*[]schema.GroupKind, error) {
 	meta, err := a.meta()
 	if err != nil {
@@ -92,7 +76,17 @@ func (a *RecordedApp) usedGKs() (*[]schema.GroupKind, error) {
 
 func (a *RecordedApp) UsedGKs() (*[]schema.GroupKind, error) { return a.usedGKs() }
 
-func (a *RecordedApp) UpdateUsedGKs(gks []schema.GroupKind) error {
+func (a *RecordedApp) UpdateUsedGVsAndGKs(gvs []schema.GroupVersion, gks []schema.GroupKind) error {
+	gvsByGV := map[schema.GroupVersion]struct{}{}
+	var uniqGVs []schema.GroupVersion
+
+	for _, gv := range gvs {
+		if _, found := gvsByGV[gv]; !found {
+			gvsByGV[gv] = struct{}{}
+			uniqGVs = append(uniqGVs, gv)
+		}
+	}
+
 	gksByGK := map[schema.GroupKind]struct{}{}
 	var uniqGKs []schema.GroupKind
 
@@ -108,6 +102,7 @@ func (a *RecordedApp) UpdateUsedGKs(gks []schema.GroupKind) error {
 	})
 
 	return a.update(func(meta *Meta) {
+		meta.UsedGVs = uniqGVs
 		meta.UsedGKs = &uniqGKs
 	})
 }

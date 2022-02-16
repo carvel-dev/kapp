@@ -179,13 +179,9 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	err = app.UpdateUsedGVs(failingAPIServicesPolicy.GVs(newResources, existingResources))
-	if err != nil {
-		return err
-	}
-
-	// Cache possibly untracked GKs in existing resources (handles older apps)
-	err = app.UpdateUsedGKs(NewUsedGKsScope(append(newResources, existingResources...)).GKs())
+	// Track newly added GVs and GKs
+	err = app.UpdateUsedGVsAndGKs(failingAPIServicesPolicy.GVs(newResources, existingResources),
+		NewUsedGKsScope(append(newResources, existingResources...)).GKs())
 	if err != nil {
 		return err
 	}
@@ -216,13 +212,9 @@ func (o *DeployOptions) Run() error {
 			return err
 		}
 
-		// Prunes unused GKs
-		err = app.UpdateUsedGKs(NewUsedGKsScope(newResources).GKs())
-		if err != nil {
-			return err
-		}
-
-		return app.UpdateUsedGVs(failingAPIServicesPolicy.GVs(newResources, nil))
+		// Remove unused GVs and GKs
+		return app.UpdateUsedGVsAndGKs(failingAPIServicesPolicy.GVs(newResources, nil),
+			NewUsedGKsScope(newResources).GKs())
 	})
 	if err != nil {
 		return err
