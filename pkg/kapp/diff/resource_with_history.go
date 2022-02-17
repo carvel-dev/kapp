@@ -69,13 +69,13 @@ func (r ResourceWithHistory) AllowsRecordingLastApplied() bool {
 	return !found
 }
 
-func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ctlres.Resource, error) {
+func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ctlres.Resource, bool, error) {
 	// Use compact representation to take as little space as possible
 	// because annotation value max length is 262144 characters
 	// (https://github.com/vmware-tanzu/carvel-kapp/issues/48).
 	appliedResBytes, err := appliedChange.AppliedResource().AsCompactBytes()
 	if err != nil {
-		return nil, err
+		return nil, true, err
 	}
 
 	diff := appliedChange.OpsDiff()
@@ -100,11 +100,11 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ct
 
 	const annValMaxLen = 262144
 
-	for annKey, annVal := range annsMod.KVs {
+	// kapp deploy should work without adding disable annotation when annotation value max length exceed
+	// (https://github.com/vmware-tanzu/carvel-kapp/issues/410)
+	for _, annVal := range annsMod.KVs {
 		if len(annVal) > annValMaxLen {
-			return nil, fmt.Errorf("Expected annotation '%s' value length %d to be <= max length %d "+
-				"(hint: consider using annotation '%s')",
-				annKey, len(annVal), annValMaxLen, disableOriginalAnnKey)
+			return nil, false, nil
 		}
 	}
 
@@ -112,10 +112,10 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ct
 
 	err = annsMod.Apply(resultRes)
 	if err != nil {
-		return nil, err
+		return nil, true, err
 	}
 
-	return resultRes, nil
+	return resultRes, true, nil
 }
 
 func (r ResourceWithHistory) CalculateChange(appliedRes ctlres.Resource) (Change, error) {
