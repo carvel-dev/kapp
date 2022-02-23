@@ -23,6 +23,7 @@ type DescribeOptions struct {
 	logger      logger.Logger
 
 	appChange string
+	diff      bool
 
 	AppFlags       cmdapp.Flags
 	NamespaceFlags cmdcore.NamespaceFlags
@@ -41,6 +42,7 @@ func NewDescribeCmd(o *DescribeOptions, flagsFactory cmdcore.FlagsFactory) *cobr
 	}
 	o.AppFlags.Set(cmd, flagsFactory)
 	cmd.Flags().StringVar(&o.appChange, "app-change", "", "Name of app-change to be described")
+	cmd.Flags().BoolVar(&o.diff, "diff", false, "Show change diff")
 	return cmd
 }
 
@@ -70,12 +72,16 @@ func (o *DescribeOptions) Run() error {
 		return fmt.Errorf("Unmarshalling app-change spec: %s", err.Error())
 	}
 
-	if configSpec.DiffChanges == "" {
+	if configSpec.ChangeSummary == "" {
 		o.ui.PrintLinef("Diff changes have not been stored for this app-change")
 		return nil
 	}
 
-	o.ui.PrintLinef(configSpec.DiffChanges)
+	if o.diff && configSpec.DiffChanges != "" {
+		o.ui.PrintLinef(configSpec.DiffChanges)
+	}
+
+	o.ui.PrintLinef(configSpec.ChangeSummary)
 
 	return nil
 }

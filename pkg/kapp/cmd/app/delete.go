@@ -20,6 +20,7 @@ import (
 
 type DeleteOptions struct {
 	ui          ui.UI
+	inMemoryUI  InMemoryUI
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
@@ -91,7 +92,7 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	clusterChangeSet, clusterChangesGraph, changesSummary, diffChangesString, err :=
+	clusterChangeSet, clusterChangesGraph, changesSummary, err :=
 		o.calculateAndPresentChanges(existingResources, conf, supportObjs)
 	if err != nil {
 		if o.DiffFlags.UI && clusterChangesGraph != nil {
@@ -126,7 +127,12 @@ func (o *DeleteOptions) Run() error {
 		return err
 	}
 
-	touch := ctlapp.Touch{App: app, Description: "delete", IgnoreSuccessErr: true, DiffChanges: diffChangesString}
+	touch := ctlapp.Touch{
+		App: app, Description: "delete",
+		IgnoreSuccessErr: true,
+		DiffChanges:      o.inMemoryUI.diffBuffer.String(),
+		ChangeSummary:    o.inMemoryUI.summaryBuffer.String(),
+	}
 
 	err = touch.Do(func() error {
 		err := clusterChangeSet.Apply(clusterChangesGraph)
@@ -181,7 +187,7 @@ func (o *DeleteOptions) existingResources(app ctlapp.App,
 }
 
 func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Resource, conf ctlconf.Conf,
-	supportObjs FactorySupportObjs) (ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, changesSummary, string, error) {
+	supportObjs FactorySupportObjs) (ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, changesSummary, error) {
 
 	var (
 		clusterChangeSet ctlcap.ClusterChangeSet
@@ -194,12 +200,12 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 
 		changes, err := changeSetFactory.New(existingResources, nil).Calculate()
 		if err != nil {
-			return ctlcap.ClusterChangeSet{}, nil, changesSummary{}, "", err
+			return ctlcap.ClusterChangeSet{}, nil, changesSummary{}, err
 		}
 
 		diffFilter, err := o.DiffFlags.DiffFilter()
 		if err != nil {
-			return ctlcap.ClusterChangeSet{}, nil, changesSummary{}, "", err
+			return ctlcap.ClusterChangeSet{}, nil, changesSummary{}, err
 		}
 
 		appliedChanges := diffFilter.Apply(changes)
@@ -228,19 +234,18 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 
 	clusterChanges, clusterChangesGraph, err := clusterChangeSet.Calculate()
 	if err != nil {
-		return ctlcap.ClusterChangeSet{}, nil, changesSummary{}, "", err
+		return ctlcap.ClusterChangeSet{}, nil, changesSummary{}, err
 	}
 
-	var diffChangesString string
 	{ // Present cluster changes in UI
 		changeViews := ctlcap.ClusterChangesAsChangeViews(clusterChanges)
 		changeSetView := ctlcap.NewChangeSetView(
 			changeViews, conf.DiffMaskRules(), o.DiffFlags.ChangeSetViewOpts)
 		changeSetView.Print(o.ui)
-		diffChangesString = changeSetView.DiffChangesString()
+		changeSetView.Print(&o.inMemoryUI)
 	}
 
-	return clusterChangeSet, clusterChangesGraph, changesSummary{HasNoChanges: len(clusterChanges) == 0, SkippedChanges: skippedChanges}, diffChangesString, nil
+	return clusterChangeSet, clusterChangesGraph, changesSummary{HasNoChanges: len(clusterChanges) == 0, SkippedChanges: skippedChanges}, nil
 }
 
 const (

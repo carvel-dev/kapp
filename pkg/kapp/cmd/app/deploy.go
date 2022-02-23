@@ -29,6 +29,7 @@ import (
 
 type DeployOptions struct {
 	ui          ui.UI
+	inMemoryUI  InMemoryUI
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
@@ -139,7 +140,7 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	clusterChangeSet, clusterChangesGraph, hasNoChanges, changeSummary, diffChangesString, err :=
+	clusterChangeSet, clusterChangesGraph, hasNoChanges, changeSummary, err :=
 		o.calculateAndPresentChanges(existingResources, newResources, conf, supportObjs)
 	if err != nil {
 		if o.DiffFlags.UI && clusterChangesGraph != nil {
@@ -196,7 +197,8 @@ func (o *DeployOptions) Run() error {
 		Description:      "update: " + changeSummary,
 		Namespaces:       nsNames,
 		IgnoreSuccessErr: true,
-		DiffChanges:      diffChangesString,
+		DiffChanges:      o.inMemoryUI.diffBuffer.String(),
+		ChangeSummary:    o.inMemoryUI.summaryBuffer.String(),
 	}
 
 	err = touch.Do(func() error {
@@ -318,7 +320,7 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 
 func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 	newResources []ctlres.Resource, conf ctlconf.Conf, supportObjs FactorySupportObjs) (
-	ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, bool, string, string, error) {
+	ctlcap.ClusterChangeSet, *ctldgraph.ChangeGraph, bool, string, error) {
 
 	var clusterChangeSet ctlcap.ClusterChangeSet
 
@@ -330,12 +332,12 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 			existingResources, newResources, conf.TemplateRules(),
 			o.DiffFlags.ChangeSetOpts, changeFactory).Calculate()
 		if err != nil {
-			return clusterChangeSet, nil, false, "", "", err
+			return clusterChangeSet, nil, false, "", err
 		}
 
 		diffFilter, err := o.DiffFlags.DiffFilter()
 		if err != nil {
-			return clusterChangeSet, nil, false, "", "", err
+			return clusterChangeSet, nil, false, "", err
 		}
 
 		changes = diffFilter.Apply(changes)
@@ -358,22 +360,21 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 	clusterChanges, clusterChangesGraph, err := clusterChangeSet.Calculate()
 	if err != nil {
 		// Return graph for inspection
-		return clusterChangeSet, clusterChangesGraph, false, "", "", err
+		return clusterChangeSet, clusterChangesGraph, false, "", err
 	}
 
 	var changesSummary string
-	var diffChangesString string
 
 	{ // Present cluster changes in UI
 		changeViews := ctlcap.ClusterChangesAsChangeViews(clusterChanges)
 		changeSetView := ctlcap.NewChangeSetView(
 			changeViews, conf.DiffMaskRules(), o.DiffFlags.ChangeSetViewOpts)
 		changeSetView.Print(o.ui)
+		changeSetView.Print(&o.inMemoryUI)
 		changesSummary = changeSetView.Summary()
-		diffChangesString = changeSetView.DiffChangesString()
 	}
 
-	return clusterChangeSet, clusterChangesGraph, (len(clusterChanges) == 0), changesSummary, diffChangesString, err
+	return clusterChangeSet, clusterChangesGraph, (len(clusterChanges) == 0), changesSummary, err
 }
 
 func (o *DeployOptions) existingPodResources(existingResources []ctlres.Resource) []ctlres.Resource {

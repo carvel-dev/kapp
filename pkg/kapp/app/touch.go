@@ -7,15 +7,17 @@ type Touch struct {
 	App              App
 	Description      string
 	DiffChanges      string
+	ChangeSummary    string
 	Namespaces       []string
 	IgnoreSuccessErr bool
 }
 
 func (t Touch) Do(doFunc func() error) error {
 	meta := ChangeMeta{
-		Description: t.Description,
-		Namespaces:  t.Namespaces,
-		DiffChanges: t.DiffChanges,
+		Description:   t.Description,
+		Namespaces:    t.Namespaces,
+		DiffChanges:   t.DiffChanges,
+		ChangeSummary: t.ChangeSummary,
 	}
 
 	change, err := t.App.BeginChange(meta)

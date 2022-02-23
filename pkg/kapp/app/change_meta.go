@@ -18,7 +18,8 @@ type ChangeMeta struct {
 	Successful  *bool  `json:"successful,omitempty"`
 	Description string `json:"description,omitempty"`
 
-	DiffChanges string `json:"diffChanges,omitempty"`
+	DiffChanges   string `json:"diffChanges,omitempty"`
+	ChangeSummary string `json:"changeSummary,omitempty"`
 
 	Namespaces []string `json:"namespaces,omitempty"`
 }
