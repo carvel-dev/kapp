@@ -165,6 +165,11 @@ func (o *DeployOptions) Run() error {
 	}
 
 	if o.DiffFlags.Run || hasNoChanges {
+		// delete configmap created by kapp while --diff-run (#432)
+		err := app.Delete()
+		if err != nil && !hasNoChanges {
+			return fmt.Errorf("Unable to delete kapp app after diff run, %s", err)
+		}
 		if o.DiffFlags.Run && o.DiffFlags.ExitStatus {
 			return DeployDiffExitStatus{hasNoChanges}
 		}
