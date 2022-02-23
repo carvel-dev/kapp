@@ -1,16 +1,14 @@
-name: goreleaser
+name: kapp-release
 
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
-  goreleaser:
+  kappreleaser:
+    name: kapp release
     runs-on: ubuntu-latest
-    # Set permissions of github token. See https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#permissions
-    permissions:
-      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -20,45 +18,72 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17.3
+          go-version: 1.17.6
 
-      - name: Run GoReleaser
-        # GoReleaser v2.5.0
-        uses: goreleaser/goreleaser-action@5e15885530fb01d81d1f24e8a6f54ebbd0fed7eb
+      - name: Build kapp Script
+        run: |
+          ./hack/build-binaries.sh
+          shasum -a 256 kapp-* | tee checksums.txt
+
+      - name: Setup Minikube
+        run: |
+          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          install minikube-linux-amd64 /usr/local/bin/minikube
+          minikube start --driver=docker --memory 4096
+          eval $(minikube docker-env --shell=bash)
+
+          # Ensure that there is no existing kapp installed
+          rm -f /tmp/bin/kapp
+
+      - name: Add kapp binary to the Path
+        run: |
+          mkdir bin
+          mv kapp bin
+          echo "$PWD/bin" >> $GITHUB_PATH
+          echo $GITHUB_PATH
+
+      - name: Run test cases
+        run: |
+          ./hack/test-external.sh
+
+      - name: Upload binaries and create draft Release
+        uses: softprops/action-gh-release@v1
         with:
-          version: 0.162.0
-          args: release --rm-dist --debug
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: ${{ github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body_path: ./checksums.txt
+          files: |
+            kapp-*
+            checksums.txt
+          draft: true
+          prerelease: true
 
-      - uses: actions/github-script@v4
+      - name: Get uploaded release YAML checksum
+        uses: actions/github-script@v4
         id: get-checksums-from-draft-release
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           result-encoding: string
           script: |
             var crypto = require('crypto');
             const { owner, repo } = context.repo;
-
             // https://docs.github.com/en/rest/reference/repos#list-releases
             // https://octokit.github.io/rest.js/v18#repos-list-releases
             var releases = await github.repos.listReleases({
               owner: owner,
               repo: repo
             });
-
             var crypto = require('crypto')
             var fs = require('fs')
             const url = require('url');
             const https = require('https');
-
             checksums = {}
             for (const r of releases["data"]) {
               if (r.draft && `refs/tags/${r.tag_name}` == "${{ github.ref }}") {
                 for (const asset of r.assets) {
                   var release_asset = await github.repos.getReleaseAsset({ headers: {accept: `application/octet-stream`}, accept: `application/octet-stream`, owner: owner, repo: repo, asset_id: asset.id });
                   const hash = crypto.createHash('sha256');
-
                   let http_promise = new Promise((resolve, reject) => {
                     https.get(release_asset.url, (stream) => {
                       stream.on('data', function (data) {
@@ -75,23 +100,20 @@ jobs:
               }
             }
             console.log(checksums)
-
-            return `${checksums['kapp-darwin-amd64']}  ./kapp-darwin-amd64
-            ${checksums['kapp-darwin-arm64']}  ./kapp-darwin-arm64
-            ${checksums['kapp-linux-amd64']}  ./kapp-linux-amd64
-            ${checksums['kapp-linux-arm64']}  ./kapp-linux-arm64
-            ${checksums['kapp-windows-amd64.exe']}  ./kapp-windows-amd64.exe`
+            return `${checksums['kapp-darwin-amd64']}  kapp-darwin-amd64
+            ${checksums['kapp-darwin-arm64']}  kapp-darwin-arm64
+            ${checksums['kapp-linux-amd64']}  kapp-linux-amd64
+            ${checksums['kapp-linux-arm64']}  kapp-linux-arm64
+            ${checksums['kapp-windows-amd64.exe']}  kapp-windows-amd64.exe`
 
       - name: verify uploaded artifacts
+        if: startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: |
           set -e -x
-          VERSION=`echo ${{ github.ref }}  | grep -Eo '[0-9].*'`
-
-          ./hack/build-binaries.sh "$VERSION" > ./go-checksums
-          cat ./go-checksums
-          diff ./go-checksums <(cat <<EOF
+          cat ./checksums.txt
+          diff ./checksums.txt <(cat <<EOF
           ${{steps.get-checksums-from-draft-release.outputs.result}}
           EOF
           )
