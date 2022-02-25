@@ -94,7 +94,6 @@ spec:
 		expected := []map[string]string{
 			{
 				"age":             "",
-				"conditions":      "",
 				"kind":            "CustomResourceDefinition",
 				"name":            "foostores.demo.com",
 				"namespace":       "(cluster)",
@@ -106,7 +105,6 @@ spec:
 			},
 			{
 				"age":             "",
-				"conditions":      "",
 				"kind":            "FooStore",
 				"name":            "test-cr",
 				"namespace":       "kapp-test",
@@ -130,7 +128,6 @@ spec:
 		expected := []map[string]string{
 			{
 				"age":             "<replaced>",
-				"conditions":      "2/2 t",
 				"kind":            "CustomResourceDefinition",
 				"name":            "foostores.demo.com",
 				"namespace":       "(cluster)",
@@ -154,7 +151,6 @@ spec:
 		expected := []map[string]string{
 			{
 				"age":             "<replaced>",
-				"conditions":      "",
 				"kind":            "FooStore",
 				"name":            "test-cr",
 				"namespace":       "kapp-test",

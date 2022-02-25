@@ -92,7 +92,6 @@ data:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + configMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
-			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
 			"namespace":       "kapp-test",
@@ -115,7 +114,6 @@ data:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + configMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
-			"conditions":      "",
 			"kind":            "Service",
 			"name":            "redis-primary",
 			"namespace":       "kapp-test",
@@ -138,7 +136,6 @@ data:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + modifiedConfigMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
-			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
 			"namespace":       "kapp-test",
@@ -161,7 +158,6 @@ data:
 			RunOpts{})
 
 		expectedChange := []map[string]string{{
-			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
 			"namespace":       "kapp-test",
@@ -184,7 +180,6 @@ data:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + configMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
-			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
 			"namespace":       "kapp-test",
@@ -207,7 +202,6 @@ data:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(modifiedServiceResourceYaml + configMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
-			"conditions":      "",
 			"kind":            "Service",
 			"name":            "redis-primary",
 			"namespace":       "kapp-test",
@@ -230,7 +224,6 @@ data:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + modifiedConfigMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
-			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
 			"namespace":       "kapp-test",
@@ -253,7 +246,6 @@ data:
 			RunOpts{})
 
 		expectedChange := []map[string]string{{
-			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
 			"namespace":       "kapp-test",
@@ -263,7 +255,6 @@ data:
 			"reconcile_state": "ok",
 			"wait_to":         "delete",
 		}, {
-			"conditions":      "",
 			"kind":            "Endpoints",
 			"name":            "redis-primary",
 			"namespace":       "kapp-test",
@@ -273,7 +264,6 @@ data:
 			"reconcile_state": "ok",
 			"wait_to":         "delete",
 		}, {
-			"conditions":      "",
 			"kind":            "Service",
 			"name":            "redis-primary",
 			"namespace":       "kapp-test",

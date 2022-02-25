@@ -36,9 +36,6 @@ func (v *ChangesView) Print(ui ui.UI) {
 	versionHeader := uitable.NewHeader("Version")
 	versionHeader.Hidden = true
 
-	conditionsHeader := uitable.NewHeader("Conditions")
-	conditionsHeader.Title = "Conds."
-
 	reconcileStateHeader := uitable.NewHeader("Reconcile state")
 	reconcileStateHeader.Title = "Rs"
 
@@ -59,7 +56,6 @@ func (v *ChangesView) Print(ui ui.UI) {
 			uitable.NewHeader("Name"),
 			uitable.NewHeader("Kind"),
 			versionHeader,
-			conditionsHeader,
 			uitable.NewHeader("Age"),
 			uitable.NewHeader("Op"),
 			opStrategyHeader,
@@ -93,16 +89,13 @@ func (v *ChangesView) Print(ui ui.UI) {
 		}
 
 		if resource.IsProvisioned() {
-			condVal := cmdcore.NewConditionsValue(resource.Status())
 
 			row = append(row,
 				// TODO erroneously colors empty value
-				uitable.ValueFmt{V: condVal, Error: condVal.NeedsAttention()},
 				cmdcore.NewValueAge(resource.CreatedAt()),
 			)
 		} else {
 			row = append(row,
-				uitable.ValueFmt{V: uitable.NewValueString(""), Error: false},
 				uitable.NewValueString(""),
 			)
 		}
