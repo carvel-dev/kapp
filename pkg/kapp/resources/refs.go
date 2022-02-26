@@ -24,11 +24,21 @@ func (r PartialResourceRef) Matches(other schema.GroupVersionResource) bool {
 	switch {
 	case len(s.Version) > 0 && len(s.Resource) > 0:
 		return s == other
-	case len(s.Version) > 0 && len(s.Resource) == 0:
+	case len(s.Resource) > 0:
+		return s.Group == other.Group && s.Resource == other.Resource
+	case len(s.Version) > 0:
 		return s.Group == other.Group && s.Version == other.Version
 	case len(s.Version) == 0 && len(s.Resource) == 0:
 		return s.Group == other.Group
 	default:
 		return false
 	}
+}
+
+type GKResourceRef struct {
+	schema.GroupKind
+}
+
+func (r GKResourceRef) Matches(other ResourceType) bool {
+	return r.Group == other.APIResource.Group && r.Kind == other.Kind
 }

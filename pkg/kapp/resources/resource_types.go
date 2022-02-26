@@ -16,7 +16,7 @@ import (
 )
 
 type ResourceTypes interface {
-	All() ([]ResourceType, error)
+	All(ignoreCachedResTypes bool) ([]ResourceType, error)
 	Find(Resource) (ResourceType, error)
 	CanIgnoreFailingGroupVersion(schema.GroupVersion) bool
 }
@@ -45,7 +45,11 @@ func NewResourceTypesImpl(coreClient kubernetes.Interface, opts ResourceTypesImp
 	return &ResourceTypesImpl{coreClient: coreClient, opts: opts}
 }
 
-func (g *ResourceTypesImpl) All() ([]ResourceType, error) {
+func (g *ResourceTypesImpl) All(ignoreCachedResTypes bool) ([]ResourceType, error) {
+	if ignoreCachedResTypes {
+		// TODO Update cache while doing a fresh fetch
+		return g.all()
+	}
 	return g.memoizedAll()
 }
 
@@ -261,6 +265,19 @@ func NonMatching(in []ResourceType, ref ResourceRef) []ResourceType {
 	for _, item := range in {
 		if !partResourceRef.Matches(item.GroupVersionResource) {
 			out = append(out, item)
+		}
+	}
+	return out
+}
+
+// TODO: Extend ResourceRef and PartialResourceRefd to allow GVK matching
+func MatchingAnyGK(in []ResourceType, gks []schema.GroupKind) []ResourceType {
+	var out []ResourceType
+	for _, item := range in {
+		for _, gk := range gks {
+			if (GKResourceRef{gk}).Matches(item) {
+				out = append(out, item)
+			}
 		}
 	}
 	return out

@@ -4,6 +4,8 @@
 package app
 
 import (
+	"time"
+
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -11,12 +13,14 @@ import (
 type App interface {
 	Name() string
 	Namespace() string
+	CreationTimestamp() time.Time
 	Description() string
 	Meta() (Meta, error)
 
 	LabelSelector() (labels.Selector, error)
 	UsedGVs() ([]schema.GroupVersion, error)
-	UpdateUsedGVs([]schema.GroupVersion) error
+	UsedGKs() (*[]schema.GroupKind, error)
+	UpdateUsedGVsAndGKs([]schema.GroupVersion, []schema.GroupKind) error
 
 	CreateOrUpdate(map[string]string) error
 	Exists() (bool, string, error)

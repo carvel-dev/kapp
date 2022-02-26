@@ -235,9 +235,14 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 		}
 
 		// Record last applied change on the latest version of a resource
-		latestResWithHistoryUpdated, err := latestResWithHistory.RecordLastAppliedResource(applyChange)
+		latestResWithHistoryUpdated, madeAnyModifications, err := latestResWithHistory.RecordLastAppliedResource(applyChange)
 		if err != nil {
 			return true, fmt.Errorf("Recording last applied resource: %s", err)
+		}
+
+		// when annotation value max length exceed then don't record the resource hence not making any modification
+		if !madeAnyModifications {
+			return true, nil
 		}
 
 		_, err = c.identifiedResources.Update(latestResWithHistoryUpdated)

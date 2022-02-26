@@ -6,6 +6,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/k14s/kapp/pkg/kapp/logger"
@@ -23,8 +24,9 @@ const (
 )
 
 type RecordedApp struct {
-	name   string
-	nsName string
+	name              string
+	nsName            string
+	creationTimestamp time.Time
 
 	coreClient             kubernetes.Interface
 	identifiedResources    ctlres.IdentifiedResources
@@ -38,6 +40,8 @@ var _ App = &RecordedApp{}
 
 func (a *RecordedApp) Name() string      { return a.name }
 func (a *RecordedApp) Namespace() string { return a.nsName }
+
+func (a *RecordedApp) CreationTimestamp() time.Time { return a.creationTimestamp }
 
 func (a *RecordedApp) Description() string {
 	return fmt.Sprintf("app '%s' namespace: %s", a.name, a.nsName)
@@ -61,7 +65,18 @@ func (a *RecordedApp) UsedGVs() ([]schema.GroupVersion, error) {
 	return meta.UsedGVs, nil
 }
 
-func (a *RecordedApp) UpdateUsedGVs(gvs []schema.GroupVersion) error {
+func (a *RecordedApp) usedGKs() (*[]schema.GroupKind, error) {
+	meta, err := a.meta()
+	if err != nil {
+		return nil, err
+	}
+
+	return meta.UsedGKs, nil
+}
+
+func (a *RecordedApp) UsedGKs() (*[]schema.GroupKind, error) { return a.usedGKs() }
+
+func (a *RecordedApp) UpdateUsedGVsAndGKs(gvs []schema.GroupVersion, gks []schema.GroupKind) error {
 	gvsByGV := map[schema.GroupVersion]struct{}{}
 	var uniqGVs []schema.GroupVersion
 
@@ -72,8 +87,27 @@ func (a *RecordedApp) UpdateUsedGVs(gvs []schema.GroupVersion) error {
 		}
 	}
 
+	gksByGK := map[schema.GroupKind]struct{}{}
+	var uniqGKs []schema.GroupKind
+
+	for _, gk := range gks {
+		if _, found := gksByGK[gk]; !found {
+			gksByGK[gk] = struct{}{}
+			uniqGKs = append(uniqGKs, gk)
+		}
+	}
+
+	sort.Slice(uniqGVs, func(i int, j int) bool {
+		return uniqGVs[i].Group+uniqGVs[i].Version < uniqGVs[j].Group+uniqGVs[j].Version
+	})
+
+	sort.Slice(uniqGKs, func(i int, j int) bool {
+		return uniqGKs[i].Group+uniqGKs[i].Kind < uniqGKs[j].Group+uniqGKs[j].Kind
+	})
+
 	return a.update(func(meta *Meta) {
 		meta.UsedGVs = uniqGVs
+		meta.UsedGKs = &uniqGKs
 	})
 }
 
@@ -91,6 +125,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 		Data: Meta{
 			LabelKey:   kappAppLabelKey,
 			LabelValue: fmt.Sprintf("%d", time.Now().UTC().UnixNano()),
+			UsedGKs:    &[]schema.GroupKind{},
 		}.AsData(),
 	}
 
