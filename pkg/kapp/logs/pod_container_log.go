@@ -144,7 +144,7 @@ func (l PodContainerLog) obtainStream(ui ui.UI, linePrefix string, cancelCh chan
 		if !isWaitingMsgPrintedOnce {
 			ui.BeginLinef("%s# waiting for '%s' logs to become available...\n", linePrefix, l.tag)
 			if !l.opts.Follow {
-				return nil, fmt.Errorf("%s# Failed to get stream for '%s'...\n", linePrefix, l.tag)
+				return nil, fmt.Errorf("%s# failed to get stream for '%s'...\n", linePrefix, l.tag)
 			}
 			isWaitingMsgPrintedOnce = true
 		}
