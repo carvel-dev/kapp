@@ -6,7 +6,6 @@ package logs
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"sync/atomic"
@@ -57,7 +56,7 @@ func (l PodContainerLog) Tail(ui ui.UI, cancelCh chan struct{}) error {
 
 			if l.opts.Follow {
 				ui.BeginLinef("%s# container restarting '%s' logs\n", linePrefix, l.tag)
-				// Mutliplying by a factor of 2 as some times for initContainers, it fetches the older stream.
+				// Multiplying by a factor of 2 as some times for initContainers, it fetches the older stream.
 				time.Sleep(2 * 500 * time.Millisecond)
 				continue
 			} else {
@@ -145,7 +144,7 @@ func (l PodContainerLog) obtainStream(ui ui.UI, linePrefix string, cancelCh chan
 		if !isWaitingMsgPrintedOnce {
 			ui.BeginLinef("%s# waiting for '%s' logs to become available...\n", linePrefix, l.tag)
 			if !l.opts.Follow {
-				return nil, errors.New(fmt.Sprintf("%s# Failed to get stream for '%s'...\n", linePrefix, l.tag))
+				return nil, fmt.Errorf("%s# Failed to get stream for '%s'...\n", linePrefix, l.tag)
 			}
 			isWaitingMsgPrintedOnce = true
 		}
