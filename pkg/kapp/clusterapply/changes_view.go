@@ -91,7 +91,7 @@ func (v *ChangesView) Print(ui ui.UI) {
 		if resource.IsProvisioned() {
 
 			row = append(row,
-				// TODO erroneously colors empty value
+
 				cmdcore.NewValueAge(resource.CreatedAt()),
 			)
 		} else {
