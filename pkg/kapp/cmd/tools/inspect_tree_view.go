@@ -96,7 +96,6 @@ func (v InspectTreeView) Print(ui ui.UI) {
 			syncVal := ctlcap.NewValueResourceConverged(resource)
 
 			row = append(row,
-
 				syncVal.StateVal,
 				syncVal.ReasonVal,
 				cmdcore.NewValueAge(resource.CreatedAt()),
