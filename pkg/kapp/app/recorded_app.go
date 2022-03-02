@@ -165,7 +165,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 					return err
 				}
 
-				return a.migrate(configmapWithoutSuffix, labels)
+				return a.migrate(configmapWithoutSuffix, labels, a.fqName)
 			}
 		} else if !errors.IsNotFound(err) {
 			// return if error is anything other than configmap not found
@@ -216,8 +216,46 @@ func (a *RecordedApp) createOrUpdate(c *corev1.ConfigMap, labels map[string]stri
 	return nil
 }
 
-func (a *RecordedApp) migrate(c *corev1.ConfigMap, labels map[string]string) error {
-	err := a.renameConfigMap(c, a.fqName, a.nsName)
+func (a *RecordedApp) Migrate(oldName string, newName string, labels map[string]string) error {
+	fmt.Println("migrate()")
+	_, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), newName, metav1.GetOptions{})
+	if err == nil {
+		fmt.Println(newName + " exists, updating")
+		return a.CreateOrUpdate(labels)
+	} else if errors.IsNotFound(err) {
+		c, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), oldName, metav1.GetOptions{})
+		if err == nil {
+			fmt.Println(newName + " does not exist, migrating " + oldName + " to " + newName)
+			return a.migrate(c, labels, newName)
+		} else if err != nil {
+			if errors.IsNotFound(err) {
+				return a.CreateOrUpdate(labels)
+			}
+		}
+	}
+
+	return err
+
+	// if a.isMigrationEnabled() {
+	// 	if a.isMigrated {
+	// 		return a.createOrUpdate(c, labels)
+	// 	}
+
+	// 	migratedAnnotation := map[string]string{KappIsConfigmapMigratedAnnotationKey: KappIsConfigmapMigratedAnnotationValue}
+	// 	err = a.mergeAppAnnotationUpdates(c, migratedAnnotation)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	// 	return a.migrate(c, labels, newName+AppSuffix)
+	// }
+
+	// return a.migrate(c, labels, newName)
+}
+
+func (a *RecordedApp) migrate(c *corev1.ConfigMap, labels map[string]string, newName string) error {
+	fmt.Println("migrate()")
+	err := a.renameConfigMap(c, newName, a.nsName)
 	if err != nil {
 		return err
 	}

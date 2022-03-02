@@ -96,9 +96,16 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	err = app.CreateOrUpdate(appLabels)
-	if err != nil {
-		return err
+	if o.DeployFlags.PrevApp != "" {
+		err = app.Migrate(o.DeployFlags.PrevApp, app.Name(), appLabels)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = app.CreateOrUpdate(appLabels)
+		if err != nil {
+			return err
+		}
 	}
 
 	usedGVs, err := app.UsedGVs()

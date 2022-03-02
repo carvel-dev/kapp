@@ -73,6 +73,9 @@ func (a *LabeledApp) Delete() error {
 }
 
 func (a *LabeledApp) Rename(_ string, _ string) error { return fmt.Errorf("Not supported") }
+func (a *LabeledApp) Migrate(_ string, _ string, _ map[string]string) error {
+	return fmt.Errorf("Not supported")
+}
 
 func (a *LabeledApp) Meta() (Meta, error) { return Meta{}, nil }
 
