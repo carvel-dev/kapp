@@ -6,7 +6,9 @@ package app
 import (
 	"context"
 	"fmt"
+	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/k14s/kapp/pkg/kapp/logger"
@@ -25,7 +27,9 @@ const (
 
 type RecordedApp struct {
 	name              string
+	fqName            string
 	nsName            string
+	isMigrated        bool
 	creationTimestamp time.Time
 
 	coreClient             kubernetes.Interface
@@ -129,15 +133,65 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 		}.AsData(),
 	}
 
-	err := a.mergeAppUpdates(configMap, labels)
+	if a.isMigrationEnabled() {
+		migratedAnnotation := map[string]string{KappIsConfigmapMigratedAnnotationKey: KappIsConfigmapMigratedAnnotationValue}
+
+		configMapWithSuffix, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
+		if err == nil {
+			if a.isKappApp(configMapWithSuffix) {
+				err = a.mergeAppUpdates(configMapWithSuffix, labels)
+				if err != nil {
+					return err
+				}
+
+				_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), configMapWithSuffix, metav1.UpdateOptions{})
+				if err != nil {
+					return fmt.Errorf("Updating app: %s", err)
+				}
+
+				return nil
+			}
+		} else if !errors.IsNotFound(err) {
+			// return if error is anything other than configmap not found
+			return fmt.Errorf("Getting app: %s", err)
+		}
+
+		configmapWithoutSuffix, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
+		if err == nil {
+			if a.isKappApp(configmapWithoutSuffix) {
+				err = a.mergeAppAnnotationUpdates(configmapWithoutSuffix, migratedAnnotation)
+				if err != nil {
+					return err
+				}
+
+				return a.migrate(configmapWithoutSuffix, labels)
+			}
+		} else if !errors.IsNotFound(err) {
+			// return if error is anything other than configmap not found
+			return fmt.Errorf("Getting app: %s", err)
+		}
+
+		err = a.mergeAppAnnotationUpdates(configMap, migratedAnnotation)
+		if err != nil {
+			return err
+		}
+
+		configMap.ObjectMeta.Name = a.fqName
+	}
+
+	return a.createOrUpdate(configMap, labels)
+}
+
+func (a *RecordedApp) createOrUpdate(c *corev1.ConfigMap, labels map[string]string) error {
+	err := a.mergeAppUpdates(c, labels)
 	if err != nil {
 		return err
 	}
 
-	_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, metav1.CreateOptions{})
+	_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), c, metav1.CreateOptions{})
 	if err != nil {
 		if errors.IsAlreadyExists(err) {
-			existingConfigMap, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
+			existingConfigMap, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), c.GetObjectMeta().GetName(), metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("Getting app: %s", err)
 			}
@@ -161,6 +215,25 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 	return nil
 }
 
+func (a *RecordedApp) migrate(c *corev1.ConfigMap, labels map[string]string) error {
+	err := a.renameConfigMap(c, a.fqName, a.nsName)
+	if err != nil {
+		return err
+	}
+
+	err = a.mergeAppUpdates(c, labels)
+	if err != nil {
+		return err
+	}
+
+	_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), c, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("Updating app: %s", err)
+	}
+
+	return nil
+}
+
 func (a *RecordedApp) mergeAppUpdates(cm *corev1.ConfigMap, labels map[string]string) error {
 	for key, val := range labels {
 		if prevVal, found := cm.ObjectMeta.Labels[key]; found {
@@ -174,7 +247,35 @@ func (a *RecordedApp) mergeAppUpdates(cm *corev1.ConfigMap, labels map[string]st
 	return nil
 }
 
+func (a *RecordedApp) mergeAppAnnotationUpdates(cm *corev1.ConfigMap, annotations map[string]string) error {
+	if cm.ObjectMeta.Annotations == nil && len(annotations) > 0 {
+		cm.ObjectMeta.Annotations = map[string]string{}
+	}
+
+	for key, val := range annotations {
+		if prevVal, found := cm.ObjectMeta.Annotations[key]; found {
+			if prevVal != val {
+				return fmt.Errorf("Expected annotation '%s' value to remain same", key)
+			}
+		}
+		cm.ObjectMeta.Annotations[key] = val
+	}
+
+	return nil
+}
+
 func (a *RecordedApp) Exists() (bool, string, error) {
+	if a.isMigrationEnabled() {
+		_, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
+		if err == nil {
+			a.isMigrated = true
+			return true, "", nil
+		} else if !errors.IsNotFound(err) {
+			// return if error is anything other than configmap not found
+			return false, "", fmt.Errorf("Getting app: %s", err)
+		}
+	}
+
 	_, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -204,7 +305,12 @@ func (a *RecordedApp) Delete() error {
 		return err
 	}
 
-	err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(context.TODO(), a.name, metav1.DeleteOptions{})
+	name := a.name
+	if a.isMigrated {
+		name = a.fqName
+	}
+
+	err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(context.TODO(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return fmt.Errorf("Deleting app: %s", err)
 	}
@@ -213,29 +319,47 @@ func (a *RecordedApp) Delete() error {
 }
 
 func (a *RecordedApp) Rename(newName string, newNamespace string) error {
-	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
+	name := a.name
+	if a.isMigrated {
+		name = a.fqName
+	}
+
+	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("App '%s' (namespace: %s) does not exist: %s%s",
-				a.name, a.nsName, err, a.appInDiffNsHintMsgFunc(a.name))
+				a.name, a.nsName, err, a.appInDiffNsHintMsgFunc(name))
 		}
+
 		return fmt.Errorf("Getting app: %s", err)
 	}
 
+	// use fully qualified name if app had been previously migrated
+	if a.isMigrated || a.isMigrationEnabled() {
+		a.mergeAppAnnotationUpdates(app, map[string]string{KappIsConfigmapMigratedAnnotationKey: KappIsConfigmapMigratedAnnotationValue})
+		return a.renameConfigMap(app, newName+AppSuffix, newNamespace)
+	}
+
+	return a.renameConfigMap(app, newName, newNamespace)
+}
+
+func (a *RecordedApp) renameConfigMap(app *corev1.ConfigMap, name, ns string) error {
+	oldName := app.Name
+
 	// Clear out all existing meta fields
 	app.ObjectMeta = metav1.ObjectMeta{
-		Name:        newName,
-		Namespace:   newNamespace,
+		Name:        name,
+		Namespace:   ns,
 		Labels:      app.ObjectMeta.Labels,
 		Annotations: app.ObjectMeta.Annotations,
 	}
 
-	_, err = a.coreClient.CoreV1().ConfigMaps(newNamespace).Create(context.TODO(), app, metav1.CreateOptions{})
+	_, err := a.coreClient.CoreV1().ConfigMaps(ns).Create(context.TODO(), app, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("Creating app: %s", err)
 	}
 
-	err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(context.TODO(), a.name, metav1.DeleteOptions{})
+	err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(context.TODO(), oldName, metav1.DeleteOptions{})
 	if err != nil {
 		// TODO Do not clean up new config map as there is no gurantee it can be deleted either
 		return fmt.Errorf("Deleting app: %s", err)
@@ -257,6 +381,15 @@ func (a *RecordedApp) labeledApp() (*LabeledApp, error) {
 	return &LabeledApp{sel, a.identifiedResources}, nil
 }
 
+func (a *RecordedApp) isKappApp(app *corev1.ConfigMap) bool {
+	_, ok := app.Labels[KappIsAppLabelKey]
+	return ok
+}
+
+func (a *RecordedApp) isMigrationEnabled() bool {
+	return strings.ToLower(os.Getenv("KAPP_FQ_CONFIGMAP_NAMES")) == "true"
+}
+
 func (a *RecordedApp) Meta() (Meta, error) { return a.meta() }
 
 func (a *RecordedApp) setMeta(app corev1.ConfigMap) (Meta, error) {
@@ -264,6 +397,10 @@ func (a *RecordedApp) setMeta(app corev1.ConfigMap) (Meta, error) {
 	if err != nil {
 		errMsg := "App '%s' (namespace: %s) backed by ConfigMap '%s' did not contain parseable app metadata: %s"
 		hintText := " (hint: ConfigMap was overriden by another user?)"
+
+		if a.isMigrated {
+			return Meta{}, fmt.Errorf(errMsg+hintText, a.name, a.nsName, a.fqName, err)
+		}
 		return Meta{}, fmt.Errorf(errMsg+hintText, a.name, a.nsName, a.name, err)
 	}
 
@@ -278,11 +415,22 @@ func (a *RecordedApp) meta() (Meta, error) {
 		return *a.memoizedMeta, nil
 	}
 
+	if a.isMigrationEnabled() {
+		app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
+		if err == nil {
+			a.isMigrated = true
+			return a.setMeta(*app)
+		} else if !errors.IsNotFound(err) {
+			// return if error is anything other than configmap not found
+			return Meta{}, fmt.Errorf("Getting app: %s", err)
+		}
+	}
+
 	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return Meta{}, fmt.Errorf("App '%s' (namespace: %s) does not exist: %s%s",
-				a.name, a.nsName, err, a.appInDiffNsHintMsgFunc(a.name))
+				a.name, a.nsName, err, a.appInDiffNsHintMsgFunc(a.fqName))
 		}
 		return Meta{}, fmt.Errorf("Getting app: %s", err)
 	}
@@ -332,7 +480,12 @@ func (a *RecordedApp) BeginChange(meta ChangeMeta) (Change, error) {
 }
 
 func (a *RecordedApp) update(doFunc func(*Meta)) error {
-	change, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
+	name := a.name
+	if a.isMigrated {
+		name = a.fqName
+	}
+
+	change, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("Getting app: %s", err)
 	}

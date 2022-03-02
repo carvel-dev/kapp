@@ -17,8 +17,11 @@ import (
 )
 
 const (
-	KappIsAppLabelKey   = "kapp.k14s.io/is-app"
-	kappIsAppLabelValue = ""
+	KappIsAppLabelKey                      = "kapp.k14s.io/is-app"
+	kappIsAppLabelValue                    = ""
+	KappIsConfigmapMigratedAnnotationKey   = "kapp.k14s.io/is-configmap-migrated"
+	KappIsConfigmapMigratedAnnotationValue = ""
+	AppSuffix                              = ".apps.k14s.io"
 )
 
 type Apps struct {
@@ -53,7 +56,7 @@ func (a Apps) Find(name string) (App, error) {
 		return nil, fmt.Errorf("Expected non-empty namespace")
 	}
 
-	return &RecordedApp{name, a.nsName, time.Time{}, a.coreClient,
+	return &RecordedApp{name, name + AppSuffix, a.nsName, false, time.Time{}, a.coreClient,
 		a.identifiedResources, a.appInDiffNsHintMsg, nil,
 		a.logger.NewPrefixed("RecordedApp")}, nil
 }
@@ -83,7 +86,15 @@ func (a Apps) list(additionalLabels map[string]string, nsName string) ([]App, er
 	}
 
 	for _, app := range apps.Items {
-		recordedApp := &RecordedApp{app.Name, app.Namespace, app.ObjectMeta.CreationTimestamp.Time, a.coreClient,
+		name := app.Name
+		isMigrated := false
+
+		if _, ok := app.Annotations[KappIsConfigmapMigratedAnnotationKey]; ok {
+			name = strings.TrimSuffix(app.Name, AppSuffix)
+			isMigrated = true
+		}
+
+		recordedApp := &RecordedApp{name, name + AppSuffix, app.Namespace, isMigrated, app.ObjectMeta.CreationTimestamp.Time, a.coreClient,
 			a.identifiedResources, a.appInDiffNsHintMsg, nil,
 			a.logger.NewPrefixed("RecordedApp")}
 
