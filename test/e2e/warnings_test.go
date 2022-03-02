@@ -88,8 +88,8 @@ spec:
 		expectedOutput := `
 Changes
 
-Namespace  Name  Kind     Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
-kapp-test  cr-1  CronTab  -       -    create  -       reconcile  -   -  
+Namespace  Name  Kind     Age  Op      Op st.  Wait to    Rs  Ri  
+kapp-test  cr-1  CronTab  -    create  -       reconcile  -   -  
 
 Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 1 reconcile, 0 delete, 0 noop
@@ -120,8 +120,8 @@ Succeeded`
 		expectedOutput := `
 Changes
 
-Namespace  Name  Kind     Conds.  Age  Op      Op st.  Wait to    Rs  Ri  
-kapp-test  cr-2  CronTab  -       -    create  -       reconcile  -   -  
+Namespace  Name  Kind     Age  Op      Op st.  Wait to    Rs  Ri  
+kapp-test  cr-2  CronTab  -    create  -       reconcile  -   -  
 
 Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 1 reconcile, 0 delete, 0 noop

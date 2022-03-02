@@ -113,7 +113,6 @@ metadata:
 
 		expected := []map[string]string{{
 			"age":             "<replaced>",
-			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "test-ignore-failing-api-service",
 			"namespace":       "kapp-test",
@@ -263,7 +262,6 @@ spec: {}
 
 		expected := []map[string]string{{
 			"age":             "<replaced>",
-			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "test-ignore-failing-group-version",
 			"namespace":       "kapp-test",

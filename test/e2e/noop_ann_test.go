@@ -49,8 +49,8 @@ metadata:
 		expectedOutput := `
 Changes
 
-Namespace  Name     Kind       Conds.  Age  Op      Op st.  Wait to    Rs  Ri  $
-(cluster)  kapp-ns  Namespace  -       -    create  -       reconcile  -   -  $
+Namespace  Name     Kind       Age  Op      Op st.  Wait to    Rs  Ri  $
+(cluster)  kapp-ns  Namespace  -    create  -       reconcile  -   -  $
 
 Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 1 reconcile, 0 delete, 0 noop
@@ -77,7 +77,7 @@ Succeeded`
 		expectedOutput := `
 Changes
 
-Namespace  Name  Kind  Conds.  Age  Op  Op st.  Wait to  Rs  Ri  $
+Namespace  Name  Kind  Age  Op  Op st.  Wait to  Rs  Ri  $
 
 Op:      0 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 0 reconcile, 0 delete, 0 noop
@@ -97,8 +97,8 @@ Succeeded`
 		expectedOutput := `
 Resources in app 'app'
 
-Namespace  Name     Kind       Owner  Conds.  Rs  Ri  Age  $
-(cluster)  kapp-ns  Namespace  kapp   -       ok  -   2s  $
+Namespace  Name     Kind       Owner  Rs  Ri  Age  $
+(cluster)  kapp-ns  Namespace  kapp   ok  -   2s  $
 
 Rs: Reconcile state
 Ri: Reconcile information

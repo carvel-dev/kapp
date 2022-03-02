@@ -29,9 +29,6 @@ func (v InspectTreeView) Print(ui ui.UI) {
 	versionHeader := uitable.NewHeader("Version")
 	versionHeader.Hidden = true
 
-	conditionsHeader := uitable.NewHeader("Conditions")
-	conditionsHeader.Title = "Conds."
-
 	reconcileStateHeader := uitable.NewHeader("Reconcile state")
 	reconcileStateHeader.Title = "Rs"
 
@@ -49,7 +46,6 @@ func (v InspectTreeView) Print(ui ui.UI) {
 			uitable.NewHeader("Kind"),
 			versionHeader,
 			uitable.NewHeader("Owner"),
-			conditionsHeader,
 			reconcileStateHeader,
 			reconcileInfoHeader,
 			uitable.NewHeader("Age"),
@@ -97,19 +93,15 @@ func (v InspectTreeView) Print(ui ui.UI) {
 		}
 
 		if resource.IsProvisioned() {
-			condVal := cmdcore.NewConditionsValue(resource.Status())
 			syncVal := ctlcap.NewValueResourceConverged(resource)
 
 			row = append(row,
-				// TODO erroneously colors empty value
-				uitable.ValueFmt{V: condVal, Error: condVal.NeedsAttention()},
 				syncVal.StateVal,
 				syncVal.ReasonVal,
 				cmdcore.NewValueAge(resource.CreatedAt()),
 			)
 		} else {
 			row = append(row,
-				uitable.ValueFmt{V: uitable.NewValueString(""), Error: false},
 				uitable.NewValueString(""),
 				uitable.NewValueString(""),
 				uitable.NewValueString(""),

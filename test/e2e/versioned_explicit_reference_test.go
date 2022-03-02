@@ -128,7 +128,6 @@ data:
 		expected := []map[string]string{
 			{
 				"age":             "",
-				"conditions":      "",
 				"kind":            "ConfigMap",
 				"name":            "config-1-ver-1",
 				"namespace":       "kapp-test",
@@ -140,7 +139,6 @@ data:
 			},
 			{
 				"age":             "",
-				"conditions":      "",
 				"kind":            "ConfigMap",
 				"name":            "config-2",
 				"namespace":       "kapp-test",
@@ -152,7 +150,6 @@ data:
 			},
 			{
 				"age":             "",
-				"conditions":      "",
 				"kind":            "ConfigMap",
 				"name":            "config-3",
 				"namespace":       "kapp-test",
@@ -164,7 +161,6 @@ data:
 			},
 			{
 				"age":             "",
-				"conditions":      "",
 				"kind":            "ConfigMap",
 				"name":            "config-4",
 				"namespace":       "kapp-test",
@@ -187,7 +183,6 @@ data:
 		expected := []map[string]string{
 			{
 				"age":             "",
-				"conditions":      "",
 				"kind":            "ConfigMap",
 				"name":            "config-1-ver-2",
 				"namespace":       "kapp-test",
@@ -199,7 +194,6 @@ data:
 			},
 			{
 				"age":             "<replaced>",
-				"conditions":      "",
 				"kind":            "ConfigMap",
 				"name":            "config-2",
 				"namespace":       "kapp-test",
@@ -211,7 +205,6 @@ data:
 			},
 			{
 				"age":             "<replaced>",
-				"conditions":      "",
 				"kind":            "ConfigMap",
 				"name":            "config-3",
 				"namespace":       "kapp-test",

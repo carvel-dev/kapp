@@ -90,7 +90,6 @@ metadata:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
 		expectedNonVer := []map[string]string{{
-			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "config",
 			"namespace":       "kapp-test",
@@ -100,7 +99,6 @@ metadata:
 			"reconcile_state": "",
 			"wait_to":         "reconcile",
 		}, {
-			"conditions":      "",
 			"kind":            "Secret",
 			"name":            "secret",
 			"namespace":       "kapp-test",
@@ -122,7 +120,6 @@ metadata:
 		respVer := uitest.JSONUIFromBytes(t, []byte(verOut))
 
 		expectedVer := []map[string]string{{
-			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "config",
 			"namespace":       "kapp-test",
@@ -132,7 +129,6 @@ metadata:
 			"reconcile_state": "ok",
 			"wait_to":         "delete",
 		}, {
-			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "config-ver-1",
 			"namespace":       "kapp-test",
@@ -142,7 +138,6 @@ metadata:
 			"reconcile_state": "",
 			"wait_to":         "reconcile",
 		}, {
-			"conditions":      "",
 			"kind":            "Secret",
 			"name":            "secret",
 			"namespace":       "kapp-test",
@@ -152,7 +147,6 @@ metadata:
 			"reconcile_state": "ok",
 			"wait_to":         "delete",
 		}, {
-			"conditions":      "",
 			"kind":            "Secret",
 			"name":            "secret-ver-1",
 			"namespace":       "kapp-test",
@@ -173,7 +167,6 @@ metadata:
 
 		expectedVerKeepOrg := []map[string]string{
 			{
-				"conditions":      "",
 				"kind":            "ConfigMap",
 				"name":            "config",
 				"namespace":       "kapp-test",
@@ -183,7 +176,6 @@ metadata:
 				"reconcile_state": "",
 				"wait_to":         "reconcile",
 			}, {
-				"conditions":      "",
 				"kind":            "ConfigMap",
 				"name":            "config-ver-2",
 				"namespace":       "kapp-test",
@@ -193,7 +185,6 @@ metadata:
 				"reconcile_state": "",
 				"wait_to":         "reconcile",
 			}, {
-				"conditions":      "",
 				"kind":            "Secret",
 				"name":            "secret",
 				"namespace":       "kapp-test",
@@ -203,7 +194,6 @@ metadata:
 				"reconcile_state": "",
 				"wait_to":         "reconcile",
 			}, {
-				"conditions":      "",
 				"kind":            "Secret",
 				"name":            "secret-ver-2",
 				"namespace":       "kapp-test",
@@ -229,7 +219,6 @@ metadata:
 
 		expectedVerKeepOrg := []map[string]string{
 			{
-				"conditions":      "",
 				"kind":            "ConfigMap",
 				"name":            "config",
 				"namespace":       "kapp-test",
@@ -239,7 +228,6 @@ metadata:
 				"reconcile_state": "",
 				"wait_to":         "reconcile",
 			}, {
-				"conditions":      "",
 				"kind":            "ConfigMap",
 				"name":            "config-ver-1",
 				"namespace":       "kapp-test",
@@ -249,7 +237,6 @@ metadata:
 				"reconcile_state": "",
 				"wait_to":         "reconcile",
 			}, {
-				"conditions":      "",
 				"kind":            "Secret",
 				"name":            "secret",
 				"namespace":       "kapp-test",
@@ -259,7 +246,6 @@ metadata:
 				"reconcile_state": "",
 				"wait_to":         "reconcile",
 			}, {
-				"conditions":      "",
 				"kind":            "Secret",
 				"name":            "secret-ver-1",
 				"namespace":       "kapp-test",
@@ -280,7 +266,6 @@ metadata:
 		respVer := uitest.JSONUIFromBytes(t, []byte(verOut))
 
 		expectedVer := []map[string]string{{
-			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "config",
 			"namespace":       "kapp-test",
@@ -290,7 +275,6 @@ metadata:
 			"reconcile_state": "ok",
 			"wait_to":         "delete",
 		}, {
-			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "config-ver-2",
 			"namespace":       "kapp-test",
@@ -300,7 +284,6 @@ metadata:
 			"reconcile_state": "",
 			"wait_to":         "reconcile",
 		}, {
-			"conditions":      "",
 			"kind":            "Secret",
 			"name":            "secret",
 			"namespace":       "kapp-test",
@@ -310,7 +293,6 @@ metadata:
 			"reconcile_state": "ok",
 			"wait_to":         "delete",
 		}, {
-			"conditions":      "",
 			"kind":            "Secret",
 			"name":            "secret-ver-2",
 			"namespace":       "kapp-test",
@@ -335,7 +317,6 @@ metadata:
 
 		expectedVerKeepOrg := []map[string]string{
 			{
-				"conditions":      "",
 				"kind":            "ConfigMap",
 				"name":            "config",
 				"namespace":       "kapp-test",
@@ -345,7 +326,6 @@ metadata:
 				"reconcile_state": "",
 				"wait_to":         "reconcile",
 			}, {
-				"conditions":      "",
 				"kind":            "ConfigMap",
 				"name":            "config-ver-1",
 				"namespace":       "kapp-test",
@@ -355,7 +335,6 @@ metadata:
 				"reconcile_state": "",
 				"wait_to":         "reconcile",
 			}, {
-				"conditions":      "",
 				"kind":            "Secret",
 				"name":            "secret",
 				"namespace":       "kapp-test",
@@ -365,7 +344,6 @@ metadata:
 				"reconcile_state": "",
 				"wait_to":         "reconcile",
 			}, {
-				"conditions":      "",
 				"kind":            "Secret",
 				"name":            "secret-ver-1",
 				"namespace":       "kapp-test",
@@ -386,7 +364,6 @@ metadata:
 		respNonVer := uitest.JSONUIFromBytes(t, []byte(nonVerOut))
 
 		expectedVer := []map[string]string{{
-			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "config",
 			"namespace":       "kapp-test",
@@ -396,7 +373,6 @@ metadata:
 			"reconcile_state": "ok",
 			"wait_to":         "reconcile",
 		}, {
-			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "config-ver-1",
 			"namespace":       "kapp-test",
@@ -406,7 +382,6 @@ metadata:
 			"reconcile_state": "ok",
 			"wait_to":         "delete",
 		}, {
-			"conditions":      "",
 			"kind":            "Secret",
 			"name":            "secret",
 			"namespace":       "kapp-test",
@@ -416,7 +391,6 @@ metadata:
 			"reconcile_state": "ok",
 			"wait_to":         "reconcile",
 		}, {
-			"conditions":      "",
 			"kind":            "Secret",
 			"name":            "secret-ver-1",
 			"namespace":       "kapp-test",
@@ -477,7 +451,6 @@ data:
 		respKapp := uitest.JSONUIFromBytes(t, []byte(kappOut))
 
 		expectedKapp := []map[string]string{{
-			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "config",
 			"namespace":       "kapp-test",
@@ -487,7 +460,6 @@ data:
 			"reconcile_state": "ok",
 			"wait_to":         "delete",
 		}, {
-			"conditions":      "",
 			"kind":            "ConfigMap",
 			"name":            "config-ver-1",
 			"namespace":       "kapp-test",

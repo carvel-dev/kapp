@@ -51,7 +51,6 @@ spec:
 
 		expected := []map[string]string{{
 			"age":             "<replaced>",
-			"conditions":      "",
 			"kind":            "Endpoints",
 			"name":            "redis-primary",
 			"namespace":       "kapp-test",
@@ -60,7 +59,6 @@ spec:
 			"reconcile_state": "ok",
 		}, {
 			"age":             "<replaced>",
-			"conditions":      "",
 			"kind":            "Service",
 			"name":            "redis-primary",
 			"namespace":       "kapp-test",
@@ -73,7 +71,6 @@ spec:
 			respRows = removeEndpointSliceNameSuffix(respRows)
 			expected = append(expected, map[string]string{
 				"age":             "<replaced>",
-				"conditions":      "",
 				"kind":            "EndpointSlice",
 				"name":            "redis-primary",
 				"namespace":       "kapp-test",
@@ -94,7 +91,6 @@ spec:
 
 		expected := []map[string]string{{
 			"age":             "<replaced>",
-			"conditions":      "",
 			"kind":            "Service",
 			"name":            "redis-primary",
 			"namespace":       "kapp-test",
@@ -103,7 +99,6 @@ spec:
 			"reconcile_state": "ok",
 		}, {
 			"age":             "<replaced>",
-			"conditions":      "",
 			"kind":            "Endpoints",
 			"name":            " L redis-primary",
 			"namespace":       "kapp-test",
@@ -116,7 +111,6 @@ spec:
 			respRows = removeEndpointSliceNameSuffix(respRows)
 			expected = append(expected, map[string]string{
 				"age":             "<replaced>",
-				"conditions":      "",
 				"kind":            "EndpointSlice",
 				"name":            " L redis-primary",
 				"namespace":       "kapp-test",
