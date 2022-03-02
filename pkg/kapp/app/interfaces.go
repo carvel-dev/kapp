@@ -26,6 +26,7 @@ type App interface {
 	Exists() (bool, string, error)
 	Delete() error
 	Rename(string, string) error
+	RenamePrevApp(string, map[string]string) error
 
 	// Sorted as first is oldest
 	Changes() ([]Change, error)
