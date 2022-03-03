@@ -119,8 +119,10 @@ func (l PodContainerLog) StartTail(ui ui.UI, cancelCh chan struct{}) error {
 }
 
 func (l PodContainerLog) obtainStream(ui ui.UI, linePrefix string, cancelCh chan struct{}) (io.ReadCloser, error) {
-	isWaitingMsgPrintedOnce := false
-	var err error
+	var (
+		isWaitingMsgPrintedOnce bool
+		err error
+	)
 	for {
 		// TODO infinite retry
 		// It appears that GetLogs will successfully return log stream
