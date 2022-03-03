@@ -121,7 +121,7 @@ func (l PodContainerLog) StartTail(ui ui.UI, cancelCh chan struct{}) error {
 func (l PodContainerLog) obtainStream(ui ui.UI, linePrefix string, cancelCh chan struct{}) (io.ReadCloser, error) {
 	var (
 		isWaitingMsgPrintedOnce bool
-		err error
+		err                     error
 	)
 	for {
 		// TODO infinite retry
