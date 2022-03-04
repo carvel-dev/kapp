@@ -117,12 +117,12 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 		if len(c.trackedChanges) == 0 || len(doneChanges) > 0 {
 			return doneChanges, nil
 		}
-		trackedResourcesDesc := ""
 
-		for _, change := range c.trackedChanges {
-			trackedResourcesDesc = trackedResourcesDesc + change.Graph.Change.Resource().Description() + "\n "
-		}
 		if time.Now().Sub(startTime) > c.opts.Timeout {
+			trackedResourcesDesc := ""
+			for _, change := range c.trackedChanges {
+				trackedResourcesDesc = trackedResourcesDesc + change.Graph.Change.Resource().Description() + "\n "
+			}
 			return nil, fmt.Errorf("Timed out waiting after %s for resources:\n %+v", c.opts.Timeout, trackedResourcesDesc)
 		}
 
