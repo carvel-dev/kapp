@@ -5,6 +5,7 @@ package clusterapply
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
@@ -119,11 +120,11 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 		}
 
 		if time.Now().Sub(startTime) > c.opts.Timeout {
-			trackedResourcesDesc := ""
+			var timedOutResources []string
 			for _, change := range c.trackedChanges {
-				trackedResourcesDesc = trackedResourcesDesc + change.Graph.Change.Resource().Description() + "\n "
+				timedOutResources = append(timedOutResources, change.Graph.Change.Resource().Description())
 			}
-			return nil, fmt.Errorf("Timed out waiting after %s for resources:\n %+v", c.opts.Timeout, trackedResourcesDesc)
+			return nil, fmt.Errorf("Timed out waiting after %s for resources:\n %s", c.opts.Timeout, strings.Join(timedOutResources, "\n "))
 		}
 
 		time.Sleep(c.opts.CheckInterval)
