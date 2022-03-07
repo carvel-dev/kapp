@@ -44,6 +44,32 @@ func NewPodContainerLog(
 }
 
 func (l PodContainerLog) Tail(ui ui.UI, cancelCh chan struct{}) error {
+	linePrefix := ""
+	if len(l.opts.LinePrefix) > 0 {
+		linePrefix = l.opts.LinePrefix + " | "
+	}
+
+	for {
+		err := l.StartTail(ui, cancelCh)
+		if err == io.EOF {
+			if l.opts.Follow {
+				ui.BeginLinef("%s# container stopped '%s' logs\n", linePrefix, l.tag)
+				// Making it 1sec instead of 500ms as some times for initContainers, it fetches the older stream if we go by 500ms.
+				time.Sleep(1 * time.Second)
+				continue
+			} else {
+				ui.BeginLinef("%s# ending tailing '%s' logs\n", linePrefix, l.tag)
+				return nil
+			}
+
+		}
+		if err != nil {
+			return err
+		}
+	}
+}
+
+func (l PodContainerLog) StartTail(ui ui.UI, cancelCh chan struct{}) error {
 	var streamCanceled atomic.Value
 
 	linePrefix := ""
@@ -75,10 +101,6 @@ func (l PodContainerLog) Tail(ui ui.UI, cancelCh chan struct{}) error {
 	for {
 		line, err := reader.ReadBytes('\n')
 		if err != nil {
-			if err == io.EOF {
-				ui.BeginLinef("%s# ending tailing '%s' logs\n", linePrefix, l.tag)
-				return nil
-			}
 			typedCanceled, ok := streamCanceled.Load().(bool)
 			if ok && typedCanceled {
 				return nil // ignore error if stream was canceled
@@ -95,11 +117,12 @@ func (l PodContainerLog) Tail(ui ui.UI, cancelCh chan struct{}) error {
 }
 
 func (l PodContainerLog) obtainStream(ui ui.UI, linePrefix string, cancelCh chan struct{}) (io.ReadCloser, error) {
-	tryCount := 0
-
+	var (
+		isWaitingMsgPrintedOnce bool
+		err                     error
+	)
 	for {
 		// TODO infinite retry
-
 		// It appears that GetLogs will successfully return log stream
 		// almost immediately after pod has been created; however,
 		// returned log stream will not carry any data, even after containers have started.
@@ -119,12 +142,13 @@ func (l PodContainerLog) obtainStream(ui ui.UI, linePrefix string, cancelCh chan
 			}
 		}
 
-		if tryCount%100 == 0 {
+		if !isWaitingMsgPrintedOnce {
 			ui.BeginLinef("%s# waiting for '%s' logs to become available...\n", linePrefix, l.tag)
-			tryCount = 1
+			if !l.opts.Follow {
+				return nil, err
+			}
+			isWaitingMsgPrintedOnce = true
 		}
-
-		tryCount++
 
 		select {
 		case <-cancelCh:
@@ -140,6 +164,23 @@ func (l PodContainerLog) readyToGetLogs() bool {
 	if err != nil {
 		return false
 	}
-
-	return len(pod.Status.ContainerStatuses) > 0 || len(pod.Status.InitContainerStatuses) > 0
+	containerStatuses := pod.Status.ContainerStatuses
+	initContainerStatuses := pod.Status.InitContainerStatuses
+	for _, containerStatus := range containerStatuses {
+		if l.container != containerStatus.Name {
+			continue
+		}
+		if containerStatus.State.Running != nil {
+			return true
+		}
+	}
+	for _, initContainerStatus := range initContainerStatuses {
+		if l.container != initContainerStatus.Name {
+			continue
+		}
+		if initContainerStatus.State.Running != nil {
+			return true
+		}
+	}
+	return false
 }
