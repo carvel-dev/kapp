@@ -51,13 +51,11 @@ func (l PodContainerLog) Tail(ui ui.UI, cancelCh chan struct{}) error {
 
 	for {
 		err := l.StartTail(ui, cancelCh)
-
 		if err == io.EOF {
-
 			if l.opts.Follow {
 				ui.BeginLinef("%s# container stopped '%s' logs\n", linePrefix, l.tag)
-				// Multiplying by a factor of 2 as some times for initContainers, it fetches the older stream.
-				time.Sleep(2 * 500 * time.Millisecond)
+				// Making it 1sec instead of 500ms as some times for initContainers, it fetches the older stream if we go by 500ms.
+				time.Sleep(1 * time.Second)
 				continue
 			} else {
 				ui.BeginLinef("%s# ending tailing '%s' logs\n", linePrefix, l.tag)
