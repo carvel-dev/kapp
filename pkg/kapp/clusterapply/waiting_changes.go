@@ -5,11 +5,16 @@ package clusterapply
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 	"github.com/k14s/kapp/pkg/kapp/util"
+)
+
+const (
+	nonBlockingOrderingAnnKey = "kapp.k14s.io/non-blocking-ordering" // value is ignored
 )
 
 type WaitingChangesOpts struct {
@@ -99,6 +104,13 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 			switch {
 			case !state.Done:
 				newInProgressChanges = append(newInProgressChanges, change)
+
+				if _, found := change.Cluster.Resource().Annotations()[nonBlockingOrderingAnnKey]; found {
+					// TODO Improve if condition
+					if !strings.Contains(state.Message, "Waiting for generation") {
+						doneChanges = append(doneChanges, change)
+					}
+				}
 
 			case state.Done && !state.Successful:
 				msg := ""
