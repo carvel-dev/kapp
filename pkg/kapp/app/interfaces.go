@@ -22,7 +22,7 @@ type App interface {
 	UsedGKs() (*[]schema.GroupKind, error)
 	UpdateUsedGVsAndGKs([]schema.GroupVersion, []schema.GroupKind) error
 
-	CreateOrUpdate(map[string]string) error
+	CreateOrUpdate(map[string]string, bool) error
 	Exists() (bool, string, error)
 	Delete() error
 	Rename(string, string) error
