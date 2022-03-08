@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	nonBlockingOrderingAnnKey = "kapp.k14s.io/non-blocking-ordering" // value is ignored
+	nonBlockingWaitAnnKey = "kapp.k14s.io/non-blocking-wait" // value is ignored
 )
 
 type WaitingChangesOpts struct {
@@ -105,7 +105,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 			case !state.Done:
 				newInProgressChanges = append(newInProgressChanges, change)
 
-				if _, found := change.Cluster.Resource().Annotations()[nonBlockingOrderingAnnKey]; found {
+				if _, found := change.Cluster.Resource().Annotations()[nonBlockingWaitAnnKey]; found {
 					// TODO Improve if condition
 					if !strings.Contains(state.Message, "Waiting for generation") {
 						doneChanges = append(doneChanges, change)
