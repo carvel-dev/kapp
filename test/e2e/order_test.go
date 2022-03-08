@@ -259,9 +259,9 @@ metadata:
 
 		expectedOutput := strings.TrimSpace(replaceSpaces(`Changes
 
-Namespace  Name            Kind       Conds.  Age  Op      Op st.  Wait to    Rs  Ri  $
-kapp-test  resource-2      ConfigMap  -       -    create  -       reconcile  -   -  $
-^          successful-job  Job        -       -    create  -       reconcile  -   -  $
+Namespace  Name            Kind       Age  Op      Op st.  Wait to    Rs  Ri  $
+kapp-test  resource-2      ConfigMap  -    create  -       reconcile  -   -  $
+^          successful-job  Job        -    create  -       reconcile  -   -  $
 
 Op:      2 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 2 reconcile, 0 delete, 0 noop
