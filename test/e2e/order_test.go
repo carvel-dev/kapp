@@ -210,6 +210,85 @@ Succeeded
 	})
 }
 
+func TestNonBlockingWait(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+
+	name := "test-non-blocking-wait"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("deploy ordered", func() {
+		yaml1 := `
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: successful-job
+  annotations:
+    kapp.k14s.io/change-group: "group-1"
+    kapp.k14s.io/non-blocking-wait: ""
+    kapp.k14s.io/disable-associated-resources-wait: ""
+spec:
+  template:
+    metadata:
+      name: successful-job
+    spec:
+      containers:
+      - name: successful-job
+        image: busybox
+        command: ["/bin/sh", "-c", "sleep 2"]
+      restartPolicy: Never
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: resource-2
+  generation: 1
+  annotations:
+    kapp.k14s.io/change-rule: "upsert after upserting group-1"
+`
+
+		out, _ := kapp.RunWithOpts([]string{"deploy", "--tty", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		out = strings.TrimSpace(replaceSpaces(replaceTarget(replaceTs(out))))
+
+		expectedOutput := strings.TrimSpace(replaceSpaces(`Changes
+
+Namespace  Name            Kind       Conds.  Age  Op      Op st.  Wait to    Rs  Ri  $
+kapp-test  resource-2      ConfigMap  -       -    create  -       reconcile  -   -  $
+^          successful-job  Job        -       -    create  -       reconcile  -   -  $
+
+Op:      2 create, 0 delete, 0 update, 0 noop, 0 exists
+Wait to: 2 reconcile, 0 delete, 0 noop
+
+<replaced>: ---- applying 1 changes [0/2 done] ----
+<replaced>: create job/successful-job (batch/v1) namespace: kapp-test
+<replaced>: ---- waiting on 1 changes [0/2 done] ----
+<replaced>: ongoing: reconcile job/successful-job (batch/v1) namespace: kapp-test
+<replaced>:  ^ Waiting to complete (0 active, 0 failed, 0 succeeded)
+<replaced>: ---- applying 1 changes [1/2 done] ----
+<replaced>: create configmap/resource-2 (v1) namespace: kapp-test
+<replaced>: ---- waiting on 2 changes [0/2 done] ----
+<replaced>: ok: reconcile configmap/resource-2 (v1) namespace: kapp-test
+<replaced>: ongoing: reconcile job/successful-job (batch/v1) namespace: kapp-test
+<replaced>:  ^ Waiting to complete (1 active, 0 failed, 0 succeeded)
+<replaced>: ---- waiting on 1 changes [1/2 done] ----
+<replaced>: ok: reconcile job/successful-job (batch/v1) namespace: kapp-test
+<replaced>:  ^ Completed
+<replaced>: ---- applying complete [2/2 done] ----
+<replaced>: ---- waiting complete [2/2 done] ----
+
+Succeeded
+`))
+		require.Equal(t, expectedOutput, out)
+	})
+}
+
 func replaceTs(result string) string {
 	return regexp.MustCompile("\\d{1,2}:\\d{1,2}:\\d{1,2}(AM|PM)").ReplaceAllString(result, "<replaced>")
 }
