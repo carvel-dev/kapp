@@ -55,7 +55,6 @@ spec:
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 
 		require.Equal(t, 2, len(resp.Tables[0].Rows), "Expected to have 2 app-changes")
-
 		require.Equal(t, "update: Op: 0 create, 0 delete, 1 update, 0 noop, 0 exists / Wait to: 1 reconcile, 0 delete, 0 noop", resp.Tables[0].Rows[0]["description"], "Expected description to match")
 		require.Equal(t, "update: Op: 1 create, 0 delete, 0 update, 0 noop, 0 exists / Wait to: 1 reconcile, 0 delete, 0 noop", resp.Tables[0].Rows[1]["description"], "Expected description to match")
 	})
@@ -67,7 +66,6 @@ spec:
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 
 		require.Equal(t, 2, len(resp.Tables[0].Rows), "Expected to have 2 app-changes")
-
 		require.Equal(t, "update: Op: 0 create, 0 delete, 1 update, 0 noop, 0 exists / Wait to: 1 reconcile, 0 delete, 0 noop", resp.Tables[0].Rows[0]["description"], "Expected description to match")
 		require.Equal(t, "update: Op: 1 create, 0 delete, 0 update, 0 noop, 0 exists / Wait to: 1 reconcile, 0 delete, 0 noop", resp.Tables[0].Rows[1]["description"], "Expected description to match")
 	})

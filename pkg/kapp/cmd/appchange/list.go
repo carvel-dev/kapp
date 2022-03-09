@@ -14,7 +14,6 @@ import (
 	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	"github.com/k14s/kapp/pkg/kapp/logger"
-	"github.com/k14s/kapp/pkg/kapp/util"
 	"github.com/spf13/cobra"
 )
 
@@ -59,14 +58,14 @@ func (o *ListOptions) Run() error {
 	formats := []string{time.RFC3339, dateFormat}
 
 	if o.TimeFlags.Before != "" {
-		o.TimeFlags.BeforeTime, err = util.ParseTime(o.TimeFlags.Before, formats)
+		o.TimeFlags.BeforeTime, err = parseTime(o.TimeFlags.Before, formats)
 		if err != nil {
 			return err
 		}
 	}
 
 	if o.TimeFlags.After != "" {
-		o.TimeFlags.AfterTime, err = util.ParseTime(o.TimeFlags.After, formats)
+		o.TimeFlags.AfterTime, err = parseTime(o.TimeFlags.After, formats)
 		if err != nil {
 			return err
 		}
@@ -110,7 +109,6 @@ func (t AppChangesTable) Print(ui ui.UI) {
 	}
 
 	for _, change := range t.Changes {
-
 		if (!t.TimeFlags.BeforeTime.IsZero() && !change.Meta().StartedAt.Before(t.TimeFlags.BeforeTime)) ||
 			(!t.TimeFlags.AfterTime.IsZero() && !change.Meta().StartedAt.After(t.TimeFlags.AfterTime)) {
 			continue
@@ -130,4 +128,14 @@ func (t AppChangesTable) Print(ui ui.UI) {
 	}
 
 	ui.PrintTable(table)
+}
+
+func parseTime(input string, formats []string) (time.Time, error) {
+	for _, format := range formats {
+		t, err := time.Parse(format, input)
+		if err == nil {
+			return t, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("unrecognized time format %s, supported formats: %s", input, formats)
 }
