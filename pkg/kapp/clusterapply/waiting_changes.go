@@ -121,11 +121,11 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 		}
 
 		if time.Now().Sub(startTime) > c.opts.Timeout {
-			var timedOutResources []string
+			var trackedResourcesDesc []string
 			for _, change := range c.trackedChanges {
-				timedOutResources = append(timedOutResources, change.Cluster.Resource().Description())
+				trackedResourcesDesc = append(trackedResourcesDesc, change.Cluster.Resource().Description())
 			}
-			return nil, uierrs.NewSemiStructuredError(fmt.Errorf("Timed out waiting after %s for resources: [%s]", c.opts.Timeout, strings.Join(timedOutResources, ", ")))
+			return nil, uierrs.NewSemiStructuredError(fmt.Errorf("Timed out waiting after %s for resources: [%s]", c.opts.Timeout, strings.Join(trackedResourcesDesc, ", ")))
 		}
 
 		time.Sleep(c.opts.CheckInterval)
