@@ -42,7 +42,7 @@ func (r RebasedResource) Resource() (ctlres.Resource, error) {
 	}
 
 	for _, t := range r.mods {
-		// copy newRes and existingRes as they may be be modified in place
+		// copy newRes and existingRes as they may be modified in place
 		resSources := map[ctlres.FieldCopyModSource]ctlres.Resource{
 			ctlres.FieldCopyModSourceNew:      r.newRes.DeepCopy(),
 			ctlres.FieldCopyModSourceExisting: r.existingRes.DeepCopy(),
