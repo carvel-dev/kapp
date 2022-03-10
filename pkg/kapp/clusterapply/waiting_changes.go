@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	uierrs "github.com/cppforlife/go-cli-ui/errors"
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 	"github.com/k14s/kapp/pkg/kapp/util"
@@ -122,9 +123,9 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 		if time.Now().Sub(startTime) > c.opts.Timeout {
 			var timedOutResources []string
 			for _, change := range c.trackedChanges {
-				timedOutResources = append(timedOutResources, change.Graph.Change.Resource().Description())
+				timedOutResources = append(timedOutResources, change.Cluster.Resource().Description())
 			}
-			return nil, fmt.Errorf("Timed out waiting after %s for resources:\n %s", c.opts.Timeout, strings.Join(timedOutResources, "\n "))
+			return nil, uierrs.NewSemiStructuredError(fmt.Errorf("Timed out waiting after %s for resources: [%s]", c.opts.Timeout, strings.Join(timedOutResources, ", ")))
 		}
 
 		time.Sleep(c.opts.CheckInterval)
