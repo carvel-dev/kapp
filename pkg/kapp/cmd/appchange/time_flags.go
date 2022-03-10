@@ -19,6 +19,6 @@ type TimeFlags struct {
 }
 
 func (t *TimeFlags) Set(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&t.Before, "before", "", "List app-changes happened before given time stamp (formats: before=2022-01-10T12:15:25Z, before=2022-01-10)")
-	cmd.Flags().StringVar(&t.After, "after", "", "List app-changes happened after given time stamp (formats: after=2022-01-10T12:15:25Z, after=2022-01-10)")
+	cmd.Flags().StringVar(&t.Before, "before", "", "List app changes before given time (formats: 2022-01-10T12:15:25Z, 2022-01-10)")
+	cmd.Flags().StringVar(&t.After, "after", "", "List app changes after given time (formats: 2022-01-10T12:15:25Z, 2022-01-10)")
 }

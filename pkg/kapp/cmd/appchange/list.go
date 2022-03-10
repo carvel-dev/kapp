@@ -26,8 +26,6 @@ type ListOptions struct {
 	TimeFlags TimeFlags
 }
 
-const dateFormat = "2006-01-02"
-
 func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ListOptions {
 	return &ListOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
@@ -55,17 +53,17 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
-	formats := []string{time.RFC3339, dateFormat}
+	formats := []string{time.RFC3339, "2006-01-02"}
 
 	if o.TimeFlags.Before != "" {
-		o.TimeFlags.BeforeTime, err = parseTime(o.TimeFlags.Before, formats)
+		o.TimeFlags.BeforeTime, err = o.parseTime(o.TimeFlags.Before, formats)
 		if err != nil {
 			return err
 		}
 	}
 
 	if o.TimeFlags.After != "" {
-		o.TimeFlags.AfterTime, err = parseTime(o.TimeFlags.After, formats)
+		o.TimeFlags.AfterTime, err = o.parseTime(o.TimeFlags.After, formats)
 		if err != nil {
 			return err
 		}
@@ -78,6 +76,16 @@ func (o *ListOptions) Run() error {
 	AppChangesTable{"App changes", changes, o.TimeFlags}.Print(o.ui)
 
 	return nil
+}
+
+func (o *ListOptions) parseTime(input string, formats []string) (time.Time, error) {
+	for _, format := range formats {
+		t, err := time.Parse(format, input)
+		if err == nil {
+			return t, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("unrecognized time format %s, supported formats: %s", input, formats)
 }
 
 type AppChangesTable struct {
@@ -128,14 +136,4 @@ func (t AppChangesTable) Print(ui ui.UI) {
 	}
 
 	ui.PrintTable(table)
-}
-
-func parseTime(input string, formats []string) (time.Time, error) {
-	for _, format := range formats {
-		t, err := time.Parse(format, input)
-		if err == nil {
-			return t, nil
-		}
-	}
-	return time.Time{}, fmt.Errorf("unrecognized time format %s, supported formats: %s", input, formats)
 }
