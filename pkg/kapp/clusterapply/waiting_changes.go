@@ -5,8 +5,10 @@ package clusterapply
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
+	uierrs "github.com/cppforlife/go-cli-ui/errors"
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 	"github.com/k14s/kapp/pkg/kapp/util"
@@ -119,7 +121,11 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 		}
 
 		if time.Now().Sub(startTime) > c.opts.Timeout {
-			return nil, fmt.Errorf("Timed out waiting after %s", c.opts.Timeout)
+			var trackedResourcesDesc []string
+			for _, change := range c.trackedChanges {
+				trackedResourcesDesc = append(trackedResourcesDesc, change.Cluster.Resource().Description())
+			}
+			return nil, uierrs.NewSemiStructuredError(fmt.Errorf("Timed out waiting after %s for resources: [%s]", c.opts.Timeout, strings.Join(trackedResourcesDesc, ", ")))
 		}
 
 		time.Sleep(c.opts.CheckInterval)
