@@ -127,7 +127,7 @@ func (a *RecordedApp) UpdateUsedGVsAndGKs(gvs []schema.GroupVersion, gks []schem
 	})
 }
 
-func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
+func (a *RecordedApp) CreateOrUpdate(labels map[string]string, isDiffRun bool) error {
 	defer a.logger.DebugFunc("CreateOrUpdate").Finish()
 
 	app, foundMigratedApp, err := a.find(a.fqName())
