@@ -144,24 +144,28 @@ data:
 	prevAppName := "test-create-update-delete-prev-app-old"
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", appName})
+		kapp.Run([]string{"delete", "-a", prevAppName})
 		os.Unsetenv("KAPP_FQ_CONFIGMAP_NAMES")
 	}
 
 	cleanUp()
 	defer cleanUp()
 
-	logger.Section("prevApp does not exist", func() {
-		logger.Section("deploy initial", func() {
-			kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+	logger.Section("non-existent app, non-existent prevApp", func() {
+		// creates app with name appName
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-			NewPresentClusterResource("service", "redis-primary", env.Namespace, kubectl)
-			NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
+		NewPresentClusterResource("service", "redis-primary", env.Namespace, kubectl)
+		NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
 
-			NewPresentClusterResource("configmap", appName, env.Namespace, kubectl)
-			NewMissingClusterResource(t, "configmap", prevAppName, env.Namespace, kubectl)
-		})
+		NewPresentClusterResource("configmap", appName, env.Namespace, kubectl)
 
-		logger.Section("deploy update with 1 delete, 1 update, 1 create", func() {
+		cleanUp()
+	})
+
+	logger.Section("existing unmigrated app", func() {
+		logger.Section("deploy", func() {
+			kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 			kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 			NewMissingClusterResource(t, "service", "redis-primary", env.Namespace, kubectl)
@@ -177,48 +181,63 @@ data:
 			NewMissingClusterResource(t, "configmap", prevAppName, env.Namespace, kubectl)
 		})
 
-		logger.Section("delete application", func() {
-			kapp.RunWithOpts([]string{"delete", "-a", appName}, RunOpts{})
-
-			NewMissingClusterResource(t, "service", "redis-primary", env.Namespace, kubectl)
-			NewMissingClusterResource(t, "configmap", "redis-config", env.Namespace, kubectl)
-			NewMissingClusterResource(t, "configmap", "redis-config2", env.Namespace, kubectl)
+		logger.Section("delete", func() {
+			cleanUp()
 
 			NewMissingClusterResource(t, "configmap", appName, env.Namespace, kubectl)
 		})
 	})
 
-	logger.Section("prevApp does exist", func() {
-		logger.Section("deploy", func() {
-			kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+	logger.Section("existing migrated app", func() {
+		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-			NewPresentClusterResource("service", "redis-primary", env.Namespace, kubectl)
-			NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
-			NewPresentClusterResource("configmap", prevAppName, env.Namespace, kubectl)
+		// KAPP_FQ_CONFIGMAP_NAMES=False is not supported - must go from migrated => migrated
+		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "False")
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName},
+			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml2)})
 
-			// migrate
-			kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
+		require.Errorf(t, err, "Expected to receive error")
+		require.Containsf(t, err.Error(), "is already associated with a different app", "Expected app to be associated with another owner")
 
-			config := NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
-			val := config.RawPath(ctlres.NewPathFromStrings([]string{"data", "key"}))
-			require.Exactlyf(t, "value2", val, "Expected value to be updated")
+		logger.Section("delete", func() {
+			os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
+			cleanUp()
 
-			NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
-
-			NewPresentClusterResource("configmap", appName, env.Namespace, kubectl)
 			NewMissingClusterResource(t, "configmap", prevAppName, env.Namespace, kubectl)
 		})
+	})
 
-		logger.Section("delete application", func() {
-			kapp.RunWithOpts([]string{"delete", "-a", appName}, RunOpts{})
+	logger.Section("non-existent app, existing unmigrated prevApp", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
-			NewMissingClusterResource(t, "service", "redis-primary", env.Namespace, kubectl)
-			NewMissingClusterResource(t, "configmap", "redis-config", env.Namespace, kubectl)
-			NewMissingClusterResource(t, "configmap", "redis-config2", env.Namespace, kubectl)
+		config := NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
+		val := config.RawPath(ctlres.NewPathFromStrings([]string{"data", "key"}))
+		require.Exactlyf(t, "value2", val, "Expected value to be updated")
 
-			NewMissingClusterResource(t, "configmap", appName, env.Namespace, kubectl)
-			NewMissingClusterResource(t, "configmap", prevAppName, env.Namespace, kubectl)
-		})
+		NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
+
+		NewPresentClusterResource("configmap", appName, env.Namespace, kubectl)
+		NewMissingClusterResource(t, "configmap", prevAppName, env.Namespace, kubectl)
+
+		cleanUp()
+	})
+
+	logger.Section("non-existent app, existing migrated prevApp", func() {
+		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		// KAPP_FQ_CONFIGMAP_NAMES=False is not supported - must go from migrated => migrated
+		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "False")
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName},
+			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml2)})
+
+		require.Errorf(t, err, "Expected to receive error")
+		require.Containsf(t, err.Error(), "is already associated with a different app", "Expected app to be associated with another owner")
+
+		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
+		cleanUp()
 	})
 }
 
@@ -271,115 +290,96 @@ data:
 	prevAppName := "test-create-update-delete-prev-app-fq-configmap-old"
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", appName})
+		kapp.Run([]string{"delete", "-a", prevAppName})
 		os.Unsetenv("KAPP_FQ_CONFIGMAP_NAMES")
 	}
 
 	cleanUp()
 	defer cleanUp()
 
-	os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
+	logger.Section("non-existent app, non-existent prevApp", func() {
+		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
 
-	logger.Section("prevApp does not exist", func() {
-		logger.Section("deploy initial", func() {
-			kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+		// creates app with name appName
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-			NewPresentClusterResource("service", "redis-primary", env.Namespace, kubectl)
-			NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
+		NewPresentClusterResource("service", "redis-primary", env.Namespace, kubectl)
+		NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
 
-			NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
-			NewMissingClusterResource(t, "configmap", prevAppName, env.Namespace, kubectl)
-		})
+		NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
 
-		logger.Section("deploy update with 1 delete, 1 update, 1 create", func() {
-			kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
-
-			NewMissingClusterResource(t, "service", "redis-primary", env.Namespace, kubectl)
-
-			config := NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
-			val := config.RawPath(ctlres.NewPathFromStrings([]string{"data", "key"}))
-
-			require.Exactlyf(t, "value2", val, "Expected value to be updated")
-
-			NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
-
-			c := NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
-			require.Contains(t, c.res.Annotations(), app.KappIsConfigmapMigratedAnnotationKey)
-			NewMissingClusterResource(t, "configmap", prevAppName, env.Namespace, kubectl)
-		})
-
-		logger.Section("delete application", func() {
-			kapp.RunWithOpts([]string{"delete", "-a", appName}, RunOpts{})
-
-			NewMissingClusterResource(t, "service", "redis-primary", env.Namespace, kubectl)
-			NewMissingClusterResource(t, "configmap", "redis-config", env.Namespace, kubectl)
-			NewMissingClusterResource(t, "configmap", "redis-config2", env.Namespace, kubectl)
-
-			NewMissingClusterResource(t, "configmap", appName, env.Namespace, kubectl)
-			NewMissingClusterResource(t, "configmap", appName+app.AppSuffix, env.Namespace, kubectl)
-		})
+		cleanUp()
 	})
 
-	logger.Section("prevApp exists", func() {
+	logger.Section("existing unmigrated app", func() {
 		logger.Section("deploy", func() {
-			os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "False")
 			kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-			// migrate
 			os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
 			kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 			config := NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
 			val := config.RawPath(ctlres.NewPathFromStrings([]string{"data", "key"}))
+
 			require.Exactlyf(t, "value2", val, "Expected value to be updated")
 
 			NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
 
-			c := NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
-			require.Contains(t, c.res.Annotations(), app.KappIsConfigmapMigratedAnnotationKey)
+			NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
 			NewMissingClusterResource(t, "configmap", prevAppName, env.Namespace, kubectl)
 		})
 
-		logger.Section("delete application", func() {
-			kapp.RunWithOpts([]string{"delete", "-a", appName}, RunOpts{})
+		logger.Section("delete", func() {
+			cleanUp()
 
-			NewMissingClusterResource(t, "service", "redis-primary", env.Namespace, kubectl)
-			NewMissingClusterResource(t, "configmap", "redis-config", env.Namespace, kubectl)
-			NewMissingClusterResource(t, "configmap", "redis-config2", env.Namespace, kubectl)
-
-			NewMissingClusterResource(t, "configmap", appName, env.Namespace, kubectl)
 			NewMissingClusterResource(t, "configmap", appName+app.AppSuffix, env.Namespace, kubectl)
-			NewMissingClusterResource(t, "configmap", prevAppName, env.Namespace, kubectl)
 		})
 	})
 
-	// logger.Section("prevApp exists and migrated", func() {
-	// 	logger.Section("deploy", func() {
-	// 		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
-	// 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+	logger.Section("existing migrated app", func() {
+		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-	// 		// migrate
-	// 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
-	// 		config := NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
-	// 		val := config.RawPath(ctlres.NewPathFromStrings([]string{"data", "key"}))
-	// 		require.Exactlyf(t, "value2", val, "Expected value to be updated")
+		NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
 
-	// 		NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
+		cleanUp()
+	})
 
-	// 		c := NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
-	// 		require.Contains(t, c.res.Annotations(), app.KappIsConfigmapMigratedAnnotationKey)
-	// 		NewMissingClusterResource(t, "configmap", prevAppName+app.AppSuffix, env.Namespace, kubectl)
-	// 	})
+	logger.Section("non-existent app, existing unmigrated prevApp", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-	// 	logger.Section("delete application", func() {
-	// 		kapp.RunWithOpts([]string{"delete", "-a", appName}, RunOpts{})
+		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
-	// 		NewMissingClusterResource(t, "service", "redis-primary", env.Namespace, kubectl)
-	// 		NewMissingClusterResource(t, "configmap", "redis-config", env.Namespace, kubectl)
-	// 		NewMissingClusterResource(t, "configmap", "redis-config2", env.Namespace, kubectl)
+		config := NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
+		val := config.RawPath(ctlres.NewPathFromStrings([]string{"data", "key"}))
+		require.Exactlyf(t, "value2", val, "Expected value to be updated")
 
-	// 		NewMissingClusterResource(t, "configmap", appName+app.AppSuffix, env.Namespace, kubectl)
-	// 		NewMissingClusterResource(t, "configmap", prevAppName+app.AppSuffix, env.Namespace, kubectl)
-	// 	})
-	// })
+		NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
+
+		NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
+		NewMissingClusterResource(t, "configmap", prevAppName, env.Namespace, kubectl)
+
+		cleanUp()
+	})
+
+	logger.Section("non-existent app, existing migrated prevApp", func() {
+		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
+
+		config := NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
+		val := config.RawPath(ctlres.NewPathFromStrings([]string{"data", "key"}))
+		require.Exactlyf(t, "value2", val, "Expected value to be updated")
+
+		NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
+
+		NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
+		NewMissingClusterResource(t, "configmap", prevAppName, env.Namespace, kubectl)
+
+		cleanUp()
+	})
 }

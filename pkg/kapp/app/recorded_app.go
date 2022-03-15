@@ -159,11 +159,6 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 		configmapWithoutSuffix, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 		if err == nil {
 			if a.isKappApp(configmapWithoutSuffix) {
-				err = a.mergeAppAnnotationUpdates(configmapWithoutSuffix, migratedAnnotation)
-				if err != nil {
-					return err
-				}
-
 				return a.migrate(configmapWithoutSuffix, labels, a.fqName)
 			}
 		} else if !errors.IsNotFound(err) {
@@ -226,32 +221,46 @@ func (a *RecordedApp) updateApp(existingConfigMap *corev1.ConfigMap, labels map[
 
 func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string) error {
 	defer a.logger.DebugFunc("RenamePrevApp").Finish()
-	var (
-		c   *corev1.ConfigMap
-		err error
-	)
+	var c *corev1.ConfigMap
+	var err error
 
 	if a.isMigrationEnabled() {
 		c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
+		if err == nil {
+			return a.updateApp(c, labels)
+		} else if err != nil {
+			if errors.IsNotFound(err) {
+				c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
+				if err == nil {
+					return a.migrate(c, labels, a.fqName)
+				}
+			}
+		}
 	} else {
 		c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
-	}
-	if err == nil {
-		return a.updateApp(c, labels)
+		if err == nil {
+			return a.updateApp(c, labels)
+		}
 	}
 
 	if errors.IsNotFound(err) {
-		c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), prevAppName, metav1.GetOptions{})
-		if err == nil {
-			if a.isMigrationEnabled() {
-				err = a.mergeAppAnnotationUpdates(c, map[string]string{KappIsConfigmapMigratedAnnotationKey: KappIsConfigmapMigratedAnnotationValue})
-				if err != nil {
-					return err
+		if a.isMigrationEnabled() {
+			c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), prevAppName+AppSuffix, metav1.GetOptions{})
+			if err == nil {
+				return a.migrate(c, labels, a.fqName)
+			} else if err != nil {
+				if errors.IsNotFound(err) {
+					c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), prevAppName, metav1.GetOptions{})
+					if err == nil {
+						return a.migrate(c, labels, a.fqName)
+					}
 				}
-
-				return a.migrate(c, labels, a.name+AppSuffix)
 			}
-			return a.migrate(c, labels, a.name)
+		} else {
+			c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), prevAppName, metav1.GetOptions{})
+			if err == nil {
+				return a.migrate(c, labels, a.name)
+			}
 		}
 
 		if errors.IsNotFound(err) {
@@ -269,6 +278,11 @@ func (a *RecordedApp) migrate(c *corev1.ConfigMap, labels map[string]string, new
 	}
 
 	err = a.mergeAppUpdates(c, labels)
+	if err != nil {
+		return err
+	}
+
+	err = a.mergeAppAnnotationUpdates(c, map[string]string{KappIsConfigmapMigratedAnnotationKey: KappIsConfigmapMigratedAnnotationValue})
 	if err != nil {
 		return err
 	}
