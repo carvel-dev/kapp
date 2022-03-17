@@ -5,7 +5,6 @@ package app
 
 import (
 	"fmt"
-
 	"github.com/spf13/cobra"
 
 	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
