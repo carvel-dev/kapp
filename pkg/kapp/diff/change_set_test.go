@@ -267,7 +267,7 @@ metadata:
 	require.Equal(t, expectedDiff, actualDiff, "Expected diff to match")
 }
 
-func TestChangeSet_RebaseWithNilNew_And_UnexpectedChanges(t *testing.T) {
+func TestRebaseWithNilNewAndUnexpectedChanges(t *testing.T) {
 	newRes := ctlres.MustNewResourceFromBytes([]byte(`
 metadata:
   name: my-res
