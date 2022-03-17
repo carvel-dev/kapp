@@ -110,6 +110,7 @@ func (t AppChangesTable) Print(ui ui.UI) {
 			uitable.NewHeader("Description"),
 			nsHeader,
 		},
+
 		SortBy: []uitable.ColumnSort{
 			{Column: 1, Asc: false},
 			{Column: 0, Asc: true}, // in case start time are same
