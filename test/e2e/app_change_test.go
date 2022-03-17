@@ -67,14 +67,12 @@ spec:
 		require.Equal(t, 2, len(resp.Tables[0].Rows), "Expected to have 2 app-changes")
 		require.Equal(t, "update: Op: 0 create, 0 delete, 1 update, 0 noop, 0 exists / Wait to: 1 reconcile, 0 delete, 0 noop", resp.Tables[0].Rows[0]["description"], "Expected description to match")
 		require.Equal(t, "update: Op: 1 create, 0 delete, 0 update, 0 noop, 0 exists / Wait to: 1 reconcile, 0 delete, 0 noop", resp.Tables[0].Rows[1]["description"], "Expected description to match")
-	})
 
-	logger.Section("app change list filter with before flag", func() {
-		out, _ := kapp.RunWithOpts([]string{"app-change", "ls", "-a", name, "--before", time.Now().Add(-1 * time.Minute).Format(time.RFC3339), "--json"}, RunOpts{})
+		out2, _ := kapp.RunWithOpts([]string{"app-change", "ls", "-a", name, "--before", time.Now().Add(-1 * time.Minute).Format(time.RFC3339), "--json"}, RunOpts{})
 
-		resp := uitest.JSONUIFromBytes(t, []byte(out))
+		resp2 := uitest.JSONUIFromBytes(t, []byte(out2))
 
-		require.Equal(t, 0, len(resp.Tables[0].Rows), "Expected to have 0 app-changes")
+		require.Equal(t, 0, len(resp2.Tables[0].Rows), "Expected to have 0 app-changes")
 	})
 
 	logger.Section("app change list filter with after flag", func() {
@@ -83,13 +81,11 @@ spec:
 		resp := uitest.JSONUIFromBytes(t, []byte(out))
 
 		require.Equal(t, 0, len(resp.Tables[0].Rows), "Expected to have 0 app-changes")
-	})
 
-	logger.Section("app change list filter with after flag", func() {
-		out, _ := kapp.RunWithOpts([]string{"app-change", "ls", "-a", name, "--after", time.Now().Add(-1 * time.Minute).Format("2006-01-02"), "--json"}, RunOpts{})
+		out2, _ := kapp.RunWithOpts([]string{"app-change", "ls", "-a", name, "--after", time.Now().Add(-1 * time.Minute).Format("2006-01-02"), "--json"}, RunOpts{})
 
-		resp := uitest.JSONUIFromBytes(t, []byte(out))
+		resp2 := uitest.JSONUIFromBytes(t, []byte(out2))
 
-		require.Equal(t, 2, len(resp.Tables[0].Rows), "Expected to have 2 app-changes")
+		require.Equal(t, 2, len(resp2.Tables[0].Rows), "Expected to have 2 app-changes")
 	})
 }

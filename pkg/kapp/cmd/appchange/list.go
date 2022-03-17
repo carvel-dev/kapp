@@ -119,7 +119,7 @@ func (t AppChangesTable) Print(ui ui.UI) {
 
 	for _, change := range t.Changes {
 		if (!t.TimeFlags.BeforeTime.IsZero() && !change.Meta().StartedAt.Before(t.TimeFlags.BeforeTime)) ||
-			(!t.TimeFlags.AfterTime.IsZero() && !change.Meta().StartedAt.After(t.TimeFlags.AfterTime)) {
+			!change.Meta().StartedAt.After(t.TimeFlags.AfterTime) {
 			continue
 		}
 
