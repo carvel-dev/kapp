@@ -4,7 +4,9 @@
 package appchange
 
 import (
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
@@ -20,7 +22,8 @@ type ListOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	AppFlags cmdapp.Flags
+	AppFlags  cmdapp.Flags
+	TimeFlags TimeFlags
 }
 
 func NewListOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *ListOptions {
@@ -35,6 +38,7 @@ func NewListCmd(o *ListOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	o.AppFlags.Set(cmd, flagsFactory)
+	o.TimeFlags.Set(cmd)
 	return cmd
 }
 
@@ -49,14 +53,45 @@ func (o *ListOptions) Run() error {
 		return err
 	}
 
-	AppChangesTable{"App changes", changes}.Print(o.ui)
+	formats := []string{time.RFC3339, "2006-01-02"}
+
+	if o.TimeFlags.Before != "" {
+		o.TimeFlags.BeforeTime, err = o.parseTime(o.TimeFlags.Before, formats)
+		if err != nil {
+			return err
+		}
+	}
+
+	if o.TimeFlags.After != "" {
+		o.TimeFlags.AfterTime, err = o.parseTime(o.TimeFlags.After, formats)
+		if err != nil {
+			return err
+		}
+
+		if !o.TimeFlags.BeforeTime.IsZero() && o.TimeFlags.BeforeTime.Before(o.TimeFlags.AfterTime) {
+			return fmt.Errorf("After time %s should be less than before time %s", o.TimeFlags.After, o.TimeFlags.Before)
+		}
+	}
+
+	AppChangesTable{"App changes", changes, o.TimeFlags}.Print(o.ui)
 
 	return nil
 }
 
+func (o *ListOptions) parseTime(input string, formats []string) (time.Time, error) {
+	for _, format := range formats {
+		t, err := time.Parse(format, input)
+		if err == nil {
+			return t, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("unrecognized time format %s, supported formats: %s", input, formats)
+}
+
 type AppChangesTable struct {
-	Title   string
-	Changes []ctlapp.Change
+	Title     string
+	Changes   []ctlapp.Change
+	TimeFlags TimeFlags
 }
 
 func (t AppChangesTable) Print(ui ui.UI) {
@@ -83,6 +118,11 @@ func (t AppChangesTable) Print(ui ui.UI) {
 	}
 
 	for _, change := range t.Changes {
+		if (!t.TimeFlags.BeforeTime.IsZero() && !change.Meta().StartedAt.Before(t.TimeFlags.BeforeTime)) ||
+			!change.Meta().StartedAt.After(t.TimeFlags.AfterTime) {
+			continue
+		}
+
 		table.Rows = append(table.Rows, []uitable.Value{
 			uitable.NewValueString(change.Name()),
 			uitable.NewValueTime(change.Meta().StartedAt),
