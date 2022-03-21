@@ -11,9 +11,11 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:shortName=pkgr
+// +kubebuilder:resource:shortName=pkgr,categories={all,carvel}
 // +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date
 // +kubebuilder:printcolumn:name=Description,JSONPath=.status.friendlyDescription,description=Friendly description,type=string
+// A package repository is a collection of packages and their metadata.
+// Similar to a maven repository or a rpm repository, adding a package repository to a cluster gives users of that cluster the ability to install any of the packages from that repository.
 type PackageRepository struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
@@ -48,14 +50,22 @@ type PackageRepositorySpec struct {
 }
 
 type PackageRepositoryFetch struct {
+	// Image url; unqualified, tagged, or
+	// digest references supported (required)
 	// +optional
 	Image *v1alpha1.AppFetchImage `json:"image,omitempty"`
+	// Uses http library to fetch file containing packages
 	// +optional
 	HTTP *v1alpha1.AppFetchHTTP `json:"http,omitempty"`
+	// Uses git to clone repository containing package list
 	// +optional
 	Git *v1alpha1.AppFetchGit `json:"git,omitempty"`
+	// Pulls imgpkg bundle from Docker/OCI registry
 	// +optional
 	ImgpkgBundle *v1alpha1.AppFetchImgpkgBundle `json:"imgpkgBundle,omitempty"`
+	// Pull content from within this resource; or other resources in the cluster
+	// +optional
+	Inline *v1alpha1.AppFetchInline `json:"inline,omitempty"`
 }
 
 type PackageRepositoryStatus struct {
