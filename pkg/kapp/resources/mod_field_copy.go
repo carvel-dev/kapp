@@ -161,7 +161,7 @@ func (t FieldCopyMod) obtainValue(obj interface{}, path Path) (interface{}, bool
 		switch {
 		case part.MapKey != nil:
 			typedObj, ok := obj.(map[string]interface{})
-			if !ok {
+			if !ok && typedObj != nil {
 				return nil, false, fmt.Errorf("Unexpected non-map found: %T", obj)
 			}
 
