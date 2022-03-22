@@ -138,14 +138,15 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		return nil
 	})
 
-	// Last one runs first
-	cobrautil.VisitCommands(cmd, finishDebugLog, cobrautil.ReconfigureCmdWithSubcmd,
-		cobrautil.ReconfigureLeafCmds(cobrautil.DisallowExtraArgs), configureGlobal, cobrautil.WrapRunEForCmd(cobrautil.ResolveFlagsForCmd))
+	cobrautil.VisitCommands(cmd, cobrautil.ReconfigureLeafCmds(cobrautil.DisallowExtraArgs))
 
-	// Completion command have to be added after the VisitCommands
+	// Completion command have to be added after the cobrautil.DisallowExtraArgs.
 	// This due to the ReconfigureLeafCmds that we do not want to have enforced for the completion
 	// This configurations forces all nodes to do not accept extra args, but the completion requires 1 extra arg
 	cmd.AddCommand(NewCmdCompletion())
+
+	// Last one runs first
+	cobrautil.VisitCommands(cmd, finishDebugLog, cobrautil.ReconfigureCmdWithSubcmd, configureGlobal, cobrautil.WrapRunEForCmd(cobrautil.ResolveFlagsForCmd))
 	return cmd
 }
 
