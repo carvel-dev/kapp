@@ -158,14 +158,15 @@ data:
 		NewPresentClusterResource("service", "redis-primary", env.Namespace, kubectl)
 		NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
 
-		NewPresentClusterResource("configmap", appName, env.Namespace, kubectl)
+		c := NewPresentClusterResource("configmap", appName, env.Namespace, kubectl)
+		require.NotContains(t, c.res.Annotations(), app.KappIsConfigmapMigratedAnnotationKey)
 
 		cleanUp()
 	})
 
 	logger.Section("existing unmigrated app", func() {
 		logger.Section("deploy", func() {
-			kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+			kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 			kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 			NewMissingClusterResource(t, "service", "redis-primary", env.Namespace, kubectl)
@@ -177,7 +178,9 @@ data:
 
 			NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
 
-			NewPresentClusterResource("configmap", appName, env.Namespace, kubectl)
+			c := NewPresentClusterResource("configmap", appName, env.Namespace, kubectl)
+			require.NotContains(t, c.res.Annotations(), app.KappIsConfigmapMigratedAnnotationKey)
+
 			NewMissingClusterResource(t, "configmap", prevAppName, env.Namespace, kubectl)
 		})
 
@@ -218,7 +221,9 @@ data:
 
 		NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
 
-		NewPresentClusterResource("configmap", appName, env.Namespace, kubectl)
+		c := NewPresentClusterResource("configmap", appName, env.Namespace, kubectl)
+		require.NotContains(t, c.res.Annotations(), app.KappIsConfigmapMigratedAnnotationKey)
+
 		NewMissingClusterResource(t, "configmap", prevAppName, env.Namespace, kubectl)
 
 		cleanUp()
@@ -306,7 +311,8 @@ data:
 		NewPresentClusterResource("service", "redis-primary", env.Namespace, kubectl)
 		NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
 
-		NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
+		c := NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
+		require.Contains(t, c.res.Annotations(), app.KappIsConfigmapMigratedAnnotationKey)
 
 		cleanUp()
 	})
@@ -325,7 +331,9 @@ data:
 
 			NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
 
-			NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
+			c := NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
+			require.Contains(t, c.res.Annotations(), app.KappIsConfigmapMigratedAnnotationKey)
+
 			NewMissingClusterResource(t, "configmap", prevAppName, env.Namespace, kubectl)
 		})
 
@@ -342,7 +350,8 @@ data:
 
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
-		NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
+		c := NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
+		require.Contains(t, c.res.Annotations(), app.KappIsConfigmapMigratedAnnotationKey)
 
 		cleanUp()
 	})
@@ -359,7 +368,9 @@ data:
 
 		NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
 
-		NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
+		c := NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
+		require.Contains(t, c.res.Annotations(), app.KappIsConfigmapMigratedAnnotationKey)
+
 		NewMissingClusterResource(t, "configmap", prevAppName, env.Namespace, kubectl)
 
 		cleanUp()
@@ -377,7 +388,9 @@ data:
 
 		NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
 
-		NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
+		c := NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
+		require.Contains(t, c.res.Annotations(), app.KappIsConfigmapMigratedAnnotationKey)
+
 		NewMissingClusterResource(t, "configmap", prevAppName, env.Namespace, kubectl)
 
 		cleanUp()

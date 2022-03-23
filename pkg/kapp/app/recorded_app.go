@@ -254,7 +254,12 @@ func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string
 		} else {
 			c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), prevAppName, metav1.GetOptions{})
 			if err == nil {
-				return a.migrate(c, labels, a.name)
+				err := a.renameConfigMap(c, a.name, a.nsName)
+				if err != nil {
+					return err
+				}
+
+				return a.updateApp(c, labels)
 			}
 		}
 
