@@ -5,7 +5,6 @@ package clusterapply
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
@@ -106,10 +105,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 				newInProgressChanges = append(newInProgressChanges, change)
 
 				if _, found := change.Cluster.Resource().Annotations()[nonBlockingWaitAnnKey]; found {
-					// TODO Improve if condition
-					if !strings.Contains(state.Message, "Waiting for generation") {
-						doneChanges = append(doneChanges, change)
-					}
+					doneChanges = append(doneChanges, change)
 				}
 
 			case state.Done && !state.Successful:
