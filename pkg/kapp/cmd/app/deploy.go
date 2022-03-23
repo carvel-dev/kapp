@@ -96,8 +96,9 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
+	var msg string = ""
 	if o.DeployFlags.PrevApp != "" {
-		err = app.RenamePrevApp(o.DeployFlags.PrevApp, appLabels)
+		msg, err = app.RenamePrevApp(o.DeployFlags.PrevApp, appLabels)
 	} else {
 		err = app.CreateOrUpdate(appLabels)
 	}
@@ -177,6 +178,10 @@ func (o *DeployOptions) Run() error {
 			return DeployApplyExitStatus{hasNoChanges}
 		}
 		return nil
+	}
+
+	if msg != "" {
+		o.ui.PrintLinef(msg)
 	}
 
 	err = o.ui.AskForConfirmation()
