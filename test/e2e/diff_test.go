@@ -375,3 +375,30 @@ data:
 
 	require.Containsf(t, out, expectedOutput, "Did not find expected diff output")
 }
+
+func TestKappNotCreateConfigmapOnDiffRun(t *testing.T) {
+	env := BuildEnv(t)
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, Logger{}}
+	kubectl := Kubectl{t, env.Namespace, Logger{}}
+
+	name := "not-create-configmap-diff-run"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	yaml1 := `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config
+`
+
+	_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
+		"--diff-run"},
+		RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
+
+	NewMissingClusterResource(t, "configmap", name, env.Namespace, kubectl)
+}
