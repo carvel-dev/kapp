@@ -49,7 +49,7 @@ func (c DeleteChange) ApplyStrategy() (ApplyStrategy, error) {
 	res := c.change.ExistingResource()
 	strategy := res.Annotations()[deleteStrategyAnnKey]
 
-	if isInoperableResource(res) {
+	if c.isInoperableResource() {
 		return DeleteOrphanStrategy{res, c}, nil
 	}
 
@@ -67,6 +67,10 @@ func (c DeleteChange) ApplyStrategy() (ApplyStrategy, error) {
 
 func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
 	res := c.change.ExistingResource()
+
+	if c.isInoperableResource() {
+		return ctlresm.DoneApplyState{Done: true, Successful: true, Message: "Resource orphaned"}, nil, nil
+	}
 
 	switch ClusterChangeApplyStrategyOp(res.Annotations()[deleteStrategyAnnKey]) {
 	case deleteStrategyOrphanAnnValue:
@@ -140,7 +144,9 @@ func descMessage(res ctlres.Resource) []string {
 	return []string{}
 }
 
-func isInoperableResource(res ctlres.Resource) bool {
+func (c DeleteChange) isInoperableResource() bool {
+
+	res := c.change.ExistingResource()
 	for _, r := range inoperableResourceList {
 		if (ctlres.PartialResourceRef{r.GroupVersionResource}).Matches(res.GroupVersionResource()) && r.Name == res.Name() {
 			return true
