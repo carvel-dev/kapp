@@ -11,6 +11,7 @@ import (
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -32,9 +33,25 @@ type DeleteChange struct {
 	identifiedResources ctlres.IdentifiedResources
 }
 
+type uniqueResourceRef struct {
+	schema.GroupVersionResource
+	Name string
+}
+
+var inoperableResourceList = []uniqueResourceRef{
+	{
+		GroupVersionResource: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"},
+		Name:                 "default",
+	},
+}
+
 func (c DeleteChange) ApplyStrategy() (ApplyStrategy, error) {
 	res := c.change.ExistingResource()
 	strategy := res.Annotations()[deleteStrategyAnnKey]
+
+	if isInoperableResource(res) {
+		return DeleteOrphanStrategy{res, c}, nil
+	}
 
 	switch ClusterChangeApplyStrategyOp(strategy) {
 	case deleteStrategyPlainAnnValue:
@@ -121,4 +138,13 @@ func descMessage(res ctlres.Resource) []string {
 			ctlresm.NewDeleting(res).IsDoneApplying().Message}
 	}
 	return []string{}
+}
+
+func isInoperableResource(res ctlres.Resource) bool {
+	for _, r := range inoperableResourceList {
+		if (ctlres.PartialResourceRef{r.GroupVersionResource}).Matches(res.GroupVersionResource()) && r.Name == res.Name() {
+			return true
+		}
+	}
+	return false
 }
