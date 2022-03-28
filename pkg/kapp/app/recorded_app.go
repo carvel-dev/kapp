@@ -214,7 +214,7 @@ func (a *RecordedApp) updateApp(existingConfigMap *corev1.ConfigMap, labels map[
 	return nil
 }
 
-func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string) (string, error) {
+func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string) error {
 	defer a.logger.DebugFunc("RenamePrevApp").Finish()
 	var c *corev1.ConfigMap
 	var err error
@@ -222,19 +222,19 @@ func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string
 	if a.isMigrationEnabled() {
 		c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
 		if err == nil {
-			return "", a.updateApp(c, labels)
+			return a.updateApp(c, labels)
 		} else if err != nil {
 			if errors.IsNotFound(err) {
 				c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 				if err == nil {
-					return "", a.migrate(c, labels, a.fqName)
+					return a.migrate(c, labels, a.fqName)
 				}
 			}
 		}
 	} else {
 		c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
 		if err == nil {
-			return "", a.updateApp(c, labels)
+			return a.updateApp(c, labels)
 		}
 	}
 
@@ -242,13 +242,12 @@ func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string
 		if a.isMigrationEnabled() {
 			c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), prevAppName+AppSuffix, metav1.GetOptions{})
 			if err == nil {
-				return "", a.migrate(c, labels, a.fqName)
+				return a.migrate(c, labels, a.fqName)
 			} else if err != nil {
 				if errors.IsNotFound(err) {
 					c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), prevAppName, metav1.GetOptions{})
 					if err == nil {
-						msg := fmt.Sprintf("Renaming '%s' (namespace: %s) to '%s' (app changes will not be renamed)", prevAppName, c.Namespace, a.name)
-						return msg, a.migrate(c, labels, a.fqName)
+						return a.migrate(c, labels, a.fqName)
 					}
 				}
 			}
@@ -257,20 +256,19 @@ func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string
 			if err == nil {
 				err := a.renameConfigMap(c, a.name, a.nsName)
 				if err != nil {
-					return "", err
+					return err
 				}
 
-				msg := fmt.Sprintf("Renaming '%s' (namespace: %s) to '%s' (app changes will not be renamed)", prevAppName, c.Namespace, a.name)
-				return msg, a.updateApp(c, labels)
+				return a.updateApp(c, labels)
 			}
 		}
 
 		if errors.IsNotFound(err) {
-			return "", a.CreateOrUpdate(labels)
+			return a.CreateOrUpdate(labels)
 		}
 	}
 
-	return "", err
+	return err
 }
 
 func (a *RecordedApp) migrate(c *corev1.ConfigMap, labels map[string]string, newName string) error {
