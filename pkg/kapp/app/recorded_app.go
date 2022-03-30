@@ -219,6 +219,21 @@ func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string
 	var c *corev1.ConfigMap
 	var err error
 
+	newConf := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      a.name,
+			Namespace: a.nsName,
+			Labels: map[string]string{
+				KappIsAppLabelKey: kappIsAppLabelValue,
+			},
+		},
+		Data: Meta{
+			LabelKey:   kappAppLabelKey,
+			LabelValue: fmt.Sprintf("%d", time.Now().UTC().UnixNano()),
+			UsedGKs:    &[]schema.GroupKind{},
+		}.AsData(),
+	}
+
 	if a.isMigrationEnabled() {
 		c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
 		if err == nil {
@@ -248,6 +263,14 @@ func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string
 					c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), prevAppName, metav1.GetOptions{})
 					if err == nil {
 						return a.migrate(c, labels, a.fqName)
+					} else if errors.IsNotFound(err) {
+						newConf.Name = a.fqName
+						err = a.mergeAppAnnotationUpdates(newConf, map[string]string{KappIsConfigmapMigratedAnnotationKey: KappIsConfigmapMigratedAnnotationValue})
+						if err != nil {
+							return err
+						}
+
+						return a.createOrUpdate(newConf, labels)
 					}
 				}
 			}
@@ -260,11 +283,9 @@ func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string
 				}
 
 				return a.updateApp(c, labels)
+			} else if errors.IsNotFound(err) {
+				return a.createOrUpdate(newConf, labels)
 			}
-		}
-
-		if errors.IsNotFound(err) {
-			return a.CreateOrUpdate(labels)
 		}
 	}
 
