@@ -34,19 +34,21 @@ type DeleteChange struct {
 }
 
 type uniqueResourceRef struct {
-	schema.GroupVersionResource
+	schema.GroupKind
 	Name string
 }
 
+// if any new reource will encountered which kapp can not delete and required to orphaned then resource info will be added here.
 var inoperableResourceList = []uniqueResourceRef{
 	{
-		GroupVersionResource: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"},
-		Name:                 "default",
+		GroupKind: schema.GroupKind{Group: "", Kind: "namespace"},
+		Name:      "default",
 	},
 }
 
 func (c DeleteChange) ApplyStrategy() (ApplyStrategy, error) {
 	res := c.change.ExistingResource()
+
 	strategy := res.Annotations()[deleteStrategyAnnKey]
 
 	if c.isInoperableResource() {
@@ -116,6 +118,7 @@ func (c DeleteOrphanStrategy) Op() ClusterChangeApplyStrategyOp { return deleteS
 func (c DeleteOrphanStrategy) Apply() error {
 	mergePatch := []interface{}{
 		// TODO currently we do not account for when '-a label:foo=bar' used
+		//
 		map[string]interface{}{
 			"op":   "remove",
 			"path": "/metadata/labels/" + jsonPointerEncoder.Replace(appLabelKey),
@@ -147,8 +150,10 @@ func descMessage(res ctlres.Resource) []string {
 func (c DeleteChange) isInoperableResource() bool {
 
 	res := c.change.ExistingResource()
+
 	for _, r := range inoperableResourceList {
-		if (ctlres.PartialResourceRef{r.GroupVersionResource}).Matches(res.GroupVersionResource()) && r.Name == res.Name() {
+		strings.EqualFold(r.Name, res.Name())
+		if strings.EqualFold(r.Name, res.Name()) && strings.EqualFold(r.Kind, res.GroupKind().Kind) && strings.EqualFold(r.Group, res.GroupKind().Group) {
 			return true
 		}
 	}
