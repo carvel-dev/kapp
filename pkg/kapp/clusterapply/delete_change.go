@@ -44,6 +44,18 @@ var inoperableResourceList = []uniqueResourceRef{
 		GroupKind: schema.GroupKind{Group: "", Kind: "namespace"},
 		Name:      "default",
 	},
+	{
+		GroupKind: schema.GroupKind{Group: "", Kind: "namespace"},
+		Name:      "kube-node-lease",
+	},
+	{
+		GroupKind: schema.GroupKind{Group: "", Kind: "namespace"},
+		Name:      "kube-public",
+	},
+	{
+		GroupKind: schema.GroupKind{Group: "", Kind: "namespace"},
+		Name:      "kube-system",
+	},
 }
 
 func (c DeleteChange) ApplyStrategy() (ApplyStrategy, error) {
@@ -118,7 +130,7 @@ func (c DeleteOrphanStrategy) Op() ClusterChangeApplyStrategyOp { return deleteS
 func (c DeleteOrphanStrategy) Apply() error {
 	mergePatch := []interface{}{
 		// TODO currently we do not account for when '-a label:foo=bar' used
-		//
+		// Reason: In labeled app labels are not accessible in delete operation now. Without the label info kapp can not apply the changes
 		map[string]interface{}{
 			"op":   "remove",
 			"path": "/metadata/labels/" + jsonPointerEncoder.Replace(appLabelKey),
