@@ -58,6 +58,9 @@ type Resource interface {
 	SetOrigin(string)
 	Origin() string
 
+	SetUserAgent(string)
+	UserAgent() string
+
 	MarkTransient(bool)
 	Transient() bool
 
@@ -71,6 +74,7 @@ type ResourceImpl struct {
 	resType   ResourceType
 	transient bool
 	origin    string
+	userAgent string
 }
 
 var _ Resource = &ResourceImpl{}
@@ -234,7 +238,7 @@ func (r *ResourceImpl) Equal(res Resource) bool {
 }
 
 func (r *ResourceImpl) DeepCopy() Resource {
-	return &ResourceImpl{*r.un.DeepCopy(), r.resType, r.transient, ""}
+	return &ResourceImpl{*r.un.DeepCopy(), r.resType, r.transient, "", r.userAgent}
 }
 
 func (r *ResourceImpl) DeepCopyRaw() map[string]interface{} {
@@ -279,6 +283,9 @@ func (r *ResourceImpl) Debug(title string) {
 
 func (r *ResourceImpl) SetOrigin(origin string) { r.origin = origin }
 func (r *ResourceImpl) Origin() string          { return r.origin }
+
+func (r *ResourceImpl) SetUserAgent(userAgent string) { r.userAgent = userAgent }
+func (r *ResourceImpl) UserAgent() string             { return r.userAgent }
 
 func (r *ResourceImpl) unstructured() unstructured.Unstructured      { return r.un }
 func (r *ResourceImpl) unstructuredPtr() *unstructured.Unstructured  { return &r.un }

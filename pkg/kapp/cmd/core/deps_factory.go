@@ -26,7 +26,8 @@ type DepsFactoryImpl struct {
 	ui              ui.UI
 	printTargetOnce *sync.Once
 
-	Warnings bool
+	Warnings  bool
+	UserAgent bool
 }
 
 var _ DepsFactory = &DepsFactoryImpl{}
@@ -39,7 +40,8 @@ func NewDepsFactoryImpl(configFactory ConfigFactory, ui ui.UI) *DepsFactoryImpl 
 }
 
 type DynamicClientOpts struct {
-	Warnings bool
+	Warnings  bool
+	UserAgent bool
 }
 
 func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts) (dynamic.Interface, error) {
@@ -50,11 +52,18 @@ func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts) (dynamic.Interfa
 
 	// copy to avoid mutating the passed-in config
 	cpConfig := rest.CopyConfig(config)
+	cpConfig.UserAgent = ""
 
 	if opts.Warnings {
 		cpConfig.WarningHandler = f.newWarningHandler()
 	} else {
 		cpConfig.WarningHandler = rest.NoWarnings{}
+	}
+
+	if opts.UserAgent {
+		cpConfig.UserAgent = "kapp-wait"
+	} else {
+		cpConfig.UserAgent = ""
 	}
 
 	clientset, err := dynamic.NewForConfig(cpConfig)
@@ -85,6 +94,10 @@ func (f *DepsFactoryImpl) CoreClient() (kubernetes.Interface, error) {
 
 func (f *DepsFactoryImpl) ConfigureWarnings(warnings bool) {
 	f.Warnings = warnings
+}
+
+func (f *DepsFactoryImpl) ConfigureUserAgent(userAgent bool) {
+	f.UserAgent = userAgent
 }
 
 func (f *DepsFactoryImpl) printTarget(config *rest.Config) {

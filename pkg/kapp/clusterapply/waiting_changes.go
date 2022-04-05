@@ -69,7 +69,8 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 			go func() {
 				waitThrottle.Take()
 				defer waitThrottle.Done()
-
+				//
+				change.Cluster.Resource().SetUserAgent("kapp-wait")
 				state, descMsgs, err := change.Cluster.IsDoneApplying()
 				// check for resource timeout
 				if err == nil {
@@ -77,6 +78,8 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 						err = fmt.Errorf("Resource timed out waiting after %s", c.opts.ResourceTimeout)
 					}
 				}
+				//
+				change.Cluster.Resource().SetUserAgent("")
 				waitCh <- waitResult{Change: change, State: state, DescMsgs: descMsgs, Err: err}
 			}()
 		}

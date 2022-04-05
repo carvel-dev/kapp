@@ -57,6 +57,7 @@ type ResourcesImpl struct {
 	coreClient         kubernetes.Interface
 	dynamicClient      dynamic.Interface
 	mutedDynamicClient dynamic.Interface
+	tmpDynamicClient   dynamic.Interface
 	opts               ResourcesImplOpts
 
 	assumedAllowedNamespacesMemoLock sync.Mutex
@@ -71,7 +72,7 @@ type ResourcesImplOpts struct {
 }
 
 func NewResourcesImpl(resourceTypes ResourceTypes, coreClient kubernetes.Interface,
-	dynamicClient dynamic.Interface, mutedDynamicClient dynamic.Interface,
+	dynamicClient dynamic.Interface, mutedDynamicClient dynamic.Interface, tmpDynamicClient dynamic.Interface,
 	opts ResourcesImplOpts, logger logger.Logger) *ResourcesImpl {
 
 	return &ResourcesImpl{
@@ -79,6 +80,7 @@ func NewResourcesImpl(resourceTypes ResourceTypes, coreClient kubernetes.Interfa
 		coreClient:         coreClient,
 		dynamicClient:      dynamicClient,
 		mutedDynamicClient: mutedDynamicClient,
+		tmpDynamicClient:   tmpDynamicClient,
 		opts:               opts,
 		logger:             logger.NewPrefixed("Resources"),
 	}
@@ -525,6 +527,9 @@ func (c *ResourcesImpl) resourceClient(resource Resource, opts resourceClientOpt
 		dynamicClient = c.dynamicClient
 	} else {
 		dynamicClient = c.mutedDynamicClient
+	}
+	if resource.UserAgent() != "" {
+		dynamicClient = c.tmpDynamicClient
 	}
 
 	return dynamicClient.Resource(resType.GroupVersionResource).Namespace(resource.Namespace()), resType, nil

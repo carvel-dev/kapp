@@ -122,19 +122,24 @@ func (o *ListLabelsOptions) listResources() ([]ctlres.Resource, error) {
 		return nil, err
 	}
 
-	dynamicClient, err := o.depsFactory.DynamicClient(cmdcore.DynamicClientOpts{Warnings: true})
+	dynamicClient, err := o.depsFactory.DynamicClient(cmdcore.DynamicClientOpts{Warnings: true, UserAgent: false})
 	if err != nil {
 		return nil, err
 	}
 
-	mutedDynamicClient, err := o.depsFactory.DynamicClient(cmdcore.DynamicClientOpts{Warnings: false})
+	mutedDynamicClient, err := o.depsFactory.DynamicClient(cmdcore.DynamicClientOpts{Warnings: false, UserAgent: false})
+	if err != nil {
+		return nil, err
+	}
+
+	tmpDynamicClient, err := o.depsFactory.DynamicClient(cmdcore.DynamicClientOpts{Warnings: false, UserAgent: true})
 	if err != nil {
 		return nil, err
 	}
 
 	resTypes := ctlres.NewResourceTypesImpl(coreClient, ctlres.ResourceTypesImplOpts{})
 	resources := ctlres.NewResourcesImpl(
-		resTypes, coreClient, dynamicClient, mutedDynamicClient, ctlres.ResourcesImplOpts{}, o.logger)
+		resTypes, coreClient, dynamicClient, mutedDynamicClient, tmpDynamicClient, ctlres.ResourcesImplOpts{}, o.logger)
 	identifiedResources := ctlres.NewIdentifiedResources(coreClient, resTypes, resources, nil, o.logger)
 
 	labelSelector, err := labels.Parse("!kapp")
