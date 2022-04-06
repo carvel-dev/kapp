@@ -33,34 +33,33 @@ type DeleteChange struct {
 	identifiedResources ctlres.IdentifiedResources
 }
 
-type uniqueResourceRef struct {
+type inoperableResourceRef struct {
 	schema.GroupKind
 	Name string
 }
 
-// if any new reource will encountered which kapp can not delete and required to orphaned then resource info will be added here.
-var inoperableResourceList = []uniqueResourceRef{
+// List of resources use the "orphan" delete strategy implicitly as they cannot be deleted by end users
+var inoperableResourceList = []inoperableResourceRef{
 	{
-		GroupKind: schema.GroupKind{Group: "", Kind: "namespace"},
+		GroupKind: schema.GroupKind{Group: "", Kind: "Namespace"},
 		Name:      "default",
 	},
 	{
-		GroupKind: schema.GroupKind{Group: "", Kind: "namespace"},
+		GroupKind: schema.GroupKind{Group: "", Kind: "Namespace"},
 		Name:      "kube-node-lease",
 	},
 	{
-		GroupKind: schema.GroupKind{Group: "", Kind: "namespace"},
+		GroupKind: schema.GroupKind{Group: "", Kind: "Namespace"},
 		Name:      "kube-public",
 	},
 	{
-		GroupKind: schema.GroupKind{Group: "", Kind: "namespace"},
+		GroupKind: schema.GroupKind{Group: "", Kind: "Namespace"},
 		Name:      "kube-system",
 	},
 }
 
 func (c DeleteChange) ApplyStrategy() (ApplyStrategy, error) {
 	res := c.change.ExistingResource()
-
 	strategy := res.Annotations()[deleteStrategyAnnKey]
 
 	if c.isInoperableResource() {
@@ -162,10 +161,8 @@ func descMessage(res ctlres.Resource) []string {
 func (c DeleteChange) isInoperableResource() bool {
 
 	res := c.change.ExistingResource()
-
 	for _, r := range inoperableResourceList {
-		strings.EqualFold(r.Name, res.Name())
-		if strings.EqualFold(r.Name, res.Name()) && strings.EqualFold(r.Kind, res.GroupKind().Kind) && strings.EqualFold(r.Group, res.GroupKind().Group) {
+		if r.Name == res.Name() && r.Kind == res.GroupKind().Kind && r.Group == res.GroupKind().Group {
 			return true
 		}
 	}
