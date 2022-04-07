@@ -42,6 +42,16 @@ type customWaitingResourceCondition struct {
 }
 
 func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
+	if mod := s.waitRule.AsMods(); mod != nil {
+		configObj, err := mod.ApplyYttWaitRule(s.resource)
+		if err != nil {
+			return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
+				"Error: Applying ytt wait rule: %s", err)}
+		}
+		return DoneApplyState{Done: configObj.Result.Done, Successful: configObj.Result.Successful,
+			Message: configObj.Result.Message}
+	}
+
 	obj := customWaitingResourceStruct{}
 
 	err := s.resource.AsUncheckedTypedObj(&obj)

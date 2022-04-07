@@ -44,6 +44,7 @@ type WaitRule struct {
 	SupportsObservedGeneration bool
 	ConditionMatchers          []WaitRuleConditionMatcher
 	ResourceMatchers           []ResourceMatcher
+	Ytt                        *WaitRuleYtt
 }
 
 type WaitRuleConditionMatcher struct {
@@ -52,6 +53,18 @@ type WaitRuleConditionMatcher struct {
 	Failure                    bool
 	Success                    bool
 	SupportsObservedGeneration bool
+}
+
+type WaitRuleYtt struct {
+	// Contracts are named and versioned (eg v1)
+	// to provide a stable interface to rule authors.
+	// Multiple contracts will be offered at the same time
+	// so that existing rules do not not break as we decide to evolve running environment.
+	WaitRuleContractV1 *WaitRuleYttContractV1 `json:"waitRuleContractV1"`
+}
+
+type WaitRuleYttContractV1 struct {
+	RulesStar string `json:"rules.star"`
 }
 
 type RebaseRule struct {
@@ -208,6 +221,21 @@ func (r RebaseRule) Validate() error {
 	}
 	if len(r.Path) == 0 && len(r.Paths) == 0 {
 		return fmt.Errorf("Expected either path or paths to be specified")
+	}
+	return nil
+}
+
+func (r WaitRule) AsMods() *yttresmod.WaitRuleContractV1Mod {
+	if r.Ytt != nil {
+		switch {
+		case r.Ytt.WaitRuleContractV1 != nil:
+			return &yttresmod.WaitRuleContractV1Mod{
+				ResourceMatcher: ctlres.AnyMatcher{
+					Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
+				},
+				Starlark: r.Ytt.WaitRuleContractV1.RulesStar,
+			}
+		}
 	}
 	return nil
 }
