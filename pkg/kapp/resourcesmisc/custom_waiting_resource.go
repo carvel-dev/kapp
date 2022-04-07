@@ -34,10 +34,11 @@ type customWaitingResourceStruct struct {
 }
 
 type customWaitingResourceCondition struct {
-	Type    string
-	Status  string
-	Reason  string
-	Message string
+	Type               string
+	Status             string
+	Reason             string
+	Message            string
+	ObservedGeneration int64
 }
 
 func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
@@ -57,6 +58,10 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 	// Check on failure conditions first
 	for _, condMatcher := range s.waitRule.ConditionMatchers {
 		for _, cond := range obj.Status.Conditions {
+			if condMatcher.SupportsObservedGeneration && obj.Metadata.Generation != cond.ObservedGeneration {
+				return DoneApplyState{Done: false, Message: fmt.Sprintf(
+					"Waiting for generation %d to be observed at status condition %s level", obj.Metadata.Generation, cond.Type)}
+			}
 			if cond.Type == condMatcher.Type && cond.Status == condMatcher.Status {
 				if condMatcher.Failure {
 					return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
@@ -70,6 +75,10 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 	// If no failure conditions found, check on successful ones
 	for _, condMatcher := range s.waitRule.ConditionMatchers {
 		for _, cond := range obj.Status.Conditions {
+			if condMatcher.SupportsObservedGeneration && obj.Metadata.Generation != cond.ObservedGeneration {
+				return DoneApplyState{Done: false, Message: fmt.Sprintf(
+					"Waiting for generation %d to be observed at status condition %s level", obj.Metadata.Generation, cond.Type)}
+			}
 			if cond.Type == condMatcher.Type && cond.Status == condMatcher.Status {
 				if condMatcher.Success {
 					return DoneApplyState{Done: true, Successful: true, Message: fmt.Sprintf(
