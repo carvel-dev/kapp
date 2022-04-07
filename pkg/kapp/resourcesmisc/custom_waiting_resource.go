@@ -46,7 +46,7 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 		configObj, err := mod.ApplyYttWaitRule(s.resource)
 		if err != nil {
 			return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
-				"Error: Applying ytt wait rule: %s", err)}
+				"Error: Applying ytt wait rule: %s", err.Error())}
 		}
 		return DoneApplyState{Done: configObj.Result.Done, Successful: configObj.Result.Successful,
 			Message: configObj.Result.Message}
