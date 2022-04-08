@@ -227,7 +227,9 @@ func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string
 	if a.isMigrationEnabled() {
 		c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
 		if err == nil {
-			return a.updateApp(c, labels)
+			if a.isKappApp(c) {
+				return a.updateApp(c, labels)
+			}
 		} else if err != nil {
 			if errors.IsNotFound(err) {
 				c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.name, metav1.GetOptions{})
@@ -247,7 +249,9 @@ func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string
 		if a.isMigrationEnabled() {
 			c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), prevAppName+AppSuffix, metav1.GetOptions{})
 			if err == nil {
-				return a.migrate(c, labels, a.fqName)
+				if a.isKappApp(c) {
+					return a.migrate(c, labels, a.fqName)
+				}
 			} else if err != nil {
 				if errors.IsNotFound(err) {
 					c, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), prevAppName, metav1.GetOptions{})
