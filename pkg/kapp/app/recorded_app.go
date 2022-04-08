@@ -205,7 +205,6 @@ func (a *RecordedApp) createOrUpdate(c *corev1.ConfigMap, labels map[string]stri
 			if err != nil {
 				return fmt.Errorf("Updating app: %s", err)
 			}
-
 			return nil
 		}
 
