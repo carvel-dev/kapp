@@ -139,17 +139,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string) error {
 		configMapWithSuffix, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), a.fqName, metav1.GetOptions{})
 		if err == nil {
 			if a.isKappApp(configMapWithSuffix) {
-				err = a.mergeAppUpdates(configMapWithSuffix, labels)
-				if err != nil {
-					return err
-				}
-
-				_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), configMapWithSuffix, metav1.UpdateOptions{})
-				if err != nil {
-					return fmt.Errorf("Updating app: %s", err)
-				}
-
-				return nil
+				return a.updateApp(configMapWithSuffix, labels)
 			}
 		} else if !errors.IsNotFound(err) {
 			// return if error is anything other than configmap not found
