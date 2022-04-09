@@ -159,10 +159,9 @@ func descMessage(res ctlres.Resource) []string {
 }
 
 func (c DeleteChange) isInoperableResource() bool {
-
 	res := c.change.ExistingResource()
 	for _, r := range inoperableResourceList {
-		if r.Name == res.Name() && r.Kind == res.GroupKind().Kind && r.Group == res.GroupKind().Group {
+		if r == (inoperableResourceRef{Name: res.Name(), GroupKind: res.GroupKind()}) {
 			return true
 		}
 	}

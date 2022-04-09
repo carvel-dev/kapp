@@ -9,7 +9,6 @@ import (
 )
 
 func TestDeleteInoperable(t *testing.T) {
-
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
