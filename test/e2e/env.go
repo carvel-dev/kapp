@@ -34,7 +34,7 @@ func (e Env) Validate(t *testing.T) {
 	errStrs := []string{}
 
 	if len(e.Namespace) == 0 {
-		errStrs = append(errStrs, "Expected Namespace to be non-empty")
+		errStrs = append(errStrs, "Expected Namespace to be non-empty (Hint: set ENV var KAPP_E2E_NAMESPACE")
 	}
 
 	require.Lenf(t, errStrs, 0, "%s", strings.Join(errStrs, "\n"))
