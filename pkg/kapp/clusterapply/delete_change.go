@@ -11,6 +11,7 @@ import (
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -32,9 +33,38 @@ type DeleteChange struct {
 	identifiedResources ctlres.IdentifiedResources
 }
 
+type inoperableResourceRef struct {
+	schema.GroupKind
+	Name string
+}
+
+// List of resources use the "orphan" delete strategy implicitly as they cannot be deleted by end users
+var inoperableResourceList = []inoperableResourceRef{
+	{
+		GroupKind: schema.GroupKind{Group: "", Kind: "Namespace"},
+		Name:      "default",
+	},
+	{
+		GroupKind: schema.GroupKind{Group: "", Kind: "Namespace"},
+		Name:      "kube-node-lease",
+	},
+	{
+		GroupKind: schema.GroupKind{Group: "", Kind: "Namespace"},
+		Name:      "kube-public",
+	},
+	{
+		GroupKind: schema.GroupKind{Group: "", Kind: "Namespace"},
+		Name:      "kube-system",
+	},
+}
+
 func (c DeleteChange) ApplyStrategy() (ApplyStrategy, error) {
 	res := c.change.ExistingResource()
 	strategy := res.Annotations()[deleteStrategyAnnKey]
+
+	if c.isInoperableResource() {
+		return DeleteOrphanStrategy{res, c}, nil
+	}
 
 	switch ClusterChangeApplyStrategyOp(strategy) {
 	case deleteStrategyPlainAnnValue:
@@ -50,6 +80,10 @@ func (c DeleteChange) ApplyStrategy() (ApplyStrategy, error) {
 
 func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
 	res := c.change.ExistingResource()
+
+	if c.isInoperableResource() {
+		return ctlresm.DoneApplyState{Done: true, Successful: true, Message: "Resource orphaned"}, nil, nil
+	}
 
 	switch ClusterChangeApplyStrategyOp(res.Annotations()[deleteStrategyAnnKey]) {
 	case deleteStrategyOrphanAnnValue:
@@ -95,6 +129,7 @@ func (c DeleteOrphanStrategy) Op() ClusterChangeApplyStrategyOp { return deleteS
 func (c DeleteOrphanStrategy) Apply() error {
 	mergePatch := []interface{}{
 		// TODO currently we do not account for when '-a label:foo=bar' used
+		// Reason: In labeled app labels are not accessible in delete operation now. Without the label info kapp can not apply the changes
 		map[string]interface{}{
 			"op":   "remove",
 			"path": "/metadata/labels/" + jsonPointerEncoder.Replace(appLabelKey),
@@ -121,4 +156,14 @@ func descMessage(res ctlres.Resource) []string {
 			ctlresm.NewDeleting(res).IsDoneApplying().Message}
 	}
 	return []string{}
+}
+
+func (c DeleteChange) isInoperableResource() bool {
+	res := c.change.ExistingResource()
+	for _, r := range inoperableResourceList {
+		if r == (inoperableResourceRef{Name: res.Name(), GroupKind: res.GroupKind()}) {
+			return true
+		}
+	}
+	return false
 }
