@@ -6,6 +6,7 @@ package logs
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"sync/atomic"
@@ -144,10 +145,13 @@ func (l PodContainerLog) obtainStream(ui ui.UI, linePrefix string, cancelCh chan
 
 		if !isWaitingMsgPrintedOnce {
 			ui.BeginLinef("%s# waiting for '%s' logs to become available...\n", linePrefix, l.tag)
+			isWaitingMsgPrintedOnce = true
 			if !l.opts.Follow {
+				if err == nil {
+					err = errors.New(fmt.Sprintf("Container %s not in Ready state", l.container))
+				}
 				return nil, err
 			}
-			isWaitingMsgPrintedOnce = true
 		}
 
 		select {
