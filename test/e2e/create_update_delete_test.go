@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	"github.com/k14s/kapp/pkg/kapp/app"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/stretchr/testify/require"
@@ -197,6 +198,19 @@ data:
 
 		// KAPP_FQ_CONFIGMAP_NAMES=False is not supported - must go from migrated => migrated
 		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "False")
+		out := kapp.Run([]string{"ls", "--json"})
+
+		expectedAppsList := []map[string]string{{
+			"last_change_age":        "<replaced>",
+			"last_change_successful": "true",
+			"name":                   prevAppName + app.AppSuffix,
+			"namespaces":             env.Namespace,
+		}}
+
+		resp := uitest.JSONUIFromBytes(t, []byte(out))
+
+		require.Equalf(t, expectedAppsList, replaceLastChangeAge(resp.Tables[0].Rows), "Expected to match")
+
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml2)})
 

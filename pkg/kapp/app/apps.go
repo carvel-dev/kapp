@@ -6,6 +6,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -89,7 +90,7 @@ func (a Apps) list(additionalLabels map[string]string, nsName string) ([]App, er
 		name := app.Name
 		isMigrated := false
 
-		if _, ok := app.Annotations[KappIsConfigmapMigratedAnnotationKey]; ok {
+		if _, ok := app.Annotations[KappIsConfigmapMigratedAnnotationKey]; ok && strings.ToLower(os.Getenv("KAPP_FQ_CONFIGMAP_NAMES")) == "true" {
 			name = strings.TrimSuffix(app.Name, AppSuffix)
 			isMigrated = true
 		}
