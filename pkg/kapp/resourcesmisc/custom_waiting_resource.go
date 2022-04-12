@@ -42,16 +42,6 @@ type customWaitingResourceCondition struct {
 }
 
 func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
-	if mod := s.waitRule.AsMods(); mod != nil {
-		configObj, err := mod.ApplyYttWaitRule(s.resource)
-		if err != nil {
-			return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
-				"Error: Applying ytt wait rule: %s", err.Error())}
-		}
-		return DoneApplyState{Done: configObj.Result.Done, Successful: configObj.Result.Successful,
-			Message: configObj.Result.Message}
-	}
-
 	obj := customWaitingResourceStruct{}
 
 	err := s.resource.AsUncheckedTypedObj(&obj)
@@ -63,6 +53,16 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 	if s.waitRule.SupportsObservedGeneration && obj.Metadata.Generation != obj.Status.ObservedGeneration {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(
 			"Waiting for generation %d to be observed", obj.Metadata.Generation)}
+	}
+
+	if contract := s.waitRule.GetContract(); contract != nil {
+		configObj, err := contract.ApplyYttWaitRule(s.resource)
+		if err != nil {
+			return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
+				"Error: Applying ytt wait rule: %s", err.Error())}
+		}
+		return DoneApplyState{Done: configObj.Done, Successful: configObj.Successful,
+			Message: configObj.Message}
 	}
 
 	hasConditionWaitingForGeneration := false

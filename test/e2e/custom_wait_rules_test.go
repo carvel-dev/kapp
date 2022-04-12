@@ -23,13 +23,10 @@ kind: Config
 
 waitRules:
   - ytt:
-      waitRuleContractV1:
+      funcContractV1:
         rules.star: |
-          load("@ytt:data", "data")
-
-          state = data.values.status.currentState
-
-          def check_status():
+          def check_status(resource):
+              state = resource.status.currentState
               if state == "Failed":
                 return {"Done":True, "Successful": False, "Message": ""}
               elif state == "Running":

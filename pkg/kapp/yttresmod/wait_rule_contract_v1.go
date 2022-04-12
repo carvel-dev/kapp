@@ -13,7 +13,7 @@ import (
 	"github.com/k14s/ytt/pkg/files"
 )
 
-type WaitRuleContractV1Mod struct {
+type WaitRuleContractV1 struct {
 	ResourceMatcher ctlres.ResourceMatcher
 	Starlark        string
 }
@@ -28,7 +28,7 @@ type DoneApplyState struct {
 	Message    string
 }
 
-func (t WaitRuleContractV1Mod) ApplyYttWaitRule(res ctlres.Resource) (*ConfigYAMLObj, error) {
+func (t WaitRuleContractV1) ApplyYttWaitRule(res ctlres.Resource) (*DoneApplyState, error) {
 	if !t.ResourceMatcher.Matches(res) {
 		return nil, nil
 	}
@@ -36,7 +36,7 @@ func (t WaitRuleContractV1Mod) ApplyYttWaitRule(res ctlres.Resource) (*ConfigYAM
 	return t.evalYtt(res)
 }
 
-func (t WaitRuleContractV1Mod) evalYtt(res ctlres.Resource) (*ConfigYAMLObj, error) {
+func (t WaitRuleContractV1) evalYtt(res ctlres.Resource) (*DoneApplyState, error) {
 	opts := cmdtpl.NewOptions()
 
 	opts.DataValuesFlags.FromFiles = []string{"values.yml"}
@@ -49,7 +49,7 @@ func (t WaitRuleContractV1Mod) evalYtt(res ctlres.Resource) (*ConfigYAMLObj, err
 
 	filesToProcess := []*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("rules.star", []byte(t.Starlark))),
-		files.MustNewFileFromSource(files.NewBytesSource("config.yml", getConfigYAML())),
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", t.getConfigYAML())),
 	}
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui.NewTTY(false))
@@ -73,18 +73,19 @@ func (t WaitRuleContractV1Mod) evalYtt(res ctlres.Resource) (*ConfigYAMLObj, err
 		return nil, fmt.Errorf("Deserializing result: %s", err)
 	}
 
-	return &configObj, nil
+	return &configObj.Result, nil
 }
 
-func (t WaitRuleContractV1Mod) valuesYAML(res ctlres.Resource) ([]byte, error) {
+func (t WaitRuleContractV1) valuesYAML(res ctlres.Resource) ([]byte, error) {
 	return yaml.Marshal(res.DeepCopyRaw())
 }
 
-func getConfigYAML() []byte {
+func (t WaitRuleContractV1) getConfigYAML() []byte {
 	config := `
 #@ load("rules.star", "check_status")
+#@ load("@ytt:data", "data")
 
-result: #@ check_status()
+result: #@ check_status(data.values)
 `
 	return []byte(config)
 }
