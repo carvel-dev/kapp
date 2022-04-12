@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	createStrategyAnnKey                                                = "kapp.k14s.io/create-strategy"
-	createStrategyPlainAnnValue            ClusterChangeApplyStrategyOp = ""
-	createStrategyFallbackOnUpdateAnnValue ClusterChangeApplyStrategyOp = "fallback-on-update"
-	createStrategyFallbackOnNoopAnnValue   ClusterChangeApplyStrategyOp = "fallback-on-noop"
+	createStrategyAnnKey                                                      = "kapp.k14s.io/create-strategy"
+	createStrategyPlainAnnValue                  ClusterChangeApplyStrategyOp = ""
+	createStrategyFallbackOnUpdateAnnValue       ClusterChangeApplyStrategyOp = "fallback-on-update"
+	createStrategyFallbackOnUpdateOrNoopAnnValue ClusterChangeApplyStrategyOp = "fallback-on-update-or-noop"
 
 	updateStrategyAnnKey                                                 = "kapp.k14s.io/update-strategy"
 	updateStrategyPlainAnnValue             ClusterChangeApplyStrategyOp = ""
@@ -57,8 +57,8 @@ func (c AddOrUpdateChange) ApplyStrategy() (ApplyStrategy, error) {
 		case createStrategyFallbackOnUpdateAnnValue:
 			return AddOrFallbackOnUpdateStrategy{newRes, c}, nil
 
-		case createStrategyFallbackOnNoopAnnValue:
-			return AddOrFallbackOnNoopStrategy{newRes, c}, nil
+		case createStrategyFallbackOnUpdateOrNoopAnnValue:
+			return AddOrFallbackOnUpdateOrNoopStrategy{newRes, c}, nil
 
 		default:
 			return nil, fmt.Errorf("Unknown create strategy: %s", strategy)
@@ -164,7 +164,7 @@ func (c AddOrUpdateChange) tryToResolveUpdateConflict(
 	return fmt.Errorf(errMsgPrefix+"(tried multiple times): %s", origErr)
 }
 
-func (c AddOrUpdateChange) tryToUpdateAfterCreateConflict() error {
+func (c AddOrUpdateChange) tryToUpdateAfterCreateConflict(allowNoopUpdates bool) error {
 	var lastUpdateErr error
 
 	for i := 0; i < 10; i++ {
@@ -186,7 +186,10 @@ func (c AddOrUpdateChange) tryToUpdateAfterCreateConflict() error {
 		}
 		switch recalcChanges[0].Op() {
 		case ctldiff.ChangeOpNoop:
-			return nil
+			if allowNoopUpdates {
+				return nil
+			}
+			return fmt.Errorf("Recalculated change was a noop but those are not allowed (try adding annotation kapp.k14s.io/create-strategy: fallback-on-update-or-noop)")
 		case ctldiff.ChangeOpUpdate:
 			updatedRes, err := c.identifiedResources.Update(recalcChanges[0].NewResource())
 			if err != nil {
@@ -290,7 +293,7 @@ func (c AddOrFallbackOnUpdateStrategy) Apply() error {
 	createdRes, err := c.aou.identifiedResources.Create(c.newRes)
 	if err != nil {
 		if errors.IsAlreadyExists(err) {
-			return c.aou.tryToUpdateAfterCreateConflict()
+			return c.aou.tryToUpdateAfterCreateConflict(false)
 		}
 		return err
 	}
@@ -298,20 +301,20 @@ func (c AddOrFallbackOnUpdateStrategy) Apply() error {
 	return c.aou.recordAppliedResource(createdRes)
 }
 
-type AddOrFallbackOnNoopStrategy struct {
+type AddOrFallbackOnUpdateOrNoopStrategy struct {
 	newRes ctlres.Resource
 	aou    AddOrUpdateChange
 }
 
-func (c AddOrFallbackOnNoopStrategy) Op() ClusterChangeApplyStrategyOp {
-	return createStrategyFallbackOnNoopAnnValue
+func (c AddOrFallbackOnUpdateOrNoopStrategy) Op() ClusterChangeApplyStrategyOp {
+	return createStrategyFallbackOnUpdateOrNoopAnnValue
 }
 
-func (c AddOrFallbackOnNoopStrategy) Apply() error {
+func (c AddOrFallbackOnUpdateOrNoopStrategy) Apply() error {
 	createdRes, err := c.aou.identifiedResources.Create(c.newRes)
 	if err != nil {
 		if errors.IsAlreadyExists(err) {
-			return c.aou.tryToUpdateAfterCreateConflict()
+			return c.aou.tryToUpdateAfterCreateConflict(true)
 		}
 		return err
 	}
