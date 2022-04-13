@@ -63,7 +63,7 @@ data:
 			"last_change_age":        "<replaced>",
 			"last_change_successful": "true",
 			"name":                   "test-app-1",
-			"namespaces":             "kapp-test",
+			"namespaces":             env.Namespace,
 		}}
 
 		resp := uitest.JSONUIFromBytes(t, []byte(listedApps))
@@ -76,7 +76,7 @@ data:
 			"last_change_age":        "<replaced>",
 			"last_change_successful": "true",
 			"name":                   "test-app-2",
-			"namespaces":             "kapp-test",
+			"namespaces":             env.Namespace,
 		}}
 
 		resp2 := uitest.JSONUIFromBytes(t, []byte(filteredApps))
