@@ -92,7 +92,7 @@ metadata:
 		expectedNonVer := []map[string]string{{
 			"kind":            "ConfigMap",
 			"name":            "config",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "create",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -101,7 +101,7 @@ metadata:
 		}, {
 			"kind":            "Secret",
 			"name":            "secret",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "create",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -122,7 +122,7 @@ metadata:
 		expectedVer := []map[string]string{{
 			"kind":            "ConfigMap",
 			"name":            "config",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "delete",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -131,7 +131,7 @@ metadata:
 		}, {
 			"kind":            "ConfigMap",
 			"name":            "config-ver-1",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "create",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -140,7 +140,7 @@ metadata:
 		}, {
 			"kind":            "Secret",
 			"name":            "secret",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "delete",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -149,7 +149,7 @@ metadata:
 		}, {
 			"kind":            "Secret",
 			"name":            "secret-ver-1",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "create",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -169,7 +169,7 @@ metadata:
 			{
 				"kind":            "ConfigMap",
 				"name":            "config",
-				"namespace":       "kapp-test",
+				"namespace":       env.Namespace,
 				"op":              "create",
 				"op_strategy":     "",
 				"reconcile_info":  "",
@@ -178,7 +178,7 @@ metadata:
 			}, {
 				"kind":            "ConfigMap",
 				"name":            "config-ver-2",
-				"namespace":       "kapp-test",
+				"namespace":       env.Namespace,
 				"op":              "create",
 				"op_strategy":     "",
 				"reconcile_info":  "",
@@ -187,7 +187,7 @@ metadata:
 			}, {
 				"kind":            "Secret",
 				"name":            "secret",
-				"namespace":       "kapp-test",
+				"namespace":       env.Namespace,
 				"op":              "create",
 				"op_strategy":     "",
 				"reconcile_info":  "",
@@ -196,7 +196,7 @@ metadata:
 			}, {
 				"kind":            "Secret",
 				"name":            "secret-ver-2",
-				"namespace":       "kapp-test",
+				"namespace":       env.Namespace,
 				"op":              "create",
 				"op_strategy":     "",
 				"reconcile_info":  "",
@@ -221,7 +221,7 @@ metadata:
 			{
 				"kind":            "ConfigMap",
 				"name":            "config",
-				"namespace":       "kapp-test",
+				"namespace":       env.Namespace,
 				"op":              "create",
 				"op_strategy":     "",
 				"reconcile_info":  "",
@@ -230,7 +230,7 @@ metadata:
 			}, {
 				"kind":            "ConfigMap",
 				"name":            "config-ver-1",
-				"namespace":       "kapp-test",
+				"namespace":       env.Namespace,
 				"op":              "create",
 				"op_strategy":     "",
 				"reconcile_info":  "",
@@ -239,7 +239,7 @@ metadata:
 			}, {
 				"kind":            "Secret",
 				"name":            "secret",
-				"namespace":       "kapp-test",
+				"namespace":       env.Namespace,
 				"op":              "create",
 				"op_strategy":     "",
 				"reconcile_info":  "",
@@ -248,7 +248,7 @@ metadata:
 			}, {
 				"kind":            "Secret",
 				"name":            "secret-ver-1",
-				"namespace":       "kapp-test",
+				"namespace":       env.Namespace,
 				"op":              "create",
 				"op_strategy":     "",
 				"reconcile_info":  "",
@@ -268,7 +268,7 @@ metadata:
 		expectedVer := []map[string]string{{
 			"kind":            "ConfigMap",
 			"name":            "config",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "delete",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -277,7 +277,7 @@ metadata:
 		}, {
 			"kind":            "ConfigMap",
 			"name":            "config-ver-2",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "create",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -286,7 +286,7 @@ metadata:
 		}, {
 			"kind":            "Secret",
 			"name":            "secret",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "delete",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -295,7 +295,7 @@ metadata:
 		}, {
 			"kind":            "Secret",
 			"name":            "secret-ver-2",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "create",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -319,7 +319,7 @@ metadata:
 			{
 				"kind":            "ConfigMap",
 				"name":            "config",
-				"namespace":       "kapp-test",
+				"namespace":       env.Namespace,
 				"op":              "create",
 				"op_strategy":     "",
 				"reconcile_info":  "",
@@ -328,7 +328,7 @@ metadata:
 			}, {
 				"kind":            "ConfigMap",
 				"name":            "config-ver-1",
-				"namespace":       "kapp-test",
+				"namespace":       env.Namespace,
 				"op":              "create",
 				"op_strategy":     "",
 				"reconcile_info":  "",
@@ -337,7 +337,7 @@ metadata:
 			}, {
 				"kind":            "Secret",
 				"name":            "secret",
-				"namespace":       "kapp-test",
+				"namespace":       env.Namespace,
 				"op":              "create",
 				"op_strategy":     "",
 				"reconcile_info":  "",
@@ -346,7 +346,7 @@ metadata:
 			}, {
 				"kind":            "Secret",
 				"name":            "secret-ver-1",
-				"namespace":       "kapp-test",
+				"namespace":       env.Namespace,
 				"op":              "create",
 				"op_strategy":     "",
 				"reconcile_info":  "",
@@ -366,7 +366,7 @@ metadata:
 		expectedVer := []map[string]string{{
 			"kind":            "ConfigMap",
 			"name":            "config",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "update",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -375,7 +375,7 @@ metadata:
 		}, {
 			"kind":            "ConfigMap",
 			"name":            "config-ver-1",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "delete",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -384,7 +384,7 @@ metadata:
 		}, {
 			"kind":            "Secret",
 			"name":            "secret",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "update",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -393,7 +393,7 @@ metadata:
 		}, {
 			"kind":            "Secret",
 			"name":            "secret-ver-1",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "delete",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -453,7 +453,7 @@ data:
 		expectedKapp := []map[string]string{{
 			"kind":            "ConfigMap",
 			"name":            "config",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "delete",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -462,7 +462,7 @@ data:
 		}, {
 			"kind":            "ConfigMap",
 			"name":            "config-ver-1",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "create",
 			"op_strategy":     "",
 			"reconcile_info":  "",
