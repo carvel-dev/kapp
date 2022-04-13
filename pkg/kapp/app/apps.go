@@ -6,7 +6,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -18,11 +17,8 @@ import (
 )
 
 const (
-	KappIsAppLabelKey                      = "kapp.k14s.io/is-app"
-	kappIsAppLabelValue                    = ""
-	KappIsConfigmapMigratedAnnotationKey   = "kapp.k14s.io/is-configmap-migrated"
-	KappIsConfigmapMigratedAnnotationValue = ""
-	AppSuffix                              = ".apps.k14s.io"
+	KappIsAppLabelKey   = "kapp.k14s.io/is-app"
+	kappIsAppLabelValue = ""
 )
 
 type Apps struct {
@@ -57,9 +53,8 @@ func (a Apps) Find(name string) (App, error) {
 		return nil, fmt.Errorf("Expected non-empty namespace")
 	}
 
-	return &RecordedApp{name, name + AppSuffix, a.nsName, false, time.Time{}, a.coreClient,
-		a.identifiedResources, a.appInDiffNsHintMsg, nil,
-		a.logger.NewPrefixed("RecordedApp")}, nil
+	return NewRecordedApp(name, a.nsName, time.Time{}, a.coreClient,
+		a.identifiedResources, a.appInDiffNsHintMsg, a.logger, nil), nil
 }
 
 func (a Apps) List(additionalLabels map[string]string) ([]App, error) {
@@ -87,21 +82,8 @@ func (a Apps) list(additionalLabels map[string]string, nsName string) ([]App, er
 	}
 
 	for _, app := range apps.Items {
-		name := app.Name
-		isMigrated := false
-
-		if _, ok := app.Annotations[KappIsConfigmapMigratedAnnotationKey]; ok && strings.ToLower(os.Getenv("KAPP_FQ_CONFIGMAP_NAMES")) == "true" {
-			name = strings.TrimSuffix(app.Name, AppSuffix)
-			isMigrated = true
-		}
-
-		recordedApp := &RecordedApp{name, name + AppSuffix, app.Namespace, isMigrated, app.ObjectMeta.CreationTimestamp.Time, a.coreClient,
-			a.identifiedResources, a.appInDiffNsHintMsg, nil,
-			a.logger.NewPrefixed("RecordedApp")}
-
-		recordedApp.setMeta(app)
-
-		result = append(result, recordedApp)
+		result = append(result, NewRecordedApp(app.Name, app.Namespace, app.ObjectMeta.CreationTimestamp.Time, a.coreClient,
+			a.identifiedResources, a.appInDiffNsHintMsg, a.logger, &app))
 	}
 
 	return result, nil
