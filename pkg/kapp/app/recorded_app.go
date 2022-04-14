@@ -43,21 +43,15 @@ type RecordedApp struct {
 }
 
 func NewRecordedApp(name, nsName string, creationTimestamp time.Time, coreClient kubernetes.Interface,
-	identifiedResources ctlres.IdentifiedResources, appInDiffNsHintMsgFunc func(string) string, logger logger.Logger, app *corev1.ConfigMap) *RecordedApp {
+	identifiedResources ctlres.IdentifiedResources, appInDiffNsHintMsgFunc func(string) string, logger logger.Logger) *RecordedApp {
 
 	recordedApp := &RecordedApp{name, nsName, false, creationTimestamp, coreClient, identifiedResources, appInDiffNsHintMsgFunc,
 		nil, logger.NewPrefixed("RecordedApp")}
 
-	if app == nil {
-		return recordedApp
-	}
-
-	if _, ok := app.Annotations[KappIsConfigmapMigratedAnnotationKey]; ok && recordedApp.isMigrationEnabled() {
+	if recordedApp.isMigrationEnabled() {
+		// If migration is enabled always trim suffix, even if user added it manually (to avoid double migration)
 		recordedApp.name = strings.TrimSuffix(recordedApp.name, AppSuffix)
-		recordedApp.isMigrated = true
 	}
-
-	recordedApp.setMeta(*app)
 
 	return recordedApp
 }

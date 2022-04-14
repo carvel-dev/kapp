@@ -54,7 +54,7 @@ func (a Apps) Find(name string) (App, error) {
 	}
 
 	return NewRecordedApp(name, a.nsName, time.Time{}, a.coreClient,
-		a.identifiedResources, a.appInDiffNsHintMsg, a.logger, nil), nil
+		a.identifiedResources, a.appInDiffNsHintMsg, a.logger), nil
 }
 
 func (a Apps) List(additionalLabels map[string]string) ([]App, error) {
@@ -82,8 +82,12 @@ func (a Apps) list(additionalLabels map[string]string, nsName string) ([]App, er
 	}
 
 	for _, app := range apps.Items {
-		result = append(result, NewRecordedApp(app.Name, app.Namespace, app.ObjectMeta.CreationTimestamp.Time, a.coreClient,
-			a.identifiedResources, a.appInDiffNsHintMsg, a.logger, &app))
+		recordedApp := NewRecordedApp(app.Name, app.Namespace, app.ObjectMeta.CreationTimestamp.Time, a.coreClient,
+			a.identifiedResources, a.appInDiffNsHintMsg, a.logger)
+
+		recordedApp.setMeta(app)
+
+		result = append(result, recordedApp)
 	}
 
 	return result, nil
