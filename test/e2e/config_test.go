@@ -29,7 +29,7 @@ rebaseRules:
   resourceMatchers:
   - kindNamespaceNameMatcher:
       kind: ConfigMap
-      namespace: ` + env.Namespace + `
+      namespace: kapp-test
       name: first
 ---
 apiVersion: v1
@@ -49,10 +49,10 @@ data:
       resourceMatchers:
       - kindNamespaceNameMatcher:
           kind: ConfigMap
-          namespace: ` + env.Namespace + `
+          namespace: kapp-test
           name: second
 `
-
+	strings.ReplaceAll(config, "kapp-test", env.Namespace)
 	yaml1 := `
 ---
 apiVersion: v1
