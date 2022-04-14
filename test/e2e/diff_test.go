@@ -85,7 +85,7 @@ data:
 			"wait_to":         "reconcile",
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "",
 		}, {
@@ -95,7 +95,7 @@ data:
 			"wait_to":         "reconcile",
 			"kind":            "ConfigMap",
 			"name":            "redis-config1",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "",
 		}, {
@@ -105,7 +105,7 @@ data:
 			"wait_to":         "reconcile",
 			"kind":            "ConfigMap",
 			"name":            "redis-config2",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "",
 		}}
@@ -140,7 +140,7 @@ data:
 			"wait_to":         "delete",
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}, {
@@ -150,7 +150,7 @@ data:
 			"wait_to":         "reconcile",
 			"kind":            "ConfigMap",
 			"name":            "redis-config1",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}, {
@@ -160,7 +160,7 @@ data:
 			"wait_to":         "reconcile",
 			"kind":            "ConfigMap",
 			"name":            "redis-config3",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "",
 		}}
@@ -182,7 +182,7 @@ data:
 			"wait_to":         "delete",
 			"kind":            "ConfigMap",
 			"name":            "redis-config1",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}, {
@@ -192,7 +192,7 @@ data:
 			"wait_to":         "delete",
 			"kind":            "ConfigMap",
 			"name":            "redis-config2",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}, {
@@ -202,7 +202,7 @@ data:
 			"wait_to":         "delete",
 			"kind":            "ConfigMap",
 			"name":            "redis-config3",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
 		}}
@@ -307,7 +307,7 @@ data:
 		RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
 	expectedOutput := `
-@@ create secret/no-data (v1) namespace: kapp-test @@
+@@ create secret/no-data (v1) namespace: ` + env.Namespace + ` @@
       0 + apiVersion: v1
       1 + kind: Secret
       2 + metadata:
@@ -315,9 +315,9 @@ data:
       4 +     -replaced-
       5 +     -replaced-
       6 +   name: no-data
-      7 +   namespace: kapp-test
+      7 +   namespace: ` + env.Namespace + `
       8 + 
-@@ create secret/empty-data (v1) namespace: kapp-test @@
+@@ create secret/empty-data (v1) namespace: ` + env.Namespace + ` @@
       0 + apiVersion: v1
       1 + data: {}
       2 + kind: Secret
@@ -326,9 +326,9 @@ data:
       5 +     -replaced-
       6 +     -replaced-
       7 +   name: empty-data
-      8 +   namespace: kapp-test
+      8 +   namespace: ` + env.Namespace + `
       9 + 
-@@ create secret/with-keys (v1) namespace: kapp-test @@
+@@ create secret/with-keys (v1) namespace:` + env.Namespace + ` @@
       0 + apiVersion: v1
       1 + data:
       2 +   key1: <-- value not shown (#1)
@@ -339,9 +339,9 @@ data:
       7 +     -replaced-
       8 +     -replaced-
       9 +   name: with-keys
-     10 +   namespace: kapp-test
+     10 +   namespace: ` + env.Namespace + `
      11 + 
-@@ create secret/with-dup-keys (v1) namespace: kapp-test @@
+@@ create secret/with-dup-keys (v1) namespace: ` + env.Namespace + ` @@
       0 + apiVersion: v1
       1 + data:
       2 +   key1: <-- value not shown (#1)
@@ -352,7 +352,7 @@ data:
       7 +     -replaced-
       8 +     -replaced-
       9 +   name: with-dup-keys
-     10 +   namespace: kapp-test
+     10 +   namespace: ` + env.Namespace + `
      11 + 
 `
 
@@ -364,7 +364,7 @@ data:
 		RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 	expectedOutput = `
-@@ update secret/with-dup-keys (v1) namespace: kapp-test @@
+@@ update secret/with-dup-keys (v1) namespace: ` + env.Namespace + ` @@
   ...
   2,  2     key1: <-- value not shown (#1)
   3     -   key2: <-- value not shown (#2)
