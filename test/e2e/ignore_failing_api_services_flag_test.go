@@ -31,7 +31,7 @@ spec:
   insecureSkipTLSVerify: true
   service:
     name: redis-primary
-    namespace: kapp-test
+    namespace: ` + env.Namespace + `
   version: v1
   versionPriority: 100
 ---
@@ -115,7 +115,7 @@ metadata:
 			"age":             "<replaced>",
 			"kind":            "ConfigMap",
 			"name":            "test-ignore-failing-api-service",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"owner":           "kapp",
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
@@ -210,7 +210,7 @@ spec:
       conversionReviewVersions: ["v1","v1beta1"]
       clientConfig:
         service:
-          namespace: kapp-test
+          namespace: ` + env.Namespace + `
           name: failing-group-version-webhook
           path: /convert
 `
@@ -264,7 +264,7 @@ spec: {}
 			"age":             "<replaced>",
 			"kind":            "ConfigMap",
 			"name":            "test-ignore-failing-group-version",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"owner":           "kapp",
 			"reconcile_info":  "",
 			"reconcile_state": "ok",
