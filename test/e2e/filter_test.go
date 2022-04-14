@@ -62,7 +62,7 @@ data:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 		expectedOutput1 := `
 Namespace  Name           Kind       Age  Op      Op st.  Wait to    Rs  Ri  
-kapp-test  redis-config   ConfigMap  -    create  -       reconcile  -   -  
+` + env.Namespace + `  redis-config   ConfigMap  -    create  -       reconcile  -   -  
 ^          redis-primary  Service    -    create  -       reconcile  -   -  
 
 Op:      2 create, 0 delete, 0 update, 0 noop, 0 exists
@@ -77,7 +77,7 @@ Wait to: 2 reconcile, 0 delete, 0 noop
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 		expectedOutput2 := `
 Namespace  Name           Kind       Age  Op      Op st.  Wait to    Rs  Ri  
-kapp-test  redis-config   ConfigMap  -    create  -       reconcile  -   -  
+` + env.Namespace + `  redis-config   ConfigMap  -    create  -       reconcile  -   -  
 ^          redis-config2  ConfigMap  -    create  -       reconcile  -   -  
 
 Op:      2 create, 0 delete, 0 update, 0 noop, 0 exists
@@ -92,7 +92,7 @@ Wait to: 2 reconcile, 0 delete, 0 noop
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 		expectedOutput3 := `
 Namespace  Name           Kind     Age  Op      Op st.  Wait to    Rs  Ri  
-kapp-test  redis-primary  Service  -    create  -       reconcile  -   -  
+` + env.Namespace + `  redis-primary  Service  -    create  -       reconcile  -   -  
 
 Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 1 reconcile, 0 delete, 0 noop
@@ -108,7 +108,7 @@ Wait to: 1 reconcile, 0 delete, 0 noop
 
 		expectedOutput4 := `
 Namespace  Name           Kind       Age  Op      Op st.  Wait to    Rs  Ri  
-kapp-test  redis-config2  ConfigMap  -    create  -       reconcile  -   -  
+` + env.Namespace + `  redis-config2  ConfigMap  -    create  -       reconcile  -   -  
 
 Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 1 reconcile, 0 delete, 0 noop

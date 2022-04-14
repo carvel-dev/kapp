@@ -328,7 +328,7 @@ data:
       7 +   name: empty-data
       8 +   namespace: ` + env.Namespace + `
       9 + 
-@@ create secret/with-keys (v1) namespace:` + env.Namespace + ` @@
+@@ create secret/with-keys (v1) namespace: ` + env.Namespace + ` @@
       0 + apiVersion: v1
       1 + data:
       2 +   key1: <-- value not shown (#1)

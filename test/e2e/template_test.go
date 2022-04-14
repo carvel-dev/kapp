@@ -99,7 +99,7 @@ data:
 ` + depYAML
 
 	expectedYAML1Diff := `
-@@ create configmap/config-ver-1 (v1) namespace: kapp-test @@
+@@ create configmap/config-ver-1 (v1) namespace: ` + env.Namespace + ` @@
 -linesss- apiVersion: v1
 -linesss- data:
 -linesss-   key1: val1
@@ -111,9 +111,9 @@ data:
 -linesss-     -replaced-
 -linesss-     -replaced-
 -linesss-   name: config-ver-1
--linesss-   namespace: kapp-test
+-linesss-   namespace: ` + env.Namespace + `
 -linesss- 
-@@ create secret/secret-ver-1 (v1) namespace: kapp-test @@
+@@ create secret/secret-ver-1 (v1) namespace: ` + env.Namespace + ` @@
 -linesss- apiVersion: v1
 -linesss- data:
 -linesss-   key1: val1
@@ -125,9 +125,9 @@ data:
 -linesss-     -replaced-
 -linesss-     -replaced-
 -linesss-   name: secret-ver-1
--linesss-   namespace: kapp-test
+-linesss-   namespace: ` + env.Namespace + `
 -linesss- 
-@@ create deployment/dep (apps/v1) namespace: kapp-test @@
+@@ create deployment/dep (apps/v1) namespace: ` + env.Namespace + ` @@
 -linesss- apiVersion: apps/v1
 -linesss- kind: Deployment
 -linesss- metadata:
@@ -135,7 +135,7 @@ data:
 -linesss-     -replaced-
 -linesss-     -replaced-
 -linesss-   name: dep
--linesss-   namespace: kapp-test
+-linesss-   namespace: ` + env.Namespace + `
 -linesss- spec:
 -linesss-   replicas: 1
 -linesss-   selector:
@@ -176,21 +176,21 @@ data:
 `
 
 	expectedYAML2Diff := `
-@@ create configmap/config-ver-2 (v1) namespace: kapp-test @@
+@@ create configmap/config-ver-2 (v1) namespace: ` + env.Namespace + ` @@
   ...
 -linesss- data:
 -linesss-   key1: val1
 -linesss-   key1: val2
 -linesss- kind: ConfigMap
 -linesss- metadata:
-@@ create secret/secret-ver-2 (v1) namespace: kapp-test @@
+@@ create secret/secret-ver-2 (v1) namespace: ` + env.Namespace + ` @@
   ...
 -linesss- data:
 -linesss-   key1: val1
 -linesss-   key1: val2
 -linesss- kind: Secret
 -linesss- metadata:
-@@ update deployment/dep (apps/v1) namespace: kapp-test @@
+@@ update deployment/dep (apps/v1) namespace: ` + env.Namespace + ` @@
   ...
 -linesss-         - configMapRef:
 -linesss-             name: config-ver-1

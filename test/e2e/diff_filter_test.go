@@ -20,7 +20,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redis-primary
-  namespace: kapp-test
+  namespace: ` + env.Namespace + `
   labels:
     x: "y"
 spec:
@@ -38,7 +38,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: redis-config
-  namespace: kapp-test
+  namespace: ` + env.Namespace + `
   labels:
     x: "z"
 data:
@@ -52,7 +52,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redis-primary
-  namespace: kapp-test
+  namespace: ` + env.Namespace + `
   labels:
     x: "y"
 spec:
@@ -71,7 +71,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: redis-config
-  namespace: kapp-test
+  namespace: ` + env.Namespace + `
   labels:
     x: "z"
 data:
@@ -94,7 +94,7 @@ data:
 		expectedChange := []map[string]string{{
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "create",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -110,13 +110,13 @@ data:
 
 	logger.Section("diff filter by kind and namespace on new resource", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name,
-			"--diff-filter", `{"newResource": {"kinds": ["Service"], "namespaces": ["kapp-test"]}}`, "--json"},
+			"--diff-filter", `{"newResource": {"kinds": ["Service"], "namespaces": ["` + env.Namespace + `"]}}`, "--json"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(serviceResourceYaml + configMapResourceyYaml)})
 
 		expectedChange := []map[string]string{{
 			"kind":            "Service",
 			"name":            "redis-primary",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "create",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -138,7 +138,7 @@ data:
 		expectedChange := []map[string]string{{
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "update",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -160,7 +160,7 @@ data:
 		expectedChange := []map[string]string{{
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "delete",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -182,7 +182,7 @@ data:
 		expectedChange := []map[string]string{{
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "create",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -204,7 +204,7 @@ data:
 		expectedChange := []map[string]string{{
 			"kind":            "Service",
 			"name":            "redis-primary",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "update",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -226,7 +226,7 @@ data:
 		expectedChange := []map[string]string{{
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "update",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -248,7 +248,7 @@ data:
 		expectedChange := []map[string]string{{
 			"kind":            "ConfigMap",
 			"name":            "redis-config",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "delete",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -257,7 +257,7 @@ data:
 		}, {
 			"kind":            "Endpoints",
 			"name":            "redis-primary",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "",
 			"op_strategy":     "",
 			"reconcile_info":  "",
@@ -266,7 +266,7 @@ data:
 		}, {
 			"kind":            "Service",
 			"name":            "redis-primary",
-			"namespace":       "kapp-test",
+			"namespace":       env.Namespace,
 			"op":              "delete",
 			"op_strategy":     "",
 			"reconcile_info":  "",
