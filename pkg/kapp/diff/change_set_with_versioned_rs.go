@@ -42,21 +42,21 @@ func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 
 	// First try to calculate changes will update references on all resources
 	// (which includes versioned and non-versioned resources)
-	_, _, err := d.addChanges(newRs, existingRsGrouped)
+	_, _, err := d.addAndKeepChanges(newRs, existingRsGrouped)
 	if err != nil {
 		return nil, err
 	}
 
 	// Since there might have been circular dependencies;
 	// second try catches ones that werent changed during first run
-	addChanges, alreadyAdded, err := d.addChanges(newRs, existingRsGrouped)
+	addChanges, alreadyAdded, err := d.addAndKeepChanges(newRs, existingRsGrouped)
 	if err != nil {
 		return nil, err
 	}
 
 	allChanges = append(allChanges, addChanges...)
 
-	keepAndDeleteChanges, err := d.keepAndDeleteChanges(existingRsGrouped, alreadyAdded)
+	keepAndDeleteChanges, err := d.noopAndDeleteChanges(existingRsGrouped, alreadyAdded)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func (d ChangeSetWithVersionedRs) assignNewNames(
 	}
 }
 
-func (d ChangeSetWithVersionedRs) addChanges(
+func (d ChangeSetWithVersionedRs) addAndKeepChanges(
 	newRs versionedResources, existingRsGrouped map[string][]ctlres.Resource) (
 	[]Change, map[string]ctlres.Resource, error) {
 
@@ -139,6 +139,7 @@ func (d ChangeSetWithVersionedRs) addChanges(
 			case ChangeOpKeep:
 				// Use latest copy of resource to update affected resources
 				usedRes = existingRes
+				changes = append(changes, d.newKeepChange(existingRes))
 			default:
 				panic(fmt.Sprintf("Unexpected change op %s", updateChange.Op()))
 			}
@@ -182,7 +183,7 @@ func (d ChangeSetWithVersionedRs) newAddChangeFromUpdateChange(
 	return addChange
 }
 
-func (d ChangeSetWithVersionedRs) keepAndDeleteChanges(
+func (d ChangeSetWithVersionedRs) noopAndDeleteChanges(
 	existingRsGrouped map[string][]ctlres.Resource,
 	alreadyAdded map[string]ctlres.Resource) ([]Change, error) {
 
@@ -212,9 +213,9 @@ func (d ChangeSetWithVersionedRs) keepAndDeleteChanges(
 			changes = append(changes, change)
 		}
 
-		// Create changes that "keep" resources
+		// Create changes that "noop" resources
 		for _, existingRes := range existingRs[len(existingRs)-numToKeep:] {
-			changes = append(changes, d.newKeepChange(existingRes))
+			changes = append(changes, d.newNoopChange(existingRes))
 		}
 	}
 
@@ -226,6 +227,14 @@ func (d ChangeSetWithVersionedRs) newKeepChange(existingRes ctlres.Resource) Cha
 	addChange := NewChangePrecalculated(existingRes, nil, nil)
 	// TODO private field access
 	addChange.op = ChangeOpKeep
+	return addChange
+}
+
+func (d ChangeSetWithVersionedRs) newNoopChange(existingRes ctlres.Resource) Change {
+	// Use update's diffs but create a change for new resource
+	addChange := NewChangePrecalculated(existingRes, nil, nil)
+	// TODO private field access
+	addChange.op = ChangeOpNoop
 	return addChange
 }
 
