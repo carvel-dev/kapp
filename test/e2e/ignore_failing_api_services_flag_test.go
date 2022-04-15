@@ -31,7 +31,7 @@ spec:
   insecureSkipTLSVerify: true
   service:
     name: redis-primary
-    namespace: ` + env.Namespace + `
+    namespace: <e2e-test-ns>
   version: v1
   versionPriority: 100
 ---
@@ -82,6 +82,7 @@ kind: Foo
 metadata:
   name: test-uses-failing-api-service
 `
+	yaml1 = strings.Replace(yaml1, "<e2e-test-ns>", env.Namespace, 1)
 
 	name1 := "test-ignore-failing-api-services1"
 	name2 := "test-ignore-failing-api-services2"
@@ -210,7 +211,7 @@ spec:
       conversionReviewVersions: ["v1","v1beta1"]
       clientConfig:
         service:
-          namespace: ` + env.Namespace + `
+          namespace: <e2e-test-ns>
           name: failing-group-version-webhook
           path: /convert
 `
@@ -231,6 +232,7 @@ metadata:
   name: test-uses-failing-group-version
 spec: {}
 `
+	yaml1 = strings.Replace(yaml1, "<e2e-test-ns>", env.Namespace, 1)
 
 	name1 := "test-ignore-failing-group-version1"
 	name2 := "test-ignore-failing-group-version2"

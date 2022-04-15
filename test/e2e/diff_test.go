@@ -307,7 +307,7 @@ data:
 		RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
 	expectedOutput := `
-@@ create secret/no-data (v1) namespace: ` + env.Namespace + ` @@
+@@ create secret/no-data (v1) namespace: <e2e-test-ns> @@
       0 + apiVersion: v1
       1 + kind: Secret
       2 + metadata:
@@ -315,9 +315,9 @@ data:
       4 +     -replaced-
       5 +     -replaced-
       6 +   name: no-data
-      7 +   namespace: ` + env.Namespace + `
+      7 +   namespace: <e2e-test-ns>
       8 + 
-@@ create secret/empty-data (v1) namespace: ` + env.Namespace + ` @@
+@@ create secret/empty-data (v1) namespace: <e2e-test-ns> @@
       0 + apiVersion: v1
       1 + data: {}
       2 + kind: Secret
@@ -326,9 +326,9 @@ data:
       5 +     -replaced-
       6 +     -replaced-
       7 +   name: empty-data
-      8 +   namespace: ` + env.Namespace + `
+      8 +   namespace: <e2e-test-ns>
       9 + 
-@@ create secret/with-keys (v1) namespace: ` + env.Namespace + ` @@
+@@ create secret/with-keys (v1) namespace: <e2e-test-ns> @@
       0 + apiVersion: v1
       1 + data:
       2 +   key1: <-- value not shown (#1)
@@ -339,9 +339,9 @@ data:
       7 +     -replaced-
       8 +     -replaced-
       9 +   name: with-keys
-     10 +   namespace: ` + env.Namespace + `
+     10 +   namespace: <e2e-test-ns>
      11 + 
-@@ create secret/with-dup-keys (v1) namespace: ` + env.Namespace + ` @@
+@@ create secret/with-dup-keys (v1) namespace: <e2e-test-ns> @@
       0 + apiVersion: v1
       1 + data:
       2 +   key1: <-- value not shown (#1)
@@ -352,10 +352,10 @@ data:
       7 +     -replaced-
       8 +     -replaced-
       9 +   name: with-dup-keys
-     10 +   namespace: ` + env.Namespace + `
+     10 +   namespace: <e2e-test-ns>
      11 + 
 `
-
+	expectedOutput = strings.ReplaceAll(expectedOutput, "<e2e-test-ns>", env.Namespace)
 	out = replaceAnnsLabels(out)
 
 	require.Containsf(t, out, expectedOutput, "Did not find expected diff output")
@@ -364,7 +364,7 @@ data:
 		RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 	expectedOutput = `
-@@ update secret/with-dup-keys (v1) namespace: ` + env.Namespace + ` @@
+@@ update secret/with-dup-keys (v1) namespace: <e2e-test-ns> @@
   ...
   2,  2     key1: <-- value not shown (#1)
   3     -   key2: <-- value not shown (#2)
@@ -372,6 +372,6 @@ data:
   4,  4   kind: Secret
   5,  5   metadata:
 `
-
+	expectedOutput = strings.Replace(expectedOutput, "<e2e-test-ns>", env.Namespace, 1)
 	require.Containsf(t, out, expectedOutput, "Did not find expected diff output")
 }

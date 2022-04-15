@@ -99,7 +99,7 @@ data:
 ` + depYAML
 
 	expectedYAML1Diff := `
-@@ create configmap/config-ver-1 (v1) namespace: kapp-test @@
+@@ create configmap/config-ver-1 (v1) namespace: <e2e-test-ns> @@
 -linesss- apiVersion: v1
 -linesss- data:
 -linesss-   key1: val1
@@ -111,9 +111,9 @@ data:
 -linesss-     -replaced-
 -linesss-     -replaced-
 -linesss-   name: config-ver-1
--linesss-   namespace: kapp-test
+-linesss-   namespace: <e2e-test-ns>
 -linesss- 
-@@ create secret/secret-ver-1 (v1) namespace: kapp-test @@
+@@ create secret/secret-ver-1 (v1) namespace: <e2e-test-ns> @@
 -linesss- apiVersion: v1
 -linesss- data:
 -linesss-   key1: val1
@@ -125,9 +125,9 @@ data:
 -linesss-     -replaced-
 -linesss-     -replaced-
 -linesss-   name: secret-ver-1
--linesss-   namespace: kapp-test
+-linesss-   namespace: <e2e-test-ns>
 -linesss- 
-@@ create deployment/dep (apps/v1) namespace: kapp-test @@
+@@ create deployment/dep (apps/v1) namespace: <e2e-test-ns> @@
 -linesss- apiVersion: apps/v1
 -linesss- kind: Deployment
 -linesss- metadata:
@@ -135,7 +135,7 @@ data:
 -linesss-     -replaced-
 -linesss-     -replaced-
 -linesss-   name: dep
--linesss-   namespace: kapp-test
+-linesss-   namespace: <e2e-test-ns>
 -linesss- spec:
 -linesss-   replicas: 1
 -linesss-   selector:
@@ -174,23 +174,23 @@ data:
 -linesss-           secretName: secret-ver-1
 -linesss- 
 `
-	strings.ReplaceAll(expectedYAML1Diff, "kapp-test", env.Namespace)
+	expectedYAML1Diff = strings.ReplaceAll(expectedYAML1Diff, "<e2e-test-ns>", env.Namespace)
 	expectedYAML2Diff := `
-@@ create configmap/config-ver-2 (v1) namespace: kapp-test @@
+@@ create configmap/config-ver-2 (v1) namespace: <e2e-test-ns> @@
   ...
 -linesss- data:
 -linesss-   key1: val1
 -linesss-   key1: val2
 -linesss- kind: ConfigMap
 -linesss- metadata:
-@@ create secret/secret-ver-2 (v1) namespace: kapp-test @@
+@@ create secret/secret-ver-2 (v1) namespace: <e2e-test-ns> @@
   ...
 -linesss- data:
 -linesss-   key1: val1
 -linesss-   key1: val2
 -linesss- kind: Secret
 -linesss- metadata:
-@@ update deployment/dep (apps/v1) namespace: kapp-test @@
+@@ update deployment/dep (apps/v1) namespace: <e2e-test-ns> @@
   ...
 -linesss-         - configMapRef:
 -linesss-             name: config-ver-1
@@ -210,7 +210,7 @@ data:
 -linesss- status:
 -linesss-   availableReplicas: 1
 `
-	strings.ReplaceAll(expectedYAML2Diff, "kapp-test", env.Namespace)
+	expectedYAML2Diff = strings.ReplaceAll(expectedYAML2Diff, "<e2e-test-ns>", env.Namespace)
 
 	name := "test-template"
 	cleanUp := func() {

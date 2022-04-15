@@ -20,7 +20,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redis-primary
-  namespace: ` + env.Namespace + `
+  namespace: <e2e-test-ns>
   labels:
     x: "y"
 spec:
@@ -38,7 +38,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: redis-config
-  namespace: ` + env.Namespace + `
+  namespace: <e2e-test-ns>
   labels:
     x: "z"
 data:
@@ -52,7 +52,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redis-primary
-  namespace: ` + env.Namespace + `
+  namespace: <e2e-test-ns>
   labels:
     x: "y"
 spec:
@@ -71,13 +71,17 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: redis-config
-  namespace: ` + env.Namespace + `
+  namespace: <e2e-test-ns>
   labels:
     x: "z"
 data:
   key: value2
 ---
 `
+	modifiedServiceResourceYaml = strings.Replace(modifiedServiceResourceYaml, "<e2e-test-ns>", env.Namespace, 1)
+	modifiedConfigMapResourceyYaml = strings.Replace(modifiedConfigMapResourceyYaml, "<e2e-test-ns>", env.Namespace, 1)
+	configMapResourceyYaml = strings.Replace(configMapResourceyYaml, "<e2e-test-ns>", env.Namespace, 1)
+	serviceResourceYaml = strings.Replace(serviceResourceYaml, "<e2e-test-ns>", env.Namespace, 1)
 
 	name := "test-diff-filter"
 	cleanUp := func() {

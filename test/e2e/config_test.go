@@ -29,7 +29,7 @@ rebaseRules:
   resourceMatchers:
   - kindNamespaceNameMatcher:
       kind: ConfigMap
-      namespace: kapp-test
+      namespace: <e2e-test-ns>
       name: first
 ---
 apiVersion: v1
@@ -49,10 +49,10 @@ data:
       resourceMatchers:
       - kindNamespaceNameMatcher:
           kind: ConfigMap
-          namespace: kapp-test
+          namespace: <e2e-test-ns>
           name: second
 `
-	strings.ReplaceAll(config, "kapp-test", env.Namespace)
+	config = strings.ReplaceAll(config, "<e2e-test-ns>", env.Namespace)
 	yaml1 := `
 ---
 apiVersion: v1
