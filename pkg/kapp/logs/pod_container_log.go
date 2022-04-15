@@ -144,10 +144,13 @@ func (l PodContainerLog) obtainStream(ui ui.UI, linePrefix string, cancelCh chan
 
 		if !isWaitingMsgPrintedOnce {
 			ui.BeginLinef("%s# waiting for '%s' logs to become available...\n", linePrefix, l.tag)
+			isWaitingMsgPrintedOnce = true
 			if !l.opts.Follow {
+				if err == nil {
+					err = fmt.Errorf("Container %s not in Ready state", l.container)
+				}
 				return nil, err
 			}
-			isWaitingMsgPrintedOnce = true
 		}
 
 		select {
