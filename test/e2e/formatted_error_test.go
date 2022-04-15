@@ -22,7 +22,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: successful-job
-  namespace: default
+  namespace: <e2e-test-ns>
 spec:
   selector:
     matchLabels:
@@ -39,7 +39,7 @@ spec:
         command: ["/bin/sh", "-c", "sleep 11"]
       restartPolicy: Never
 `
-
+	yaml1 = strings.Replace(yaml1, "<e2e-test-ns>", env.Namespace, 1)
 	name := "test-formatted-error"
 	cleanUp := func() {
 		kapp.RunWithOpts([]string{"delete", "-a", name}, RunOpts{AllowError: true})
@@ -50,8 +50,8 @@ spec:
 
 	logger.Section("deploy with errors", func() {
 		expectedErr := strings.TrimSpace(`
-kapp: Error: Applying create job/successful-job (batch/v1) namespace: default:
-  Creating resource job/successful-job (batch/v1) namespace: default:
+kapp: Error: Applying create job/successful-job (batch/v1) namespace: <e2e-test-ns>:
+  Creating resource job/successful-job (batch/v1) namespace: <e2e-test-ns>:
     API server says:
       Job.batch "successful-job" is invalid: 
 
@@ -61,7 +61,7 @@ kapp: Error: Applying create job/successful-job (batch/v1) namespace: default:
 
  (reason: Invalid)
 `)
-
+		expectedErr = strings.ReplaceAll(expectedErr, "<e2e-test-ns>", env.Namespace)
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{StdinReader: strings.NewReader(yaml1), AllowError: true})
 

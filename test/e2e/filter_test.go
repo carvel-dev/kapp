@@ -62,12 +62,13 @@ data:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 		expectedOutput1 := `
 Namespace  Name           Kind       Age  Op      Op st.  Wait to    Rs  Ri  
-kapp-test  redis-config   ConfigMap  -    create  -       reconcile  -   -  
+<e2e-test-ns>  redis-config   ConfigMap  -    create  -       reconcile  -   -  
 ^          redis-primary  Service    -    create  -       reconcile  -   -  
 
 Op:      2 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 2 reconcile, 0 delete, 0 noop
 `
+		expectedOutput1 = strings.Replace(expectedOutput1, "<e2e-test-ns>", env.Namespace, 1)
 		require.Contains(t, out, expectedOutput1, "Did not find expected diff output")
 	})
 
@@ -77,12 +78,13 @@ Wait to: 2 reconcile, 0 delete, 0 noop
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 		expectedOutput2 := `
 Namespace  Name           Kind       Age  Op      Op st.  Wait to    Rs  Ri  
-kapp-test  redis-config   ConfigMap  -    create  -       reconcile  -   -  
+<e2e-test-ns>  redis-config   ConfigMap  -    create  -       reconcile  -   -  
 ^          redis-config2  ConfigMap  -    create  -       reconcile  -   -  
 
 Op:      2 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 2 reconcile, 0 delete, 0 noop
 `
+		expectedOutput2 = strings.Replace(expectedOutput2, "<e2e-test-ns>", env.Namespace, 1)
 		require.Contains(t, out, expectedOutput2, "Did not find expected diff output")
 	})
 
@@ -92,11 +94,12 @@ Wait to: 2 reconcile, 0 delete, 0 noop
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 		expectedOutput3 := `
 Namespace  Name           Kind     Age  Op      Op st.  Wait to    Rs  Ri  
-kapp-test  redis-primary  Service  -    create  -       reconcile  -   -  
+<e2e-test-ns>  redis-primary  Service  -    create  -       reconcile  -   -  
 
 Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 1 reconcile, 0 delete, 0 noop
 `
+		expectedOutput3 = strings.Replace(expectedOutput3, "<e2e-test-ns>", env.Namespace, 1)
 		require.Contains(t, out, expectedOutput3, "Did not find expected diff output")
 	})
 
@@ -108,11 +111,12 @@ Wait to: 1 reconcile, 0 delete, 0 noop
 
 		expectedOutput4 := `
 Namespace  Name           Kind       Age  Op      Op st.  Wait to    Rs  Ri  
-kapp-test  redis-config2  ConfigMap  -    create  -       reconcile  -   -  
+<e2e-test-ns>  redis-config2  ConfigMap  -    create  -       reconcile  -   -  
 
 Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 1 reconcile, 0 delete, 0 noop
 `
+		expectedOutput4 = strings.Replace(expectedOutput4, "<e2e-test-ns>", env.Namespace, 1)
 		require.Contains(t, out, expectedOutput4, "Did not find expected diff output")
 	})
 }

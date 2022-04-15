@@ -89,22 +89,23 @@ spec:
 Changes
 
 Namespace  Name  Kind     Age  Op      Op st.  Wait to    Rs  Ri  
-` + env.Namespace + `  cr-1  CronTab  -    create  -       reconcile  -   -  
+<e2e-test-ns>  cr-1  CronTab  -    create  -       reconcile  -   -  
 
 Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 1 reconcile, 0 delete, 0 noop
 
 <replaced>: ---- applying 1 changes [0/1 done] ----
 Warning: <custom-warning>
-<replaced>: create crontab/cr-1 (stable.example.com/v1alpha1) namespace: ` + env.Namespace + `
+<replaced>: create crontab/cr-1 (stable.example.com/v1alpha1) namespace: <e2e-test-ns>
 <replaced>: ---- waiting on 1 changes [0/1 done] ----
-<replaced>: ok: reconcile crontab/cr-1 (stable.example.com/v1alpha1) namespace: ` + env.Namespace + `
+<replaced>: ok: reconcile crontab/cr-1 (stable.example.com/v1alpha1) namespace: <e2e-test-ns>
 <replaced>: ---- applying complete [1/1 done] ----
 <replaced>: ---- waiting complete [1/1 done] ----
 
 Succeeded`
 
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
+		expectedOutput = strings.ReplaceAll(expectedOutput, "<e2e-test-ns>", env.Namespace)
 		expectedOutput = strings.Replace(expectedOutput, "<custom-warning>", customWarning, 1)
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
 
@@ -121,20 +122,21 @@ Succeeded`
 Changes
 
 Namespace  Name  Kind     Age  Op      Op st.  Wait to    Rs  Ri  
-` + env.Namespace + `  cr-2  CronTab  -    create  -       reconcile  -   -  
+<e2e-test-ns>  cr-2  CronTab  -    create  -       reconcile  -   -  
 
 Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists
 Wait to: 1 reconcile, 0 delete, 0 noop
 
 <replaced>: ---- applying 1 changes [0/1 done] ----
-<replaced>: create crontab/cr-2 (stable.example.com/v1alpha1) namespace: ` + env.Namespace + `
+<replaced>: create crontab/cr-2 (stable.example.com/v1alpha1) namespace: <e2e-test-ns>
 <replaced>: ---- waiting on 1 changes [0/1 done] ----
-<replaced>: ok: reconcile crontab/cr-2 (stable.example.com/v1alpha1) namespace: ` + env.Namespace + `
+<replaced>: ok: reconcile crontab/cr-2 (stable.example.com/v1alpha1) namespace: <e2e-test-ns>
 <replaced>: ---- applying complete [1/1 done] ----
 <replaced>: ---- waiting complete [1/1 done] ----
 
 Succeeded`
 
+		expectedOutput = strings.ReplaceAll(expectedOutput, "<e2e-test-ns>", env.Namespace)
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
 
