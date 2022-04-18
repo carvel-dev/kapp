@@ -193,22 +193,18 @@ data:
 
 	logger.Section("existing migrated app", func() {
 		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-		// KAPP_FQ_CONFIGMAP_NAMES=False is not supported - must go from migrated => migrated
+		// Migrated app should get updated even if migration is disabled
 		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "False")
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName},
-			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml2)})
+		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
-		require.Errorf(t, err, "Expected to receive error")
-		require.Containsf(t, err.Error(), "is already associated with a different app", "Expected app to be associated with another owner")
+		config := NewPresentClusterResource("configmap", "redis-config", env.Namespace, kubectl)
+		val := config.RawPath(ctlres.NewPathFromStrings([]string{"data", "key"}))
+		require.Exactlyf(t, "value2", val, "Expected value to be updated")
 
-		logger.Section("delete", func() {
-			os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
-			cleanUp()
-
-			NewMissingClusterResource(t, "configmap", prevAppName, env.Namespace, kubectl)
-		})
+		cleanUp()
 	})
 
 	logger.Section("non-existent app, existing unmigrated prevApp", func() {
@@ -233,13 +229,17 @@ data:
 		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
-		// KAPP_FQ_CONFIGMAP_NAMES=False is not supported - must go from migrated => migrated
+		// Migrated prev-app should be renamed and updated
 		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "False")
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName},
-			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml2)})
+		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--prev-app", prevAppName},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
-		require.Errorf(t, err, "Expected to receive error")
-		require.Containsf(t, err.Error(), "is already associated with a different app", "Expected app to be associated with another owner")
+		NewPresentClusterResource("configmap", "redis-config2", env.Namespace, kubectl)
+
+		c := NewPresentClusterResource("configmap", appName+app.AppSuffix, env.Namespace, kubectl)
+		require.Contains(t, c.res.Annotations(), app.KappIsConfigmapMigratedAnnotationKey)
+
+		NewMissingClusterResource(t, "configmap", prevAppName+app.AppSuffix, env.Namespace, kubectl)
 
 		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
 		cleanUp()
