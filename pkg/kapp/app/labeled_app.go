@@ -70,7 +70,7 @@ func (a *LabeledApp) Delete() error {
 }
 
 func (a *LabeledApp) Rename(_ string, _ string) error { return fmt.Errorf("Not supported") }
-func (a *LabeledApp) RenamePrevApp(_ string, _ map[string]string) error {
+func (a *LabeledApp) RenamePrevApp(_ string, _ map[string]string, _ bool) error {
 	return fmt.Errorf("Not supported")
 }
 
