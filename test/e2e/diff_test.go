@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -363,15 +364,14 @@ data:
 	out, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "-c", "-p"},
 		RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
-	expectedOutput = `
-@@ update secret/with-dup-keys (v1) namespace: <e2e-test-ns> @@
+	expectedOutput = fmt.Sprintf(`
+@@ update secret/with-dup-keys (v1) namespace: %s @@
   ...
   2,  2     key1: <-- value not shown (#1)
   3     -   key2: <-- value not shown (#2)
       3 +   key2: <-- value not shown (#3)
   4,  4   kind: Secret
   5,  5   metadata:
-`
-	expectedOutput = strings.Replace(expectedOutput, "<e2e-test-ns>", env.Namespace, 1)
+`, env.Namespace)
 	require.Containsf(t, out, expectedOutput, "Did not find expected diff output")
 }
