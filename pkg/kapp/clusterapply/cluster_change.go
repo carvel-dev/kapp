@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	uierrs "github.com/cppforlife/go-cli-ui/errors"
+	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
@@ -65,6 +66,8 @@ type ClusterChange struct {
 	ui                  UI
 
 	markedNeedsWaiting bool
+
+	diffMaskRules []ctlconf.DiffMaskRule
 }
 
 var _ ChangeView = &ClusterChange{}
@@ -73,10 +76,11 @@ func NewClusterChange(change ctldiff.Change, opts ClusterChangeOpts,
 	identifiedResources ctlres.IdentifiedResources,
 	changeFactory ctldiff.ChangeFactory,
 	changeSetFactory ctldiff.ChangeSetFactory,
-	convergedResFactory ConvergedResourceFactory, ui UI) *ClusterChange {
+	convergedResFactory ConvergedResourceFactory, ui UI,
+	diffMaskRules []ctlconf.DiffMaskRule) *ClusterChange {
 
 	return &ClusterChange{change, opts, identifiedResources,
-		changeFactory, changeSetFactory, convergedResFactory, ui, false}
+		changeFactory, changeSetFactory, convergedResFactory, ui, false, diffMaskRules}
 }
 
 func (c *ClusterChange) ApplyOp() ClusterChangeApplyOp {
@@ -202,7 +206,7 @@ func (c *ClusterChange) applyStrategy() (ApplyStrategy, error) {
 	case ClusterChangeApplyOpAdd, ClusterChangeApplyOpUpdate:
 		return AddOrUpdateChange{
 			c.change, c.identifiedResources, c.changeFactory,
-			c.changeSetFactory, c.opts.AddOrUpdateChangeOpts}.ApplyStrategy()
+			c.changeSetFactory, c.opts.AddOrUpdateChangeOpts, c.diffMaskRules}.ApplyStrategy()
 
 	case ClusterChangeApplyOpDelete:
 		return DeleteChange{c.change, c.identifiedResources}.ApplyStrategy()

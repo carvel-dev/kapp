@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/k14s/kapp/pkg/kapp/util"
@@ -36,6 +37,7 @@ type AddOrUpdateChange struct {
 	changeFactory       ctldiff.ChangeFactory
 	changeSetFactory    ctldiff.ChangeSetFactory
 	opts                AddOrUpdateChangeOpts
+	diffMaskRules       []ctlconf.DiffMaskRule
 }
 
 func (c AddOrUpdateChange) ApplyStrategy() (ApplyStrategy, error) {
@@ -147,7 +149,13 @@ func (c AddOrUpdateChange) tryToResolveUpdateConflict(
 			return fmt.Errorf("Expected recalculated change to be an update")
 		}
 		if recalcChanges[0].OpsDiff().MinimalMD5() != c.change.OpsDiff().MinimalMD5() {
-			return fmt.Errorf(errMsgPrefix+"(approved diff no longer matches): %s", origErr)
+			errMsg := fmt.Sprintf(errMsgPrefix+"(approved diff no longer matches): %s", origErr)
+
+			textDiff, err := recalcChanges[0].ConfigurableTextDiff().Masked(c.diffMaskRules)
+			if err != nil {
+				return fmt.Errorf(errMsg)
+			}
+			return fmt.Errorf("%s: Recalculated diff:\n%s", errMsg, textDiff.MinimalString())
 		}
 
 		updatedRes, err := c.identifiedResources.Update(recalcChanges[0].NewResource())

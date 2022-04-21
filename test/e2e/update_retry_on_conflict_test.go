@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -191,6 +192,13 @@ spec:
 
 		require.Contains(t, err.Error(), "please apply your changes to the latest version and try again (reason: Conflict)",
 			"Expected error to include k8s reason")
+
+		recalculatedDiff := `Recalculated diff:
+ <replaced> -   - port: 6380
+ <replaced> +   - port: 6381
+ <replaced> -     changed: label`
+
+		require.Contains(t, replaceDiffLineNumber(err.Error()), recalculatedDiff, "Expected error to include recalculated diff")
 	})
 }
 
@@ -327,4 +335,8 @@ func newTmpFile(content string, t *testing.T) *os.File {
 	require.NoError(t, err)
 
 	return file
+}
+
+func replaceDiffLineNumber(result string) string {
+	return regexp.MustCompile("[0-9]+, [0-9]+").ReplaceAllString(result, "<replaced>")
 }

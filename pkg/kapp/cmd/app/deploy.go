@@ -406,7 +406,7 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 
 		clusterChangeFactory := ctlcap.NewClusterChangeFactory(
 			o.ApplyFlags.ClusterChangeOpts, supportObjs.IdentifiedResources,
-			changeFactory, changeSetFactory, convergedResFactory, msgsUI)
+			changeFactory, changeSetFactory, convergedResFactory, msgsUI, conf.DiffMaskRules())
 
 		clusterChangeSet = ctlcap.NewClusterChangeSet(
 			changes, o.ApplyFlags.ClusterChangeSetOpts, clusterChangeFactory,
