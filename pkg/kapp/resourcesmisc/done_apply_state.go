@@ -7,6 +7,8 @@ type DoneApplyState struct {
 	Done       bool   `json:"done"`
 	Successful bool   `json:"successful"`
 	Message    string `json:"message"`
+
+	UnblockBlockedChanges bool
 }
 
 func (s DoneApplyState) TerminallyFailed() bool {

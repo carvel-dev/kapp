@@ -102,6 +102,10 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 			case !state.Done:
 				newInProgressChanges = append(newInProgressChanges, change)
 
+				if state.UnblockBlockedChanges {
+					doneChanges = append(doneChanges, change)
+				}
+
 			case state.Done && !state.Successful:
 				msg := ""
 				if len(state.Message) > 0 {

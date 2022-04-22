@@ -53,6 +53,7 @@ type WaitRuleConditionMatcher struct {
 	Failure                    bool
 	Success                    bool
 	SupportsObservedGeneration bool
+	SupportsUnblockingChanges  bool
 }
 
 type WaitRuleYtt struct {

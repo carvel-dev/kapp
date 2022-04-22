@@ -87,6 +87,8 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 		}
 	}
 
+	unblockingWaitingChangeMsg := ""
+
 	// If no failure conditions found, check on successful ones
 	for _, condMatcher := range s.waitRule.ConditionMatchers {
 		for _, cond := range obj.Status.Conditions {
@@ -96,6 +98,12 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 					continue
 				}
 				if condMatcher.Success {
+					if condMatcher.SupportsUnblockingChanges {
+						unblockingWaitingChangeMsg = fmt.Sprintf(
+							"Allowing blocked changes to proceed: Encountered successful condition %s == %s: %s",
+							cond.Type, condMatcher.Status, cond.Reason)
+						continue
+					}
 					return DoneApplyState{Done: true, Successful: true, Message: fmt.Sprintf(
 						"Encountered successful condition %s == %s: %s (message: %s)",
 						cond.Type, condMatcher.Status, cond.Reason, cond.Message)}
@@ -108,5 +116,10 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(
 			"Waiting for generation %d to be observed by status condition(s)", obj.Metadata.Generation)}
 	}
+
+	if unblockingWaitingChangeMsg != "" {
+		return DoneApplyState{Done: false, UnblockBlockedChanges: true, Message: unblockingWaitingChangeMsg}
+	}
+
 	return DoneApplyState{Done: false, Message: "No failing or successful conditions found"}
 }

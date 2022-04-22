@@ -210,6 +210,103 @@ Succeeded
 	})
 }
 
+func TestSupportUnblockingChanges(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+
+	name := "test-support-unblocking-changes"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("deploying with supporting unblocking changes", func() {
+		yaml := `apiVersion: kapp.k14s.io/v1alpha1
+kind: Config
+waitRules:
+- supportsObservedGeneration: true
+  conditionMatchers:
+  - type: Progressing
+    status: "True"
+    success: true
+    supportsUnblockingChanges: true
+  - type: Available
+    status: "True"
+    success: true
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: apps/v1, kind: Deployment}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simple-app
+  annotations:
+    kapp.k14s.io/change-rule: "upsert after upserting dep"
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+    selector:
+      simple-app: ""
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-app
+  annotations:
+    kapp.k14s.io/change-group: "dep"
+spec:
+  selector:
+    matchLabels:
+      simple-app: ""
+  template:
+    metadata:
+      labels:
+        simple-app: ""
+    spec:
+      containers:
+      - name: simple-app
+        image: docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0`
+
+		out, _ := kapp.RunWithOpts([]string{"deploy", "--tty", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml)})
+
+		out = strings.TrimSpace(replaceSpaces(replaceAgeStr(replaceTarget(replaceTs(out)))))
+		expectedOutput := strings.TrimSpace(replaceSpaces(`Changes
+
+Namespace  Name        Kind        Age  Op      Op st.  Wait to    Rs  Ri  $
+kapp-test  simple-app  Deployment  -    create  -       reconcile  -   -  $
+^          simple-app  Service     -    create  -       reconcile  -   -  $
+
+Op:      2 create, 0 delete, 0 update, 0 noop, 0 exists
+Wait to: 2 reconcile, 0 delete, 0 noop
+
+<replaced>: ---- applying 1 changes [0/2 done] ----
+<replaced>: create deployment/simple-app (apps/v1) namespace: kapp-test
+<replaced>: ---- waiting on 1 changes [0/2 done] ----
+<replaced>: ongoing: reconcile deployment/simple-app (apps/v1) namespace: kapp-test
+<replaced>:  ^ Waiting for generation 2 to be observed
+<replaced>: ongoing: reconcile deployment/simple-app (apps/v1) namespace: kapp-test
+<replaced>:  ^ Allowing blocked changes to proceed: Encountered successful condition Progressing == True: ReplicaSetUpdated
+<replaced>: ---- applying 1 changes [1/2 done] ----
+<replaced>: create service/simple-app (v1) namespace: kapp-test
+<replaced>: ---- waiting on 2 changes [0/2 done] ----
+<replaced>: ok: reconcile service/simple-app (v1) namespace: kapp-test
+<replaced>: ---- waiting on 1 changes [1/2 done] ----
+<replaced>: ok: reconcile deployment/simple-app (apps/v1) namespace: kapp-test
+<replaced>:  ^ Encountered successful condition Available == True: MinimumReplicasAvailable (message: Deployment has minimum availability.)
+<replaced>: ---- applying complete [2/2 done] ----
+<replaced>: ---- waiting complete [2/2 done] ----
+
+Succeeded
+`))
+
+		require.Equal(t, expectedOutput, out)
+	})
+}
+
 func replaceTs(result string) string {
 	return regexp.MustCompile("\\d{1,2}:\\d{1,2}:\\d{1,2}(AM|PM)").ReplaceAllString(result, "<replaced>")
 }
