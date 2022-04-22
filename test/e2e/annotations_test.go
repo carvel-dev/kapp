@@ -550,8 +550,8 @@ spec:
 			"Wait to: 1 reconcile, 0 delete, 0 noop", out)
 	})
 
-	logger.Section("deploy with no changes", func() {
-		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
+	logger.Section("deploy with no changes and use --diff-changes", func() {
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "-c", "--json"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(failYaml)})
 
 		require.Error(t, err, "Expected to receive an error")

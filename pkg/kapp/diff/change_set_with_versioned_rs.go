@@ -175,12 +175,7 @@ func (d ChangeSetWithVersionedRs) newAddChangeFromUpdateChange(
 	newRes ctlres.Resource, updateChange Change) Change {
 
 	// Use update's diffs but create a change for new resource
-	addChange := NewChangePrecalculated(nil, newRes, newRes)
-	// TODO private field access
-	addChange.op = ChangeOpAdd
-	addChange.configurableTextDiff = updateChange.ConfigurableTextDiff()
-	addChange.opsDiff = updateChange.OpsDiff()
-	return addChange
+	return NewChangePrecalculated(nil, newRes, newRes, ChangeOpAdd, updateChange.ConfigurableTextDiff(), updateChange.OpsDiff())
 }
 
 func (d ChangeSetWithVersionedRs) noopAndDeleteChanges(
@@ -223,19 +218,11 @@ func (d ChangeSetWithVersionedRs) noopAndDeleteChanges(
 }
 
 func (d ChangeSetWithVersionedRs) newKeepChange(existingRes ctlres.Resource) Change {
-	// Use update's diffs but create a change for new resource
-	addChange := NewChangePrecalculated(existingRes, nil, nil)
-	// TODO private field access
-	addChange.op = ChangeOpKeep
-	return addChange
+	return NewChangePrecalculated(existingRes, nil, nil, ChangeOpKeep, NewConfigurableTextDiff(existingRes, nil, true), OpsDiff{})
 }
 
 func (d ChangeSetWithVersionedRs) newNoopChange(existingRes ctlres.Resource) Change {
-	// Use update's diffs but create a change for new resource
-	addChange := NewChangePrecalculated(existingRes, nil, nil)
-	// TODO private field access
-	addChange.op = ChangeOpNoop
-	return addChange
+	return NewChangePrecalculated(existingRes, nil, nil, ChangeOpNoop, nil, OpsDiff{})
 }
 
 func (ChangeSetWithVersionedRs) numOfResourcesToKeep(res ctlres.Resource) (int, error) {

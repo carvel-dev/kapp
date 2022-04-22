@@ -20,7 +20,9 @@ type ChangePrecalculated struct {
 
 var _ Change = &ChangePrecalculated{}
 
-func NewChangePrecalculated(existingRes, newRes, appliedRes ctlres.Resource) *ChangePrecalculated {
+func NewChangePrecalculated(existingRes, newRes, appliedRes ctlres.Resource,
+	op ChangeOp, configurableTextDiff *ConfigurableTextDiff, opsDiff OpsDiff) *ChangePrecalculated {
+
 	if existingRes == nil && newRes == nil {
 		panic("Expected either existingRes or newRes be non-nil")
 	}
@@ -35,7 +37,8 @@ func NewChangePrecalculated(existingRes, newRes, appliedRes ctlres.Resource) *Ch
 		appliedRes = appliedRes.DeepCopy()
 	}
 
-	return &ChangePrecalculated{existingRes: existingRes, newRes: newRes, appliedRes: appliedRes}
+	return &ChangePrecalculated{existingRes: existingRes, newRes: newRes, appliedRes: appliedRes,
+		op: op, configurableTextDiff: configurableTextDiff, opsDiff: opsDiff}
 }
 
 func (d *ChangePrecalculated) NewOrExistingResource() ctlres.Resource {
