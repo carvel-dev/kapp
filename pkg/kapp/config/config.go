@@ -60,11 +60,11 @@ type WaitRuleYtt struct {
 	// to provide a stable interface to rule authors.
 	// Multiple contracts will be offered at the same time
 	// so that existing rules do not not break as we decide to evolve running environment.
-	FuncContractV1 *funcContractV1 `json:"funcContractV1"`
+	FuncContractV1 *FuncContractV1 `json:"funcContractV1"`
 }
 
-type funcContractV1 struct {
-	RulesStar string `json:"rules.star"`
+type FuncContractV1 struct {
+	Resource string `json:"resource.star"`
 }
 
 type RebaseRule struct {
@@ -221,21 +221,6 @@ func (r RebaseRule) Validate() error {
 	}
 	if len(r.Path) == 0 && len(r.Paths) == 0 {
 		return fmt.Errorf("Expected either path or paths to be specified")
-	}
-	return nil
-}
-
-func (r WaitRule) GetContract() *yttresmod.WaitRuleContractV1 {
-	if r.Ytt != nil {
-		switch {
-		case r.Ytt.FuncContractV1 != nil:
-			return &yttresmod.WaitRuleContractV1{
-				ResourceMatcher: ctlres.AnyMatcher{
-					Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
-				},
-				Starlark: r.Ytt.FuncContractV1.RulesStar,
-			}
-		}
 	}
 	return nil
 }

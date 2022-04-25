@@ -8,6 +8,7 @@ import (
 
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/k14s/kapp/pkg/kapp/yttresmod"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -55,8 +56,10 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 			"Waiting for generation %d to be observed", obj.Metadata.Generation)}
 	}
 
-	if contract := s.waitRule.GetContract(); contract != nil {
-		configObj, err := contract.ApplyYttWaitRule(s.resource)
+	if s.waitRule.Ytt != nil {
+		configObj, err := yttresmod.WaitRuleContractV1{ResourceMatcher: ctlres.AnyMatcher{
+			Matchers: ctlconf.ResourceMatchers(s.waitRule.ResourceMatchers).AsResourceMatchers()},
+			Starlark: s.waitRule.Ytt.FuncContractV1.Resource}.ApplyYttWaitRule(s.resource)
 		if err != nil {
 			return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
 				"Error: Applying ytt wait rule: %s", err.Error())}

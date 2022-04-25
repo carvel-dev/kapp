@@ -15,7 +15,7 @@ func TestCustomWaitRules(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
-	//kubectl := Kubectl{t, env.Namespace, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
 
 	config := `
 apiVersion: kapp.k14s.io/v1alpha1
@@ -24,8 +24,8 @@ kind: Config
 waitRules:
   - ytt:
       funcContractV1:
-        rules.star: |
-          def check_status(resource):
+        resource.star: |
+          def is_done(resource):
               state = resource.status.currentState
               if state == "Failed":
                 return {"Done":True, "Successful": False, "Message": ""}
@@ -73,8 +73,6 @@ spec:
     plural: crontabs
     singular: crontab
     kind: CronTab
-    shortNames:
-      - ct
 ---
 `
 	crYaml := `
@@ -98,12 +96,20 @@ status:
 	cleanUp()
 	defer cleanUp()
 
-	logger.Section("deploy when resource current state as running)", func() {
-		res, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(crdYaml + fmt.Sprintf(crYaml, "Running") + config)})
+	logger.Section("deploy resource with current state as running", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(crdYaml + fmt.Sprintf(crYaml, "Running") + config)})
 		if err != nil {
-			require.Errorf(t, err, "")
+			require.Errorf(t, err, "Expected CronTab to be deployed")
 		}
-		require.Contains(t, res, "Succeeded")
+		NewPresentClusterResource("CronTab", "my-new-cron-object-1", env.Namespace, kubectl)
+	})
+
+	cleanUp()
+
+	logger.Section("deploy resource with current state as failed", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(crdYaml +
+			fmt.Sprintf(crYaml, "Failed") + config), AllowError: true})
+
+		require.Contains(t, err.Error(), "kapp: Error: waiting on reconcile crontab/my-new-cron-object-1")
 	})
 }

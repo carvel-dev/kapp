@@ -48,7 +48,7 @@ func (t WaitRuleContractV1) evalYtt(res ctlres.Resource) (*DoneApplyState, error
 	}
 
 	filesToProcess := []*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("rules.star", []byte(t.Starlark))),
+		files.MustNewFileFromSource(files.NewBytesSource("resource.star", []byte(t.Starlark))),
 		files.MustNewFileFromSource(files.NewBytesSource("config.yml", t.getConfigYAML())),
 	}
 
@@ -82,10 +82,10 @@ func (t WaitRuleContractV1) valuesYAML(res ctlres.Resource) ([]byte, error) {
 
 func (t WaitRuleContractV1) getConfigYAML() []byte {
 	config := `
-#@ load("rules.star", "check_status")
+#@ load("resource.star", "is_done")
 #@ load("@ytt:data", "data")
 
-result: #@ check_status(data.values)
+result: #@ is_done(data.values)
 `
 	return []byte(config)
 }
