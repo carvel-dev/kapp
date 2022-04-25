@@ -100,21 +100,20 @@ func TestAppSuffix_AppExists_MigrationEnabled(t *testing.T) {
 		NewMissingClusterResource(t, "configmap", newName, env.Namespace, kubectl)
 	})
 
-	logger.Section("name already contains app suffix", func() {
-		existingName := name + app.AppSuffix
-
-		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "False")
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", existingName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
-		NewPresentClusterResource("configmap", existingName, env.Namespace, kubectl)
-
+	logger.Section("name contains app suffix for migrated app", func() {
 		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", existingName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+		NewPresentClusterResource("configmap", name+app.AppSuffix, env.Namespace, kubectl)
 
-		NewMissingClusterResource(t, "configmap", existingName, env.Namespace, kubectl)
-		c := NewPresentClusterResource("configmap", existingName+app.AppSuffix, env.Namespace, kubectl)
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name + app.AppSuffix}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		// double migration shouldn't have happened
+		NewMissingClusterResource(t, "configmap", name+app.AppSuffix+app.AppSuffix, env.Namespace, kubectl)
+
+		c := NewPresentClusterResource("configmap", name+app.AppSuffix, env.Namespace, kubectl)
 		require.Contains(t, c.res.Annotations(), app.KappIsConfigmapMigratedAnnotationKey)
 
-		kapp.Run([]string{"delete", "-a", existingName})
+		kapp.Run([]string{"delete", "-a", name})
 	})
 
 	// Migrated apps are supported even when migration is disabled
