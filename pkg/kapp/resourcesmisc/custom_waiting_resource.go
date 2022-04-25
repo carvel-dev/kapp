@@ -56,13 +56,13 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 	}
 
 	// True if a condition has not observed the latest generation
-	condObsGenMatchWait := false
+	hasConditionWaitingForGeneration := false
 	// Check on failure conditions first
 	for _, condMatcher := range s.waitRule.ConditionMatchers {
 		for _, cond := range obj.Status.Conditions {
 			if cond.Type == condMatcher.Type && cond.Status == condMatcher.Status {
 				if condMatcher.SupportsObservedGeneration && obj.Metadata.Generation != cond.ObservedGeneration {
-					condObsGenMatchWait = true
+					hasConditionWaitingForGeneration = true
 					continue
 				}
 				if condMatcher.Failure {
@@ -79,7 +79,7 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 		for _, cond := range obj.Status.Conditions {
 			if cond.Type == condMatcher.Type && cond.Status == condMatcher.Status {
 				if condMatcher.SupportsObservedGeneration && obj.Metadata.Generation != cond.ObservedGeneration {
-					condObsGenMatchWait = true
+					hasConditionWaitingForGeneration = true
 					continue
 				}
 				if condMatcher.Success {
@@ -91,7 +91,7 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 		}
 	}
 
-	if condObsGenMatchWait {
+	if hasConditionWaitingForGeneration {
 		return DoneApplyState{Done: false, Message: fmt.Sprintf(
 			"Waiting for generation %d to be observed by status condition(s)", obj.Metadata.Generation)}
 	}
