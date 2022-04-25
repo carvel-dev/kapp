@@ -55,7 +55,6 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 			"Waiting for generation %d to be observed", obj.Metadata.Generation)}
 	}
 
-	// True if a condition has not observed the latest generation
 	hasConditionWaitingForGeneration := false
 	// Check on failure conditions first
 	for _, condMatcher := range s.waitRule.ConditionMatchers {
