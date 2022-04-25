@@ -8,6 +8,9 @@ import (
 )
 
 type GenericStatus struct {
+	// Populated based on metadata.generation when controller
+	// observes a change to the resource; if this value is
+	// out of data, other status fields do not reflect latest state
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration" protobuf:"varint,1,opt,name=observedGeneration"`
 	// +optional
