@@ -144,6 +144,10 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
+	if o.DeployFlags.Logs {
+		usedGKs = append(usedGKs, schema.GroupKind{Kind: "Pod"})
+	}
+
 	existingResources, existingPodRs, err := o.existingResources(
 		newResources, labeledResources, resourceFilter, supportObjs.Apps, usedGKs)
 	if err != nil {
