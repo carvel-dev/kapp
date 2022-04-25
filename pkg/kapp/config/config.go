@@ -47,10 +47,11 @@ type WaitRule struct {
 }
 
 type WaitRuleConditionMatcher struct {
-	Type    string
-	Status  string
-	Failure bool
-	Success bool
+	Type                       string
+	Status                     string
+	Failure                    bool
+	Success                    bool
+	SupportsObservedGeneration bool
 }
 
 type RebaseRule struct {

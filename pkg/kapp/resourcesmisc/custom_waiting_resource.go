@@ -34,10 +34,11 @@ type customWaitingResourceStruct struct {
 }
 
 type customWaitingResourceCondition struct {
-	Type    string
-	Status  string
-	Reason  string
-	Message string
+	Type               string
+	Status             string
+	Reason             string
+	Message            string
+	ObservedGeneration int64
 }
 
 func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
@@ -54,10 +55,15 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 			"Waiting for generation %d to be observed", obj.Metadata.Generation)}
 	}
 
+	hasConditionWaitingForGeneration := false
 	// Check on failure conditions first
 	for _, condMatcher := range s.waitRule.ConditionMatchers {
 		for _, cond := range obj.Status.Conditions {
 			if cond.Type == condMatcher.Type && cond.Status == condMatcher.Status {
+				if condMatcher.SupportsObservedGeneration && obj.Metadata.Generation != cond.ObservedGeneration {
+					hasConditionWaitingForGeneration = true
+					continue
+				}
 				if condMatcher.Failure {
 					return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
 						"Encountered failure condition %s == %s: %s (message: %s)",
@@ -71,6 +77,10 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 	for _, condMatcher := range s.waitRule.ConditionMatchers {
 		for _, cond := range obj.Status.Conditions {
 			if cond.Type == condMatcher.Type && cond.Status == condMatcher.Status {
+				if condMatcher.SupportsObservedGeneration && obj.Metadata.Generation != cond.ObservedGeneration {
+					hasConditionWaitingForGeneration = true
+					continue
+				}
 				if condMatcher.Success {
 					return DoneApplyState{Done: true, Successful: true, Message: fmt.Sprintf(
 						"Encountered successful condition %s == %s: %s (message: %s)",
@@ -80,5 +90,9 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 		}
 	}
 
+	if hasConditionWaitingForGeneration {
+		return DoneApplyState{Done: false, Message: fmt.Sprintf(
+			"Waiting for generation %d to be observed by status condition(s)", obj.Metadata.Generation)}
+	}
 	return DoneApplyState{Done: false, Message: "No failing or successful conditions found"}
 }
