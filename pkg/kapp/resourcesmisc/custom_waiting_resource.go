@@ -60,7 +60,7 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 			ResourceMatcher: ctlres.AnyMatcher{
 				Matchers: ctlconf.ResourceMatchers(s.waitRule.ResourceMatchers).AsResourceMatchers()},
 			Starlark: s.waitRule.Ytt.FuncContractV1.Resource,
-		}.ApplyYttWaitRule(s.resource)
+		}.applyYttWaitRule(s.resource)
 		if err != nil {
 			return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
 				"Error: Applying ytt wait rule: %s", err.Error())}
