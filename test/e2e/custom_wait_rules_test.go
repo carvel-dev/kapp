@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,11 +29,11 @@ waitRules:
           def is_done(resource):
               state = resource.status.currentState
               if state == "Failed":
-                return {"Done":True, "Successful": False, "Message": ""}
+                return {"done": True, "successful": False, "message": ""}
               elif state == "Running":
-                return {"Done":True, "Successful": True, "Message": ""}
+                return {"done": True, "successful": True, "message": ""}
               else:
-                return {"Done":False, "Successful": False, "Message": "Not in Failed or Running state"}
+                return {"done": False, "successful": False, "message": "Not in Failed or Running state"}
               end
           end
     resourceMatchers:
@@ -97,7 +98,8 @@ status:
 	defer cleanUp()
 
 	logger.Section("deploy resource with current state as running", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(crdYaml + fmt.Sprintf(crYaml, "Running") + config)})
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{
+			StdinReader: strings.NewReader(crdYaml + fmt.Sprintf(crYaml, "Running") + config)})
 		if err != nil {
 			require.Errorf(t, err, "Expected CronTab to be deployed")
 		}
@@ -107,8 +109,12 @@ status:
 	cleanUp()
 
 	logger.Section("deploy resource with current state as failed", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(crdYaml +
-			fmt.Sprintf(crYaml, "Failed") + config), AllowError: true})
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{
+			StdinReader: strings.NewReader(crdYaml + fmt.Sprintf(crYaml, "Failed") + config),
+			AllowError:  true,
+		})
+
+		assert.NotEmpty(t, err.Error(), "Expected message to be returned and not empty")
 
 		require.Contains(t, err.Error(), "kapp: Error: waiting on reconcile crontab/my-new-cron-object-1")
 	})

@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package yttresmod
+package resourcesmisc
 
 import (
 	"fmt"
@@ -18,17 +18,17 @@ type WaitRuleContractV1 struct {
 	Starlark        string
 }
 
-type ConfigYAMLObj struct {
-	Result DoneApplyState
+type waitRuleContractV1Result struct {
+	Result waitRuleContractV1ResultDetails
 }
 
-type DoneApplyState struct {
-	Done       bool
-	Successful bool
-	Message    string
+type waitRuleContractV1ResultDetails struct {
+	Done       bool   `json:"done"`
+	Successful bool   `json:"successful"`
+	Message    string `json:"message"`
 }
 
-func (t WaitRuleContractV1) ApplyYttWaitRule(res ctlres.Resource) (*DoneApplyState, error) {
+func (t WaitRuleContractV1) ApplyYttWaitRule(res ctlres.Resource) (*waitRuleContractV1ResultDetails, error) {
 	if !t.ResourceMatcher.Matches(res) {
 		return nil, nil
 	}
@@ -36,7 +36,7 @@ func (t WaitRuleContractV1) ApplyYttWaitRule(res ctlres.Resource) (*DoneApplySta
 	return t.evalYtt(res)
 }
 
-func (t WaitRuleContractV1) evalYtt(res ctlres.Resource) (*DoneApplyState, error) {
+func (t WaitRuleContractV1) evalYtt(res ctlres.Resource) (*waitRuleContractV1ResultDetails, error) {
 	opts := cmdtpl.NewOptions()
 
 	opts.DataValuesFlags.FromFiles = []string{"values.yml"}
@@ -66,7 +66,7 @@ func (t WaitRuleContractV1) evalYtt(res ctlres.Resource) (*DoneApplyState, error
 		fmt.Printf("Expected config.yml but was: %s", file.RelativePath())
 	}
 
-	configObj := ConfigYAMLObj{}
+	configObj := waitRuleContractV1Result{}
 
 	err := yaml.Unmarshal(file.Bytes(), &configObj)
 	if err != nil {
