@@ -75,6 +75,10 @@ func (s AppsV1Deployment) IsDoneApplying() DoneApplyState {
 			"Waiting for %d unavailable replicas", dep.Status.UnavailableReplicas)}
 	}
 
+	if dep.Spec.Replicas != nil && dep.Status.ReadyReplicas < *dep.Spec.Replicas {
+		return DoneApplyState{Done: false, Message: fmt.Sprintf(
+			"Waiting for %d/%d replicas to be ready", *dep.Spec.Replicas-dep.Status.ReadyReplicas, *dep.Spec.Replicas)}
+	}
 	return DoneApplyState{Done: true, Successful: true}
 }
 
