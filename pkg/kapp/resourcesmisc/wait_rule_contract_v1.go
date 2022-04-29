@@ -28,7 +28,7 @@ type waitRuleContractV1ResultDetails struct {
 	Message    string `json:"message"`
 }
 
-func (t WaitRuleContractV1) applyYttWaitRule(res ctlres.Resource) (*waitRuleContractV1ResultDetails, error) {
+func (t WaitRuleContractV1) Apply(res ctlres.Resource) (*waitRuleContractV1ResultDetails, error) {
 	if !t.ResourceMatcher.Matches(res) {
 		return nil, nil
 	}
@@ -76,9 +76,7 @@ func (t WaitRuleContractV1) evalYtt(res ctlres.Resource) (*waitRuleContractV1Res
 	return &configObj.Result, nil
 }
 
-func (t WaitRuleContractV1) valuesYAML(res ctlres.Resource) ([]byte, error) {
-	return yaml.Marshal(res.DeepCopyRaw())
-}
+func (t WaitRuleContractV1) valuesYAML(res ctlres.Resource) ([]byte, error) { return yaml.Marshal(res.DeepCopyRaw()) }
 
 func (t WaitRuleContractV1) getConfigYAML() []byte {
 	config := `

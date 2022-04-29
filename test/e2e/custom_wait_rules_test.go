@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -33,7 +32,7 @@ waitRules:
               elif state == "Running":
                 return {"done": True, "successful": True, "message": ""}
               else:
-                return {"done": False, "successful": False, "message": "Not in Failed or Running state"}
+                return {"done": True, "successful": False, "message": "Not in Failed or Running state"}
               end
           end
     resourceMatchers:
@@ -114,8 +113,17 @@ status:
 			AllowError:  true,
 		})
 
-		assert.NotEmpty(t, err.Error(), "Expected message to be returned and not empty")
-
 		require.Contains(t, err.Error(), "kapp: Error: waiting on reconcile crontab/my-new-cron-object-1")
+	})
+
+	cleanUp()
+
+	logger.Section("deploy resource with current state as invalid", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{
+			StdinReader: strings.NewReader(crdYaml + fmt.Sprintf(crYaml, "Invalid") + config),
+			AllowError:  true,
+		})
+
+		require.Contains(t, err.Error(), "Not in Failed or Running state")
 	})
 }
