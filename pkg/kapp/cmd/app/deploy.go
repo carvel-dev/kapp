@@ -144,10 +144,6 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	if o.DeployFlags.Logs {
-		usedGKs = append(usedGKs, schema.GroupKind{Kind: "Pod"})
-	}
-
 	existingResources, existingPodRs, err := o.existingResources(
 		newResources, labeledResources, resourceFilter, supportObjs.Apps, usedGKs)
 	if err != nil {
@@ -266,6 +262,14 @@ func (o *DeployOptions) newAndUsedGKs(newGKs []schema.GroupKind, app ctlapp.App)
 			gksByGK[gk] = struct{}{}
 			uniqGKs = append(uniqGKs, gk)
 		}
+	}
+
+	podGK := schema.GroupKind{
+		Kind: "Pod",
+	}
+
+	if _, exists := gksByGK[podGK]; !exists {
+		uniqGKs = append(uniqGKs, podGK)
 	}
 
 	return uniqGKs, nil
