@@ -19,16 +19,16 @@ type WaitRuleContractV1 struct {
 }
 
 type waitRuleContractV1Result struct {
-	Result waitRuleContractV1ResultDetails
+	Result WaitRuleContractV1ResultDetails
 }
 
-type waitRuleContractV1ResultDetails struct {
+type WaitRuleContractV1ResultDetails struct {
 	Done       bool   `json:"done"`
 	Successful bool   `json:"successful"`
 	Message    string `json:"message"`
 }
 
-func (t WaitRuleContractV1) Apply(res ctlres.Resource) (*waitRuleContractV1ResultDetails, error) {
+func (t WaitRuleContractV1) Apply(res ctlres.Resource) (*WaitRuleContractV1ResultDetails, error) {
 	if !t.ResourceMatcher.Matches(res) {
 		return nil, nil
 	}
@@ -36,7 +36,7 @@ func (t WaitRuleContractV1) Apply(res ctlres.Resource) (*waitRuleContractV1Resul
 	return t.evalYtt(res)
 }
 
-func (t WaitRuleContractV1) evalYtt(res ctlres.Resource) (*waitRuleContractV1ResultDetails, error) {
+func (t WaitRuleContractV1) evalYtt(res ctlres.Resource) (*WaitRuleContractV1ResultDetails, error) {
 	opts := cmdtpl.NewOptions()
 
 	opts.DataValuesFlags.FromFiles = []string{"values.yml"}
@@ -76,7 +76,9 @@ func (t WaitRuleContractV1) evalYtt(res ctlres.Resource) (*waitRuleContractV1Res
 	return &configObj.Result, nil
 }
 
-func (t WaitRuleContractV1) valuesYAML(res ctlres.Resource) ([]byte, error) { return yaml.Marshal(res.DeepCopyRaw()) }
+func (t WaitRuleContractV1) valuesYAML(res ctlres.Resource) ([]byte, error) {
+	return yaml.Marshal(res.DeepCopyRaw())
+}
 
 func (t WaitRuleContractV1) getConfigYAML() []byte {
 	config := `
