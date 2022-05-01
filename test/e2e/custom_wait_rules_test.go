@@ -28,9 +28,9 @@ waitRules:
           def is_done(resource):
               state = resource.status.currentState
               if state == "Failed":
-                return {"done": True, "successful": False, "message": ""}
+                return {"done": True, "successful": False, "message": "Current state as Failed"}
               elif state == "Running":
-                return {"done": True, "successful": True, "message": ""}
+                return {"done": True, "successful": True, "message": "Current state as Running"}
               else:
                 return {"done": True, "successful": False, "message": "Not in Failed or Running state"}
               end
@@ -97,33 +97,25 @@ status:
 	defer cleanUp()
 
 	logger.Section("deploy resource with current state as running", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{
+		res, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{
 			StdinReader: strings.NewReader(crdYaml + fmt.Sprintf(crYaml, "Running") + config)})
 		if err != nil {
 			require.Errorf(t, err, "Expected CronTab to be deployed")
 		}
+		require.Contains(t, res, "Current state as Running")
 		NewPresentClusterResource("CronTab", "my-new-cron-object-1", env.Namespace, kubectl)
 	})
 
 	cleanUp()
 
 	logger.Section("deploy resource with current state as failed", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{
+		res, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{
 			StdinReader: strings.NewReader(crdYaml + fmt.Sprintf(crYaml, "Failed") + config),
 			AllowError:  true,
 		})
 
+		require.Contains(t, res, "Current state as Failed")
+
 		require.Contains(t, err.Error(), "kapp: Error: waiting on reconcile crontab/my-new-cron-object-1")
-	})
-
-	cleanUp()
-
-	logger.Section("deploy resource with current state as invalid", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{
-			StdinReader: strings.NewReader(crdYaml + fmt.Sprintf(crYaml, "Invalid") + config),
-			AllowError:  true,
-		})
-
-		require.Contains(t, err.Error(), "Not in Failed or Running state")
 	})
 }
