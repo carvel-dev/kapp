@@ -8,7 +8,7 @@ require (
 	github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
 	github.com/cppforlife/go-patch v0.2.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/hashicorp/go-version v1.3.0
+	github.com/hashicorp/go-version v1.4.0
 	github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57
 	github.com/k14s/ytt v0.36.0
 	github.com/mitchellh/go-wordwrap v1.0.1
