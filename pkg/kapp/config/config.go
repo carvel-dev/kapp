@@ -44,6 +44,7 @@ type WaitRule struct {
 	SupportsObservedGeneration bool
 	ConditionMatchers          []WaitRuleConditionMatcher
 	ResourceMatchers           []ResourceMatcher
+	Ytt                        *WaitRuleYtt
 }
 
 type WaitRuleConditionMatcher struct {
@@ -52,6 +53,18 @@ type WaitRuleConditionMatcher struct {
 	Failure                    bool
 	Success                    bool
 	SupportsObservedGeneration bool
+}
+
+type WaitRuleYtt struct {
+	// Contracts are named and versioned (eg v1)
+	// to provide a stable interface to rule authors.
+	// Multiple contracts will be offered at the same time
+	// so that existing rules do not not break as we decide to evolve running environment.
+	FuncContractV1 *FuncContractV1 `json:"funcContractV1"`
+}
+
+type FuncContractV1 struct {
+	Resource string `json:"resource.star"`
 }
 
 type RebaseRule struct {

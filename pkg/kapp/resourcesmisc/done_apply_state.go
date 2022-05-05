@@ -4,9 +4,9 @@
 package resourcesmisc
 
 type DoneApplyState struct {
-	Done       bool
-	Successful bool
-	Message    string
+	Done       bool   `json:"done"`
+	Successful bool   `json:"successful"`
+	Message    string `json:"message"`
 }
 
 func (s DoneApplyState) TerminallyFailed() bool {
