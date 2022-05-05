@@ -473,3 +473,126 @@ data:
 			"Wait to: 1 reconcile, 1 delete, 0 noop", kappOut)
 	})
 }
+
+func TestVersionedAnnotation_WithFailedPreviousVersions(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+
+	failYaml := `
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: my-job
+  annotations:
+    kapp.k14s.io/versioned: ""
+spec:
+  template:
+    metadata:
+      name: my-job
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: my-job
+          image: alpine:3.15.0
+          command: [ "sh", "-c", "exit 1" ]
+  backoffLimit: 0
+`
+
+	successYaml := `
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: my-job
+  annotations:
+    kapp.k14s.io/versioned: ""
+spec:
+  template:
+    metadata:
+      name: my-job
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: my-job
+          image: alpine:3.15.0
+          command: [ "sh", "-c", "exit 0" ]
+  backoffLimit: 0
+`
+
+	name := "test-ver-ann-with-failed-prev-ver"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("deploy ver-1 of job which is expected to fail", func() {
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
+			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(failYaml)})
+
+		require.Error(t, err, "Expected to receive an error")
+
+		resp := uitest.JSONUIFromBytes(t, []byte(out))
+
+		expectedOutput := []map[string]string{{
+			"kind":            "Job",
+			"name":            "my-job-ver-1",
+			"namespace":       env.Namespace,
+			"op":              "create",
+			"op_strategy":     "",
+			"reconcile_info":  "",
+			"reconcile_state": "",
+			"wait_to":         "reconcile",
+		}}
+
+		validateChanges(t, resp.Tables, expectedOutput, "Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists",
+			"Wait to: 1 reconcile, 0 delete, 0 noop", out)
+	})
+
+	logger.Section("deploy with no changes and use --diff-changes", func() {
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "-c", "--json"},
+			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(failYaml)})
+
+		require.Error(t, err, "Expected to receive an error")
+
+		resp := uitest.JSONUIFromBytes(t, []byte(out))
+
+		// if no changes are made, then wait for the existing version to reconcile (as it failed previously)
+		expectedOutput := []map[string]string{{
+			"kind":            "Job",
+			"name":            "my-job-ver-1",
+			"namespace":       env.Namespace,
+			"op":              "",
+			"op_strategy":     "",
+			"reconcile_info":  "Failed with reason\nBackoffLimitExceeded: Job has\nreached the specified backoff limit",
+			"reconcile_state": "fail",
+			"wait_to":         "reconcile",
+		}}
+
+		validateChanges(t, resp.Tables, expectedOutput, "Op:      0 create, 0 delete, 0 update, 1 noop, 0 exists",
+			"Wait to: 1 reconcile, 0 delete, 0 noop", out)
+	})
+
+	logger.Section("deploy new version with a change", func() {
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(successYaml)})
+
+		resp := uitest.JSONUIFromBytes(t, []byte(out))
+
+		// if a change is made, i.e a new version is created, then kapp should ignore previous failed versions
+		expectedOutput := []map[string]string{{
+			"kind":            "Job",
+			"name":            "my-job-ver-2",
+			"namespace":       env.Namespace,
+			"op":              "create",
+			"op_strategy":     "",
+			"reconcile_info":  "",
+			"reconcile_state": "",
+			"wait_to":         "reconcile",
+		}}
+
+		validateChanges(t, resp.Tables, expectedOutput, "Op:      1 create, 0 delete, 0 update, 0 noop, 0 exists",
+			"Wait to: 1 reconcile, 0 delete, 0 noop", out)
+	})
+}
