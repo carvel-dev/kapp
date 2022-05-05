@@ -152,7 +152,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string, isDiffRun bool) e
 		return a.updateApp(app, labels)
 	}
 
-	return a.create(labels)
+	return a.create(labels, isDiffRun)
 }
 
 func (a *RecordedApp) find(name string) (*corev1.ConfigMap, bool, error) {
@@ -166,7 +166,7 @@ func (a *RecordedApp) find(name string) (*corev1.ConfigMap, bool, error) {
 	return cm, true, nil
 }
 
-func (a *RecordedApp) create(labels map[string]string) error {
+func (a *RecordedApp) create(labels map[string]string, isDiffRun bool) error {
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      a.name,
@@ -197,7 +197,15 @@ func (a *RecordedApp) create(labels map[string]string) error {
 		return err
 	}
 
-	_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, metav1.CreateOptions{})
+	var dryRunValue []string = nil
+
+	if isDiffRun {
+		dryRunValue = []string{metav1.DryRunAll}
+	}
+
+	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, metav1.CreateOptions{DryRun: dryRunValue})
+
+	a.setMeta(*app)
 
 	return err
 }
@@ -216,7 +224,7 @@ func (a *RecordedApp) updateApp(existingConfigMap *corev1.ConfigMap, labels map[
 	return nil
 }
 
-func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string) error {
+func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string, isDiffRun bool) error {
 	defer a.logger.DebugFunc("RenamePrevApp").Finish()
 
 	app, foundMigratedApp, err := a.find(a.fqName())
@@ -263,7 +271,7 @@ func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string
 		return a.renameConfigMap(app, a.name, a.nsName)
 	}
 
-	return a.create(labels)
+	return a.create(labels, isDiffRun)
 }
 
 func (a *RecordedApp) migrate(c *corev1.ConfigMap, labels map[string]string, newName string) error {
