@@ -22,6 +22,14 @@ type ClusterResource struct {
 	res ctlres.Resource
 }
 
+func GetClusterResourcesByKind(kind, ns string, kubectl Kubectl) ([]ctlres.Resource, error) {
+	out, err := kubectl.RunWithOpts([]string{"get", kind, "-n", ns, "-o", "yaml"}, RunOpts{AllowError: true})
+	if err != nil {
+		return nil, err
+	}
+	return ctlres.NewResourcesFromBytes([]byte(out))
+}
+
 func NewPresentClusterResource(kind, name, ns string, kubectl Kubectl) ClusterResource {
 	// Since -oyaml output is different between different kubectl versions
 	// due to inclusion/exclusion of managed fields, lets try to
