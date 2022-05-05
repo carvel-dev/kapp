@@ -44,7 +44,7 @@ func (t WaitRuleContractV1) evalYtt(res ctlres.Resource) (*WaitRuleContractV1Res
 		if path != "values.yml" {
 			return nil, fmt.Errorf("Unknown file to read: %s", path)
 		}
-		return t.valuesYAML(res)
+		return yaml.Marshal(res.DeepCopyRaw())
 	}
 
 	filesToProcess := []*files.File{
@@ -74,10 +74,6 @@ func (t WaitRuleContractV1) evalYtt(res ctlres.Resource) (*WaitRuleContractV1Res
 	}
 
 	return &configObj.Result, nil
-}
-
-func (t WaitRuleContractV1) valuesYAML(res ctlres.Resource) ([]byte, error) {
-	return yaml.Marshal(res.DeepCopyRaw())
 }
 
 func (t WaitRuleContractV1) getConfigYAML() []byte {
