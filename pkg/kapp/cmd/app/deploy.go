@@ -264,6 +264,15 @@ func (o *DeployOptions) newAndUsedGKs(newGKs []schema.GroupKind, app ctlapp.App)
 		}
 	}
 
+	podGK := schema.GroupKind{
+		Kind: "Pod",
+	}
+
+	// adding Pod in GKs to get existing Pod resources (#460)
+	if _, exists := gksByGK[podGK]; !exists && o.DeployFlags.Logs {
+		uniqGKs = append(uniqGKs, podGK)
+	}
+
 	return uniqGKs, nil
 }
 
