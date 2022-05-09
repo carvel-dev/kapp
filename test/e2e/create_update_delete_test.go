@@ -143,8 +143,7 @@ data:
 	appName := "test-create-update-delete-prev-app"
 	prevAppName := "test-create-update-delete-prev-app-old"
 	cleanUp := func() {
-		kapp.Run([]string{"delete", "-a", appName})
-		kapp.Run([]string{"delete", "-a", prevAppName})
+		kapp.Run([]string{"delete", "-a", appName, "--prev-app", prevAppName})
 		os.Unsetenv("KAPP_FQ_CONFIGMAP_NAMES")
 	}
 
@@ -294,8 +293,7 @@ data:
 	appName := "test-create-update-delete-prev-app-fq-configmap"
 	prevAppName := "test-create-update-delete-prev-app-fq-configmap-old"
 	cleanUp := func() {
-		kapp.Run([]string{"delete", "-a", appName})
-		kapp.Run([]string{"delete", "-a", prevAppName})
+		kapp.Run([]string{"delete", "-a", appName, "--prev-app", prevAppName})
 		os.Unsetenv("KAPP_FQ_CONFIGMAP_NAMES")
 	}
 
