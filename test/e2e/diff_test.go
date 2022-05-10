@@ -376,7 +376,7 @@ data:
 	require.Containsf(t, out, expectedOutput, "Did not find expected diff output")
 }
 
-func TestKappNotCreateConfigmapOnDiffRun(t *testing.T) {
+func TestDiffRun(t *testing.T) {
 	env := BuildEnv(t)
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, Logger{}}
 	kubectl := Kubectl{t, env.Namespace, Logger{}}

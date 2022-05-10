@@ -197,13 +197,11 @@ func (a *RecordedApp) create(labels map[string]string, isDiffRun bool) error {
 		return err
 	}
 
-	var dryRunValue []string = nil
-
+	createOpts := metav1.CreateOptions{}
 	if isDiffRun {
-		dryRunValue = []string{metav1.DryRunAll}
+		createOpts.DryRun = []string{metav1.DryRunAll}
 	}
-
-	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, metav1.CreateOptions{DryRun: dryRunValue})
+	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, createOpts)
 
 	a.setMeta(*app)
 
