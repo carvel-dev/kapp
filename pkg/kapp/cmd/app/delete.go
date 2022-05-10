@@ -80,13 +80,13 @@ func (o *DeleteOptions) Run() error {
 				return err
 			}
 
-			prevExists, prevNotExistsMsg, err := app.Exists()
+			prevAppExists, prevAppNotExistsMsg, err := app.Exists()
 			if err != nil {
 				return err
 			}
 
-			if !prevExists {
-				o.ui.PrintLinef("%s", prevNotExistsMsg)
+			if !prevAppExists {
+				o.ui.PrintLinef("%s", prevAppNotExistsMsg)
 				o.ui.PrintLinef("%s", notExistsMsg)
 				return nil
 			}
