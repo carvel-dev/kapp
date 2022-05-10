@@ -34,6 +34,7 @@ type DeployOptions struct {
 	logger      logger.Logger
 
 	AppFlags            Flags
+	PrevAppFlags        PrevAppFlags
 	FileFlags           cmdtools.FileFlags
 	DiffFlags           cmdtools.DiffFlags
 	ResourceFilterFlags cmdtools.ResourceFilterFlags
@@ -79,6 +80,7 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	o.DeployFlags.Set(cmd)
 	o.ResourceTypesFlags.Set(cmd)
 	o.LabelFlags.Set(cmd)
+	o.PrevAppFlags.Set(cmd)
 
 	return cmd
 }
@@ -96,8 +98,8 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	if o.DeployFlags.PrevApp != "" {
-		err = app.RenamePrevApp(o.DeployFlags.PrevApp, appLabels)
+	if o.PrevAppFlags.PrevAppName != "" {
+		err = app.RenamePrevApp(o.PrevAppFlags.PrevAppName, appLabels)
 	} else {
 		err = app.CreateOrUpdate(appLabels)
 	}

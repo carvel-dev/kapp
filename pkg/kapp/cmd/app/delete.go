@@ -28,7 +28,7 @@ type DeleteOptions struct {
 	ResourceFilterFlags cmdtools.ResourceFilterFlags
 	ApplyFlags          ApplyFlags
 	ResourceTypesFlags  ResourceTypesFlags
-	MigrationFlags      MigrationFlags
+	PrevAppFlags        PrevAppFlags
 }
 
 type changesSummary struct {
@@ -54,7 +54,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	o.ResourceFilterFlags.Set(cmd)
 	o.ApplyFlags.SetWithDefaults("", ApplyFlagsDeleteDefaults, cmd)
 	o.ResourceTypesFlags.Set(cmd)
-	o.MigrationFlags.Set(cmd)
+	o.PrevAppFlags.Set(cmd)
 	return cmd
 }
 
@@ -72,8 +72,8 @@ func (o *DeleteOptions) Run() error {
 	}
 
 	if !exists {
-		if o.MigrationFlags.PrevAppName != "" {
-			o.AppFlags.Name = o.MigrationFlags.PrevAppName
+		if o.PrevAppFlags.PrevAppName != "" {
+			o.AppFlags.Name = o.PrevAppFlags.PrevAppName
 
 			app, supportObjs, err = Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
 			if err != nil {
