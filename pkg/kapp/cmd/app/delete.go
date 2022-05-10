@@ -72,8 +72,8 @@ func (o *DeleteOptions) Run() error {
 	}
 
 	if !exists {
-		if o.MigrationFlags.prevAppName != "" {
-			o.AppFlags.Name = o.MigrationFlags.prevAppName
+		if o.MigrationFlags.PrevAppName != "" {
+			o.AppFlags.Name = o.MigrationFlags.PrevAppName
 
 			app, supportObjs, err = Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
 			if err != nil {

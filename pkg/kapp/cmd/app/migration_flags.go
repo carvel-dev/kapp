@@ -8,9 +8,9 @@ import (
 )
 
 type MigrationFlags struct {
-	prevAppName string
+	PrevAppName string
 }
 
 func (s *MigrationFlags) Set(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&s.prevAppName, "prev-app", "", "Name of old app incase of migration")
+	cmd.Flags().StringVar(&s.PrevAppName, "prev-app", "", "Name of old app incase of migration")
 }
