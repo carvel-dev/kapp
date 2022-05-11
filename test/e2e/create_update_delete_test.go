@@ -140,10 +140,27 @@ data:
   key: value
 `
 
+	yaml3 := `
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: example-service
+spec:
+  ports:
+  - port: 6381
+    targetPort: 6381
+  selector:
+    app: example-app
+    tier: backend
+---
+`
+
 	appName := "test-create-update-delete-prev-app"
 	prevAppName := "test-create-update-delete-prev-app-old"
 	cleanUp := func() {
-		kapp.Run([]string{"delete", "-a", appName, "--prev-app", prevAppName})
+		kapp.Run([]string{"delete", "-a", appName})
+		kapp.Run([]string{"delete", "-a", prevAppName})
 		os.Unsetenv("KAPP_FQ_CONFIGMAP_NAMES")
 	}
 
@@ -243,6 +260,37 @@ data:
 		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
 		cleanUp()
 	})
+
+	logger.Section("delete migrated prevApp", func() {
+		os.Setenv("KAPP_FQ_CONFIGMAP_NAMES", "True")
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		kapp.Run([]string{"delete", "-a", "empty-app", "--prev-app", appName})
+
+		NewMissingClusterResource(t, "configmap", appName, env.Namespace, kubectl)
+		cleanUp()
+	})
+
+	logger.Section("delete unmigrated prevApp", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		kapp.Run([]string{"delete", "-a", "empty-app", "--prev-app", appName})
+
+		NewMissingClusterResource(t, "configmap", appName, env.Namespace, kubectl)
+		cleanUp()
+	})
+
+	// delete with --app and --prev-app existing should only delete --app and not --prev-app
+	logger.Section("delete ignores prevApp", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", prevAppName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml3)})
+
+		kapp.Run([]string{"delete", "-a", appName, "--prev-app", prevAppName})
+
+		NewMissingClusterResource(t, "configmap", appName, env.Namespace, kubectl)
+		NewPresentClusterResource("configmap", prevAppName, env.Namespace, kubectl)
+		cleanUp()
+	})
 }
 
 func TestCreateUpdateDelete_PrevApp_FQConfigmap_Enabled(t *testing.T) {
@@ -293,7 +341,8 @@ data:
 	appName := "test-create-update-delete-prev-app-fq-configmap"
 	prevAppName := "test-create-update-delete-prev-app-fq-configmap-old"
 	cleanUp := func() {
-		kapp.Run([]string{"delete", "-a", appName, "--prev-app", prevAppName})
+		kapp.Run([]string{"delete", "-a", appName})
+		kapp.Run([]string{"delete", "-a", prevAppName})
 		os.Unsetenv("KAPP_FQ_CONFIGMAP_NAMES")
 	}
 
