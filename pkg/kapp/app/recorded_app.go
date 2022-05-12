@@ -137,7 +137,7 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string, isDiffRun bool) e
 
 	if foundMigratedApp {
 		a.isMigrated = true
-		return a.updateApp(app, labels, isDiffRun)
+		return a.updateApp(app, labels)
 	}
 
 	app, foundNonMigratedApp, err := a.find(a.name)
@@ -146,10 +146,10 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string, isDiffRun bool) e
 	}
 
 	if foundNonMigratedApp {
-		if a.isMigrationEnabled() && !isDiffRun {
+		if a.isMigrationEnabled() {
 			return a.migrate(app, labels, a.fqName())
 		}
-		return a.updateApp(app, labels, isDiffRun)
+		return a.updateApp(app, labels)
 	}
 
 	return a.create(labels, isDiffRun)
@@ -201,7 +201,6 @@ func (a *RecordedApp) create(labels map[string]string, isDiffRun bool) error {
 	if isDiffRun {
 		createOpts.DryRun = []string{metav1.DryRunAll}
 	}
-
 	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, createOpts)
 
 	a.setMeta(*app)
@@ -209,18 +208,13 @@ func (a *RecordedApp) create(labels map[string]string, isDiffRun bool) error {
 	return err
 }
 
-func (a *RecordedApp) updateApp(existingConfigMap *corev1.ConfigMap, labels map[string]string, isDiffRun bool) error {
+func (a *RecordedApp) updateApp(existingConfigMap *corev1.ConfigMap, labels map[string]string) error {
 	err := a.mergeAppUpdates(existingConfigMap, labels)
 	if err != nil {
 		return err
 	}
 
-	updateOpts := metav1.UpdateOptions{}
-	if isDiffRun {
-		updateOpts.DryRun = []string{metav1.DryRunAll}
-	}
-
-	_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), existingConfigMap, updateOpts)
+	_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), existingConfigMap, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("Updating app: %s", err)
 	}
@@ -238,7 +232,7 @@ func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string
 
 	if foundMigratedApp {
 		a.isMigrated = true
-		return a.updateApp(app, labels, isDiffRun)
+		return a.updateApp(app, labels)
 	}
 
 	app, foundNonMigratedApp, err := a.find(a.name)
@@ -247,10 +241,10 @@ func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string
 	}
 
 	if foundNonMigratedApp {
-		if a.isMigrationEnabled() && !isDiffRun {
+		if a.isMigrationEnabled() {
 			return a.migrate(app, labels, a.fqName())
 		}
-		return a.updateApp(app, labels, isDiffRun)
+		return a.updateApp(app, labels)
 	}
 
 	app, foundMigratedPrevApp, err := a.find(prevAppName + AppSuffix)
@@ -269,7 +263,7 @@ func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string
 	}
 
 	if foundNonMigratedPrevApp {
-		if a.isMigrationEnabled() && !isDiffRun {
+		if a.isMigrationEnabled() {
 			return a.migrate(app, labels, a.fqName())
 		}
 		return a.renameConfigMap(app, a.name, a.nsName)
