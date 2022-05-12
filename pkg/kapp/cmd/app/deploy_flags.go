@@ -18,7 +18,6 @@ type DeployFlags struct {
 	ExistingNonLabeledResourcesCheck            bool
 	ExistingNonLabeledResourcesCheckConcurrency int
 	OverrideOwnershipOfExistingResources        bool
-	PrevApp                                     string
 
 	AppChangesMaxToKeep int
 
@@ -44,7 +43,6 @@ func (s *DeployFlags) Set(cmd *cobra.Command) {
 		100, "Concurrency to check for existing non-labeled resources")
 	cmd.Flags().BoolVar(&s.OverrideOwnershipOfExistingResources, "dangerous-override-ownership-of-existing-resources",
 		false, "Steal existing resources from another app")
-	cmd.Flags().StringVar(&s.PrevApp, "prev-app", "", "Rename existing app")
 
 	cmd.Flags().IntVar(&s.AppChangesMaxToKeep, "app-changes-max-to-keep", ctlapp.AppChangesMaxToKeepDefault, "Maximum number of app changes to keep")
 
