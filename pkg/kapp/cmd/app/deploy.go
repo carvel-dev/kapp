@@ -99,9 +99,9 @@ func (o *DeployOptions) Run() error {
 	}
 
 	if o.PrevAppFlags.PrevAppName != "" {
-		err = app.RenamePrevApp(o.PrevAppFlags.PrevAppName, appLabels)
+		err = app.RenamePrevApp(o.PrevAppFlags.PrevAppName, appLabels, o.DiffFlags.Run)
 	} else {
-		err = app.CreateOrUpdate(appLabels)
+		err = app.CreateOrUpdate(appLabels, o.DiffFlags.Run)
 	}
 
 	if err != nil {

@@ -44,8 +44,8 @@ func (a *LabeledApp) UsedGVs() ([]schema.GroupVersion, error)                   
 func (a *LabeledApp) UsedGKs() (*[]schema.GroupKind, error)                               { return nil, nil }
 func (a *LabeledApp) UpdateUsedGVsAndGKs([]schema.GroupVersion, []schema.GroupKind) error { return nil }
 
-func (a *LabeledApp) CreateOrUpdate(labels map[string]string) error { return nil }
-func (a *LabeledApp) Exists() (bool, string, error)                 { return true, "", nil }
+func (a *LabeledApp) CreateOrUpdate(labels map[string]string, isDiffRun bool) error { return nil }
+func (a *LabeledApp) Exists() (bool, string, error)                                 { return true, "", nil }
 
 func (a *LabeledApp) Delete() error {
 	labelSelector, err := a.LabelSelector()
@@ -70,7 +70,7 @@ func (a *LabeledApp) Delete() error {
 }
 
 func (a *LabeledApp) Rename(_ string, _ string) error { return fmt.Errorf("Not supported") }
-func (a *LabeledApp) RenamePrevApp(_ string, _ map[string]string) error {
+func (a *LabeledApp) RenamePrevApp(_ string, _ map[string]string, _ bool) error {
 	return fmt.Errorf("Not supported")
 }
 
