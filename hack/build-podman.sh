@@ -2,4 +2,4 @@
 
 cd $(dirname ${BASH_SOURCE[0]})
 
-./podman.sh hack/build.sh
+./podman.sh build
