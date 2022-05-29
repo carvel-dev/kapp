@@ -27,9 +27,7 @@ metadata:
     kapp.k14s.io/versioned: ""
 `))
 
-	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRes}, []ctlres.Resource{newRs}, nil,
-		ChangeSetOpts{}, ChangeFactory{})
-
+	changeSetWithVerRes := newChangeSet(existingRes, newRs)
 	changes, err := changeSetWithVerRes.Calculate()
 	require.NoError(t, err)
 
@@ -75,8 +73,7 @@ metadata:
   name: secret
 `))
 
-	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRes}, []ctlres.Resource{newRs}, nil,
-		ChangeSetOpts{}, ChangeFactory{})
+	changeSetWithVerRes := newChangeSet(existingRes, newRs)
 
 	changes, err := changeSetWithVerRes.Calculate()
 	require.NoError(t, err)
@@ -124,8 +121,7 @@ metadata:
   name: secret
 `))
 
-	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRes}, []ctlres.Resource{newRs}, nil,
-		ChangeSetOpts{}, ChangeFactory{})
+	changeSetWithVerRes := newChangeSet(existingRes, newRs)
 
 	changes, err := changeSetWithVerRes.Calculate()
 	require.NoError(t, err)
@@ -183,8 +179,8 @@ data:
   foo: foo
 `))
 
-	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRs}, []ctlres.Resource{newRs}, nil, ChangeSetOpts{}, ChangeFactory{})
-	changeSetWithVerRes.stripNameHashSuffix = true
+	stripNameHashSuffix := true
+	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRs}, []ctlres.Resource{newRs}, nil, ChangeSetOpts{}, ChangeFactory{}, stripNameHashSuffix)
 
 	changes, err := changeSetWithVerRes.Calculate()
 	require.NoError(t, err)
@@ -227,7 +223,7 @@ spec:
   replicas: 1
 `))
 
-	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRs}, []ctlres.Resource{newRs}, nil, ChangeSetOpts{}, ChangeFactory{})
+	changeSetWithVerRes := newChangeSet(existingRs, newRs)
 	changeSetWithVerRes.stripNameHashSuffix = true
 
 	changes, err := changeSetWithVerRes.Calculate()
@@ -247,6 +243,11 @@ spec:
 
 	checkChangeDiff(t, changes[0], expectedDiff)
 
+}
+
+func newChangeSet(existingRes, newRes ctlres.Resource) *ChangeSetWithVersionedRs {
+	stripNameHashSuffix := false
+	return NewChangeSetWithVersionedRs([]ctlres.Resource{existingRes}, []ctlres.Resource{newRes}, nil, ChangeSetOpts{}, ChangeFactory{}, stripNameHashSuffix)
 }
 
 func checkChangeDiff(t *testing.T, change Change, expectedDiff string) {
