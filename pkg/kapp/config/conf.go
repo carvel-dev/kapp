@@ -175,3 +175,11 @@ func (c Conf) ChangeRuleBindings() []ChangeRuleBinding {
 	}
 	return result
 }
+
+func (c Conf) StripNameHashSuffix() bool {
+	result := false
+	for _, config := range c.configs {
+		result = result || config.StripNameHashSuffix
+	}
+	return result
+}

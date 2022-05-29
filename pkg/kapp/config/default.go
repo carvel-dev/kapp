@@ -613,6 +613,8 @@ changeRuleBindings:
               - anyMatcher: {matchers: *rbacMatchers}
               - anyMatcher: {matchers: *podRelatedMatchers}
       - hasNamespaceMatcher: {}
+
+StripNameHashSuffix: false
 `
 
 var defaultConfigRes = ctlres.MustNewResourceFromBytes([]byte(defaultConfigYAML))

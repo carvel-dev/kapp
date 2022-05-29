@@ -38,6 +38,8 @@ type Config struct {
 	// TODO validations
 	ChangeGroupBindings []ChangeGroupBinding
 	ChangeRuleBindings  []ChangeRuleBinding
+
+	StripNameHashSuffix bool
 }
 
 type WaitRule struct {
