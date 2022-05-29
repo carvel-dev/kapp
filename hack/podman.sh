@@ -10,4 +10,5 @@ else
     interactive="-it"
 fi
 
+# SYS_PTRACE for dlv
 podman run --rm -v gopath:/go -v gobuild:/root/.cache/go-build -v $(realpath $PWD/..):/mnt -w /mnt $interactive --cap-add SYS_PTRACE docker.io/golang $action
