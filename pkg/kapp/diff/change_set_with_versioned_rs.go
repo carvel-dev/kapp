@@ -19,16 +19,17 @@ const (
 )
 
 type ChangeSetWithVersionedRs struct {
-	existingRs, newRs []ctlres.Resource
-	rules             []ctlconf.TemplateRule
-	opts              ChangeSetOpts
-	changeFactory     ChangeFactory
+	existingRs, newRs   []ctlres.Resource
+	rules               []ctlconf.TemplateRule
+	opts                ChangeSetOpts
+	changeFactory       ChangeFactory
+	stripNameHashSuffix bool
 }
 
 func NewChangeSetWithVersionedRs(existingRs, newRs []ctlres.Resource,
 	rules []ctlconf.TemplateRule, opts ChangeSetOpts, changeFactory ChangeFactory) *ChangeSetWithVersionedRs {
 
-	return &ChangeSetWithVersionedRs{existingRs, newRs, rules, opts, changeFactory}
+		return &ChangeSetWithVersionedRs{existingRs, newRs, rules, opts, changeFactory, false /* TODO */}
 }
 
 func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
@@ -76,19 +77,23 @@ func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 	return allChanges, nil
 }
 
+func (d ChangeSetWithVersionedRs) versionedResourceName(res ctlres.Resource) VersionedResource {
+	return VersionedResource{res, nil, d.stripNameHashSuffix}
+}
+
 func (d ChangeSetWithVersionedRs) groupResources(rs []ctlres.Resource) map[string][]ctlres.Resource {
 	result := map[string][]ctlres.Resource{}
 
 	groupByFunc := func(res ctlres.Resource) string {
 		if _, found := res.Annotations()[versionedResAnnKey]; found {
-			return VersionedResource{res, nil}.UniqVersionedKey().String()
+			return d.versionedResourceName(res).UniqVersionedKey().String()
 		}
 		panic("Expected to find versioned annotation on resource")
 	}
 
 	for resKey, subRs := range (GroupResources{rs, groupByFunc}).Resources() {
 		sort.Slice(subRs, func(i, j int) bool {
-			return VersionedResource{subRs[i], nil}.Version() < VersionedResource{subRs[j], nil}.Version()
+			return d.versionedResourceName(subRs[i]).Version() < d.versionedResourceName(subRs[j]).Version()
 		})
 		result[resKey] = subRs
 	}
@@ -101,12 +106,12 @@ func (d ChangeSetWithVersionedRs) assignNewNames(
 
 	// TODO name isnt used during diffing, should it?
 	for _, newRes := range newRs.Versioned {
-		newVerRes := VersionedResource{newRes, nil}
+		newVerRes := d.versionedResourceName(newRes)
 		newResKey := newVerRes.UniqVersionedKey().String()
 
 		if existingRs, found := existingRsGrouped[newResKey]; found {
 			existingRes := existingRs[len(existingRs)-1]
-			newVerRes.SetBaseName(VersionedResource{existingRes, nil}.Version() + 1)
+			newVerRes.SetBaseName(d.versionedResourceName(existingRes).Version() + 1)
 		} else {
 			newVerRes.SetBaseName(1)
 		}
@@ -121,7 +126,7 @@ func (d ChangeSetWithVersionedRs) addAndKeepChanges(
 	alreadyAdded := map[string]ctlres.Resource{}
 
 	for _, newRes := range newRs.Versioned {
-		newResKey := VersionedResource{newRes, nil}.UniqVersionedKey().String()
+		newResKey := d.versionedResourceName(newRes).UniqVersionedKey().String()
 		usedRes := newRes
 
 		if existingRs, found := existingRsGrouped[newResKey]; found {
@@ -153,7 +158,7 @@ func (d ChangeSetWithVersionedRs) addAndKeepChanges(
 		}
 
 		// Update both versioned and non-versioned
-		verRes := VersionedResource{usedRes, d.rules}
+		verRes := VersionedResource{usedRes, d.rules, d.stripNameHashSuffix}
 
 		err := verRes.UpdateAffected(newRs.NonVersioned)
 		if err != nil {

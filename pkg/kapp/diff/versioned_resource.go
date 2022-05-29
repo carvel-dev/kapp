@@ -18,17 +18,14 @@ const (
 	nameSuffixSep = "-ver-"
 )
 
-var (
-	stripNameHashSuffix = false
-)
-
 type VersionedResource struct {
-	res      ctlres.Resource
-	allRules []ctlconf.TemplateRule
+	res                 ctlres.Resource
+	allRules            []ctlconf.TemplateRule
+	stripNameHashSuffix bool
 }
 
-func (d VersionedResource) StripNameHashSuffix() (bool) {
-	return stripNameHashSuffix
+func (d VersionedResource) StripNameHashSuffix() bool {
+	return d.stripNameHashSuffix
 }
 
 func (d VersionedResource) SetBaseName(ver int) {

@@ -160,8 +160,7 @@ metadata:
 
 }
 
-func TestChangeSet_StripKustomizeSuffix(t *testing.T){
-	stripNameHashSuffix = true
+func TestChangeSet_StripKustomizeSuffix(t *testing.T) {
 	newRs := ctlres.MustNewResourceFromBytes([]byte(`
 apiVersion: v1
 kind: ConfigMap
@@ -185,6 +184,7 @@ data:
 `))
 
 	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRs}, []ctlres.Resource{newRs}, nil, ChangeSetOpts{}, ChangeFactory{})
+	changeSetWithVerRes.stripNameHashSuffix = true
 
 	changes, err := changeSetWithVerRes.Calculate()
 	require.NoError(t, err)
