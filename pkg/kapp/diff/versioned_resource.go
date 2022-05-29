@@ -18,13 +18,22 @@ const (
 	nameSuffixSep = "-ver-"
 )
 
+var (
+	stripNameHashSuffix = false
+)
+
 type VersionedResource struct {
 	res      ctlres.Resource
 	allRules []ctlconf.TemplateRule
 }
 
+func (d VersionedResource) StripNameHashSuffix() (bool) {
+	return stripNameHashSuffix
+}
+
 func (d VersionedResource) SetBaseName(ver int) {
-	name := fmt.Sprintf("%s%s%d", d.res.Name(), nameSuffixSep, ver)
+	currentName, _ := d.BaseNameAndVersion()
+	name := fmt.Sprintf("%s%s%d", currentName, nameSuffixSep, ver)
 	d.res.SetName(name)
 }
 
@@ -33,6 +42,12 @@ func (d VersionedResource) BaseNameAndVersion() (string, string) {
 	pieces := strings.Split(name, nameSuffixSep)
 	if len(pieces) > 1 {
 		return strings.Join(pieces[0:len(pieces)-1], nameSuffixSep), pieces[len(pieces)-1]
+	}
+	if d.StripNameHashSuffix() {
+		pieces = strings.Split(name, "-")
+		if len(pieces) > 1 {
+			return strings.Join(pieces[0:len(pieces)-1], "-"), ""
+		}
 	}
 	return name, ""
 }

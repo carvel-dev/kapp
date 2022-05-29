@@ -157,6 +157,55 @@ metadata:
   4,  7   
 `
 	checkChangeDiff(t, changes[1], expectedDiff2)
+
+}
+
+func TestChangeSet_StripKustomizeSuffix(t *testing.T){
+	stripNameHashSuffix = true
+	newRs := ctlres.MustNewResourceFromBytes([]byte(`
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  annotations:
+    kapp.k14s.io/versioned: ""
+  name: configmap-abc
+data:
+  foo: bar
+`))
+
+	existingRs := ctlres.MustNewResourceFromBytes([]byte(`
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  annotations:
+    kapp.k14s.io/versioned: ""
+  name: configmap-ver-1
+data:
+  foo: foo
+`))
+
+	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRs}, []ctlres.Resource{newRs}, nil, ChangeSetOpts{}, ChangeFactory{})
+
+	changes, err := changeSetWithVerRes.Calculate()
+	require.NoError(t, err)
+
+	//require.Equal(t, ChangeOpUpdate, changes[0].Op(), "Expect to get updated")
+
+	expectedDiff := `  0,  0   apiVersion: v1
+  1,  1   data:
+  2,  2 -   foo: foo
+  3,  2 +   foo: bar
+  3,  3   kind: ConfigMap
+  4,  4   metadata:
+  5,  5     annotations:
+  6,  6       kapp.k14s.io/versioned: ""
+  7,  7 -   name: configmap-ver-1
+  8,  7 +   name: configmap-ver-2
+  8,  8   
+`
+
+	checkChangeDiff(t, changes[0], expectedDiff)
+
 }
 
 func checkChangeDiff(t *testing.T, change Change, expectedDiff string) {
