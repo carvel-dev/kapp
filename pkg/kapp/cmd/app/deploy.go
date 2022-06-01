@@ -159,6 +159,11 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
+	// if flag is set, kapp will just print the output and exit
+	if o.DiffFlags.YamlToBeApplied {
+		return nil
+	}
+
 	// Validate new resources _after_ presenting changes to make it easier to see big picture
 	err = prep.ValidateResources(newResources)
 	if err != nil {
@@ -434,6 +439,11 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 		changeViews := ctlcap.ClusterChangesAsChangeViews(clusterChanges)
 		changeSetView := ctlcap.NewChangeSetView(
 			changeViews, conf.DiffMaskRules(), o.DiffFlags.ChangeSetViewOpts)
+
+		if o.DiffFlags.YamlToBeApplied {
+			changeSetView.PrintCompleteYamlToBeApplied(o.ui)
+			return clusterChangeSet, clusterChangesGraph, (len(clusterChanges) == 0), changesSummary, err
+		}
 		changeSetView.Print(o.ui)
 		changesSummary = changeSetView.Summary()
 	}

@@ -4,9 +4,12 @@
 package clusterapply
 
 import (
+	"fmt"
+
 	"github.com/cppforlife/go-cli-ui/ui"
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
 type ChangeSetViewOpts struct {
@@ -47,4 +50,23 @@ func (v *ChangeSetView) Print(ui ui.UI) {
 
 func (v *ChangeSetView) Summary() string {
 	return v.changesView.Summary() // assumes Print was used before
+}
+
+func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI) {
+
+	for _, view := range v.changeViews {
+		resMgd := ctlres.NewResourceWithManagedFields(view.Resource(), false)
+		res, err := resMgd.Resource()
+		if err != nil {
+			fmt.Errorf("Error: [%s]\n", err.Error())
+			return
+		}
+		by, err := res.AsYAMLBytes()
+		if err != nil {
+			fmt.Errorf("Error: [%s]\n", err.Error())
+			return
+		}
+		ui.PrintBlock([]byte("---\n"))
+		ui.PrintBlock(by)
+	}
 }
