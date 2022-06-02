@@ -15,8 +15,13 @@ func TestExistsAnn(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
 
+	namespace := `
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: external
+`
 	app := `
 apiVersion: v1
 kind: Namespace
@@ -33,18 +38,18 @@ metadata:
 `
 
 	name := "app"
-	externalResourceName := "external"
-	externalResourceKind := "namespace"
+	externalApp := "external-app"
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
-		RemoveClusterResource(t, externalResourceKind, externalResourceName, "", kubectl)
+		kapp.Run([]string{"delete", "-a", externalApp})
 	}
 	cleanUp()
 	defer cleanUp()
 
 	go func() {
 		time.Sleep(2 * time.Second)
-		NewClusterResource(t, externalResourceKind, externalResourceName, "", kubectl)
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", externalApp},
+			RunOpts{StdinReader: strings.NewReader(namespace)})
 	}()
 
 	logger.Section("deploying app with exists annotation for a non existing resource", func() {

@@ -13,6 +13,11 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
+const (
+	ExistsAnnKey = "kapp.k14s.io/exists" // Value is ignored
+	NoopAnnKey   = "kapp.k14s.io/noop"   // value is ignored
+)
+
 type OwnershipLabelModsFunc func(kvs map[string]string) []StringMapAppendMod
 type LabelScopingModsFunc func(kvs map[string]string) []StringMapAppendMod
 
@@ -119,9 +124,12 @@ func (a *LabeledResources) AllAndMatching(newResources []Resource, opts AllAndMa
 	}
 
 	if !opts.SkipResourceOwnershipCheck && len(nonLabeledResources) > 0 {
-		err := a.checkResourceOwnership(nonLabeledResources, opts)
-		if err != nil {
-			return nil, err
+		resourcesForCheck := a.resourcesForOwnershipCheck(newResources, nonLabeledResources)
+		if len(resourcesForCheck) > 0 {
+			err := a.checkResourceOwnership(resourcesForCheck, opts)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -133,6 +141,28 @@ func (a *LabeledResources) AllAndMatching(newResources []Resource, opts AllAndMa
 	}
 
 	return resources, nil
+}
+
+func (a *LabeledResources) resourcesForOwnershipCheck(newResources []Resource, nonLabeledResources []Resource) []Resource {
+	var resources []Resource
+
+	resourcesToBeSkipped := map[string]bool{}
+
+	for _, res := range newResources {
+		_, hasExistsAnnotation := res.Annotations()[ExistsAnnKey]
+		_, hasNoopAnnotation := res.Annotations()[NoopAnnKey]
+		if hasExistsAnnotation || hasNoopAnnotation {
+			resourcesToBeSkipped[NewUniqueResourceKey(res).String()] = true
+		}
+	}
+
+	for _, res := range nonLabeledResources {
+		if !resourcesToBeSkipped[NewUniqueResourceKey(res).String()] {
+			resources = append(resources, res)
+		}
+	}
+
+	return resources
 }
 
 func (a *LabeledResources) checkResourceOwnership(resources []Resource, opts AllAndMatchingOpts) error {
