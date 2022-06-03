@@ -55,6 +55,10 @@ func (v *ChangeSetView) Summary() string {
 func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI) {
 
 	for _, view := range v.changeViews {
+		st, _ := view.ApplyStrategyOp()
+		if view.ApplyOp() == ClusterChangeApplyOpDelete && st == deleteStrategyPlainAnnValue {
+			continue
+		}
 		resMgd := ctlres.NewResourceWithManagedFields(view.Resource(), false)
 		res, err := resMgd.Resource()
 		if err != nil {

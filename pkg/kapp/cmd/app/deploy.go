@@ -160,7 +160,7 @@ func (o *DeployOptions) Run() error {
 	}
 
 	// if flag is set, kapp will just print the output and exit
-	if o.DiffFlags.YamlToBeApplied {
+	if o.ApplyFlags.ApplyingChangesOpts.Run {
 		return nil
 	}
 
@@ -440,7 +440,7 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 		changeSetView := ctlcap.NewChangeSetView(
 			changeViews, conf.DiffMaskRules(), o.DiffFlags.ChangeSetViewOpts)
 
-		if o.DiffFlags.YamlToBeApplied {
+		if o.ApplyFlags.ApplyingChangesOpts.Run {
 			changeSetView.PrintCompleteYamlToBeApplied(o.ui)
 			return clusterChangeSet, clusterChangesGraph, (len(clusterChanges) == 0), changesSummary, err
 		}
