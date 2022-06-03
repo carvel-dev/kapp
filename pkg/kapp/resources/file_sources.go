@@ -44,24 +44,29 @@ func (s LocalFileSource) Description() string        { return fmt.Sprintf("file 
 func (s LocalFileSource) Bytes() ([]byte, error)     { return ioutil.ReadFile(s.path) }
 
 type HTTPFileSource struct {
-	url string
+	url    string
+	Client *http.Client
 }
 
 var _ FileSource = HTTPFileSource{}
 
-func NewHTTPFileSource(path string) HTTPFileSource { return HTTPFileSource{path} }
+func NewHTTPFileSource(path string) HTTPFileSource { return HTTPFileSource{path, &http.Client{}} }
 
 func (s HTTPFileSource) Description() string {
 	return fmt.Sprintf("HTTP URL '%s'", s.url)
 }
 
 func (s HTTPFileSource) Bytes() ([]byte, error) {
-	resp, err := http.Get(s.url)
+	resp, err := s.Client.Get(s.url)
 	if err != nil {
 		return nil, fmt.Errorf("Requesting URL '%s': %s", s.url, err)
 	}
 
 	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return nil, fmt.Errorf("Requesting URL '%s': %s", s.url, resp.Status)
+	}
 
 	result, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
