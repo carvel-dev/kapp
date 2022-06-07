@@ -121,6 +121,7 @@ rebaseRules:
   - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
 
 # ServiceAccount controller appends secret named '${metadata.name}-token-${rand}' after the save
+# Openshift adds a secret and an imagePullSecret named '${metadata.name}-dockercfg-${rand}' after the save
 - ytt:
     overlayContractV1:
       overlay.yml: |
@@ -135,14 +136,39 @@ rebaseRules:
         #@   secrets = data.values.existing.secrets
         #@ end
 
+        #@ imagePullSecrets = []
+        #@ if hasattr(data.values.existing, "imagePullSecrets"):
+        #@   imagePullSecrets = data.values.existing.imagePullSecrets
+        #@ end
+
         #@ token_secret_name = None
+        #@ token_secret_name_docker = None
         #@ for k in secrets:
         #@   if k.name.startswith(res_name+"-token-"):
         #@     token_secret_name = k.name
         #@   end
+        #@   if k.name.startswith(res_name+"-dockercfg-"):
+        #@     token_secret_name_docker = k.name
+        #@   end
+        #@ end
+
+        #@ image_pull_secret_name = None
+        #@ for k in imagePullSecrets:
+        #@   if k.name.startswith(res_name+"-dockercfg-"):
+        #@     image_pull_secret_name = k.name
+        #@   end
         #@ end
 
         #! in case token secret name is not included, do not modify anything
+
+        #@ if/end image_pull_secret_name:
+        #@overlay/match by=overlay.all
+        ---
+        #@overlay/match missing_ok=True
+        imagePullSecrets:
+        #@overlay/match by=overlay.subset({"name": image_pull_secret_name}),when=0
+        - name: #@ image_pull_secret_name
+
         #@ if/end token_secret_name:
         #@overlay/match by=overlay.all
         ---
@@ -150,6 +176,14 @@ rebaseRules:
         secrets:
         #@overlay/match by=overlay.subset({"name": token_secret_name}),when=0
         - name: #@ token_secret_name
+
+        #@ if/end token_secret_name_docker:
+        #@overlay/match by=overlay.all
+        ---
+        #@overlay/match missing_ok=True
+        secrets:
+        #@overlay/match by=overlay.subset({"name": token_secret_name_docker}),when=0
+        - name: #@ token_secret_name_docker
   resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: v1, kind: ServiceAccount}
 
