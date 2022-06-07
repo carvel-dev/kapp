@@ -64,6 +64,16 @@ rebaseRules:
   resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: v1, kind: Namespace}
 
+# Openshift adds some annotations and labels to namespaces
+- paths:
+  - [metadata, annotations, openshift.io/sa.scc.mcs]
+  - [metadata, annotations, openshift.io/sa.scc.supplemental-groups]
+  - [metadata, annotations, openshift.io/sa.scc.uid-range]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: v1, kind: Namespace}
+
 # PVC
 - paths:
   - [metadata, annotations, pv.kubernetes.io/bind-completed]
