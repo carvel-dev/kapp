@@ -477,3 +477,69 @@ status:
 		require.Containsf(t, err.Error(), "exit code: '2'", "Expected to find exit code")
 	})
 }
+
+func TestDefaultConfig_AggregatedClusterRole(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+
+	yaml := `
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: servicebinding-aggregate
+aggregationRule:
+  clusterRoleSelectors:
+  - matchLabels:
+      servicebinding.io/controller: "true"
+rules: []
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    servicebinding.io/controller: "true"
+  name: servicebinding-k8s-apps-workload
+rules:
+- apiGroups: [apps]
+  resources: [daemonsets, deployments, replicasets, statefulsets]
+  verbs: [get, list, watch, update, patch]
+`
+
+	name := "test-default-config-aggregate-cluster-role"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	var cr ClusterResource
+
+	logger.Section("initial deploy", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml)})
+
+		cr = NewPresentClusterResource("clusterrole", "servicebinding-aggregate", env.Namespace, kubectl)
+		ruleAPIGroup := cr.RawPath(ctlres.Path{
+			ctlres.NewPathPartFromString("rules"),
+			ctlres.NewPathPartFromIndex(0),
+			ctlres.NewPathPartFromString("apiGroups"),
+			ctlres.NewPathPartFromIndex(0),
+		}).(string)
+
+		require.Equal(t, "apps", ruleAPIGroup)
+	})
+
+	logger.Section("second deploy (rebase runs)", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
+			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml)})
+
+		require.Errorf(t, err, "Expected to receive error")
+
+		require.Containsf(t, err.Error(), "Exiting after diffing with no pending changes (exit status 2)", "Expected to find stderr output")
+		require.Containsf(t, err.Error(), "exit code: '2'", "Expected to find exit code")
+	})
+}
