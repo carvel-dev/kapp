@@ -90,7 +90,7 @@ Succeeded`
 	})
 
 	logger.Section("inspecting app", func() {
-		out, _ := kapp.RunWithOpts([]string{"inspect", "-a", name},
+		out, _ := kapp.RunWithOpts([]string{"inspect", "-a", name, "--tty=true"},
 			RunOpts{})
 		out = strings.TrimSpace(replaceTarget(replaceAgeStr(replaceSpaces(replaceTs(out)))))
 

@@ -42,10 +42,11 @@ func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.L
 
 func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deploy",
-		Aliases: []string{"d", "dep"},
-		Short:   "Deploy app group",
-		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Use:         "deploy",
+		Aliases:     []string{"d", "dep"},
+		Short:       "Deploy app group",
+		RunE:        func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Annotations: map[string]string{cmdapp.TTYByDefaultKey: ""},
 	}
 	o.AppGroupFlags.Set(cmd, flagsFactory)
 	o.DeployFlags.Set(cmd)

@@ -138,6 +138,18 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		return nil
 	})
 
+	configureTTYFlag := func(cmd *cobra.Command) {
+		var forceTTY bool
+		// Default tty to true for deploy and delete commands: https://github.com/vmware-tanzu/carvel-kapp/issues/28
+		_, defaultTTY := cmd.Annotations[cmdapp.TTYByDefaultKey]
+
+		cmd.Flags().BoolVar(&forceTTY, "tty", defaultTTY, "Force TTY-like output")
+		cobrautil.VisitCommands(cmd, cobrautil.WrapRunEForCmd(func(*cobra.Command, []string) error {
+			o.ui.EnableTTY(forceTTY)
+			return nil
+		}))
+	}
+
 	cobrautil.VisitCommands(cmd, cobrautil.ReconfigureLeafCmds(cobrautil.DisallowExtraArgs))
 
 	// Completion command have to be added after the cobrautil.DisallowExtraArgs.
@@ -146,7 +158,8 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	cmd.AddCommand(NewCmdCompletion())
 
 	// Last one runs first
-	cobrautil.VisitCommands(cmd, finishDebugLog, cobrautil.ReconfigureCmdWithSubcmd, configureGlobal, cobrautil.WrapRunEForCmd(cobrautil.ResolveFlagsForCmd))
+	cobrautil.VisitCommands(cmd, finishDebugLog, cobrautil.ReconfigureCmdWithSubcmd, configureGlobal,
+		cobrautil.WrapRunEForCmd(cobrautil.ResolveFlagsForCmd), cobrautil.ReconfigureLeafCmds(configureTTYFlag))
 	return cmd
 }
 

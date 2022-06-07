@@ -47,6 +47,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 		Annotations: map[string]string{
 			cmdcore.AppHelpGroup.Key: cmdcore.AppHelpGroup.Value,
+			TTYByDefaultKey:          "",
 		},
 	}
 	o.AppFlags.Set(cmd, flagsFactory)
