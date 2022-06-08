@@ -170,6 +170,25 @@ rebaseRules:
             hasAnnotationMatcher:
               keys: [kapp.k14s.io/disable-default-secretgen-rebase-rules]
 
+# aggregated ClusterRole rules are filled in by the control plane at runtime
+# refs https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles
+- paths:
+  - [rules]
+  type: copy
+  sources: [existing]
+  resourceMatchers:
+  - andMatcher:
+      matchers:
+      - anyMatcher:
+          matchers:
+          - apiVersionKindMatcher: {kind: ClusterRole, apiVersion: rbac.authorization.k8s.io/v1}
+          - apiVersionKindMatcher: {kind: ClusterRole, apiVersion: rbac.authorization.k8s.io/v1alpha1}
+          - apiVersionKindMatcher: {kind: ClusterRole, apiVersion: rbac.authorization.k8s.io/v1beta1}
+      - notMatcher:
+          matcher:
+            emptyFieldMatcher:
+              path: [aggregationRule]
+
 diffAgainstLastAppliedFieldExclusionRules:
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
   resourceMatchers: *appsV1DeploymentWithRevAnnKey
