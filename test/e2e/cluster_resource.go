@@ -59,6 +59,10 @@ func RemoveClusterResource(t *testing.T, kind, name, ns string, kubectl Kubectl)
 	}
 }
 
+func PatchClusterResource(kind, name, ns, patch string, kubectl Kubectl) {
+	kubectl.Run([]string{"patch", kind, name, "--type=json", "--patch", patch, "-n", ns})
+}
+
 func (r ClusterResource) UID() string {
 	uid := r.res.UID()
 	if len(uid) == 0 {
