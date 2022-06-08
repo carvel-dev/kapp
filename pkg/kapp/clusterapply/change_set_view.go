@@ -6,6 +6,7 @@ package clusterapply
 import (
 	"fmt"
 
+	"github.com/cppforlife/color"
 	"github.com/cppforlife/go-cli-ui/ui"
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
@@ -52,25 +53,35 @@ func (v *ChangeSetView) Summary() string {
 	return v.changesView.Summary() // assumes Print was used before
 }
 
-func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI) {
+func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI) error {
 
 	for _, view := range v.changeViews {
-		st, _ := view.ApplyStrategyOp()
-		if view.ApplyOp() == ClusterChangeApplyOpDelete && st == deleteStrategyPlainAnnValue {
+		opSt := ""
+		if view.ApplyOp() == ClusterChangeApplyOpDelete {
+			st, _ := view.ApplyStrategyOp()
+			if st == deleteStrategyPlainAnnValue {
+				opSt = color.RedString("# %s: %s", view.ApplyOp(), view.Resource().Description())
+			} else {
+				opSt = color.RedString("# %s %s: %s", st, view.ApplyOp(), view.Resource().Description())
+			}
+			ui.PrintBlock([]byte(opSt + "\n"))
 			continue
 		}
+		opSt = color.GreenString("# %s: %s", view.ApplyOp(), view.Resource().Description())
+
 		resMgd := ctlres.NewResourceWithManagedFields(view.Resource(), false)
 		res, err := resMgd.Resource()
 		if err != nil {
-			fmt.Errorf("Error: [%s]\n", err.Error())
-			return
+			return fmt.Errorf("Error: [%s]", err.Error())
 		}
 		by, err := res.AsYAMLBytes()
 		if err != nil {
-			fmt.Errorf("Error: [%s]\n", err.Error())
-			return
+			return fmt.Errorf("Error: [%s]", err.Error())
 		}
+
+		ui.PrintBlock([]byte(opSt + "\n"))
 		ui.PrintBlock([]byte("---\n"))
 		ui.PrintBlock(by)
 	}
+	return nil
 }
