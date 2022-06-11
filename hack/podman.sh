@@ -14,4 +14,13 @@ else
 fi
 
 # SYS_PTRACE for dlv
-podman run --rm -v gopath:/go -v gobuild:/root/.cache/go-build -v $(realpath $PWD/..):/mnt -w /mnt $interactive --cap-add SYS_PTRACE docker.io/golang $action
+# host network for minikube
+podman run --rm \
+    -v gopath:/go \
+    -v gobuild:/root/.cache/go-build \
+    -v $HOME/.kube:/root/.kube \
+    -v $HOME/.minikube:$HOME/.minikube \
+    -v $(realpath $PWD/..):/mnt -w /mnt $interactive \
+    --cap-add SYS_PTRACE \
+    --network host \
+    docker.io/golang $action
