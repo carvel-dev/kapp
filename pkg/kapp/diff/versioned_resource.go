@@ -100,14 +100,13 @@ func (d VersionedResource) IsExistingVersioned() bool {
 	// onto transient resources for non-versioning related purposes).
 	notTransient := !d.res.Transient()
 
-
 	// TODO check moved during refactoring, but not sure why it is required
 	_, version := d.BaseNameAndVersion()
 	hasVersion := version != ""
 
 	versionUnnecessary := !d.TrackVersions()
 
-	return d.IsVersioned() && notTransient && ( hasVersion || versionUnnecessary )
+	return d.IsVersioned() && notTransient && (hasVersion || versionUnnecessary)
 
 }
 
