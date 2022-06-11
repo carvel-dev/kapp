@@ -33,10 +33,10 @@ func NewChangeSetWithVersionedRs(existingRs, newRs []ctlres.Resource,
 }
 
 func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
-	existingRs := existingVersionedResources(d.existingRs)
+	existingRs := d.existingVersionedResources(d.existingRs)
 	existingRsGrouped := d.groupResources(existingRs.Versioned)
 
-	newRs := newVersionedResources(d.newRs)
+	newRs := d.newVersionedResources(d.newRs)
 	allChanges := []Change{}
 
 	d.assignNewNames(newRs, existingRsGrouped)
@@ -85,8 +85,9 @@ func (d ChangeSetWithVersionedRs) groupResources(rs []ctlres.Resource) map[strin
 	result := map[string][]ctlres.Resource{}
 
 	groupByFunc := func(res ctlres.Resource) string {
-		if _, found := res.Annotations()[versionedResAnnKey]; found {
-			return d.versionedResourceName(res).UniqVersionedKey().String()
+		versionedRes := d.versionedResourceName(res)
+		if versionedRes.IsVersioned() {
+			return versionedRes.UniqVersionedKey().String()
 		}
 		panic("Expected to find versioned annotation on resource")
 	}
@@ -110,10 +111,10 @@ func (d ChangeSetWithVersionedRs) assignNewNames(
 		newResKey := newVerRes.UniqVersionedKey().String()
 
 		if existingRs, found := existingRsGrouped[newResKey]; found {
-			existingRes := existingRs[len(existingRs)-1]
-			newVerRes.SetBaseName(d.versionedResourceName(existingRes).Version() + 1)
+			existingRes := d.versionedResourceName(existingRs[len(existingRs)-1])
+			newVerRes.AssignNextVersion(existingRes)
 		} else {
-			newVerRes.SetBaseName(1)
+			newVerRes.AssignNewVersion()
 		}
 	}
 }
@@ -263,13 +264,12 @@ type versionedResources struct {
 	NonVersioned []ctlres.Resource
 }
 
-func newVersionedResources(rs []ctlres.Resource) versionedResources {
+func (d ChangeSetWithVersionedRs) newVersionedResources(rs []ctlres.Resource) versionedResources {
 	var result versionedResources
 	for _, res := range rs {
-		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
 		_, hasVersionedOrigAnn := res.Annotations()[versionedResOrigAnnKey]
 
-		if hasVersionedAnn {
+		if d.versionedResourceName(res).IsVersioned() {
 			result.Versioned = append(result.Versioned, res)
 			if hasVersionedOrigAnn {
 				result.NonVersioned = append(result.NonVersioned, res.DeepCopy())
@@ -281,18 +281,10 @@ func newVersionedResources(rs []ctlres.Resource) versionedResources {
 	return result
 }
 
-func existingVersionedResources(rs []ctlres.Resource) versionedResources {
+func (d ChangeSetWithVersionedRs) existingVersionedResources(rs []ctlres.Resource) versionedResources {
 	var result versionedResources
 	for _, res := range rs {
-		// Expect that versioned resources should not be transient
-		// (Annotations may have been copied from versioned resources
-		// onto transient resources for non-versioning related purposes).
-		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
-
-		versionedRs := VersionedResource{res: res}
-		_, version := versionedRs.BaseNameAndVersion()
-
-		if hasVersionedAnn && !res.Transient() && version != "" {
+		if d.versionedResourceName(res).IsExistingVersioned() {
 			result.Versioned = append(result.Versioned, res)
 		} else {
 			result.NonVersioned = append(result.NonVersioned, res)

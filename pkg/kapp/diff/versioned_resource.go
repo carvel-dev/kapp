@@ -68,6 +68,39 @@ func (d VersionedResource) UniqVersionedKey() ctlres.UniqueResourceKey {
 	return ctlres.NewUniqueResourceKeyWithCustomName(d.res, baseName)
 }
 
+func (d VersionedResource) TrackVersions() bool {
+	_, hasVersionedAnn := d.res.Annotations()[versionedResAnnKey]
+	return hasVersionedAnn
+}
+
+func (d VersionedResource) IsVersioned() bool {
+	return d.TrackVersions()
+}
+
+func (d VersionedResource) IsExistingVersioned() bool {
+
+	// Expect that versioned resources should not be transient
+	// (Annotations may have been copied from versioned resources
+	// onto transient resources for non-versioning related purposes).
+	notTransient := !d.res.Transient()
+
+
+	// TODO check moved during refactoring, but not sure why it is required
+	_, version := d.BaseNameAndVersion()
+	hasVersion := version != ""
+
+	return d.IsVersioned() && notTransient && hasVersion
+
+}
+
+func (d VersionedResource) AssignNextVersion(old VersionedResource) {
+	d.SetBaseName(old.Version() + 1)
+}
+
+func (d VersionedResource) AssignNewVersion() {
+	d.SetBaseName(1)
+}
+
 func (d VersionedResource) UpdateAffected(rs []ctlres.Resource) error {
 	rules, err := d.matchingRules()
 	if err != nil {
