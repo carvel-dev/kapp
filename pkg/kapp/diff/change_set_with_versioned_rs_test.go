@@ -157,26 +157,23 @@ metadata:
 }
 
 func TestChangeSet_StripKustomizeSuffix(t *testing.T) {
-	newRs := ctlres.MustNewResourceFromBytes([]byte(`
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  annotations:
-    kapp.k14s.io/versioned: ""
-  name: configmap-abc
-data:
-  foo: bar
-`))
 
 	existingRs := ctlres.MustNewResourceFromBytes([]byte(`
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  annotations:
-    kapp.k14s.io/versioned: ""
-  name: configmap-ver-1
+  name: configmap-abc
 data:
   foo: foo
+`))
+
+	newRs := ctlres.MustNewResourceFromBytes([]byte(`
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap-cdf
+data:
+  foo: bar
 `))
 
 	stripNameHashSuffix := true
@@ -193,11 +190,9 @@ data:
   3,  2 +   foo: bar
   3,  3   kind: ConfigMap
   4,  4   metadata:
-  5,  5     annotations:
-  6,  6       kapp.k14s.io/versioned: ""
-  7,  7 -   name: configmap-ver-1
-  8,  7 +   name: configmap-ver-2
-  8,  8   
+  5,  5 -   name: configmap-abc
+  6,  5 +   name: configmap-cdf
+  6,  6   
 `
 
 	checkChangeDiff(t, changes[0], expectedDiff)
