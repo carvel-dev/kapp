@@ -7,7 +7,10 @@ action=$1
 if [ "$action" ]; then
     [ -x "$action.sh" ] && action=hack/$action.sh
 else
-    interactive="-it"
+    interactive="-it -v $PWD/$histfile:/root/$histfile"
+
+    histfile=.bash_history
+    [ -f $histfile ] || >$histfile
 fi
 
 # SYS_PTRACE for dlv
