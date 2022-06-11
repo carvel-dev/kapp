@@ -25,7 +25,14 @@ type VersionedResource struct {
 }
 
 func (d VersionedResource) StripNameHashSuffix() bool {
-	return d.stripNameHashSuffix
+
+	stripEnabled := d.stripNameHashSuffix
+
+	// TODO should properly check using a ResourceMatcher
+	matchesRequiredKind := d.res.Kind() == "ConfigMap" || d.res.Kind() == "Secret"
+
+	return stripEnabled && matchesRequiredKind
+
 }
 
 func (d VersionedResource) SetBaseName(ver int) {
