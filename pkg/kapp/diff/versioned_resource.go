@@ -29,9 +29,11 @@ func (d VersionedResource) StripNameHashSuffix() bool {
 }
 
 func (d VersionedResource) SetBaseName(ver int) {
-	currentName, _ := d.BaseNameAndVersion()
-	name := fmt.Sprintf("%s%s%d", currentName, nameSuffixSep, ver)
-	d.res.SetName(name)
+	if d.TrackVersions() {
+		currentName, _ := d.BaseNameAndVersion()
+		name := fmt.Sprintf("%s%s%d", currentName, nameSuffixSep, ver)
+		d.res.SetName(name)
+	}
 }
 
 func (d VersionedResource) BaseNameAndVersion() (string, string) {
@@ -52,7 +54,11 @@ func (d VersionedResource) BaseNameAndVersion() (string, string) {
 func (d VersionedResource) Version() int {
 	_, ver := d.BaseNameAndVersion()
 	if len(ver) == 0 {
-		panic(fmt.Sprintf("Missing version in versioned resource '%s'", d.res.Description()))
+		if d.StripNameHashSuffix() {
+			return -1
+		} else {
+			panic(fmt.Sprintf("Missing version in versioned resource '%s'", d.res.Description()))
+		}
 	}
 
 	verInt, err1 := strconv.Atoi(ver)
@@ -74,6 +80,9 @@ func (d VersionedResource) TrackVersions() bool {
 }
 
 func (d VersionedResource) IsVersioned() bool {
+	if d.StripNameHashSuffix() {
+		return true
+	}
 	return d.TrackVersions()
 }
 
@@ -89,7 +98,9 @@ func (d VersionedResource) IsExistingVersioned() bool {
 	_, version := d.BaseNameAndVersion()
 	hasVersion := version != ""
 
-	return d.IsVersioned() && notTransient && hasVersion
+	versionUnnecessary := !d.TrackVersions()
+
+	return d.IsVersioned() && notTransient && ( hasVersion || versionUnnecessary )
 
 }
 
@@ -102,6 +113,13 @@ func (d VersionedResource) AssignNewVersion() {
 }
 
 func (d VersionedResource) UpdateAffected(rs []ctlres.Resource) error {
+
+	if !d.TrackVersions() {
+		// if we're not tracking versions we don't update any names and thus
+		// don't need to update any references.
+		return nil
+	}
+
 	rules, err := d.matchingRules()
 	if err != nil {
 		return err
