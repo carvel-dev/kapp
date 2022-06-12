@@ -63,9 +63,8 @@ func (d VersionedResource) Version() int {
 	if len(ver) == 0 {
 		if d.StripNameHashSuffix() {
 			return -1
-		} else {
-			panic(fmt.Sprintf("Missing version in versioned resource '%s'", d.res.Description()))
 		}
+		panic(fmt.Sprintf("Missing version in versioned resource '%s'", d.res.Description()))
 	}
 
 	verInt, err1 := strconv.Atoi(ver)
