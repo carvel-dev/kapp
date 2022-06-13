@@ -12,11 +12,14 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:shortName=pkgi
+// +kubebuilder:resource:shortName=pkgi,categories={carvel}
 // +kubebuilder:printcolumn:name=Package name,JSONPath=.spec.packageRef.refName,description=PackageMetadata name,type=string
 // +kubebuilder:printcolumn:name=Package version,JSONPath=.status.version,description=PackageMetadata version,type=string
 // +kubebuilder:printcolumn:name=Description,JSONPath=.status.friendlyDescription,description=Friendly description,type=string
 // +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date
+// A Package Install is an actual installation of a package and its underlying resources on a Kubernetes cluster.
+// It is represented in kapp-controller by a PackageInstall CR.
+// A PackageInstall CR must reference a Package CR.
 type PackageInstall struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
@@ -41,12 +44,18 @@ type PackageInstallList struct {
 }
 
 type PackageInstallSpec struct {
+	// Specifies service account that will be used to install underlying package contents
 	// +optional
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
+	// Specifies that Package should be deployed to destination cluster;
+	// by default, cluster is same as where this resource resides (optional)
 	// +optional
 	Cluster *v1alpha1.AppCluster `json:"cluster,omitempty"`
+	// Specifies the name of the package to install (required)
 	// +optional
 	PackageRef *PackageRef `json:"packageRef,omitempty"`
+	// Values to be included in package's templating step
+	// (currently only included in the first templating step) (optional)
 	// +optional
 	Values []PackageInstallValues `json:"values,omitempty"`
 	// Paused when set to true will ignore all pending changes,
