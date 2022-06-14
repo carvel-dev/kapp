@@ -102,7 +102,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 			case !state.Done:
 				newInProgressChanges = append(newInProgressChanges, change)
 
-				if state.UnblockBlockedChanges {
+				if state.UnblockChanges {
 					doneChanges = append(doneChanges, change)
 				}
 

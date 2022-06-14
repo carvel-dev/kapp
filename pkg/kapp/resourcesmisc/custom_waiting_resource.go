@@ -66,11 +66,11 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 				"Error: Applying ytt wait rule: %s", err.Error())}
 		}
 		message := configObj.Message
-		if configObj.UnblockBlockedChanges {
+		if configObj.UnblockChanges {
 			message = fmt.Sprintf("Allowing blocked changes to proceed: %s", configObj.Message)
 		}
 		return DoneApplyState{Done: configObj.Done, Successful: configObj.Successful,
-			UnblockBlockedChanges: configObj.UnblockBlockedChanges, Message: message}
+			UnblockChanges: configObj.UnblockChanges, Message: message}
 	}
 
 	hasConditionWaitingForGeneration := false
@@ -91,7 +91,7 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 		}
 	}
 
-	unblockingWaitingChangeMsg := ""
+	unblockChangeMsg := ""
 
 	// If no failure conditions found, check on successful ones
 	for _, condMatcher := range s.waitRule.ConditionMatchers {
@@ -102,15 +102,15 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 					continue
 				}
 				if condMatcher.Success {
-					if condMatcher.SupportsUnblockingChanges {
-						unblockingWaitingChangeMsg = fmt.Sprintf(
-							"Allowing blocked changes to proceed: Encountered successful condition %s == %s: %s",
-							cond.Type, condMatcher.Status, cond.Reason)
-						continue
-					}
 					return DoneApplyState{Done: true, Successful: true, Message: fmt.Sprintf(
 						"Encountered successful condition %s == %s: %s (message: %s)",
 						cond.Type, condMatcher.Status, cond.Reason, cond.Message)}
+				}
+				if condMatcher.UnblockChanges {
+					unblockChangeMsg = fmt.Sprintf(
+						"Allowing blocked changes to proceed: Encountered condition %s == %s: %s",
+						cond.Type, condMatcher.Status, cond.Reason)
+					continue
 				}
 			}
 		}
@@ -121,8 +121,8 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 			"Waiting for generation %d to be observed by status condition(s)", obj.Metadata.Generation)}
 	}
 
-	if unblockingWaitingChangeMsg != "" {
-		return DoneApplyState{Done: false, UnblockBlockedChanges: true, Message: unblockingWaitingChangeMsg}
+	if unblockChangeMsg != "" {
+		return DoneApplyState{Done: false, UnblockChanges: true, Message: unblockChangeMsg}
 	}
 
 	return DoneApplyState{Done: false, Message: "No failing or successful conditions found"}

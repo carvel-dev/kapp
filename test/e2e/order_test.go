@@ -231,8 +231,7 @@ waitRules:
   conditionMatchers:
   - type: Progressing
     status: "True"
-    success: true
-    supportsUnblockingChanges: true
+    unblockChanges: true
   - type: Available
     status: "True"
     success: true
@@ -289,7 +288,7 @@ Wait to: 2 reconcile, 0 delete, 0 noop
 <replaced>: ongoing: reconcile deployment/simple-app (apps/v1) namespace: kapp-test
 <replaced>:  ^ Waiting for generation 2 to be observed
 <replaced>: ongoing: reconcile deployment/simple-app (apps/v1) namespace: kapp-test
-<replaced>:  ^ Allowing blocked changes to proceed: Encountered successful condition Progressing == True: ReplicaSetUpdated
+<replaced>:  ^ Allowing blocked changes to proceed: Encountered condition Progressing == True: ReplicaSetUpdated
 <replaced>: ---- applying 1 changes [1/2 done] ----
 <replaced>: create service/simple-app (v1) namespace: kapp-test
 <replaced>: ---- waiting on 2 changes [0/2 done] ----

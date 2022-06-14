@@ -121,7 +121,7 @@ status:
 	})
 }
 
-func TestYttWaitRules_WithUnBlockBlockedChanges(t *testing.T) {
+func TestYttWaitRules_WithUnblockChanges(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -138,7 +138,7 @@ waitRules:
           def is_done(resource):
               state = resource.status.currentState
               if state == "Progressing":
-                return {"done": False, "unblockBlockedChanges": True, "message": "Unblock blocked changes"}
+                return {"done": False, "unblockChanges": True, "message": "Unblock blocked changes"}
               elif state == "Running":
                 return {"done": True, "successful": True, "message": "Current state as Running"}
               else:
