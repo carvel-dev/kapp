@@ -14,7 +14,13 @@ func TestNoopAnn(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
-	kubectl := Kubectl{t, env.Namespace, logger}
+
+	configMap := `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: external
+`
 
 	app := `
 apiVersion: v1
@@ -26,18 +32,16 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: external
-  namespace: kapp-ns
   annotations:
     kapp.k14s.io/noop: ""
 `
 
 	name := "app"
-	externalResourceName := "external"
-	externalResourceNamespace := "kapp-ns"
-	externalResourceKind := "configmap"
+	externalApp := "external-app"
+
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
-		RemoveClusterResource(t, externalResourceKind, externalResourceName, externalResourceNamespace, kubectl)
+		kapp.Run([]string{"delete", "-a", externalApp})
 	}
 	cleanUp()
 	defer cleanUp()
@@ -70,7 +74,10 @@ Succeeded`
 	})
 
 	logger.Section("deploying app with noop annotation for an existing resource", func() {
-		NewClusterResource(t, externalResourceKind, externalResourceName, externalResourceNamespace, kubectl)
+		// deploying app with the external resource
+		kapp.RunWithOpts([]string{"deploy", "-a", externalApp, "-f", "-"},
+			RunOpts{StdinReader: strings.NewReader(configMap)})
+
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{StdinReader: strings.NewReader(app)})
 
