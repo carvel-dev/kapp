@@ -28,6 +28,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+const (
+	TTYByDefaultKey = "cli.carvel.dev/tty-by-default"
+)
+
 type DeployOptions struct {
 	ui          ui.UI
 	depsFactory cmdcore.DepsFactory
@@ -56,6 +60,7 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 		Annotations: map[string]string{
 			cmdcore.AppHelpGroup.Key: cmdcore.AppHelpGroup.Value,
+			TTYByDefaultKey:          "",
 		},
 		Example: `
   # Deploy app 'app1' based on config files in config/
