@@ -65,8 +65,12 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 			return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
 				"Error: Applying ytt wait rule: %s", err.Error())}
 		}
+		message := configObj.Message
+		if configObj.UnblockBlockedChanges {
+			message = fmt.Sprintf("Allowing blocked changes to proceed: %s", configObj.Message)
+		}
 		return DoneApplyState{Done: configObj.Done, Successful: configObj.Successful,
-			Message: configObj.Message}
+			UnblockBlockedChanges: configObj.UnblockBlockedChanges, Message: message}
 	}
 
 	hasConditionWaitingForGeneration := false

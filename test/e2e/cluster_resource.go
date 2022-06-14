@@ -63,6 +63,17 @@ func PatchClusterResource(kind, name, ns, patch string, kubectl Kubectl) {
 	kubectl.Run([]string{"patch", kind, name, "--type=json", "--patch", patch, "-n", ns})
 }
 
+func ClusterResourceExists(kind, name string, kubectl Kubectl) (bool, error) {
+	_, err := kubectl.RunWithOpts([]string{"get", kind, name}, RunOpts{AllowError: true})
+	if err != nil {
+		if strings.Contains(err.Error(), "Error from server (NotFound)") {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 func (r ClusterResource) UID() string {
 	uid := r.res.UID()
 	if len(uid) == 0 {
