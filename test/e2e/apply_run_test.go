@@ -3,6 +3,7 @@
 package e2e
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
@@ -13,6 +14,8 @@ func TestApplyRun(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	// these key's values are random generated or k8s version based output. Will be used to remove these matching line from output and then match with expected output
+	keys := []string{"kapp.k14s.io/app", "creationTimestamp:", "resourceVersion:", "uid:", "selfLink:"}
 	yaml := `
 ---
 apiVersion: v1
@@ -33,12 +36,11 @@ data:
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
 	}
-
 	cleanUp()
 	defer cleanUp()
 	logger.Section("creating an app with multiple resources", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--apply-run"},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml)})
+			RunOpts{StdinReader: strings.NewReader(yaml)})
 		expectedOutput := `
 # add: configmap/simple-cm (v1) namespace: kapp-test
 ---
@@ -48,7 +50,6 @@ data:
 kind: ConfigMap
 metadata:
   labels:
-    kapp.k14s.io/app: "1654768619446772000"
     kapp.k14s.io/association: v1.aa6ba70e7f14b3140de8009fda0a6fad
   name: simple-cm
   namespace: kapp-test
@@ -60,27 +61,19 @@ data:
 kind: ConfigMap
 metadata:
   labels:
-    kapp.k14s.io/app: "1654768619446772000"
     kapp.k14s.io/association: v1.df359155db7824da8b7d86ec097a40cf
   name: simple-cm1
   namespace: kapp-test
-
 Succeeded
 `
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
-		// filtering value for label "kapp.k14s.io/app:" and updating with hardcode value
-		if out != "" && len(strings.Split(out, "kapp.k14s.io/app: ")) > 2 {
-			repValue1 := strings.Split((strings.Split(out, "kapp.k14s.io/app: ")[1]), "\n")[0]
-			out = strings.Replace(out, repValue1, `"1654768619446772000"`, 1)
-			repValue2 := strings.Split((strings.Split(out, "kapp.k14s.io/app: ")[2]), "\n")[0]
-			out = strings.Replace(out, repValue2, `"1654768619446772000"`, 1)
-		}
+		out = clearKeys(keys, out)
 
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
-		require.Contains(t, out, expectedOutput, "output does not match")
+		require.Equal(t, out, expectedOutput, "output does not match1")
 
 		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml)})
+			RunOpts{StdinReader: strings.NewReader(yaml)})
 	})
 
 	yaml1 := `
@@ -92,8 +85,7 @@ metadata:
 data:
   hello_msg: good-morning
 `
-
-	logger.Section("update configmap simple-cm and remove configmap simple-cm1", func() {
+	logger.Section("update configmap simple-cm, simple-cm1 and remove configmap simple-cm1", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--apply-run"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 		expectedOutput := `
@@ -104,47 +96,68 @@ data:
   hello_msg: good-morning
 kind: ConfigMap
 metadata:
-  creationTimestamp: "2022-05-11T15:27:14Z"
   labels:
-    kapp.k14s.io/app: "1654768619446772000"
     kapp.k14s.io/association: v1.aa6ba70e7f14b3140de8009fda0a6fad
   name: simple-cm
   namespace: kapp-test
-  resourceVersion: "201881"
-  uid: ee57a857-1873-4c58-b021-8cc15bf4a3e6
 # delete: configmap/simple-cm1 (v1) namespace: kapp-test
-
 Succeeded
 `
-
-		// filtering value for label "kapp.k14s.io/app:" and replacing with hardcode value
-		if len(strings.Split(out, "kapp.k14s.io/app: ")) > 1 {
-			repValue := strings.Split((strings.Split(out, "kapp.k14s.io/app: ")[1]), "\n")[0]
-			out = strings.Replace(out, repValue, `"1654768619446772000"`, 1)
-		}
-
-		// filtering value for label "creationTimestamp:" and replacing with hardcode value
-		if len(strings.Split(out, "creationTimestamp: ")) > 1 {
-			repValue := strings.Split((strings.Split(out, "creationTimestamp: ")[1]), "\n")[0]
-			out = strings.Replace(out, repValue, `"2022-05-11T15:27:14Z"`, 1)
-		}
-
-		// filtering value for label "resourceVersion:" and replacing with hardcode value
-		if len(strings.Split(out, "resourceVersion: ")) > 1 {
-			repValue := strings.Split((strings.Split(out, "resourceVersion: ")[1]), "\n")[0]
-			out = strings.Replace(out, repValue, `"201881"`, 1)
-		}
-
-		// filtering value for label "uid:" and replacing with hardcode value
-		if len(strings.Split(out, "uid: ")) > 1 {
-			repValue := strings.Split((strings.Split(out, "uid: ")[1]), "\n")[0]
-			out = strings.Replace(out, repValue, "ee57a857-1873-4c58-b021-8cc15bf4a3e6", 1)
-		}
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
-
+		out = clearKeys(keys, out)
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
-		require.Contains(t, out, expectedOutput, "output does not match")
-
+		require.Equal(t, out, expectedOutput, "output does not match")
 	})
 
+	yaml2 := `
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysecret
+  namespace: default
+data:
+  username: YWRtaW4=
+  password: MWYyZDFlMmU2N2Rm
+`
+	logger.Section("remove configmap simple-cm and add a secret", func() {
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--apply-run"},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
+		expectedOutput := `
+# add: secret/mysecret (v1) namespace: kapp-test
+---
+apiVersion: v1
+data:
+  password: <-- value not shown (#1)
+  username: <-- value not shown (#2)
+kind: Secret
+metadata:
+  labels:
+    kapp.k14s.io/association: v1.2a80d2ecf0d11d91a156ff12c3016469
+  name: mysecret
+  namespace: kapp-test
+# delete: configmap/simple-cm (v1) namespace: kapp-test
+# delete: configmap/simple-cm1 (v1) namespace: kapp-test
+Succeeded
+`
+		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
+		out = clearKeys(keys, out)
+		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
+		require.Equal(t, out, expectedOutput, "output does not match")
+	})
+}
+
+// clearKeys will remove all matching strings in keys from out
+func clearKeys(keys []string, out string) string {
+	for _, key := range keys {
+		key = key + ".*"
+		r := regexp.MustCompile(key)
+		out = r.ReplaceAllString(out, "")
+
+		//removing all empty lines
+		r = regexp.MustCompile(`[ ]*[\n\t]*\n`)
+		out = r.ReplaceAllString(out, "\n")
+		out = strings.ReplaceAll(out, "\n\n", "\n")
+	}
+	return out
 }

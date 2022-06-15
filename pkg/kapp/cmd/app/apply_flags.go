@@ -45,8 +45,7 @@ func (s *ApplyFlags) SetWithDefaults(prefix string, defaults ApplyFlags, cmd *co
 		mustParseDuration("15m"), "Maximum amount of time to wait in apply phase")
 	cmd.Flags().DurationVar(&s.ApplyingChangesOpts.CheckInterval, prefix+"apply-check-interval",
 		mustParseDuration("1s"), "Amount of time to sleep between applies")
-	cmd.Flags().BoolVar(&s.ApplyingChangesOpts.Run, prefix+"apply-run", false,
-		"Print new generated yaml to be applied and exit. This flag can not be used with others.")
+	cmd.Flags().BoolVar(&s.ApplyingChangesOpts.Run, prefix+"apply-run", false, "Print new generated YAML to be applied and exit.")
 	cmd.Flags().IntVar(&s.ApplyingChangesOpts.Concurrency, prefix+"apply-concurrency", 5, "Maximum number of concurrent apply operations")
 
 	cmd.Flags().StringVar(&s.AddOrUpdateChangeOpts.DefaultUpdateStrategy, prefix+"apply-default-update-strategy",

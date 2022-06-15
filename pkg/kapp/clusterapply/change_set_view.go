@@ -9,6 +9,7 @@ import (
 	"github.com/cppforlife/color"
 	"github.com/cppforlife/go-cli-ui/ui"
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
+	"github.com/k14s/kapp/pkg/kapp/diff"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
@@ -53,33 +54,49 @@ func (v *ChangeSetView) Summary() string {
 	return v.changesView.Summary() // assumes Print was used before
 }
 
-func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI) error {
-
+func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI, conf ctlconf.Conf) error {
 	for _, view := range v.changeViews {
-		opSt := ""
+		if view.ApplyOp() == ClusterChangeApplyOpNoop {
+			continue
+		}
+
+		opAndResDesc := ""
 		if view.ApplyOp() == ClusterChangeApplyOpDelete {
 			st, _ := view.ApplyStrategyOp()
 			if st == deleteStrategyPlainAnnValue {
-				opSt = color.RedString("# %s: %s", view.ApplyOp(), view.Resource().Description())
+				opAndResDesc = color.RedString("# %s: %s", view.ApplyOp(), view.Resource().Description())
 			} else {
-				opSt = color.RedString("# %s %s: %s", st, view.ApplyOp(), view.Resource().Description())
+				opAndResDesc = color.RedString("# %s %s: %s", st, view.ApplyOp(), view.Resource().Description())
 			}
-			ui.PrintBlock([]byte(opSt + "\n"))
+			ui.PrintBlock([]byte(opAndResDesc + "\n"))
 			continue
 		}
-		opSt = color.GreenString("# %s: %s", view.ApplyOp(), view.Resource().Description())
+		opAndResDesc = color.GreenString("# %s: %s", view.ApplyOp(), view.Resource().Description())
+
+		if view.ApplyOp() == ClusterChangeApplyOpExists {
+			ui.PrintBlock([]byte(opAndResDesc + color.GreenString(" => kapp will wait for this resource to be created\n")))
+			continue
+		}
 
 		resMgd := ctlres.NewResourceWithManagedFields(view.Resource(), false)
 		res, err := resMgd.Resource()
 		if err != nil {
 			return fmt.Errorf("Error: [%s]", err.Error())
 		}
+		if res.Kind() == "Secret" {
+			// masking secret
+			maskedRes := diff.NewMaskedResource(res, conf.DiffMaskRules())
+			res, err = maskedRes.Resource()
+			if err != nil {
+				return fmt.Errorf("Error: [%s]", err.Error())
+			}
+		}
 		by, err := res.AsYAMLBytes()
 		if err != nil {
 			return fmt.Errorf("Error: [%s]", err.Error())
 		}
 
-		ui.PrintBlock([]byte(opSt + "\n"))
+		ui.PrintBlock([]byte(opAndResDesc + "\n"))
 		ui.PrintBlock([]byte("---\n"))
 		ui.PrintBlock(by)
 	}
