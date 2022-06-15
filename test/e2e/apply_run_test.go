@@ -15,7 +15,7 @@ func TestApplyRun(t *testing.T) {
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
 	// these key's values are random generated or k8s version based output. Will be used to remove these matching line from output and then match with expected output
-	keys := []string{"kapp.k14s.io/app", "creationTimestamp:", "resourceVersion:", "uid:", "selfLink:"}
+	keys := []string{"kapp.k14s.io/app", "creationTimestamp:", "resourceVersion:", "uid:", "selfLink:", "kapp.k14s.io/association"}
 	yaml := `
 ---
 apiVersion: v1
@@ -50,7 +50,6 @@ data:
 kind: ConfigMap
 metadata:
   labels:
-    kapp.k14s.io/association: v1.aa6ba70e7f14b3140de8009fda0a6fad
   name: simple-cm
   namespace: kapp-test
 # add: configmap/simple-cm1 (v1) namespace: kapp-test
@@ -61,7 +60,6 @@ data:
 kind: ConfigMap
 metadata:
   labels:
-    kapp.k14s.io/association: v1.df359155db7824da8b7d86ec097a40cf
   name: simple-cm1
   namespace: kapp-test
 Succeeded
@@ -85,9 +83,9 @@ metadata:
 data:
   hello_msg: good-morning
 `
-	logger.Section("update configmap simple-cm, simple-cm1 and remove configmap simple-cm1", func() {
+	logger.Section("update configmap simple-cm and remove configmap simple-cm1", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--apply-run"},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+			RunOpts{StdinReader: strings.NewReader(yaml1)})
 		expectedOutput := `
 # update: configmap/simple-cm (v1) namespace: kapp-test
 ---
@@ -97,7 +95,6 @@ data:
 kind: ConfigMap
 metadata:
   labels:
-    kapp.k14s.io/association: v1.aa6ba70e7f14b3140de8009fda0a6fad
   name: simple-cm
   namespace: kapp-test
 # delete: configmap/simple-cm1 (v1) namespace: kapp-test
@@ -107,6 +104,9 @@ Succeeded
 		out = clearKeys(keys, out)
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
 		require.Equal(t, out, expectedOutput, "output does not match")
+
+		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{StdinReader: strings.NewReader(yaml1)})
 	})
 
 	yaml2 := `
@@ -115,14 +115,14 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: mysecret
-  namespace: default
+  namespace: kapp-test
 data:
   username: YWRtaW4=
   password: MWYyZDFlMmU2N2Rm
 `
 	logger.Section("remove configmap simple-cm and add a secret", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--apply-run"},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
+			RunOpts{StdinReader: strings.NewReader(yaml2)})
 		expectedOutput := `
 # add: secret/mysecret (v1) namespace: kapp-test
 ---
@@ -133,11 +133,9 @@ data:
 kind: Secret
 metadata:
   labels:
-    kapp.k14s.io/association: v1.2a80d2ecf0d11d91a156ff12c3016469
   name: mysecret
   namespace: kapp-test
 # delete: configmap/simple-cm (v1) namespace: kapp-test
-# delete: configmap/simple-cm1 (v1) namespace: kapp-test
 Succeeded
 `
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
