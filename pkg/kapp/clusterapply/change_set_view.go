@@ -56,12 +56,12 @@ func (v *ChangeSetView) Summary() string {
 
 func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI, conf ctlconf.Conf) error {
 	for _, view := range v.changeViews {
-		if view.ApplyOp() == ClusterChangeApplyOpNoop {
-			continue
-		}
-
+		op := view.ApplyOp()
 		opAndResDesc := ""
-		if view.ApplyOp() == ClusterChangeApplyOpDelete {
+		switch op {
+		case ClusterChangeApplyOpNoop:
+			continue
+		case ClusterChangeApplyOpDelete:
 			st, _ := view.ApplyStrategyOp()
 			if st == deleteStrategyPlainAnnValue {
 				opAndResDesc = color.RedString("# %s: %s", view.ApplyOp(), view.Resource().Description())
@@ -70,35 +70,31 @@ func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI, conf ctlconf.Conf)
 			}
 			ui.PrintBlock([]byte(opAndResDesc + "\n"))
 			continue
-		}
-		opAndResDesc = color.GreenString("# %s: %s", view.ApplyOp(), view.Resource().Description())
-
-		if view.ApplyOp() == ClusterChangeApplyOpExists {
+		case ClusterChangeApplyOpExists:
+			opAndResDesc = color.GreenString("# %s: %s", view.ApplyOp(), view.Resource().Description())
 			ui.PrintBlock([]byte(opAndResDesc + color.GreenString(" => kapp will wait for this resource to be created\n")))
 			continue
-		}
+		default:
+			opAndResDesc = color.GreenString("# %s: %s", view.ApplyOp(), view.Resource().Description())
+			resMgd := ctlres.NewResourceWithManagedFields(view.Resource(), false)
+			res, err := resMgd.Resource()
+			if err != nil {
+				return fmt.Errorf("Error: [%s]", err.Error())
+			}
 
-		resMgd := ctlres.NewResourceWithManagedFields(view.Resource(), false)
-		res, err := resMgd.Resource()
-		if err != nil {
-			return fmt.Errorf("Error: [%s]", err.Error())
-		}
-		if res.Kind() == "Secret" {
-			// masking secret
 			maskedRes := diff.NewMaskedResource(res, conf.DiffMaskRules())
 			res, err = maskedRes.Resource()
 			if err != nil {
 				return fmt.Errorf("Error: [%s]", err.Error())
 			}
-		}
-		by, err := res.AsYAMLBytes()
-		if err != nil {
-			return fmt.Errorf("Error: [%s]", err.Error())
-		}
 
-		ui.PrintBlock([]byte(opAndResDesc + "\n"))
-		ui.PrintBlock([]byte("---\n"))
-		ui.PrintBlock(by)
+			by, err := res.AsYAMLBytes()
+			if err != nil {
+				return fmt.Errorf("Error: [%s]", err.Error())
+			}
+
+			ui.PrintBlock([]byte(opAndResDesc + "\n" + "---\n" + string(by)))
+		}
 	}
 	return nil
 }

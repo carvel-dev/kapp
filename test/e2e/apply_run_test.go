@@ -14,8 +14,7 @@ func TestApplyRun(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
-	// these key's values are random generated or k8s version based output. Will be used to remove these matching line from output and then match with expected output
-	keys := []string{"kapp.k14s.io/app", "creationTimestamp:", "resourceVersion:", "uid:", "selfLink:", "kapp.k14s.io/association"}
+	fieldsExcludedInMatch := []string{"kapp.k14s.io/app", "creationTimestamp:", "resourceVersion:", "uid:", "selfLink:", "kapp.k14s.io/association"}
 	yaml := `
 ---
 apiVersion: v1
@@ -65,10 +64,10 @@ metadata:
 Succeeded
 `
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
-		out = clearKeys(keys, out)
+		out = clearKeys(fieldsExcludedInMatch, out)
 
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
-		require.Equal(t, out, expectedOutput, "output does not match1")
+		require.Equal(t, expectedOutput, out, "output does not match")
 
 		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{StdinReader: strings.NewReader(yaml)})
@@ -101,12 +100,9 @@ metadata:
 Succeeded
 `
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
-		out = clearKeys(keys, out)
+		out = clearKeys(fieldsExcludedInMatch, out)
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
-		require.Equal(t, out, expectedOutput, "output does not match")
-
-		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			RunOpts{StdinReader: strings.NewReader(yaml1)})
+		require.Equal(t, expectedOutput, out, "output does not match")
 	})
 
 	yaml2 := `
@@ -121,6 +117,9 @@ data:
   password: MWYyZDFlMmU2N2Rm
 `
 	logger.Section("remove configmap simple-cm and add a secret", func() {
+		// removing configmap config-cm1 and then re-deploy app using yaml2 with flag --apply-run
+		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{StdinReader: strings.NewReader(yaml1)})
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--apply-run"},
 			RunOpts{StdinReader: strings.NewReader(yaml2)})
 		expectedOutput := `
@@ -139,23 +138,23 @@ metadata:
 Succeeded
 `
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
-		out = clearKeys(keys, out)
+		out = clearKeys(fieldsExcludedInMatch, out)
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
-		require.Equal(t, out, expectedOutput, "output does not match")
+		require.Equal(t, expectedOutput, out, "output does not match")
 	})
 }
 
-// clearKeys will remove all matching strings in keys from out
-func clearKeys(keys []string, out string) string {
-	for _, key := range keys {
-		key = key + ".*"
-		r := regexp.MustCompile(key)
+// clearKeys will remove all matching fields in fieldsExcludedInMatch from out
+func clearKeys(fieldsExcludedInMatch []string, out string) string {
+	for _, field := range fieldsExcludedInMatch {
+		r := regexp.MustCompile(field + ".*")
 		out = r.ReplaceAllString(out, "")
-
-		//removing all empty lines
-		r = regexp.MustCompile(`[ ]*[\n\t]*\n`)
-		out = r.ReplaceAllString(out, "\n")
-		out = strings.ReplaceAll(out, "\n\n", "\n")
 	}
+
+	//removing all empty lines, extra tab or space
+	r1 := regexp.MustCompile(`[ ]*[\n\t]*\n`)
+	out = r1.ReplaceAllString(out, "\n")
+	r1 = regexp.MustCompile(`[\n]+`)
+	out = r1.ReplaceAllString(out, "\n")
 	return out
 }
