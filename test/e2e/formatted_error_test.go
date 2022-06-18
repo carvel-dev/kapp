@@ -50,7 +50,7 @@ spec:
 
 	logger.Section("deploy with errors", func() {
 		expectedErr := strings.TrimSpace(`
-kapp: Error: Applying create job/successful-job (batch/v1) namespace: default:
+kapp: Error: create job/successful-job (batch/v1) namespace: default:
   Creating resource job/successful-job (batch/v1) namespace: default:
     API server says:
       Job.batch "successful-job" is invalid: 

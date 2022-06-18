@@ -50,6 +50,8 @@ func (s *ApplyFlags) SetWithDefaults(prefix string, defaults ApplyFlags, cmd *co
 	cmd.Flags().StringVar(&s.AddOrUpdateChangeOpts.DefaultUpdateStrategy, prefix+"apply-default-update-strategy",
 		defaults.AddOrUpdateChangeOpts.DefaultUpdateStrategy, "Change default update strategy")
 
+	cmd.Flags().BoolVar(&s.ExitEarlyOnApplyError, prefix+"exit-early-on-apply-error", true, "Exit quickly on apply failure")
+
 	cmd.Flags().BoolVar(&s.Wait, prefix+"wait", defaults.Wait, "Set to wait for changes to be applied")
 	cmd.Flags().BoolVar(&s.WaitIgnored, prefix+"wait-ignored", defaults.WaitIgnored, "Set to wait for ignored changes to be applied")
 
@@ -63,6 +65,8 @@ func (s *ApplyFlags) SetWithDefaults(prefix string, defaults ApplyFlags, cmd *co
 		5, "Maximum number of concurrent wait operations")
 
 	cmd.Flags().BoolVar(&s.ExitStatus, prefix+"apply-exit-status", false, "Return specific exit status based on number of changes")
+
+	cmd.Flags().BoolVar(&s.ExitEarlyOnWaitError, prefix+"exit-early-on-wait-error", true, "Exit quickly on wait failure")
 }
 
 func mustParseDuration(str string) time.Duration {

@@ -23,10 +23,11 @@ type ApplyingChanges struct {
 	applied              map[*ctldgraph.Change]struct{}
 	clusterChangeFactory ClusterChangeFactory
 	ui                   UI
+	exitOnError          bool
 }
 
-func NewApplyingChanges(numTotal int, opts ApplyingChangesOpts, clusterChangeFactory ClusterChangeFactory, ui UI) *ApplyingChanges {
-	return &ApplyingChanges{numTotal, opts, map[*ctldgraph.Change]struct{}{}, clusterChangeFactory, ui}
+func NewApplyingChanges(numTotal int, opts ApplyingChangesOpts, clusterChangeFactory ClusterChangeFactory, ui UI, exitOnError bool) *ApplyingChanges {
+	return &ApplyingChanges{numTotal, opts, map[*ctldgraph.Change]struct{}{}, clusterChangeFactory, ui, exitOnError}
 }
 
 type applyResult struct {
@@ -37,14 +38,16 @@ type applyResult struct {
 	Err           error
 }
 
-func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange, error) {
+func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange, []string, error) {
 	startTime := time.Now()
+
+	var unsuccessfulChangeDesc []string
 
 	for {
 		nonAppliedChanges := c.nonAppliedChanges(allChanges)
 		if len(nonAppliedChanges) == 0 {
 			// Do not print applying message if no changes
-			return nil, nil
+			return nil, unsuccessfulChangeDesc, nil
 		}
 
 		c.ui.NotifySection("applying %d changes %s", len(nonAppliedChanges), c.stats())
@@ -88,10 +91,14 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 
 			if result.Err != nil {
 				lastErr = result.Err
-				if result.Retryable {
-					continue
+				if !result.Retryable {
+					if c.exitOnError {
+						return nil, nil, result.Err
+					}
+					unsuccessfulChangeDesc = append(unsuccessfulChangeDesc, result.Err.Error())
+					c.markApplied(result.Change)
 				}
-				return nil, result.Err
+				continue
 			}
 
 			c.markApplied(result.Change)
@@ -99,11 +106,11 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 		}
 
 		if len(appliedChanges) > 0 {
-			return appliedChanges, nil
+			return appliedChanges, unsuccessfulChangeDesc, nil
 		}
 
 		if time.Now().Sub(startTime) > c.opts.Timeout {
-			return nil, fmt.Errorf("Timed out waiting after %s: Last error: %w", c.opts.Timeout, lastErr)
+			return nil, unsuccessfulChangeDesc, fmt.Errorf("Timed out waiting after %s: Last error: %s", c.opts.Timeout, lastErr)
 		}
 
 		time.Sleep(c.opts.CheckInterval)

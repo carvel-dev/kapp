@@ -27,6 +27,7 @@ type WaitingChanges struct {
 	trackedChanges []WaitingChange
 	opts           WaitingChangesOpts
 	ui             UI
+	exitOnError    bool
 }
 
 type WaitingChange struct {
@@ -35,8 +36,8 @@ type WaitingChange struct {
 	startTime time.Time
 }
 
-func NewWaitingChanges(numTotal int, opts WaitingChangesOpts, ui UI) *WaitingChanges {
-	return &WaitingChanges{numTotal, 0, nil, opts, ui}
+func NewWaitingChanges(numTotal int, opts WaitingChangesOpts, ui UI, exitOnError bool) *WaitingChanges {
+	return &WaitingChanges{numTotal, 0, nil, opts, ui, exitOnError}
 }
 
 func (c *WaitingChanges) Track(changes []WaitingChange) {
@@ -54,7 +55,7 @@ type waitResult struct {
 	Err      error
 }
 
-func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
+func (c *WaitingChanges) WaitForAny() ([]WaitingChange, []string, error) {
 	startTime := time.Now()
 
 	for {
@@ -83,6 +84,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 
 		var newInProgressChanges []WaitingChange
 		var doneChanges []WaitingChange
+		var unsuccessfulChangeDesc []string
 
 		for i := 0; i < len(c.trackedChanges); i++ {
 			result := <-waitCh
@@ -92,7 +94,12 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 			c.ui.Notify(descMsgs)
 
 			if err != nil {
-				return nil, fmt.Errorf("%s: Errored: %w", desc, err)
+				err = fmt.Errorf("%s: Errored: %w", desc, err)
+				if c.exitOnError {
+					return nil, nil, err
+				}
+				unsuccessfulChangeDesc = append(unsuccessfulChangeDesc, err.Error())
+				continue
 			}
 			if state.Done {
 				c.numWaited++
@@ -111,7 +118,11 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 				if len(state.Message) > 0 {
 					msg += " (" + state.Message + ")"
 				}
-				return nil, fmt.Errorf("%s: Finished unsuccessfully%s", desc, msg)
+				err := fmt.Errorf("%s: Finished unsuccessfully%s", desc, msg)
+				if c.exitOnError {
+					return nil, nil, err
+				}
+				unsuccessfulChangeDesc = append(unsuccessfulChangeDesc, err.Error())
 
 			case state.Done && state.Successful:
 				doneChanges = append(doneChanges, change)
@@ -120,8 +131,8 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 
 		c.trackedChanges = newInProgressChanges
 
-		if len(c.trackedChanges) == 0 || len(doneChanges) > 0 {
-			return doneChanges, nil
+		if len(c.trackedChanges) == 0 || len(doneChanges) > 0 || len(unsuccessfulChangeDesc) > 0 {
+			return doneChanges, unsuccessfulChangeDesc, nil
 		}
 
 		if time.Now().Sub(startTime) > c.opts.Timeout {
@@ -129,7 +140,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 			for _, change := range c.trackedChanges {
 				trackedResourcesDesc = append(trackedResourcesDesc, change.Cluster.Resource().Description())
 			}
-			return nil, uierrs.NewSemiStructuredError(fmt.Errorf("Timed out waiting after %s for resources: [%s]", c.opts.Timeout, strings.Join(trackedResourcesDesc, ", ")))
+			return nil, unsuccessfulChangeDesc, uierrs.NewSemiStructuredError(fmt.Errorf("Timed out waiting after %s for resources: [%s]", c.opts.Timeout, strings.Join(trackedResourcesDesc, ", ")))
 		}
 
 		time.Sleep(c.opts.CheckInterval)
