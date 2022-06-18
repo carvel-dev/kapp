@@ -397,7 +397,7 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 	var clusterChangeSet ctlcap.ClusterChangeSet
 
 	{ // Figure out changes for X existing resources -> X new resources
-		changeFactory := ctldiff.NewChangeFactory(conf.RebaseMods(), conf.DiffAgainstLastAppliedFieldExclusionMods())
+		changeFactory := ctldiff.NewChangeFactory(conf.RebaseMods(), conf.DropMods(), conf.DiffAgainstLastAppliedFieldExclusionMods())
 		changeSetFactory := ctldiff.NewChangeSetFactory(o.DiffFlags.ChangeSetOpts, changeFactory)
 
 		changes, err := ctldiff.NewChangeSetWithVersionedRs(

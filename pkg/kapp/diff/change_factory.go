@@ -9,13 +9,14 @@ import (
 
 type ChangeFactory struct {
 	rebaseMods                               []ctlres.ResourceModWithMultiple
+	dropMods                                 []ctlres.ResourceModWithMultiple
 	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod
 }
 
-func NewChangeFactory(rebaseMods []ctlres.ResourceModWithMultiple,
+func NewChangeFactory(rebaseMods []ctlres.ResourceModWithMultiple, dropMods []ctlres.ResourceModWithMultiple,
 	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod) ChangeFactory {
 
-	return ChangeFactory{rebaseMods, diffAgainstLastAppliedFieldExclusionMods}
+	return ChangeFactory{rebaseMods, dropMods, diffAgainstLastAppliedFieldExclusionMods}
 }
 
 func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Resource) (Change, error) {
@@ -58,7 +59,29 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Re
 		return nil, err
 	}
 
-	return NewChange(existingRes, rebasedNewRes, newRes), nil
+	rebasedExistingRes, rebasedNewRes, err := f.NewResourceWithDroppedFields(existingRes, rebasedNewRes)
+
+	return NewChange(existingRes, rebasedNewRes, newRes, rebasedExistingRes), nil
+}
+
+func (f ChangeFactory) NewResourceWithDroppedFields(existingRes, newRes ctlres.Resource) (ctlres.Resource,
+	ctlres.Resource, error) {
+
+	newRes, err := NewRebasedResource(existingRes, newRes, f.dropMods).Resource()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if existingRes == nil {
+		return existingRes, newRes, nil
+	}
+
+	existingRes, err = NewRebasedResource(newRes, existingRes, f.dropMods).Resource()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return existingRes, newRes, nil
 }
 
 func (f ChangeFactory) NewExactChange(existingRes, newRes ctlres.Resource) (Change, error) {
@@ -85,7 +108,7 @@ func (f ChangeFactory) NewExactChange(existingRes, newRes ctlres.Resource) (Chan
 		return nil, err
 	}
 
-	return NewChange(existingRes, rebasedNewRes, newRes), nil
+	return NewChange(existingRes, rebasedNewRes, newRes, existingRes), nil
 }
 
 func (f ChangeFactory) NewResourceWithHistory(resource ctlres.Resource) ResourceWithHistory {

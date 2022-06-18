@@ -175,3 +175,13 @@ func (c Conf) ChangeRuleBindings() []ChangeRuleBinding {
 	}
 	return result
 }
+
+func (c Conf) DropMods() []ctlres.ResourceModWithMultiple {
+	var mods []ctlres.ResourceModWithMultiple
+	for _, config := range c.configs {
+		for _, rule := range config.DropRules {
+			mods = append(mods, rule.AsMods()...)
+		}
+	}
+	return mods
+}

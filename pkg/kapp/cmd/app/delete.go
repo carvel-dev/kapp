@@ -212,7 +212,7 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 	)
 
 	{ // Figure out changes for X existing resources -> 0 new resources
-		changeFactory := ctldiff.NewChangeFactory(nil, nil)
+		changeFactory := ctldiff.NewChangeFactory(nil, nil, nil)
 		changeSetFactory := ctldiff.NewChangeSetFactory(o.DiffFlags.ChangeSetOpts, changeFactory)
 
 		changes, err := changeSetFactory.New(existingResources, nil).Calculate()

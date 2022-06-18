@@ -267,6 +267,7 @@ func NewValueResourceConverged(resource ctlres.Resource) ValueResourceConverged 
 
 	// TODO state vs err vs output
 	state, _, err := convergedResFactory.New(resource, nil).IsDoneApplying()
+	fmt.Println("Heree")
 	stateUI := NewDoneApplyStateUI(state, err)
 
 	stateVal := uitable.ValueFmt{V: uitable.NewValueString(stateUI.State), Error: stateUI.Error}
