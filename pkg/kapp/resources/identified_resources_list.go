@@ -14,6 +14,7 @@ import (
 type IdentifiedResourcesListOpts struct {
 	IgnoreCachedResTypes bool
 	GKsScope             []schema.GroupKind
+	ResourceNamespaces   []string
 }
 
 func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []ResourceRef, opts IdentifiedResourcesListOpts) ([]Resource, error) {
@@ -49,6 +50,7 @@ func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []Resou
 		ListOpts: &metav1.ListOptions{
 			LabelSelector: labelSelector.String(),
 		},
+		ResourceNamespaces: opts.ResourceNamespaces,
 	}
 
 	resources, err := r.resources.All(resTypes, allOpts)

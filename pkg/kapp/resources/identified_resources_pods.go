@@ -5,6 +5,7 @@ package resources
 
 import (
 	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,8 +13,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func (r IdentifiedResources) PodResources(labelSelector labels.Selector) UniquePodWatcher {
-	return UniquePodWatcher{labelSelector, r.fallbackAllowedNamespaces, r.coreClient}
+func (r IdentifiedResources) PodResources(labelSelector labels.Selector, resourceNamespaces []string) UniquePodWatcher {
+	return UniquePodWatcher{labelSelector, uniqAndValidNamespaces(append(r.fallbackAllowedNamespaces, resourceNamespaces...)), r.coreClient}
 }
 
 type PodWatcherI interface {
@@ -35,6 +36,7 @@ func (w UniquePodWatcher) Watch(podsToWatchCh chan corev1.Pod, cancelCh chan str
 		// Watch Pods in all namespaces first and fallback to the
 		// fallbackAllowedNamespaces if lack of permission
 		namespace := ""
+		index := 0
 		for {
 			podWatcher := NewPodWatcher(
 				w.coreClient.CoreV1().Pods(namespace),
@@ -42,21 +44,16 @@ func (w UniquePodWatcher) Watch(podsToWatchCh chan corev1.Pod, cancelCh chan str
 			)
 
 			err := podWatcher.Watch(nonUniquePodsToWatchCh, cancelCh)
-			if err == nil {
-				break
-			}
-			if errors.IsForbidden(err) && namespace == "" {
-				// The '-n' flag or default state namespace can specify only 1 namespace, so there
-				// should be at most 1 item in fallbackAllowedNamespaces
-				if len(w.fallbackAllowedNamespaces) > 0 {
-					namespace = w.fallbackAllowedNamespaces[0]
-					if namespace == "" {
-						break
-					}
+			if err != nil {
+				if !errors.IsForbidden(err) {
+					fmt.Printf("Pod watching error: %s\n", err) // TODO
+					break
 				}
-			} else {
-				fmt.Printf("Pod watching error: %s\n", err) // TODO
-				break
+			}
+
+			if len(w.fallbackAllowedNamespaces) > index {
+				namespace = w.fallbackAllowedNamespaces[index]
+				index++
 			}
 		}
 

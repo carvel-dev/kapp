@@ -75,7 +75,13 @@ func (o *InspectOptions) Run() error {
 		return err
 	}
 
-	resources, err := supportObjs.IdentifiedResources.List(labelSelector, nil, resources.IdentifiedResourcesListOpts{})
+	meta, err := app.Meta()
+	if err != nil {
+		return err
+	}
+
+	resources, err := supportObjs.IdentifiedResources.List(labelSelector, nil, resources.IdentifiedResourcesListOpts{
+		ResourceNamespaces: meta.LastChange.Namespaces})
 	if err != nil {
 		return err
 	}

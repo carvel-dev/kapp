@@ -96,6 +96,9 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 		opts.ListOpts = &metav1.ListOptions{}
 	}
 
+	// Populate FallbackAllowedNamespace with resource namespaces stored during deploy
+	c.opts.FallbackAllowedNamespaces = uniqAndValidNamespaces(append(c.opts.FallbackAllowedNamespaces, opts.ResourceNamespaces...))
+
 	nsScope := "" // all namespaces by default
 	nsScopeLimited := c.opts.ScopeToFallbackAllowedNamespaces && len(c.opts.FallbackAllowedNamespaces) == 1
 
@@ -593,8 +596,23 @@ func (c *ResourcesImpl) isEtcdRetryableError(err error) bool {
 	return etcdserverRetryableErrCheck.MatchString(err.Error())
 }
 
+func uniqAndValidNamespaces(in []string) []string {
+	var out []string
+	if len(in) > 0 {
+		uniqNamespaces := map[string]struct{}{}
+		for _, ns := range in {
+			if _, exists := uniqNamespaces[ns]; !exists && ns != "(cluster)" {
+				out = append(out, ns)
+				uniqNamespaces[ns] = struct{}{}
+			}
+		}
+	}
+	return out
+}
+
 type AllOpts struct {
-	ListOpts *metav1.ListOptions
+	ListOpts           *metav1.ListOptions
+	ResourceNamespaces []string
 }
 
 type resourceStatusErr struct {
