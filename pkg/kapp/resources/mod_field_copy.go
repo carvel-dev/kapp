@@ -22,7 +22,7 @@ type FieldCopyMod struct {
 
 var _ ResourceModWithMultiple = FieldCopyMod{}
 
-func (t FieldCopyMod) ApplyFromMultiple(res Resource, srcs map[FieldCopyModSource]Resource) error {
+func (t FieldCopyMod) ApplyFromMultiple(res Resource, srcs map[FieldCopyModSource]Resource, _ FieldTrimModSource) error {
 	if res == nil || !t.ResourceMatcher.Matches(res) {
 		return nil
 	}

@@ -14,7 +14,7 @@ type ResourceMod interface {
 }
 
 type ResourceModWithMultiple interface {
-	ApplyFromMultiple(Resource, map[FieldCopyModSource]Resource) error
+	ApplyFromMultiple(Resource, map[FieldCopyModSource]Resource, FieldTrimModSource) error
 }
 
 type Path []*PathPart

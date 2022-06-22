@@ -23,7 +23,7 @@ type OverlayContractV1Mod struct {
 
 var _ ctlres.ResourceModWithMultiple = OverlayContractV1Mod{}
 
-func (t OverlayContractV1Mod) ApplyFromMultiple(res ctlres.Resource, srcs map[ctlres.FieldCopyModSource]ctlres.Resource) error {
+func (t OverlayContractV1Mod) ApplyFromMultiple(res ctlres.Resource, srcs map[ctlres.FieldCopyModSource]ctlres.Resource, _ ctlres.FieldTrimModSource) error {
 	if !t.ResourceMatcher.Matches(res) {
 		return nil
 	}

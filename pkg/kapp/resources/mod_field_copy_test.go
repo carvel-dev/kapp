@@ -231,7 +231,7 @@ func (e modFieldCopyExample) Check(t *testing.T) {
 		ResourceMatcher: ctlres.AllMatcher{},
 		Path:            e.Path,
 		Sources:         e.Sources,
-	}.ApplyFromMultiple(res, ress)
+	}.ApplyFromMultiple(res, ress, ctlres.FieldTrimModSourceDefault)
 	require.NoError(t, err)
 
 	resultBs, err := res.AsYAMLBytes()

@@ -29,7 +29,7 @@ func NewRebasedResource(existingRes, newRes ctlres.Resource, mods []ctlres.Resou
 	return RebasedResource{existingRes: existingRes, newRes: newRes, mods: mods}
 }
 
-func (r RebasedResource) Resource() (ctlres.Resource, error) {
+func (r RebasedResource) Resource(resType ctlres.FieldTrimModSource) (ctlres.Resource, error) {
 	if r.newRes == nil {
 		return nil, nil // nothing to rebase
 	}
@@ -50,10 +50,11 @@ func (r RebasedResource) Resource() (ctlres.Resource, error) {
 			ctlres.FieldCopyModSource("_current"): result.DeepCopy(),
 		}
 
-		err := t.ApplyFromMultiple(result, resSources)
+		err := t.ApplyFromMultiple(result, resSources, resType)
 		if err != nil {
 			return nil, fmt.Errorf("Applying rebase rule to %s: %s", resultDesc, err)
 		}
+
 	}
 
 	return result, nil

@@ -42,11 +42,25 @@ rebaseRules:
   - allMatcher: {}
 
 # Copy over all status, since cluster owns that
+#- path: [status]
+#  type: copy
+#  sources: [existing]
+#  resourceMatchers:
+#  - allMatcher: {}
+
+# remove status from existing resource
+#- path: [data]
+#  type: trim
+#  resourceMatchers:
+#  - allMatcher: {}
+
+# remove status from new resource
 - path: [status]
-  type: copy
-  sources: [existing]
+  type: remove
   resourceMatchers:
   - allMatcher: {}
+
+
 
 # Prefer user provided, but allow cluster set
 - paths:

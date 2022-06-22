@@ -4,6 +4,8 @@
 package diff
 
 import (
+	"fmt"
+
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
@@ -24,12 +26,15 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Re
 	existingResForRebasing := existingRes
 
 	if existingRes != nil {
+		// b, _ := existingRes.AsYAMLBytes()
+		// fmt.Printf("Existing %s\n", string(b))
 		// If we have copy of last applied resource (assuming it's still "valid"),
 		// use it as an existing resource to provide "smart" diff instead of
 		// diffing against resource that is actually stored on cluster.
 		lastAppliedRes := f.NewResourceWithHistory(existingRes).LastAppliedResource()
 		if lastAppliedRes != nil {
-			rebasedLastAppliedRes, err := NewRebasedResource(existingResForRebasing, lastAppliedRes, f.rebaseMods).Resource()
+			fmt.Printf("last app\n")
+			rebasedLastAppliedRes, err := NewRebasedResource(existingResForRebasing, lastAppliedRes, f.rebaseMods).Resource(ctlres.FieldTrimModSourceExisting)
 			if err != nil {
 				return nil, err
 			}
@@ -53,7 +58,7 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Re
 		newRes = historylessNewRes
 	}
 
-	rebasedNewRes, err := NewRebasedResource(existingResForRebasing, newRes, f.rebaseMods).Resource()
+	rebasedNewRes, err := NewRebasedResource(existingResForRebasing, newRes, f.rebaseMods).Resource(ctlres.FieldTrimModSourceDefault)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +85,7 @@ func (f ChangeFactory) NewExactChange(existingRes, newRes ctlres.Resource) (Chan
 		newRes = historylessNewRes
 	}
 
-	rebasedNewRes, err := NewRebasedResource(existingRes, newRes, f.rebaseMods).Resource()
+	rebasedNewRes, err := NewRebasedResource(existingRes, newRes, f.rebaseMods).Resource(ctlres.FieldTrimModSourceDefault)
 	if err != nil {
 		return nil, err
 	}

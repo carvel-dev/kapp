@@ -268,6 +268,13 @@ func (r RebaseRule) AsMods() []ctlres.ResourceModWithMultiple {
 				},
 				Path: path,
 			})
+		case "trim":
+			mods = append(mods, ctlres.FieldTrimMod{
+				ResourceMatcher: ctlres.AnyMatcher{
+					Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
+				},
+				Path: path,
+			})
 
 		default:
 			panic(fmt.Sprintf("Unknown rebase rule type: %s (supported: copy, remove)", r.Type)) // TODO

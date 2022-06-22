@@ -1,37 +1,42 @@
-// Copyright 2020 VMware, Inc.
+// Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 package resources
 
-import (
-	"fmt"
+import "fmt"
+
+type FieldTrimModSource string
+
+const (
+	FieldTrimModSourceDefault  FieldTrimModSource = ""
+	FieldTrimModSourceExisting                    = "existing"
 )
 
-type FieldRemoveMod struct {
+type FieldTrimMod struct {
 	ResourceMatcher ResourceMatcher
 	Path            Path
 }
 
-var _ ResourceMod = FieldRemoveMod{}
-var _ ResourceModWithMultiple = FieldCopyMod{}
-var _ ResourceMod = FieldTrimMod{}
-
-func (t FieldRemoveMod) ApplyFromMultiple(res Resource, _ map[FieldCopyModSource]Resource, _ FieldTrimModSource) error {
+func (t FieldTrimMod) ApplyFromMultiple(res Resource, _ map[FieldCopyModSource]Resource, resType FieldTrimModSource) error {
+	if resType != FieldTrimModSourceExisting {
+		return nil
+	}
+	fmt.Printf("\ntrimming\n\n")
 	return t.Apply(res)
 }
 
-func (t FieldRemoveMod) Apply(res Resource) error {
+func (t FieldTrimMod) Apply(res Resource) error {
 	if !t.ResourceMatcher.Matches(res) {
 		return nil
 	}
 	err := t.apply(res.unstructured().Object, t.Path)
 	if err != nil {
-		return fmt.Errorf("FieldRemoveMod for path '%s' on resource '%s': %s", t.Path.AsString(), res.Description(), err)
+		return fmt.Errorf("FieldTrimMod for path '%s' on resource '%s': %s", t.Path.AsString(), res.Description(), err)
 	}
 	return nil
 }
 
-func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
+func (t FieldTrimMod) apply(obj interface{}, path Path) error {
 	for i, part := range path {
 		isLast := len(path) == i+1
 
