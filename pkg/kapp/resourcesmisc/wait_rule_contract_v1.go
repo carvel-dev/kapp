@@ -26,6 +26,8 @@ type WaitRuleContractV1ResultDetails struct {
 	Done       bool   `json:"done"`
 	Successful bool   `json:"successful"`
 	Message    string `json:"message"`
+
+	UnblockChanges bool `json:"unblockChanges"`
 }
 
 func (t WaitRuleContractV1) Apply(res ctlres.Resource) (*WaitRuleContractV1ResultDetails, error) {
