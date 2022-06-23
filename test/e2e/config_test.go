@@ -127,6 +127,13 @@ data:
 }
 
 func TestYttRebaseRule_ServiceAccountRebaseTokenSecret(t *testing.T) {
+	minorVersion, err := getServerMinorVersion()
+	require.NoErrorf(t, err, "Error getting k8s server minor version")
+
+	if minorVersion >= 24 {
+		t.Skip("Automatic creation of service account token is turned off in k8s v1.24.0+")
+	}
+
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -198,7 +205,7 @@ secrets:
 		require.True(t, strings.HasPrefix(generatedSecretName, "test-sa-with-secrets-token-"), "Expected generated secret at idx1: %#v", secrets[1])
 
 		secrets = NewPresentClusterResource("serviceaccount", "test-sa-without-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-		require.Len(t, secrets, 1, "Expected one set and one generated secret")
+		require.Len(t, secrets, 1, "Expected one generated secret")
 		require.True(t, strings.HasPrefix(secrets[0].(map[string]interface{})["name"].(string), "test-sa-without-secrets-token-"), "Expected generated secret at idx0: %#v", secrets[0])
 	})
 
@@ -224,7 +231,7 @@ secrets:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 		secrets := NewPresentClusterResource("serviceaccount", "test-sa-with-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-		require.Len(t, secrets, 3, "Expected one set and one generated secret")
+		require.Len(t, secrets, 3, "Expected two set and one generated secret")
 		require.Exactlyf(t, map[string]interface{}{"name": "some-secret"}, secrets[0], "Expected provided secret at idx0")
 		require.Exactlyf(t, map[string]interface{}{"name": "new-some-secret"}, secrets[1], "Expected provided secret at idx1")
 		require.Exactlyf(t, map[string]interface{}{"name": generatedSecretName}, secrets[2], "Expected previous generated secret at idx2")
@@ -237,7 +244,7 @@ secrets:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml3)})
 
 		secrets := NewPresentClusterResource("serviceaccount", "test-sa-with-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-		require.Len(t, secrets, 1, "Expected one set and one generated secret")
+		require.Len(t, secrets, 1, "Expected one generated secret")
 		require.Exactlyf(t, map[string]interface{}{"name": generatedSecretName}, secrets[0], "Expected previous generated secret at idx0")
 
 		secrets = NewPresentClusterResource("serviceaccount", "test-sa-without-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
@@ -249,7 +256,10 @@ secrets:
 	ensureDeploysWithNoChanges(yaml3)
 }
 
-func TestYttRebaseRule_ServiceAccountRebaseTokenSecret_Openshift(t *testing.T) {
+func TestYttRebaseRule_ServiceAccountRebaseTokenSecret_OpenShift(t *testing.T) {
+	minorVersion, err := getServerMinorVersion()
+	require.NoErrorf(t, err, "Error getting k8s server minor version")
+
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -307,34 +317,33 @@ secrets:
 	cleanUp()
 	defer cleanUp()
 
-	var generatedSecretName string
-
 	logger.Section("initial deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 
+		patchSAWithSecrets := `[{ "op": "add", "path": "/imagePullSecrets", "value": [{ "name": "test-sa-with-secrets-dockercfg-<rand>"}]},
+			{ "op": "add", "path": "/secrets/-", "value": { "name": "test-sa-with-secrets-dockercfg-<rand>"}}]`
+
+		patchSAWithoutSecrets := `[{ "op": "add", "path": "/imagePullSecrets", "value": [{ "name": "test-sa-without-secrets-dockercfg-<rand>"}]},
+			{ "op": "add", "path": "/secrets/-", "value": { "name": "test-sa-without-secrets-dockercfg-<rand>"}}]`
+
+		if minorVersion >= 24 {
+			patchSAWithoutSecrets = `[{ "op": "add", "path": "/imagePullSecrets", "value": [{ "name": "test-sa-without-secrets-dockercfg-<rand>"}]},
+			{ "op": "add", "path": "/secrets", "value": [{ "name": "test-sa-without-secrets-dockercfg-<rand>"}]}]`
+		}
+
+		// Mock Openshift behavior by adding additional secrets and image pull secrets
+		PatchClusterResource("serviceaccount", "test-sa-with-secrets", env.Namespace, strings.ReplaceAll(patchSAWithSecrets, "<rand>", RandomString(5)), kubectl)
+		PatchClusterResource("serviceaccount", "test-sa-without-secrets", env.Namespace, strings.ReplaceAll(patchSAWithoutSecrets, "<rand>", RandomString(5)), kubectl)
+
 		serviceAccount := NewPresentClusterResource("serviceaccount", "test-sa-with-secrets", env.Namespace, kubectl)
 
 		secrets := serviceAccount.RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-		require.Len(t, secrets, 2, "Expected one set and two generated secrets")
+		require.GreaterOrEqual(t, len(secrets), 2, "Expected one set and at least one generated secret")
 		require.Exactlyf(t, map[string]interface{}{"name": "some-secret"}, secrets[0], "Expected provided secret at idx0: %#v", secrets[0])
 
-		generatedSecretName = secrets[1].(map[string]interface{})["name"].(string)
-		require.True(t, strings.HasPrefix(generatedSecretName, "test-sa-with-secrets-token-"), "Expected generated secret at idx1: %#v", secrets[1])
-
 		secrets = NewPresentClusterResource("serviceaccount", "test-sa-without-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-		require.Len(t, secrets, 1, "Expected one set and one generated secret")
-		require.True(t, strings.HasPrefix(secrets[0].(map[string]interface{})["name"].(string), "test-sa-without-secrets-token-"), "Expected generated secret at idx0: %#v", secrets[0])
-
-		patchSAWithSecrets := `[{ "op": "add", "path": "/imagePullSecrets", "value": [{ "name": "test-sa-with-secrets-dockercfg-<rand>"}]},
-{ "op": "add", "path": "/secrets/-", "value": { "name": "test-sa-with-secrets-dockercfg-<rand>"}}]`
-
-		patchSAWithoutSecrets := `[{ "op": "add", "path": "/imagePullSecrets", "value": [{ "name": "test-sa-without-secrets-dockercfg-<rand>"}]},
-{ "op": "add", "path": "/secrets/-", "value": { "name": "test-sa-without-secrets-dockercfg-<rand>"}}]`
-
-		// Mock Openshift behaviour by adding aditional secrets and image pull secrets
-		PatchClusterResource("serviceaccount", "test-sa-with-secrets", env.Namespace, strings.ReplaceAll(patchSAWithSecrets, "<rand>", RandomString(5)), kubectl)
-		PatchClusterResource("serviceaccount", "test-sa-without-secrets", env.Namespace, strings.ReplaceAll(patchSAWithoutSecrets, "<rand>", RandomString(5)), kubectl)
+		require.GreaterOrEqual(t, len(secrets), 1, "Expected at least one generated secret")
 	})
 
 	ensureDeploysWithNoChanges := func(yamlContent string) {
@@ -359,10 +368,12 @@ secrets:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
 
 		secrets := NewPresentClusterResource("serviceaccount", "test-sa-with-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-		require.Len(t, secrets, 4, "Expected one set and one generated secret")
+		require.GreaterOrEqual(t, len(secrets), 3, "Expected two set and at least one generated secret")
 		require.Exactlyf(t, map[string]interface{}{"name": "some-secret"}, secrets[0], "Expected provided secret at idx0")
 		require.Exactlyf(t, map[string]interface{}{"name": "new-some-secret"}, secrets[1], "Expected provided secret at idx1")
-		require.Exactlyf(t, map[string]interface{}{"name": generatedSecretName}, secrets[2], "Expected previous generated secret at idx2")
+
+		secrets = NewPresentClusterResource("serviceaccount", "test-sa-without-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
+		require.GreaterOrEqual(t, len(secrets), 1, "Expected at least one generated secret")
 	})
 
 	ensureDeploysWithNoChanges(yaml2)
@@ -372,13 +383,11 @@ secrets:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml3)})
 
 		secrets := NewPresentClusterResource("serviceaccount", "test-sa-with-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-		require.Len(t, secrets, 2, "Expected one set and one generated secret")
-		require.Exactlyf(t, map[string]interface{}{"name": generatedSecretName}, secrets[0], "Expected previous generated secret at idx0")
+		require.GreaterOrEqual(t, len(secrets), 1, "Expected at least one generated secret")
 
 		secrets = NewPresentClusterResource("serviceaccount", "test-sa-without-secrets", env.Namespace, kubectl).RawPath(ctlres.NewPathFromStrings([]string{"secrets"})).([]interface{})
-		require.Len(t, secrets, 3, "Expected one set and one generated secret")
+		require.GreaterOrEqual(t, len(secrets), 2, "Expected one set and at least one generated secret")
 		require.Exactlyf(t, map[string]interface{}{"name": "some-secret"}, secrets[0], "Expected provided secret at idx0")
-		require.True(t, strings.HasPrefix(secrets[1].(map[string]interface{})["name"].(string), "test-sa-without-secrets-token-"), "Expected generated secret at idx1: %#v", secrets[1])
 	})
 
 	ensureDeploysWithNoChanges(yaml3)
