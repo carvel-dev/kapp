@@ -435,9 +435,8 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 		changeSetView := ctlcap.NewChangeSetView(
 			changeViews, conf.DiffMaskRules(), o.DiffFlags.ChangeSetViewOpts)
 
-		if o.ApplyFlags.ApplyingChangesOpts.Run {
+		if o.DiffFlags.ChangeYaml {
 			changeSetView.PrintCompleteYamlToBeApplied(o.ui, conf)
-			return clusterChangeSet, clusterChangesGraph, true, changesSummary, err
 		}
 		changeSetView.Print(o.ui)
 		changesSummary = changeSetView.Summary()

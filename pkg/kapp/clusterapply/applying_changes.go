@@ -15,7 +15,6 @@ type ApplyingChangesOpts struct {
 	Timeout       time.Duration
 	CheckInterval time.Duration
 	Concurrency   int
-	Run           bool
 }
 
 type ApplyingChanges struct {

@@ -35,10 +35,12 @@ data:
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
 	}
+
 	cleanUp()
 	defer cleanUp()
+
 	logger.Section("creating an app with multiple resources", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--apply-run"},
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-apply-run", "--diff-summary=false", "--diff-run"},
 			RunOpts{StdinReader: strings.NewReader(yaml)})
 		expectedOutput := `
 # add: configmap/simple-cm (v1) namespace: kapp-test
@@ -68,9 +70,6 @@ Succeeded
 
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
 		require.Equal(t, expectedOutput, out, "output does not match")
-
-		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			RunOpts{StdinReader: strings.NewReader(yaml)})
 	})
 
 	yaml1 := `
@@ -83,7 +82,11 @@ data:
   hello_msg: good-morning
 `
 	logger.Section("update configmap simple-cm and remove configmap simple-cm1", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--apply-run"},
+
+		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+			RunOpts{StdinReader: strings.NewReader(yaml)})
+
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-apply-run", "--diff-summary=false", "--diff-run"},
 			RunOpts{StdinReader: strings.NewReader(yaml1)})
 		expectedOutput := `
 # update: configmap/simple-cm (v1) namespace: kapp-test
@@ -117,10 +120,10 @@ data:
   password: MWYyZDFlMmU2N2Rm
 `
 	logger.Section("remove configmap simple-cm and add a secret", func() {
-		// removing configmap config-cm1 and then re-deploy app using yaml2 with flag --apply-run
+		// removing configmap config-cm1 and then re-deploy app using yaml2 with flag --diff-apply-run
 		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{StdinReader: strings.NewReader(yaml1)})
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--apply-run"},
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-apply-run", "--diff-summary=false", "--diff-run"},
 			RunOpts{StdinReader: strings.NewReader(yaml2)})
 		expectedOutput := `
 # add: secret/mysecret (v1) namespace: kapp-test
