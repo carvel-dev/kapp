@@ -40,7 +40,7 @@ data:
 	defer cleanUp()
 
 	logger.Section("creating an app with multiple resources", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-apply-run", "--diff-summary=false", "--diff-run"},
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-apply-run"},
 			RunOpts{StdinReader: strings.NewReader(yaml)})
 		expectedOutput := `
 # add: configmap/simple-cm (v1) namespace: kapp-test
@@ -63,13 +63,12 @@ metadata:
   labels:
   name: simple-cm1
   namespace: kapp-test
-Succeeded
 `
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
 		out = clearKeys(fieldsExcludedInMatch, out)
 
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
-		require.Equal(t, expectedOutput, out, "output does not match")
+		require.Contains(t, out, expectedOutput, "output does not match")
 	})
 
 	yaml1 := `
@@ -86,7 +85,7 @@ data:
 		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{StdinReader: strings.NewReader(yaml)})
 
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-apply-run", "--diff-summary=false", "--diff-run"},
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-apply-run"},
 			RunOpts{StdinReader: strings.NewReader(yaml1)})
 		expectedOutput := `
 # update: configmap/simple-cm (v1) namespace: kapp-test
@@ -100,12 +99,11 @@ metadata:
   name: simple-cm
   namespace: kapp-test
 # delete: configmap/simple-cm1 (v1) namespace: kapp-test
-Succeeded
 `
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
 		out = clearKeys(fieldsExcludedInMatch, out)
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
-		require.Equal(t, expectedOutput, out, "output does not match")
+		require.Contains(t, out, expectedOutput, "output does not match")
 	})
 
 	yaml2 := `
@@ -123,7 +121,7 @@ data:
 		// removing configmap config-cm1 and then re-deploy app using yaml2 with flag --diff-apply-run
 		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{StdinReader: strings.NewReader(yaml1)})
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-apply-run", "--diff-summary=false", "--diff-run"},
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-apply-run"},
 			RunOpts{StdinReader: strings.NewReader(yaml2)})
 		expectedOutput := `
 # add: secret/mysecret (v1) namespace: kapp-test
@@ -138,12 +136,11 @@ metadata:
   name: mysecret
   namespace: kapp-test
 # delete: configmap/simple-cm (v1) namespace: kapp-test
-Succeeded
 `
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
 		out = clearKeys(fieldsExcludedInMatch, out)
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
-		require.Equal(t, expectedOutput, out, "output does not match")
+		require.Contains(t, out, expectedOutput, "output does not match")
 	})
 }
 
