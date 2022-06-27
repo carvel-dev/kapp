@@ -23,7 +23,11 @@ jobs:
       - name: Build kapp Script
         run: |
           ./hack/build-binaries.sh
-          shasum -a 256 kapp-* | tee checksums.txt
+          shasum -a 256 ./kapp-* | tee checksums.txt
+          echo "# :open_file_folder: Files Checksum" | tee checksums-formatted.txt
+          echo \`\`\` | tee -a checksums-formatted.txt
+          cat checksums.txt | tee -a checksums-formatted.txt
+          echo \`\`\` | tee -a checksums-formatted.txt
 
       - name: Setup Minikube
         run: |
@@ -51,7 +55,7 @@ jobs:
         with:
           name: ${{ github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          body_path: ./checksums.txt
+          body_path: ./checksums-formatted.txt
           files: |
             kapp-*
             checksums.txt
