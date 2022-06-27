@@ -1,0 +1,6 @@
+apiVersion: kapp.k14s.io/v1alpha1
+kind: Config
+metadata:
+  name: irrelevant
+
+StripNameHashSuffix: true
