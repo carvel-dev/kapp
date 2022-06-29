@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestApplyRun(t *testing.T) {
+func TestDiffChangeYAML(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -31,7 +31,7 @@ metadata:
 data:
   hello_msg: hello
 `
-	name := "test-apply-run"
+	name := "test-changes-yaml"
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
 	}
@@ -40,7 +40,7 @@ data:
 	defer cleanUp()
 
 	logger.Section("creating an app with multiple resources", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-apply-run"},
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml"},
 			RunOpts{StdinReader: strings.NewReader(yaml)})
 		expectedOutput := `
 # add: configmap/simple-cm (v1) namespace: kapp-test
@@ -85,7 +85,7 @@ data:
 		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{StdinReader: strings.NewReader(yaml)})
 
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-apply-run"},
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml"},
 			RunOpts{StdinReader: strings.NewReader(yaml1)})
 		expectedOutput := `
 # update: configmap/simple-cm (v1) namespace: kapp-test
@@ -118,10 +118,10 @@ data:
   password: MWYyZDFlMmU2N2Rm
 `
 	logger.Section("remove configmap simple-cm and add a secret", func() {
-		// removing configmap config-cm1 and then re-deploy app using yaml2 with flag --diff-apply-run
+		// removing configmap config-cm1 and then re-deploy app using yaml2 with flag --diff-changes-yaml
 		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{StdinReader: strings.NewReader(yaml1)})
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-apply-run"},
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml"},
 			RunOpts{StdinReader: strings.NewReader(yaml2)})
 		expectedOutput := `
 # add: secret/mysecret (v1) namespace: kapp-test

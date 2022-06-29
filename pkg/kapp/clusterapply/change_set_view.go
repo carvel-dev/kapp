@@ -4,8 +4,6 @@
 package clusterapply
 
 import (
-	"fmt"
-
 	"github.com/cppforlife/color"
 	"github.com/cppforlife/go-cli-ui/ui"
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
@@ -60,40 +58,37 @@ func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI, conf ctlconf.Conf)
 		opAndResDesc := ""
 		switch op {
 		case ClusterChangeApplyOpNoop:
-			continue
+			// will do nothing
 		case ClusterChangeApplyOpDelete:
-			st, _ := view.ApplyStrategyOp()
-			if st == deleteStrategyPlainAnnValue {
+			strategy, _ := view.ApplyStrategyOp()
+			if strategy == deleteStrategyPlainAnnValue {
 				opAndResDesc = color.RedString("# %s: %s", view.ApplyOp(), view.Resource().Description())
 			} else {
-				opAndResDesc = color.RedString("# %s %s: %s", st, view.ApplyOp(), view.Resource().Description())
+				opAndResDesc = color.RedString("# %s %s: %s", strategy, view.ApplyOp(), view.Resource().Description())
 			}
 			ui.PrintBlock([]byte(opAndResDesc + "\n"))
-			continue
 		case ClusterChangeApplyOpExists:
 			opAndResDesc = color.GreenString("# %s: %s", view.ApplyOp(), view.Resource().Description())
 			ui.PrintBlock([]byte(opAndResDesc + color.GreenString(" => kapp will wait for this resource to be created\n")))
-			continue
 		default:
 			opAndResDesc = color.GreenString("# %s: %s", view.ApplyOp(), view.Resource().Description())
 			resMgd := ctlres.NewResourceWithManagedFields(view.Resource(), false)
 			res, err := resMgd.Resource()
 			if err != nil {
-				return fmt.Errorf("Error: [%s]", err.Error())
+				return err
 			}
 
-			maskedRes := diff.NewMaskedResource(res, conf.DiffMaskRules())
-			res, err = maskedRes.Resource()
+			res, err = diff.NewMaskedResource(res, conf.DiffMaskRules()).Resource()
 			if err != nil {
-				return fmt.Errorf("Error: [%s]", err.Error())
+				return err
 			}
 
-			by, err := res.AsYAMLBytes()
+			resYAML, err := res.AsYAMLBytes()
 			if err != nil {
-				return fmt.Errorf("Error: [%s]", err.Error())
+				return err
 			}
 
-			ui.PrintBlock([]byte(opAndResDesc + "\n" + "---\n" + string(by)))
+			ui.PrintBlock([]byte(opAndResDesc + "\n" + "---\n" + string(resYAML)))
 		}
 	}
 	return nil

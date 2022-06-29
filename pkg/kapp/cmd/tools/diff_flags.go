@@ -17,7 +17,7 @@ type DiffFlags struct {
 	Run        bool
 	ExitStatus bool
 	UI         bool
-	ChangeYaml bool
+	ChangeYAML bool
 }
 
 func (s *DiffFlags) SetWithPrefix(prefix string, cmd *cobra.Command) {
@@ -39,5 +39,5 @@ func (s *DiffFlags) SetWithPrefix(prefix string, cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&s.AgainstLastApplied, prefix+"against-last-applied", true, "Show changes against last applied copy when possible")
 
 	cmd.Flags().StringVar(&s.Filter, prefix+"filter", "", `Set changes filter (example: {"and":[{"ops":["update"]},{"existingResource":{"kinds":["Deployment"]}]})`)
-	cmd.Flags().BoolVar(&s.ChangeYaml, prefix+"apply-run", false, "Print YAML to be applied and exit.")
+	cmd.Flags().BoolVar(&s.ChangeYAML, prefix+"changes-yaml", false, "Print YAML to be applied.")
 }
