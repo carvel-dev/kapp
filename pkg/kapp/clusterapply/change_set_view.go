@@ -72,8 +72,7 @@ func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI, conf ctlconf.Conf)
 			ui.PrintBlock([]byte(opAndResDesc + color.GreenString(" => kapp will wait for this resource to be created\n")))
 		default:
 			opAndResDesc = color.GreenString("# %s: %s", view.ApplyOp(), view.Resource().Description())
-			resMgd := ctlres.NewResourceWithManagedFields(view.Resource(), false)
-			res, err := resMgd.Resource()
+			res, err := ctlres.NewResourceWithManagedFields(view.Resource(), false).Resource()
 			if err != nil {
 				return err
 			}
