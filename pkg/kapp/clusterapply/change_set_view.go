@@ -57,26 +57,25 @@ func (v *ChangeSetView) Summary() string {
 func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI, conf ctlconf.Conf) error {
 	for _, view := range v.changeViews {
 		op := view.ApplyOp()
-		opAndResDesc := ""
+		opAndResDesc := fmt.Sprintf("%s: %s", view.ApplyOp(), view.Resource().Description())
+		resYAML := ""
 		switch op {
 		case ClusterChangeApplyOpNoop:
-			// Do nothing
+			continue
 		case ClusterChangeApplyOpDelete:
 			strategy, err := view.ApplyStrategyOp()
 			if err != nil {
 				return err
 			}
 			if strategy == deleteStrategyPlainAnnValue {
-				opAndResDesc = color.RedString("# %s: %s", view.ApplyOp(), view.Resource().Description())
+				opAndResDesc = color.RedString("# %s", opAndResDesc)
 			} else {
-				opAndResDesc = color.RedString("# %s %s: %s", strategy, view.ApplyOp(), view.Resource().Description())
+				opAndResDesc = color.RedString("# %s %s", strategy, opAndResDesc)
 			}
-			ui.PrintBlock([]byte(opAndResDesc + "\n"))
 		case ClusterChangeApplyOpExists:
-			opAndResDesc = color.GreenString("# %s: %s", view.ApplyOp(), view.Resource().Description())
-			ui.PrintBlock([]byte(opAndResDesc + color.GreenString(" => kapp will wait for this resource to be created\n")))
+			opAndResDesc = color.GreenString("# %s", opAndResDesc)
 		default:
-			opAndResDesc = color.GreenString("# %s: %s", view.ApplyOp(), view.Resource().Description())
+			opAndResDesc = color.GreenString("# %s", opAndResDesc)
 			res, err := ctlres.NewResourceWithManagedFields(view.Resource(), false).Resource()
 			if err != nil {
 				return err
@@ -87,15 +86,17 @@ func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI, conf ctlconf.Conf)
 				return err
 			}
 
-			resYAML, err := res.AsYAMLBytes()
+			resBytes, err := res.AsYAMLBytes()
 			if err != nil {
 				return err
 			}
+			resYAML = string(resBytes)
 
-			ui.PrintBlock([]byte(fmt.Sprintf(`%s
----
-%s`, opAndResDesc, string(resYAML))))
 		}
+		ui.PrintBlock([]byte(fmt.Sprintf(`---
+%s
+%s
+`, opAndResDesc, string(resYAML))))
 	}
 	return nil
 }

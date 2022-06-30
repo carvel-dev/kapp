@@ -150,7 +150,7 @@ func clearKeys(fieldsExcludedInMatch []string, out string) string {
 		out = r.ReplaceAllString(out, "")
 	}
 
-	//removing all empty lines, extra tab or space
+	// removing all empty lines, extra tab or space
 	r1 := regexp.MustCompile(`[ ]*[\n\t]*\n`)
 	out = r1.ReplaceAllString(out, "\n")
 	r1 = regexp.MustCompile(`[\n]+`)
