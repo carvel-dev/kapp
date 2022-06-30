@@ -4,6 +4,8 @@
 package clusterapply
 
 import (
+	"fmt"
+
 	"github.com/cppforlife/color"
 	"github.com/cppforlife/go-cli-ui/ui"
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
@@ -58,9 +60,12 @@ func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI, conf ctlconf.Conf)
 		opAndResDesc := ""
 		switch op {
 		case ClusterChangeApplyOpNoop:
-			// will do nothing
+			// Do nothing
 		case ClusterChangeApplyOpDelete:
-			strategy, _ := view.ApplyStrategyOp()
+			strategy, err := view.ApplyStrategyOp()
+			if err != nil {
+				return err
+			}
 			if strategy == deleteStrategyPlainAnnValue {
 				opAndResDesc = color.RedString("# %s: %s", view.ApplyOp(), view.Resource().Description())
 			} else {
@@ -87,7 +92,9 @@ func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI, conf ctlconf.Conf)
 				return err
 			}
 
-			ui.PrintBlock([]byte(opAndResDesc + "\n" + "---\n" + string(resYAML)))
+			ui.PrintBlock([]byte(fmt.Sprintf(`%s
+---
+%s`, opAndResDesc, string(resYAML))))
 		}
 	}
 	return nil

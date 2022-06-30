@@ -435,7 +435,7 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 		changeSetView := ctlcap.NewChangeSetView(
 			changeViews, conf.DiffMaskRules(), o.DiffFlags.ChangeSetViewOpts)
 
-		if o.DiffFlags.ChangeYAML {
+		if o.DiffFlags.ChangesYAML {
 			changeSetView.PrintCompleteYamlToBeApplied(o.ui, conf)
 		}
 		changeSetView.Print(o.ui)

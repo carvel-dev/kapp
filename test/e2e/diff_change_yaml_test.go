@@ -118,7 +118,6 @@ data:
   password: MWYyZDFlMmU2N2Rm
 `
 	logger.Section("remove configmap simple-cm and add a secret", func() {
-		// removing configmap config-cm1 and then re-deploy app using yaml2 with flag --diff-changes-yaml
 		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{StdinReader: strings.NewReader(yaml1)})
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml"},
