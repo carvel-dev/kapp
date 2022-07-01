@@ -43,8 +43,8 @@ data:
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml"},
 			RunOpts{StdinReader: strings.NewReader(yaml)})
 		expectedOutput := `
-# add: configmap/simple-cm (v1) namespace: kapp-test
 ---
+# add: configmap/simple-cm (v1) namespace: kapp-test
 apiVersion: v1
 data:
   hello_msg: good-morning-bangalore
@@ -53,8 +53,8 @@ metadata:
   labels:
   name: simple-cm
   namespace: kapp-test
-# add: configmap/simple-cm1 (v1) namespace: kapp-test
 ---
+# add: configmap/simple-cm1 (v1) namespace: kapp-test
 apiVersion: v1
 data:
   hello_msg: hello
@@ -88,8 +88,8 @@ data:
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml"},
 			RunOpts{StdinReader: strings.NewReader(yaml1)})
 		expectedOutput := `
-# update: configmap/simple-cm (v1) namespace: kapp-test
 ---
+# update: configmap/simple-cm (v1) namespace: kapp-test
 apiVersion: v1
 data:
   hello_msg: good-morning
@@ -98,6 +98,7 @@ metadata:
   labels:
   name: simple-cm
   namespace: kapp-test
+---
 # delete: configmap/simple-cm1 (v1) namespace: kapp-test
 `
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
@@ -123,8 +124,8 @@ data:
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml"},
 			RunOpts{StdinReader: strings.NewReader(yaml2)})
 		expectedOutput := `
-# add: secret/mysecret (v1) namespace: kapp-test
 ---
+# add: secret/mysecret (v1) namespace: kapp-test
 apiVersion: v1
 data:
   password: <-- value not shown (#1)
@@ -134,6 +135,7 @@ metadata:
   labels:
   name: mysecret
   namespace: kapp-test
+---
 # delete: configmap/simple-cm (v1) namespace: kapp-test
 `
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
