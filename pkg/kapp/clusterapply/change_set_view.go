@@ -57,25 +57,30 @@ func (v *ChangeSetView) Summary() string {
 func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI, conf ctlconf.Conf) error {
 	for _, view := range v.changeViews {
 		op := view.ApplyOp()
-		opAndResDesc := fmt.Sprintf("%s: %s", view.ApplyOp(), view.Resource().Description())
 		resYAML := ""
+		opAndResDesc := fmt.Sprintf("# %s: %s", view.ApplyOp(), view.Resource().Description())
+		strategy, err := view.ApplyStrategyOp()
+		if err != nil {
+			return err
+		}
+
 		switch op {
 		case ClusterChangeApplyOpNoop:
 			continue
 		case ClusterChangeApplyOpDelete:
-			strategy, err := view.ApplyStrategyOp()
-			if err != nil {
-				return err
-			}
 			if strategy == deleteStrategyPlainAnnValue {
-				opAndResDesc = color.RedString("# %s", opAndResDesc)
+				opAndResDesc = color.RedString("%s", opAndResDesc)
 			} else {
-				opAndResDesc = color.RedString("# %s %s", strategy, opAndResDesc)
+				opAndResDesc = color.RedString("%s (strategy: %s)", opAndResDesc, strategy)
 			}
 		case ClusterChangeApplyOpExists:
-			opAndResDesc = color.GreenString("# %s", opAndResDesc)
+			opAndResDesc = color.GreenString("%s", opAndResDesc)
 		default:
-			opAndResDesc = color.GreenString("# %s", opAndResDesc)
+			if strategy != "" {
+				opAndResDesc = color.RedString("%s (strategy: %s)", opAndResDesc, strategy)
+			} else {
+				opAndResDesc = color.GreenString("%s", opAndResDesc)
+			}
 			res, err := ctlres.NewResourceWithManagedFields(view.Resource(), false).Resource()
 			if err != nil {
 				return err

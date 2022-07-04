@@ -235,6 +235,10 @@ func (o *DeleteOptions) calculateAndPresentChanges(existingResources []ctlres.Re
 		changeViews := ctlcap.ClusterChangesAsChangeViews(clusterChanges)
 		changeSetView := ctlcap.NewChangeSetView(
 			changeViews, conf.DiffMaskRules(), o.DiffFlags.ChangeSetViewOpts)
+
+		if o.DiffFlags.ChangesYAML {
+			changeSetView.PrintCompleteYamlToBeApplied(o.ui, conf)
+		}
 		changeSetView.Print(o.ui)
 	}
 
