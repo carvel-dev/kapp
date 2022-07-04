@@ -15,8 +15,9 @@ import (
 )
 
 type ChangeSetViewOpts struct {
-	Summary bool
-	Changes bool
+	Summary     bool
+	Changes     bool
+	ChangesYAML bool
 	ctldiff.TextDiffViewOpts
 }
 
@@ -35,6 +36,9 @@ func NewChangeSetView(changeViews []ChangeView,
 }
 
 func (v *ChangeSetView) Print(ui ui.UI) {
+	if v.opts.ChangesYAML {
+		v.printChangesYAML(ui)
+	}
 	if v.opts.Changes {
 		for _, view := range v.changeViews {
 			textDiffView := ctldiff.NewTextDiffView(view.ConfigurableTextDiff(), v.maskRules, v.opts.TextDiffViewOpts)
@@ -54,7 +58,7 @@ func (v *ChangeSetView) Summary() string {
 	return v.changesView.Summary() // assumes Print was used before
 }
 
-func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI, conf ctlconf.Conf) error {
+func (v ChangeSetView) printChangesYAML(ui ui.UI) error {
 	for _, view := range v.changeViews {
 		op := view.ApplyOp()
 		resYAML := ""
@@ -69,24 +73,24 @@ func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI, conf ctlconf.Conf)
 			continue
 		case ClusterChangeApplyOpDelete:
 			if strategy == deleteStrategyPlainAnnValue {
-				opAndResDesc = color.RedString("%s", opAndResDesc)
+				opAndResDesc = color.RedString(opAndResDesc)
 			} else {
 				opAndResDesc = color.RedString("%s (strategy: %s)", opAndResDesc, strategy)
 			}
 		case ClusterChangeApplyOpExists:
-			opAndResDesc = color.GreenString("%s", opAndResDesc)
+			opAndResDesc = color.GreenString(opAndResDesc)
 		default:
-			if strategy != "" {
-				opAndResDesc = color.RedString("%s (strategy: %s)", opAndResDesc, strategy)
+			if strategy != createStrategyPlainAnnValue && strategy != updateStrategyPlainAnnValue {
+				opAndResDesc = color.GreenString("%s (strategy: %s)", opAndResDesc, strategy)
 			} else {
-				opAndResDesc = color.GreenString("%s", opAndResDesc)
+				opAndResDesc = color.GreenString(opAndResDesc)
 			}
 			res, err := ctlres.NewResourceWithManagedFields(view.Resource(), false).Resource()
 			if err != nil {
 				return err
 			}
 
-			res, err = diff.NewMaskedResource(res, conf.DiffMaskRules()).Resource()
+			res, err = diff.NewMaskedResource(res, v.maskRules).Resource()
 			if err != nil {
 				return err
 			}
@@ -96,12 +100,11 @@ func (v ChangeSetView) PrintCompleteYamlToBeApplied(ui ui.UI, conf ctlconf.Conf)
 				return err
 			}
 			resYAML = string(resBytes)
-
 		}
 		ui.PrintBlock([]byte(fmt.Sprintf(`---
 %s
 %s
-`, opAndResDesc, string(resYAML))))
+`, opAndResDesc, resYAML)))
 	}
 	return nil
 }

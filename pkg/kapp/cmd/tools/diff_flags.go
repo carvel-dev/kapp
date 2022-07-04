@@ -14,10 +14,9 @@ type DiffFlags struct {
 	ctldiff.ChangeSetOpts
 	ctldiff.ChangeSetFilter
 
-	Run         bool
-	ExitStatus  bool
-	UI          bool
-	ChangesYAML bool
+	Run        bool
+	ExitStatus bool
+	UI         bool
 }
 
 func (s *DiffFlags) SetWithPrefix(prefix string, cmd *cobra.Command) {
