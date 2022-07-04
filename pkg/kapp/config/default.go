@@ -48,6 +48,11 @@ rebaseRules:
   resourceMatchers:
   - allMatcher: {}
 
+- path: [status]
+  type: remove
+  resourceMatchers:
+  - allMatcher: {}
+
 # Prefer user provided, but allow cluster set
 - paths:
   - [spec, clusterIP]

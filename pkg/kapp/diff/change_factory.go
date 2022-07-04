@@ -4,6 +4,8 @@
 package diff
 
 import (
+	"fmt"
+
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
@@ -23,14 +25,23 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Re
 	// Retain original copy of existing resource and use it
 	// for rebasing last applied resource and new resource.
 	existingResForRebasing := existingRes
-
+	tmpRmod := f.rebaseMods
+	var rMod []ctlres.ResourceModWithMultiple
+	for _, mod := range f.rebaseMods {
+		if m, ok := mod.(ctlres.FieldRemoveMod); ok && m.Path.AsString() == "status" {
+			fmt.Printf("Mod status: [%+v], %s\n", m, m.Path.AsString())
+			continue
+		}
+		rMod = append(rMod, mod)
+	}
+	f.rebaseMods = rMod
 	if existingRes != nil {
 		// If we have copy of last applied resource (assuming it's still "valid"),
 		// use it as an existing resource to provide "smart" diff instead of
 		// diffing against resource that is actually stored on cluster.
 		lastAppliedRes := f.NewResourceWithHistory(existingRes).LastAppliedResource()
 		if lastAppliedRes != nil {
-			rebasedLastAppliedRes, err := NewRebasedResource(existingResForRebasing, lastAppliedRes, f.rebaseMods).Resource()
+			rebasedLastAppliedRes, err := NewRebasedResource(existingResForRebasing, lastAppliedRes, rMod).Resource()
 			if err != nil {
 				return nil, err
 			}
@@ -44,7 +55,7 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Re
 
 		existingRes = historylessExistingRes
 	}
-
+	f.rebaseMods = tmpRmod
 	if newRes != nil {
 		historylessNewRes, err := f.NewResourceWithHistory(newRes).HistorylessResource()
 		if err != nil {
@@ -59,7 +70,14 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Re
 		return nil, err
 	}
 
-	rebasedExistingRes, rebasedNewRes, err := f.NewResourceWithDroppedFields(existingRes, rebasedNewRes)
+	rebasedExistingRes, err := NewRebasedResource(rebasedNewRes, existingRes, f.rebaseMods).Resource()
+	if err != nil {
+		return nil, err
+	}
+	// rebasedExistingRes, rebasedNewRes, err := f.NewResourceWithDroppedFields(existingRes, rebasedNewRes)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return NewChange(existingRes, rebasedNewRes, newRes, rebasedExistingRes), nil
 }
