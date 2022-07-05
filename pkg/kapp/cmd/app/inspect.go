@@ -12,6 +12,7 @@ import (
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
 	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/k14s/kapp/pkg/kapp/resources"
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
 )
 
@@ -94,7 +95,7 @@ func (o *InspectOptions) Run() error {
 			if err != nil {
 				return err
 			}
-			resManagedFields, err := NewResourceWithManagedFields(historylessRes, o.ManagedFields).Resource()
+			resManagedFields, err := ctlres.NewResourceWithManagedFields(historylessRes, o.ManagedFields).Resource()
 			if err != nil {
 				return err
 			}

@@ -4,14 +4,20 @@
 package clusterapply
 
 import (
+	"fmt"
+
+	"github.com/cppforlife/color"
 	"github.com/cppforlife/go-cli-ui/ui"
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
+	"github.com/k14s/kapp/pkg/kapp/diff"
 	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 )
 
 type ChangeSetViewOpts struct {
-	Summary bool
-	Changes bool
+	Summary     bool
+	Changes     bool
+	ChangesYAML bool
 	ctldiff.TextDiffViewOpts
 }
 
@@ -30,6 +36,9 @@ func NewChangeSetView(changeViews []ChangeView,
 }
 
 func (v *ChangeSetView) Print(ui ui.UI) {
+	if v.opts.ChangesYAML {
+		v.printChangesYAML(ui)
+	}
 	if v.opts.Changes {
 		for _, view := range v.changeViews {
 			textDiffView := ctldiff.NewTextDiffView(view.ConfigurableTextDiff(), v.maskRules, v.opts.TextDiffViewOpts)
@@ -47,4 +56,52 @@ func (v *ChangeSetView) Print(ui ui.UI) {
 
 func (v *ChangeSetView) Summary() string {
 	return v.changesView.Summary() // assumes Print was used before
+}
+
+func (v ChangeSetView) printChangesYAML(ui ui.UI) error {
+	for _, view := range v.changeViews {
+		resYAML := ""
+		opAndResDesc := fmt.Sprintf("# %s: %s", applyOpCodeUI[view.ApplyOp()], view.Resource().Description())
+		strategy, err := view.ApplyStrategyOp()
+		if err != nil {
+			return err
+		}
+		if strategy != "" {
+			opAndResDesc = fmt.Sprintf("%s (strategy: %s)", opAndResDesc, strategy)
+		}
+
+		switch view.ApplyOp() {
+		case ClusterChangeApplyOpNoop:
+			continue
+
+		case ClusterChangeApplyOpDelete:
+			opAndResDesc = color.RedString(opAndResDesc)
+
+		case ClusterChangeApplyOpExists:
+			opAndResDesc = color.GreenString(opAndResDesc)
+
+		default:
+			opAndResDesc = color.GreenString(opAndResDesc)
+			res, err := ctlres.NewResourceWithManagedFields(view.Resource(), false).Resource()
+			if err != nil {
+				return err
+			}
+
+			res, err = diff.NewMaskedResource(res, v.maskRules).Resource()
+			if err != nil {
+				return err
+			}
+
+			resBytes, err := res.AsYAMLBytes()
+			if err != nil {
+				return err
+			}
+			resYAML = string(resBytes)
+		}
+		ui.PrintBlock([]byte(fmt.Sprintf(`---
+%s
+%s
+`, opAndResDesc, resYAML)))
+	}
+	return nil
 }
