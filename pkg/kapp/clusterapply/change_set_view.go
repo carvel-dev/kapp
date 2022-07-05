@@ -66,24 +66,22 @@ func (v ChangeSetView) printChangesYAML(ui ui.UI) error {
 		if err != nil {
 			return err
 		}
+		if strategy != "" {
+			opAndResDesc = fmt.Sprintf("%s (strategy: %s)", opAndResDesc, strategy)
+		}
 
 		switch view.ApplyOp() {
 		case ClusterChangeApplyOpNoop:
 			continue
+
 		case ClusterChangeApplyOpDelete:
-			if strategy == deleteStrategyPlainAnnValue {
-				opAndResDesc = color.RedString(opAndResDesc)
-			} else {
-				opAndResDesc = color.RedString("%s (strategy: %s)", opAndResDesc, strategy)
-			}
+			opAndResDesc = color.RedString(opAndResDesc)
+
 		case ClusterChangeApplyOpExists:
 			opAndResDesc = color.GreenString(opAndResDesc)
+
 		default:
-			if strategy != createStrategyPlainAnnValue && strategy != updateStrategyPlainAnnValue {
-				opAndResDesc = color.GreenString("%s (strategy: %s)", opAndResDesc, strategy)
-			} else {
-				opAndResDesc = color.GreenString(opAndResDesc)
-			}
+			opAndResDesc = color.GreenString(opAndResDesc)
 			res, err := ctlres.NewResourceWithManagedFields(view.Resource(), false).Resource()
 			if err != nil {
 				return err
