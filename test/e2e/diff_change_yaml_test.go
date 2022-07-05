@@ -45,7 +45,7 @@ data:
 			RunOpts{StdinReader: strings.NewReader(yaml)})
 		expectedOutput := `
 ---
-# add: configmap/simple-cm (v1) namespace: kapp-test
+# create: configmap/simple-cm (v1) namespace: kapp-test
 apiVersion: v1
 data:
   hello_msg: good-morning-bangalore
@@ -55,7 +55,7 @@ metadata:
   name: simple-cm
   namespace: kapp-test
 ---
-# add: configmap/simple-cm1 (v1) namespace: kapp-test
+# create: configmap/simple-cm1 (v1) namespace: kapp-test
 apiVersion: v1
 data:
   hello_msg: hello
@@ -126,7 +126,7 @@ data:
 			RunOpts{StdinReader: strings.NewReader(yaml2)})
 		expectedOutput := `
 ---
-# add: secret/mysecret (v1) namespace: kapp-test
+# create: secret/mysecret (v1) namespace: kapp-test
 apiVersion: v1
 data:
   password: <-- value not shown (#1)

@@ -60,15 +60,14 @@ func (v *ChangeSetView) Summary() string {
 
 func (v ChangeSetView) printChangesYAML(ui ui.UI) error {
 	for _, view := range v.changeViews {
-		op := view.ApplyOp()
 		resYAML := ""
-		opAndResDesc := fmt.Sprintf("# %s: %s", view.ApplyOp(), view.Resource().Description())
+		opAndResDesc := fmt.Sprintf("# %s: %s", applyOpCodeUI[view.ApplyOp()], view.Resource().Description())
 		strategy, err := view.ApplyStrategyOp()
 		if err != nil {
 			return err
 		}
 
-		switch op {
+		switch view.ApplyOp() {
 		case ClusterChangeApplyOpNoop:
 			continue
 		case ClusterChangeApplyOpDelete:
