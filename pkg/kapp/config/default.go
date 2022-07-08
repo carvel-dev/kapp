@@ -515,6 +515,10 @@ changeGroupBindings:
   # delay other resources with load balancer provisioning
   # - apiVersionKindMatcher: {kind: Service, apiVersion: v1}
 
+- name: change-groups.kapp.k14s.io/serviceaccount
+  resourceMatchers: &svcAcctRelatedMatchers
+  - apiVersionKindMatcher : {kind: ServiceAccount, apiVersion: v1}
+
 changeRuleBindings:
 # Insert CRDs before all CRs
 - rules:
@@ -581,6 +585,18 @@ changeRuleBindings:
       - anyMatcher: {matchers: *rbacRoleBindingMatchers}
       - notMatcher:
           matcher: *disableDefaultChangeGroupAnnMatcher
+
+# delete packageInstall/app (kctrl app CR) before service account
+- rules:
+  - "delete before deleting change-groups.kapp.k14s.io/serviceaccount"
+  resourceMatchers:
+  - apiVersionKindMatcher: {kind: App, apiVersion: kappctrl.k14s.io/v1alpha1}
+
+# delete packageInstall/app (kctrl app CR) before RBAC
+- rules:
+  - "delete before deleting change-groups.kapp.k14s.io/rbac"
+  resourceMatchers:
+  - apiVersionKindMatcher: {kind: App, apiVersion: kappctrl.k14s.io/v1alpha1}
 
 - rules:
   - "upsert after upserting change-groups.kapp.k14s.io/storage-class"
