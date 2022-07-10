@@ -7,13 +7,13 @@ components:
 configMapGenerator:
   - name: config-map
     literals:
-      - foo=foo
+      - foo=bal
     options:
       annotations:
         kapp.k14s.io/num-versions: "1"
   - name: versioned-cm
     literals:
-      - trulla=troet
+      - trulla=schnuerschuh
     options:
       disableNameSuffixHash: true
       annotations:
