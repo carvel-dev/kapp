@@ -4,8 +4,10 @@
 package diffgraph_test
 
 import (
+	"io/ioutil"
 	"strings"
 	"testing"
+	"time"
 
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
@@ -587,6 +589,42 @@ roleRef:
 (upsert) clusterrolebinding/test-rbac-cluster-role-binding (rbac.authorization.k8s.io/v1) cluster
   (upsert) clusterrole/test-rbac-cluster-role (rbac.authorization.k8s.io/v1) cluster
 `)
+	require.Equal(t, expectedOutput, output)
+}
+
+func TestAppCRSvcAccntRBACDelete(t *testing.T) {
+	configYAML, err := ioutil.ReadFile("assets/appcr-rbac-svcaccnt.yaml")
+	require.NoErrorf(t, err, "Reading appcr-rbac-svcaccnt asset")
+
+	configRs, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(configYAML))).Resources()
+	require.NoErrorf(t, err, "Parsing resources")
+
+	rs, conf, err := ctlconf.NewConfFromResourcesWithDefaults(configRs)
+	require.NoErrorf(t, err, "Parsing conf defaults")
+
+	opts := buildGraphOpts{
+		resources:           rs,
+		op:                  ctldgraph.ActualChangeOpDelete,
+		changeGroupBindings: conf.ChangeGroupBindings(),
+		changeRuleBindings:  conf.ChangeRuleBindings(),
+	}
+
+	t1 := time.Now()
+
+	graph, err := buildChangeGraphWithOpts(opts, t)
+	require.NoErrorf(t, err, "Expected graph to build")
+
+	require.Less(t, time.Now().Sub(t1), time.Duration(1*time.Second), "Graph build took too long")
+
+	output := strings.TrimSpace(graph.PrintLinearizedStr())
+	expectedOutput := strings.TrimSpace(`
+(delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
+---
+(delete) serviceaccount/default-ns-sa (v1) namespace: default
+(delete) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
+(delete) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: default
+`)
+
 	require.Equal(t, expectedOutput, output)
 }
 
