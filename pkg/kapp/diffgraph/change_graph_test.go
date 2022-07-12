@@ -624,7 +624,6 @@ func TestAppCRSvcAccntRBACDelete(t *testing.T) {
 (delete) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
 (delete) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: default
 `)
-
 	require.Equal(t, expectedOutput, output)
 }
 
