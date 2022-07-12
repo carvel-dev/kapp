@@ -4,7 +4,6 @@
 package diffgraph_test
 
 import (
-	"io/ioutil"
 	"strings"
 	"testing"
 	"time"
@@ -592,18 +591,87 @@ roleRef:
 	require.Equal(t, expectedOutput, output)
 }
 
-func TestAppCRSvcAccntRBACDelete(t *testing.T) {
-	configYAML, err := ioutil.ReadFile("assets/appcr-rbac-svcaccnt.yaml")
-	require.NoErrorf(t, err, "Reading appcr-rbac-svcaccnt asset")
+const appCRSvcAccntRBACYaml = `
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default-ns-sa
+  namespace: default
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: default-ns-role
+  namespace: default
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: default-ns-role-binding
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: default-ns-sa
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: default-ns-role
+---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: simple-app-cr
+  namespace: default
+spec:
+  serviceAccountName: default-ns-sa
+  fetch:
+  - git: {}
+  template:
+  - ytt: {}
+  deploy:
+  - kapp: {}
+  `
 
-	configRs, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(configYAML))).Resources()
-	require.NoErrorf(t, err, "Parsing resources")
-
-	rs, conf, err := ctlconf.NewConfFromResourcesWithDefaults(configRs)
+func Test_AppCRSvcAccntRBACUpsert(t *testing.T) {
+	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
 	require.NoErrorf(t, err, "Parsing conf defaults")
 
 	opts := buildGraphOpts{
-		resources:           rs,
+		resourcesBs:         appCRSvcAccntRBACYaml,
+		op:                  ctldgraph.ActualChangeOpUpsert,
+		changeGroupBindings: conf.ChangeGroupBindings(),
+		changeRuleBindings:  conf.ChangeRuleBindings(),
+	}
+
+	t1 := time.Now()
+
+	graph, err := buildChangeGraphWithOpts(opts, t)
+	require.NoErrorf(t, err, "Expected graph to build")
+
+	require.Less(t, time.Now().Sub(t1), time.Duration(1*time.Second), "Graph build took too long")
+
+	output := strings.TrimSpace(graph.PrintLinearizedStr())
+	expectedOutput := strings.TrimSpace(`
+(upsert) serviceaccount/default-ns-sa (v1) namespace: default
+(upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
+---
+(upsert) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: default
+---
+(upsert) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
+`)
+	require.Equal(t, expectedOutput, output)
+}
+func Test_AppCRSvcAccntRBACDelete(t *testing.T) {
+	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
+	require.NoErrorf(t, err, "Parsing conf defaults")
+
+	opts := buildGraphOpts{
+		resourcesBs:         appCRSvcAccntRBACYaml,
 		op:                  ctldgraph.ActualChangeOpDelete,
 		changeGroupBindings: conf.ChangeGroupBindings(),
 		changeRuleBindings:  conf.ChangeRuleBindings(),
