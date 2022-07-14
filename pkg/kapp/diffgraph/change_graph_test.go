@@ -6,7 +6,6 @@ package diffgraph_test
 import (
 	"strings"
 	"testing"
-	"time"
 
 	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
 	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
@@ -591,7 +590,8 @@ roleRef:
 	require.Equal(t, expectedOutput, output)
 }
 
-const appCRSvcAccntRBACYaml = `
+func TestChangeGraphWithAppCR_SA_RoleAndRoleBinding(t *testing.T) {
+	appCRSvcAccntRBACYaml := `
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -636,8 +636,6 @@ spec:
   deploy:
   - kapp: {}
   `
-
-func Test_AppCRSvcAccntRBACUpsert(t *testing.T) {
 	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
 	require.NoErrorf(t, err, "Parsing conf defaults")
 
@@ -648,49 +646,36 @@ func Test_AppCRSvcAccntRBACUpsert(t *testing.T) {
 		changeRuleBindings:  conf.ChangeRuleBindings(),
 	}
 
-	t1 := time.Now()
-
 	graph, err := buildChangeGraphWithOpts(opts, t)
 	require.NoErrorf(t, err, "Expected graph to build")
 
-	require.Less(t, time.Now().Sub(t1), time.Duration(1*time.Second), "Graph build took too long")
-
-	output := strings.TrimSpace(graph.PrintLinearizedStr())
+	output := strings.TrimSpace(graph.PrintStr())
 	expectedOutput := strings.TrimSpace(`
 (upsert) serviceaccount/default-ns-sa (v1) namespace: default
 (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
----
 (upsert) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: default
----
+  (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
 (upsert) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
+  (upsert) serviceaccount/default-ns-sa (v1) namespace: default
+  (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
+  (upsert) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: default
+    (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
 `)
 	require.Equal(t, expectedOutput, output)
-}
-func Test_AppCRSvcAccntRBACDelete(t *testing.T) {
-	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
-	require.NoErrorf(t, err, "Parsing conf defaults")
 
-	opts := buildGraphOpts{
-		resourcesBs:         appCRSvcAccntRBACYaml,
-		op:                  ctldgraph.ActualChangeOpDelete,
-		changeGroupBindings: conf.ChangeGroupBindings(),
-		changeRuleBindings:  conf.ChangeRuleBindings(),
-	}
-
-	t1 := time.Now()
-
-	graph, err := buildChangeGraphWithOpts(opts, t)
+	opts.op = ctldgraph.ActualChangeOpDelete
+	graph, err = buildChangeGraphWithOpts(opts, t)
 	require.NoErrorf(t, err, "Expected graph to build")
 
-	require.Less(t, time.Now().Sub(t1), time.Duration(1*time.Second), "Graph build took too long")
-
-	output := strings.TrimSpace(graph.PrintLinearizedStr())
-	expectedOutput := strings.TrimSpace(`
-(delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
----
+	output = strings.TrimSpace(graph.PrintStr())
+	expectedOutput = strings.TrimSpace(`
 (delete) serviceaccount/default-ns-sa (v1) namespace: default
+  (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
 (delete) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
+  (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
 (delete) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: default
+  (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
+(delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
 `)
 	require.Equal(t, expectedOutput, output)
 }
