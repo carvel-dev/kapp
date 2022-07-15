@@ -635,7 +635,30 @@ spec:
   - ytt: {}
   deploy:
   - kapp: {}
-  `
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  name: pkg-demo
+spec:
+  serviceAccountName: default-ns-sa
+  packageRef:
+    refName: simple-app.corp.com
+    versionSelection:
+      constraints: 1.0.0
+  values:
+  - secretRef:
+      name: pkg-demo-values
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pkg-demo-values
+stringData:
+  values.yml: |
+    ---
+    hello_msg: "to all my internet friends"
+`
 	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
 	require.NoErrorf(t, err, "Parsing conf defaults")
 
@@ -651,15 +674,18 @@ spec:
 
 	output := strings.TrimSpace(graph.PrintStr())
 	expectedOutput := strings.TrimSpace(`
-(upsert) serviceaccount/default-ns-sa (v1) namespace: default
+  (upsert) serviceaccount/default-ns-sa (v1) namespace: default
 (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
 (upsert) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: default
   (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
 (upsert) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
   (upsert) serviceaccount/default-ns-sa (v1) namespace: default
+  (upsert) secret/pkg-demo-values (v1) cluster
   (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
   (upsert) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: default
     (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
+(upsert) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) cluster
+(upsert) secret/pkg-demo-values (v1) cluster
 `)
 	require.Equal(t, expectedOutput, output)
 
@@ -669,13 +695,15 @@ spec:
 
 	output = strings.TrimSpace(graph.PrintStr())
 	expectedOutput = strings.TrimSpace(`
-(delete) serviceaccount/default-ns-sa (v1) namespace: default
+ (delete) serviceaccount/default-ns-sa (v1) namespace: default
   (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
 (delete) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
   (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
 (delete) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: default
   (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
 (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
+(delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) cluster
+(delete) secret/pkg-demo-values (v1) cluster
 `)
 	require.Equal(t, expectedOutput, output)
 }
