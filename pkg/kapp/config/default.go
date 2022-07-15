@@ -516,7 +516,7 @@ changeGroupBindings:
   # - apiVersionKindMatcher: {kind: Service, apiVersion: v1}
 
 - name: change-groups.kapp.k14s.io/serviceaccount
-  resourceMatchers: &serviceAccountRelatedMatchers
+  resourceMatchers: &serviceAccountMatchers
   - apiVersionKindMatcher : {kind: ServiceAccount, apiVersion: v1}
 
 changeRuleBindings:
