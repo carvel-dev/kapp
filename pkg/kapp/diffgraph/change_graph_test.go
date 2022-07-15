@@ -590,7 +590,7 @@ roleRef:
 	require.Equal(t, expectedOutput, output)
 }
 
-func TestChangeGraphWithAppCR_SA_RoleAndRoleBinding(t *testing.T) {
+func TestChangeGraphWithAppCR_RoleRoleBindingAndSA(t *testing.T) {
 	appCRSvcAccntRBACYaml := `
 apiVersion: v1
 kind: ServiceAccount

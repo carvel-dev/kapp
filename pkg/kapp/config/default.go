@@ -516,7 +516,7 @@ changeGroupBindings:
   # - apiVersionKindMatcher: {kind: Service, apiVersion: v1}
 
 - name: change-groups.kapp.k14s.io/serviceaccount
-  resourceMatchers: &svcAcctRelatedMatchers
+  resourceMatchers: &serviceAccountRelatedMatchers
   - apiVersionKindMatcher : {kind: ServiceAccount, apiVersion: v1}
 
 changeRuleBindings:
@@ -586,13 +586,11 @@ changeRuleBindings:
       - notMatcher:
           matcher: *disableDefaultChangeGroupAnnMatcher
 
-# delete packageInstall/app (kapp-controller App CR) before service account
 - rules:
   - "delete before deleting change-groups.kapp.k14s.io/serviceaccount"
   resourceMatchers:
   - apiVersionKindMatcher: {kind: App, apiVersion: kappctrl.k14s.io/v1alpha1}
 
-# delete packageInstall/app (kapp-controller App CR) before RBAC
 - rules:
   - "delete before deleting change-groups.kapp.k14s.io/rbac"
   resourceMatchers:
