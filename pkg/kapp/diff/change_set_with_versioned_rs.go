@@ -121,14 +121,15 @@ func (d ChangeSetWithVersionedRs) assignNewNames(
 
 func (d ChangeSetWithVersionedRs) addAndKeepChanges(
 	newRs versionedResources, existingRsGrouped map[string][]ctlres.Resource) (
-	[]Change, map[string]ctlres.Resource, error) {
+	[]Change, map[string]Change, error) {
 
 	changes := []Change{}
-	alreadyAdded := map[string]ctlres.Resource{}
+	alreadyAdded := map[string]Change{}
 
 	for _, newRes := range newRs.Versioned {
 		newResKey := d.versionedResourceName(newRes).UniqVersionedKey().String()
 		usedRes := newRes
+		var change Change
 
 		if existingRs, found := existingRsGrouped[newResKey]; found {
 			existingRes := existingRs[len(existingRs)-1]
@@ -141,21 +142,23 @@ func (d ChangeSetWithVersionedRs) addAndKeepChanges(
 
 			switch updateChange.Op() {
 			case ChangeOpUpdate:
-				changes = append(changes, d.newAddChangeFromUpdateChange(newRes, updateChange))
+				change = d.newAddChangeFromUpdateChange(newRes, updateChange)
+				changes = append(changes, change)
 			case ChangeOpKeep:
 				// Use latest copy of resource to update affected resources
 				usedRes = existingRes
-				changes = append(changes, d.newKeepChange(existingRes))
+				change = d.newKeepChange(existingRes)
+				changes = append(changes, change)
 			default:
 				panic(fmt.Sprintf("Unexpected change op %s", updateChange.Op()))
 			}
 		} else {
 			// Since there no existing resource, create change for new resource
-			addChange, err := d.newChange(nil, newRes)
+			change, err := d.newChange(nil, newRes)
 			if err != nil {
 				return nil, nil, err
 			}
-			changes = append(changes, addChange)
+			changes = append(changes, change)
 		}
 
 		// Update both versioned and non-versioned
@@ -171,7 +174,7 @@ func (d ChangeSetWithVersionedRs) addAndKeepChanges(
 			return nil, nil, err
 		}
 
-		alreadyAdded[newResKey] = newRes
+		alreadyAdded[newResKey] = change
 	}
 
 	return changes, alreadyAdded, nil
@@ -186,7 +189,7 @@ func (d ChangeSetWithVersionedRs) newAddChangeFromUpdateChange(
 
 func (d ChangeSetWithVersionedRs) noopAndDeleteChanges(
 	existingRsGrouped map[string][]ctlres.Resource,
-	alreadyAdded map[string]ctlres.Resource) ([]Change, error) {
+	alreadyAdded map[string]Change) ([]Change, error) {
 
 	changes := []Change{}
 
@@ -194,9 +197,9 @@ func (d ChangeSetWithVersionedRs) noopAndDeleteChanges(
 	for existingResKey, existingRs := range existingRsGrouped {
 		numToKeep := 0
 
-		if newRes, found := alreadyAdded[existingResKey]; found {
+		if change, found := alreadyAdded[existingResKey]; found {
 			var err error
-			numToKeep, err = d.numOfResourcesToKeep(newRes)
+			numToKeep, err = d.numOfResourcesToKeep(change)
 			if err != nil {
 				return nil, err
 			}
@@ -231,9 +234,10 @@ func (d ChangeSetWithVersionedRs) newNoopChange(existingRes ctlres.Resource) Cha
 	return NewChangePrecalculated(existingRes, nil, nil, ChangeOpNoop, nil, OpsDiff{})
 }
 
-func (d ChangeSetWithVersionedRs) numOfResourcesToKeep(res ctlres.Resource) (int, error) {
-	// TODO get rid of arbitrary cut off
-	numToKeep := 5
+func (d ChangeSetWithVersionedRs) numOfResourcesToKeep(change Change) (int, error) {
+	res := change.NewOrExistingResource()
+	versionedRes := d.versionedResourceName(res)
+	var numToKeep int
 
 	if numToKeepAnn, found := res.Annotations()[versionedResNumVersAnnKey]; found {
 		var err error
@@ -244,9 +248,14 @@ func (d ChangeSetWithVersionedRs) numOfResourcesToKeep(res ctlres.Resource) (int
 		if numToKeep < 1 {
 			return 0, fmt.Errorf("Expected annotation '%s' value to be a >= 1", versionedResNumVersAnnKey)
 		}
-	} else if !d.versionedResourceName(res).IsTracked() {
-		numToKeep = 0
+	} else if versionedRes.IsVersioned() && !versionedRes.IsTracked() {
+		if change.Op() == ChangeOpKeep {
+			numToKeep = 1
+		} else {
+			numToKeep = 0
+		}
 	} else {
+		// TODO get rid of arbitrary cut off
 		numToKeep = 5
 	}
 
