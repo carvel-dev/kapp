@@ -16,7 +16,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.27.0
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
+	golang.org/x/net v0.0.0-20211209124913-491a49abca63
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.22.1 // kubernetes-1.22.1
 	k8s.io/apimachinery v0.22.1 // kubernetes-1.22.1
