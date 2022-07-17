@@ -231,7 +231,7 @@ func (d ChangeSetWithVersionedRs) newNoopChange(existingRes ctlres.Resource) Cha
 	return NewChangePrecalculated(existingRes, nil, nil, ChangeOpNoop, nil, OpsDiff{})
 }
 
-func (ChangeSetWithVersionedRs) numOfResourcesToKeep(res ctlres.Resource) (int, error) {
+func (d ChangeSetWithVersionedRs) numOfResourcesToKeep(res ctlres.Resource) (int, error) {
 	// TODO get rid of arbitrary cut off
 	numToKeep := 5
 
@@ -244,6 +244,8 @@ func (ChangeSetWithVersionedRs) numOfResourcesToKeep(res ctlres.Resource) (int, 
 		if numToKeep < 1 {
 			return 0, fmt.Errorf("Expected annotation '%s' value to be a >= 1", versionedResNumVersAnnKey)
 		}
+	} else if !d.versionedResourceName(res).IsTracked() {
+		numToKeep = 0
 	} else {
 		numToKeep = 5
 	}

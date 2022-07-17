@@ -3,19 +3,7 @@ data:
   foo: bal
 kind: ConfigMap
 metadata:
-  annotations:
-    kapp.k14s.io/num-versions: "1"
   name: config-map-5bghbfbdc8
----
-apiVersion: v1
-data:
-  trulla: schnuerschuh
-kind: ConfigMap
-metadata:
-  annotations:
-    kapp.k14s.io/num-versions: "1"
-    kapp.k14s.io/versioned: ""
-  name: versioned-cm
 ---
 StripNameHashSuffix: true
 apiVersion: kapp.k14s.io/v1alpha1

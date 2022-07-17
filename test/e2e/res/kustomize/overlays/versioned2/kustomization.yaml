@@ -8,14 +8,3 @@ configMapGenerator:
   - name: config-map
     literals:
       - foo=bar
-    options:
-      annotations:
-        kapp.k14s.io/num-versions: "1"
-  - name: versioned-cm
-    literals:
-      - trulla=erna
-    options:
-      disableNameSuffixHash: true
-      annotations:
-        kapp.k14s.io/versioned: ""
-        kapp.k14s.io/num-versions: "1"

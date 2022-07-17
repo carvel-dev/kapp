@@ -3,19 +3,7 @@ data:
   foo: foo
 kind: ConfigMap
 metadata:
-  annotations:
-    kapp.k14s.io/num-versions: "1"
   name: config-map-7tgk8db28b
----
-apiVersion: v1
-data:
-  trulla: troet
-kind: ConfigMap
-metadata:
-  annotations:
-    kapp.k14s.io/num-versions: "1"
-    kapp.k14s.io/versioned: ""
-  name: versioned-cm
 ---
 StripNameHashSuffix: true
 apiVersion: kapp.k14s.io/v1alpha1

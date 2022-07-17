@@ -92,6 +92,10 @@ func (d VersionedResource) IsVersioned() bool {
 	return d.TrackVersions()
 }
 
+func (d VersionedResource) IsTracked() bool {
+	return d.IsVersioned() && d.TrackVersions()
+}
+
 func (d VersionedResource) IsExistingVersioned() bool {
 
 	// Expect that versioned resources should not be transient
