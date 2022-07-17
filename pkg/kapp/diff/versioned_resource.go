@@ -36,7 +36,7 @@ func (d VersionedResource) StripNameHashSuffix() bool {
 }
 
 func (d VersionedResource) SetBaseName(ver int) {
-	if d.TrackVersions() {
+	if d.trackVersions() {
 		currentName, _ := d.BaseNameAndVersion()
 		name := fmt.Sprintf("%s%s%d", currentName, nameSuffixSep, ver)
 		d.res.SetName(name)
@@ -80,7 +80,7 @@ func (d VersionedResource) UniqVersionedKey() ctlres.UniqueResourceKey {
 	return ctlres.NewUniqueResourceKeyWithCustomName(d.res, baseName)
 }
 
-func (d VersionedResource) TrackVersions() bool {
+func (d VersionedResource) trackVersions() bool {
 	_, hasVersionedAnn := d.res.Annotations()[versionedResAnnKey]
 	return hasVersionedAnn
 }
@@ -89,11 +89,11 @@ func (d VersionedResource) IsVersioned() bool {
 	if d.StripNameHashSuffix() {
 		return true
 	}
-	return d.TrackVersions()
+	return d.trackVersions()
 }
 
 func (d VersionedResource) IsTracked() bool {
-	return d.IsVersioned() && d.TrackVersions()
+	return d.IsVersioned() && d.trackVersions()
 }
 
 func (d VersionedResource) IsExistingVersioned() bool {
@@ -107,7 +107,7 @@ func (d VersionedResource) IsExistingVersioned() bool {
 	_, version := d.BaseNameAndVersion()
 	hasVersion := version != ""
 
-	versionUnnecessary := !d.TrackVersions()
+	versionUnnecessary := !d.trackVersions()
 
 	return d.IsVersioned() && notTransient && (hasVersion || versionUnnecessary)
 
@@ -123,7 +123,7 @@ func (d VersionedResource) AssignNewVersion() {
 
 func (d VersionedResource) UpdateAffected(rs []ctlres.Resource) error {
 
-	if !d.TrackVersions() {
+	if !d.trackVersions() {
 		// if we're not tracking versions we don't update any names and thus
 		// don't need to update any references.
 		return nil
