@@ -674,7 +674,7 @@ stringData:
 
 	output := strings.TrimSpace(graph.PrintStr())
 	expectedOutput := strings.TrimSpace(`
-  (upsert) serviceaccount/default-ns-sa (v1) namespace: default
+(upsert) serviceaccount/default-ns-sa (v1) namespace: default
 (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
 (upsert) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: default
   (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
@@ -685,6 +685,10 @@ stringData:
   (upsert) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: default
     (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
 (upsert) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) cluster
+  (upsert) serviceaccount/default-ns-sa (v1) namespace: default
+  (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
+  (upsert) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: default
+    (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
 (upsert) secret/pkg-demo-values (v1) cluster
 `)
 	require.Equal(t, expectedOutput, output)
@@ -695,11 +699,14 @@ stringData:
 
 	output = strings.TrimSpace(graph.PrintStr())
 	expectedOutput = strings.TrimSpace(`
- (delete) serviceaccount/default-ns-sa (v1) namespace: default
+(delete) serviceaccount/default-ns-sa (v1) namespace: default
+  (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) cluster
   (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
 (delete) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
+  (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) cluster
   (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
 (delete) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: default
+  (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) cluster
   (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
 (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
 (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) cluster
