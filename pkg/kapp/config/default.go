@@ -527,7 +527,6 @@ changeGroupBindings:
   resourceMatchers:
   - apiVersionKindMatcher: {kind: PackageInstall, apiVersion: packaging.carvel.dev/v1alpha1}
 
-
 changeRuleBindings:
 # Insert CRDs before all CRs
 - rules:
