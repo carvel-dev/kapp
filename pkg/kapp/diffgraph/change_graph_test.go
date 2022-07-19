@@ -4,6 +4,7 @@
 package diffgraph_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -673,6 +674,7 @@ stringData:
 	require.NoErrorf(t, err, "Expected graph to build")
 
 	output := strings.TrimSpace(graph.PrintStr())
+	fmt.Printf("output upsert:\n %s\n", output)
 	expectedOutput := strings.TrimSpace(`
   (upsert) serviceaccount/default-ns-sa (v1) namespace: default
 (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
@@ -694,6 +696,7 @@ stringData:
 	require.NoErrorf(t, err, "Expected graph to build")
 
 	output = strings.TrimSpace(graph.PrintStr())
+	fmt.Printf("output delete:\n %s\n", output)
 	expectedOutput = strings.TrimSpace(`
  (delete) serviceaccount/default-ns-sa (v1) namespace: default
   (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default

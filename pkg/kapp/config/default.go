@@ -515,9 +515,17 @@ changeGroupBindings:
   # delay other resources with load balancer provisioning
   # - apiVersionKindMatcher: {kind: Service, apiVersion: v1}
 
-- name: change-groups.kapp.k14s.io/serviceaccount
-  resourceMatchers: &serviceAccountMatchers
-  - apiVersionKindMatcher : {kind: ServiceAccount, apiVersion: v1}
+#- name: change-groups.kapp.k14s.io/serviceaccount
+#  resourceMatchers: &serviceAccountMatchers
+#  - apiVersionKindMatcher: {kind: ServiceAccount, apiVersion: v1}
+
+- name: change-groups.kapp.k14s.io/appcr
+  resourceMatchers: &appCRMatchers
+  apiVersionKindMatcher: {kind: App, apiVersion: kappctrl.k14s.io/v1alpha1}
+
+- name: change-groups.kapp.k14s.io/packageinstall
+  resourceMatchers: &packageInstallMatchers
+  apiVersionKindMatcher: {kind: PackageInstall, apiVersion: packaging.carvel.dev/v1alpha1}
 
 changeRuleBindings:
 # Insert CRDs before all CRs
@@ -587,14 +595,25 @@ changeRuleBindings:
           matcher: *disableDefaultChangeGroupAnnMatcher
 
 - rules:
-  - "delete before deleting change-groups.kapp.k14s.io/serviceaccount"
-  resourceMatchers:
-  - apiVersionKindMatcher: {kind: App, apiVersion: kappctrl.k14s.io/v1alpha1}
+  - "upsert before upserting change-groups.kapp.k14s.io/packageinstall"
+  ignoreIfCyclical: true
+  resourceMatchers: 
+  - apiVersionKindMatcher: {kind: ServiceAccount, apiVersion: v1}
+  - anyMatcher: {matchers: *rbacMatchers}
 
 - rules:
-  - "delete before deleting change-groups.kapp.k14s.io/rbac"
+  - "delete after deleting change-groups.kapp.k14s.io/packageinstall"
+  ignoreIfCyclical: true
   resourceMatchers:
-  - apiVersionKindMatcher: {kind: App, apiVersion: kappctrl.k14s.io/v1alpha1}
+  - apiVersionKindMatcher: {kind: ServiceAccount, apiVersion: v1}
+  - anyMatcher: {matchers: *rbacMatchers}
+
+- rules:
+  - "delete after deleting change-groups.kapp.k14s.io/appcr"
+  ignoreIfCyclical: true
+  resourceMatchers:
+  - apiVersionKindMatcher: {kind: ServiceAccount, apiVersion: v1}
+  - anyMatcher: {matchers: *rbacMatchers}
 
 - rules:
   - "upsert after upserting change-groups.kapp.k14s.io/storage-class"
