@@ -55,7 +55,7 @@ func (a *LabeledApp) Delete() error {
 
 	rs, err := a.identifiedResources.List(labelSelector, nil, ctlres.IdentifiedResourcesListOpts{IgnoreCachedResTypes: true})
 	if err != nil {
-		return fmt.Errorf("Relisting app resources: %s", err)
+		return fmt.Errorf("Relisting app resources: %w", err)
 	}
 
 	if len(rs) > 0 {

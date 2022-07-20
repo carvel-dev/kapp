@@ -110,7 +110,7 @@ func (a RecordedAppChanges) Begin(meta ChangeMeta) (*ChangeImpl, error) {
 
 	createdChange, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, metav1.CreateOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("Creating app change: %s", err)
+		return nil, fmt.Errorf("Creating app change: %w", err)
 	}
 
 	change := &ChangeImpl{

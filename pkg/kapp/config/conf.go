@@ -31,7 +31,7 @@ func NewConfFromResources(resources []ctlres.Resource) ([]ctlres.Resource, Conf,
 			config, err := NewConfigFromResource(res)
 			if err != nil {
 				return nil, Conf{}, fmt.Errorf(
-					"Parsing resource '%s' as kapp config: %s", res.Description(), err)
+					"Parsing resource '%s' as kapp config: %w", res.Description(), err)
 			}
 			configs = append(configs, config)
 
@@ -39,7 +39,7 @@ func NewConfFromResources(resources []ctlres.Resource) ([]ctlres.Resource, Conf,
 			config, err := newConfigFromConfigMapRes(res)
 			if err != nil {
 				return nil, Conf{}, fmt.Errorf(
-					"Parsing resource '%s' labeled as kapp config: %s", res.Description(), err)
+					"Parsing resource '%s' labeled as kapp config: %w", res.Description(), err)
 			}
 			// Make sure to add ConfigMap resource to regular resources list
 			// (our goal of allowing kapp config in ConfigMaps is to allow
@@ -66,7 +66,7 @@ func newConfigFromConfigMapRes(res ctlres.Resource) (Config, error) {
 
 	err := res.AsTypedObj(&configCM)
 	if err != nil {
-		return Config{}, fmt.Errorf("Converting resource to ConfigMap: %s", err)
+		return Config{}, fmt.Errorf("Converting resource to ConfigMap: %w", err)
 	}
 
 	configStr, found := configCM.Data[configMapConfigKey]
@@ -76,7 +76,7 @@ func newConfigFromConfigMapRes(res ctlres.Resource) (Config, error) {
 
 	configRes, err := ctlres.NewResourceFromBytes([]byte(configStr))
 	if err != nil {
-		return Config{}, fmt.Errorf("Parsing kapp config as resource: %s", err)
+		return Config{}, fmt.Errorf("Parsing kapp config as resource: %w", err)
 	}
 
 	return NewConfigFromResource(configRes)

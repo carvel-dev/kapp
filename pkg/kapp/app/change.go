@@ -48,7 +48,7 @@ func (c *ChangeImpl) Succeed() error {
 func (c *ChangeImpl) Delete() error {
 	err := c.coreClient.CoreV1().ConfigMaps(c.nsName).Delete(context.TODO(), c.name, metav1.DeleteOptions{})
 	if err != nil {
-		return fmt.Errorf("Deleting app change: %s", err)
+		return fmt.Errorf("Deleting app change: %w", err)
 	}
 
 	return nil
@@ -57,7 +57,7 @@ func (c *ChangeImpl) Delete() error {
 func (c *ChangeImpl) update(doFunc func(*ChangeMeta)) error {
 	change, err := c.coreClient.CoreV1().ConfigMaps(c.nsName).Get(context.TODO(), c.name, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("Getting app change: %s", err)
+		return fmt.Errorf("Getting app change: %w", err)
 	}
 
 	meta := NewChangeMetaFromData(change.Data)
@@ -68,7 +68,7 @@ func (c *ChangeImpl) update(doFunc func(*ChangeMeta)) error {
 
 	_, err = c.coreClient.CoreV1().ConfigMaps(c.nsName).Update(context.TODO(), change, metav1.UpdateOptions{})
 	if err != nil {
-		return fmt.Errorf("Updating app change: %s", err)
+		return fmt.Errorf("Updating app change: %w", err)
 	}
 
 	return nil

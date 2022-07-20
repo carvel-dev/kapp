@@ -59,7 +59,7 @@ func (s HTTPFileSource) Description() string {
 func (s HTTPFileSource) Bytes() ([]byte, error) {
 	resp, err := s.Client.Get(s.url)
 	if err != nil {
-		return nil, fmt.Errorf("Requesting URL '%s': %s", s.url, err)
+		return nil, fmt.Errorf("Requesting URL '%s': %w", s.url, err)
 	}
 
 	defer resp.Body.Close()
@@ -70,7 +70,7 @@ func (s HTTPFileSource) Bytes() ([]byte, error) {
 
 	result, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Reading URL '%s': %s", s.url, err)
+		return nil, fmt.Errorf("Reading URL '%s': %w", s.url, err)
 	}
 
 	return result, nil

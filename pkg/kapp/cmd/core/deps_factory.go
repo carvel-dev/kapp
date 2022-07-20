@@ -59,7 +59,7 @@ func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts) (dynamic.Interfa
 
 	clientset, err := dynamic.NewForConfig(cpConfig)
 	if err != nil {
-		return nil, fmt.Errorf("Building Dynamic clientset: %s", err)
+		return nil, fmt.Errorf("Building Dynamic clientset: %w", err)
 	}
 
 	f.printTarget(config)
@@ -75,7 +75,7 @@ func (f *DepsFactoryImpl) CoreClient() (kubernetes.Interface, error) {
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, fmt.Errorf("Building Core clientset: %s", err)
+		return nil, fmt.Errorf("Building Core clientset: %w", err)
 	}
 
 	f.printTarget(config)

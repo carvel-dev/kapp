@@ -103,7 +103,7 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 		}
 
 		if time.Now().Sub(startTime) > c.opts.Timeout {
-			return nil, fmt.Errorf("Timed out waiting after %s: Last error: %s", c.opts.Timeout, lastErr)
+			return nil, fmt.Errorf("Timed out waiting after %s: Last error: %w", c.opts.Timeout, lastErr)
 		}
 
 		time.Sleep(c.opts.CheckInterval)

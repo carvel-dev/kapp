@@ -37,14 +37,14 @@ func (d ConfigurableTextDiff) Masked(rules []ctlconf.DiffMaskRule) (TextDiff, er
 	if d.existingRes != nil {
 		existingRes, err = NewMaskedResource(d.existingRes, rules).Resource()
 		if err != nil {
-			return TextDiff{}, fmt.Errorf("Masking existing resource: %s", err)
+			return TextDiff{}, fmt.Errorf("Masking existing resource: %w", err)
 		}
 	}
 
 	if d.newRes != nil {
 		newRes, err = NewMaskedResource(d.newRes, rules).Resource()
 		if err != nil {
-			return TextDiff{}, fmt.Errorf("Masking new resource: %s", err)
+			return TextDiff{}, fmt.Errorf("Masking new resource: %w", err)
 		}
 	}
 

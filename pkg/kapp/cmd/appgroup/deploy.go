@@ -123,7 +123,7 @@ func (o *DeployOptions) appsToUpdate() (map[string]appGroupApp, error) {
 
 	fileInfos, err := ioutil.ReadDir(dir)
 	if err != nil {
-		return nil, fmt.Errorf("Reading directory '%s': %s", dir, err)
+		return nil, fmt.Errorf("Reading directory '%s': %w", dir, err)
 	}
 
 	for _, fi := range fileInfos {

@@ -56,7 +56,7 @@ func (t WaitRuleContractV1) evalYtt(res ctlres.Resource) (*WaitRuleContractV1Res
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui.NewTTY(false))
 	if out.Err != nil {
-		return nil, fmt.Errorf("Evaluating: %s", out.Err)
+		return nil, fmt.Errorf("Evaluating: %w", out.Err)
 	}
 
 	if len(out.Files) == 0 {
@@ -72,7 +72,7 @@ func (t WaitRuleContractV1) evalYtt(res ctlres.Resource) (*WaitRuleContractV1Res
 
 	err := yaml.Unmarshal(file.Bytes(), &configObj)
 	if err != nil {
-		return nil, fmt.Errorf("Deserializing result: %s", err)
+		return nil, fmt.Errorf("Deserializing result: %w", err)
 	}
 
 	return &configObj.Result, nil
