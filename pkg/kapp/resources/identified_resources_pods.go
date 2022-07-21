@@ -5,6 +5,7 @@ package resources
 
 import (
 	"fmt"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -35,28 +36,34 @@ func (w UniquePodWatcher) Watch(podsToWatchCh chan corev1.Pod, cancelCh chan str
 	go func() {
 		// Watch Pods in all namespaces first and fallback to the
 		// fallbackAllowedNamespaces if lack of permission
-		namespace := ""
-		index := 0
-		for {
+		namespaces := []string{""}
+		namespaces = append(namespaces, w.fallbackAllowedNamespaces...)
+		var forbiddenNamespaces []string
+
+		for _, namespace := range namespaces {
 			podWatcher := NewPodWatcher(
 				w.coreClient.CoreV1().Pods(namespace),
 				metav1.ListOptions{LabelSelector: w.labelSelector.String()},
 			)
-
 			err := podWatcher.Watch(nonUniquePodsToWatchCh, cancelCh)
-			if err != nil {
-				if !errors.IsForbidden(err) {
-					fmt.Printf("Pod watching error: %s\n", err) // TODO
+			if err == nil {
+				if namespace == "" {
 					break
 				}
+				continue
 			}
-
-			if len(w.fallbackAllowedNamespaces) > index {
-				namespace = w.fallbackAllowedNamespaces[index]
-				index++
+			if !errors.IsForbidden(err) {
+				fmt.Printf("Pod watching error: %s\n", err) // TODO
+				break
+			}
+			if namespace != "" {
+				forbiddenNamespaces = append(forbiddenNamespaces, fmt.Sprintf(`"%s"`, namespace))
 			}
 		}
 
+		if len(forbiddenNamespaces) > 0 {
+			fmt.Printf(`Pod watching error: pods is forbidden: User cannot list resource "pods" in API group "" in the namespace(s) %s`, strings.Join(forbiddenNamespaces, ", "))
+		}
 		close(nonUniquePodsToWatchCh)
 	}()
 

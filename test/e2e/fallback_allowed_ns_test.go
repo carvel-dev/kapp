@@ -158,8 +158,12 @@ data:
 `, env.Namespace, testNamespace)
 
 	logger.Section("deploy app using scoped context", func() {
-		kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
 			RunOpts{StdinReader: strings.NewReader(yaml1)})
+
+		// Expect pod watching error for the fallback allowed namespaces as listing pods is not allowed.
+		require.Contains(t, out, fmt.Sprintf(`Pod watching error: pods is forbidden: User cannot list resource "pods" in API group "" in the namespace(s) "%s", "%s"`,
+			env.Namespace, testNamespace))
 
 		NewPresentClusterResource("configmap", "cm-1", env.Namespace, kubectl)
 		NewPresentClusterResource("configmap", "cm-2", testNamespace, kubectl)
