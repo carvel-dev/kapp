@@ -149,7 +149,7 @@ func (c AddOrUpdateChange) tryToResolveUpdateConflict(
 			return fmt.Errorf("Expected recalculated change to be an update")
 		}
 		if recalcChanges[0].OpsDiff().MinimalMD5() != c.change.OpsDiff().MinimalMD5() {
-			errMsg := fmt.Sprintf(errMsgPrefix+"(approved diff no longer matches): %w", origErr)
+			errMsg := fmt.Sprintf(errMsgPrefix+"(approved diff no longer matches): %s", origErr)
 
 			textDiff, err := recalcChanges[0].ConfigurableTextDiff().Masked(c.diffMaskRules)
 			if err != nil {

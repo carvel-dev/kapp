@@ -75,7 +75,6 @@ func (a *RecordedApp) LabelSelector() (labels.Selector, error) {
 func (a *RecordedApp) UsedGVs() ([]schema.GroupVersion, error) {
 	meta, err := a.meta()
 	if err != nil {
-		fmt.Printf("Error-1: %s\n", err.Error())
 		return nil, err
 	}
 
