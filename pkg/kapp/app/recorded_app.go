@@ -558,6 +558,11 @@ func (a *RecordedApp) update(doFunc func(*Meta)) error {
 
 	change.Data = meta.AsData()
 
+	_, err = a.setMeta(*change)
+	if err != nil {
+		return err
+	}
+
 	_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), change, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("Updating app: %s", err)

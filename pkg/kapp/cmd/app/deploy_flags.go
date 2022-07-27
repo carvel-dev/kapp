@@ -21,8 +21,9 @@ type DeployFlags struct {
 
 	AppChangesMaxToKeep int
 
-	Logs    bool
-	LogsAll bool
+	Logs            bool
+	LogsAll         bool
+	AppMetadataFile string
 }
 
 func (s *DeployFlags) Set(cmd *cobra.Command) {
@@ -48,4 +49,5 @@ func (s *DeployFlags) Set(cmd *cobra.Command) {
 
 	cmd.Flags().BoolVar(&s.Logs, "logs", true, fmt.Sprintf("Show logs from Pods annotated as '%s'", deployLogsAnnKey))
 	cmd.Flags().BoolVar(&s.LogsAll, "logs-all", false, "Show logs from all Pods")
+	cmd.Flags().StringVar(&s.AppMetadataFile, "app-metadata-file-output", "", "Set filename to write app metadata")
 }
