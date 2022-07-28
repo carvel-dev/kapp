@@ -52,7 +52,7 @@ func (r RebasedResource) Resource() (ctlres.Resource, error) {
 
 		err := t.ApplyFromMultiple(result, resSources)
 		if err != nil {
-			return nil, fmt.Errorf("Applying rebase rule to %s: %s", resultDesc, err)
+			return nil, fmt.Errorf("Applying rebase rule to %s: %w", resultDesc, err)
 		}
 	}
 

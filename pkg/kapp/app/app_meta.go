@@ -26,7 +26,7 @@ func NewAppMetaFromData(data map[string]string) (Meta, error) {
 
 	err := json.Unmarshal([]byte(data["spec"]), &meta)
 	if err != nil {
-		return Meta{}, fmt.Errorf("Parsing app metadata: %s", err)
+		return Meta{}, fmt.Errorf("Parsing app metadata: %w", err)
 	}
 
 	return meta, nil

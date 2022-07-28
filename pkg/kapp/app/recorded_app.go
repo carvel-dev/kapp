@@ -216,7 +216,7 @@ func (a *RecordedApp) updateApp(existingConfigMap *corev1.ConfigMap, labels map[
 
 	_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), existingConfigMap, metav1.UpdateOptions{})
 	if err != nil {
-		return fmt.Errorf("Updating app: %s", err)
+		return fmt.Errorf("Updating app: %w", err)
 	}
 
 	return nil
@@ -290,7 +290,7 @@ func (a *RecordedApp) migrate(c *corev1.ConfigMap, labels map[string]string, new
 
 	_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), c, metav1.UpdateOptions{})
 	if err != nil {
-		return fmt.Errorf("Updating app: %s", err)
+		return fmt.Errorf("Updating app: %w", err)
 	}
 
 	a.isMigrated = true
@@ -361,7 +361,7 @@ func (a *RecordedApp) Delete() error {
 
 	err = NewRecordedAppChanges(a.nsName, a.name, a.coreClient).DeleteAll()
 	if err != nil {
-		return fmt.Errorf("Deleting app changes: %s", err)
+		return fmt.Errorf("Deleting app changes: %w", err)
 	}
 
 	err = app.Delete()
@@ -376,7 +376,7 @@ func (a *RecordedApp) Delete() error {
 
 	err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(context.TODO(), name, metav1.DeleteOptions{})
 	if err != nil {
-		return fmt.Errorf("Deleting app: %s", err)
+		return fmt.Errorf("Deleting app: %w", err)
 	}
 
 	return nil
@@ -420,13 +420,13 @@ func (a *RecordedApp) renameConfigMap(app *corev1.ConfigMap, name, ns string) er
 
 	_, err := a.coreClient.CoreV1().ConfigMaps(ns).Create(context.TODO(), app, metav1.CreateOptions{})
 	if err != nil {
-		return fmt.Errorf("Creating app: %s", err)
+		return fmt.Errorf("Creating app: %w", err)
 	}
 
 	err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Delete(context.TODO(), oldName, metav1.DeleteOptions{})
 	if err != nil {
 		// TODO Do not clean up new config map as there is no gurantee it can be deleted either
-		return fmt.Errorf("Deleting app: %s", err)
+		return fmt.Errorf("Deleting app: %w", err)
 	}
 
 	// TODO deal with app history somehow?
@@ -454,7 +454,7 @@ func (a *RecordedApp) Meta() (Meta, error) { return a.meta() }
 func (a *RecordedApp) setMeta(app corev1.ConfigMap) (Meta, error) {
 	meta, err := NewAppMetaFromData(app.Data)
 	if err != nil {
-		errMsg := "App '%s' (namespace: %s) backed by ConfigMap '%s' did not contain parseable app metadata: %s"
+		errMsg := "App '%s' (namespace: %s) backed by ConfigMap '%s' did not contain parseable app metadata: %w"
 		hintText := " (hint: ConfigMap was overriden by another user?)"
 
 		if a.isMigrated {
@@ -546,7 +546,7 @@ func (a *RecordedApp) update(doFunc func(*Meta)) error {
 
 	change, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("Getting app: %s", err)
+		return fmt.Errorf("Getting app: %w", err)
 	}
 
 	meta, err := NewAppMetaFromData(change.Data)
@@ -560,7 +560,7 @@ func (a *RecordedApp) update(doFunc func(*Meta)) error {
 
 	_, err = a.coreClient.CoreV1().ConfigMaps(a.nsName).Update(context.TODO(), change, metav1.UpdateOptions{})
 	if err != nil {
-		return fmt.Errorf("Updating app: %s", err)
+		return fmt.Errorf("Updating app: %w", err)
 	}
 
 	return nil

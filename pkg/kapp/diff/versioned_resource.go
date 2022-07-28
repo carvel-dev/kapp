@@ -97,23 +97,23 @@ func (d VersionedResource) updateAffected(rule ctlconf.TemplateRule, rs []ctlres
 				explicitRef := NewExplicitVersionedRef(k, v)
 				objectRef, err := explicitRef.AsObjectRef()
 				if err != nil {
-					return fmt.Errorf("Parsing versioned explicit ref on resource '%s': %s", res.Description(), err)
+					return fmt.Errorf("Parsing versioned explicit ref on resource '%s': %w", res.Description(), err)
 				}
 
 				// Passing empty TemplateAffectedObjRef as explicit references do not have a special name key
 				err = d.buildObjRefReplacementFunc(ctlconf.TemplateAffectedObjRef{})(objectRef)
 				if err != nil {
-					return fmt.Errorf("Processing object ref for explicit ref on resource '%s': %s", res.Description(), err)
+					return fmt.Errorf("Processing object ref for explicit ref on resource '%s': %w", res.Description(), err)
 				}
 
 				annotationMod, err := explicitRef.AnnotationMod(objectRef)
 				if err != nil {
-					return fmt.Errorf("Preparing annotation mod for versioned explicit ref on resource '%s': %s", res.Description(), err)
+					return fmt.Errorf("Preparing annotation mod for versioned explicit ref on resource '%s': %w", res.Description(), err)
 				}
 
 				err = annotationMod.Apply(res)
 				if err != nil {
-					return fmt.Errorf("Updating versioned explicit ref on resource '%s': %s", res.Description(), err)
+					return fmt.Errorf("Updating versioned explicit ref on resource '%s': %w", res.Description(), err)
 				}
 			}
 		}
@@ -130,14 +130,14 @@ func (d VersionedResource) buildObjRefReplacementFunc(
 	return func(typedObj map[string]interface{}) error {
 		bs, err := json.Marshal(typedObj)
 		if err != nil {
-			return fmt.Errorf("Remarshaling object reference: %s", err)
+			return fmt.Errorf("Remarshaling object reference: %w", err)
 		}
 
 		var objRef corev1.ObjectReference
 
 		err = json.Unmarshal(bs, &objRef)
 		if err != nil {
-			return fmt.Errorf("Unmarshaling object reference: %s", err)
+			return fmt.Errorf("Unmarshaling object reference: %w", err)
 		}
 
 		// Check as many rules as possible

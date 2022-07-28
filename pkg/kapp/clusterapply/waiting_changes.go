@@ -92,7 +92,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 			c.ui.Notify(descMsgs)
 
 			if err != nil {
-				return nil, fmt.Errorf("%s: Errored: %s", desc, err)
+				return nil, fmt.Errorf("%s: Errored: %w", desc, err)
 			}
 			if state.Done {
 				c.numWaited++

@@ -44,7 +44,7 @@ func (a Apps) Find(name string) (App, error) {
 	if strings.HasPrefix(name, labelPrefix) {
 		sel, err := labels.Parse(strings.TrimPrefix(name, labelPrefix))
 		if err != nil {
-			return nil, fmt.Errorf("Parsing app name (or label selector): %s", err)
+			return nil, fmt.Errorf("Parsing app name (or label selector): %w", err)
 		}
 		return &LabeledApp{sel, a.identifiedResources}, nil
 	}

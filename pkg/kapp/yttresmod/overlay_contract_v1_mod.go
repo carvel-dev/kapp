@@ -30,7 +30,7 @@ func (t OverlayContractV1Mod) ApplyFromMultiple(res ctlres.Resource, srcs map[ct
 
 	result, err := t.evalYtt(res, srcs)
 	if err != nil {
-		return fmt.Errorf("Applying ytt (overlayContractV1): %s", err)
+		return fmt.Errorf("Applying ytt (overlayContractV1): %w", err)
 	}
 
 	res.DeepCopyIntoFrom(result)
@@ -62,7 +62,7 @@ func (t OverlayContractV1Mod) evalYtt(res ctlres.Resource, srcs map[ctlres.Field
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui.NewTTY(false))
 	if out.Err != nil {
-		return nil, fmt.Errorf("Evaluating: %s", out.Err)
+		return nil, fmt.Errorf("Evaluating: %w", out.Err)
 	}
 
 	if len(out.Files) == 0 {
@@ -76,7 +76,7 @@ func (t OverlayContractV1Mod) evalYtt(res ctlres.Resource, srcs map[ctlres.Field
 
 	rs, err := ctlres.NewResourcesFromBytes(file.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("Deserializing result: %s", err)
+		return nil, fmt.Errorf("Deserializing result: %w", err)
 	}
 
 	if len(rs) != 1 {

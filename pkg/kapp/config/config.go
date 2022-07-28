@@ -160,12 +160,12 @@ func NewConfigFromResource(res ctlres.Resource) (Config, error) {
 
 	err = yaml.Unmarshal(bs, &config)
 	if err != nil {
-		return Config{}, fmt.Errorf("Unmarshaling %s: %s", res.Description(), err)
+		return Config{}, fmt.Errorf("Unmarshaling %s: %w", res.Description(), err)
 	}
 
 	err = config.Validate()
 	if err != nil {
-		return Config{}, fmt.Errorf("Validating config: %s", err)
+		return Config{}, fmt.Errorf("Validating config: %w", err)
 	}
 
 	return config, nil
@@ -186,12 +186,12 @@ func (c Config) Validate() error {
 
 		userConstraint, err := semver.NewConstraint(">=" + c.MinimumRequiredVersion)
 		if err != nil {
-			return fmt.Errorf("Parsing minimum version constraint: %s", err)
+			return fmt.Errorf("Parsing minimum version constraint: %w", err)
 		}
 
 		kappVersion, err := semver.NewVersion(version.Version)
 		if err != nil {
-			return fmt.Errorf("Parsing version constraint: %s", err)
+			return fmt.Errorf("Parsing version constraint: %w", err)
 		}
 
 		if !userConstraint.Check(kappVersion) {
@@ -203,7 +203,7 @@ func (c Config) Validate() error {
 	for i, rule := range c.RebaseRules {
 		err := rule.Validate()
 		if err != nil {
-			return fmt.Errorf("Validating rebase rule %d: %s", i, err)
+			return fmt.Errorf("Validating rebase rule %d: %w", i, err)
 		}
 	}
 
