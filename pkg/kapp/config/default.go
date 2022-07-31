@@ -324,6 +324,7 @@ ownershipLabelRules:
 
 labelScopingRules:
 - path: [spec, selector]
+  isDefault: true
   resourceMatchers:
   - andMatcher:
       matchers:
@@ -339,6 +340,7 @@ labelScopingRules:
       - apiVersionKindMatcher: {apiVersion: v1, kind: Service}
 
 - path: [spec, selector, matchLabels]
+  isDefault: true
   resourceMatchers:
   - andMatcher:
       matchers:
@@ -350,6 +352,7 @@ labelScopingRules:
           matchers: *withPodTemplate
 
 - path: [spec, selector, matchLabels]
+  isDefault: true
   resourceMatchers:
   - andMatcher:
       matchers:

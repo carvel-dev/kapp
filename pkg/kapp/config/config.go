@@ -104,6 +104,7 @@ type OwnershipLabelRule struct {
 type LabelScopingRule struct {
 	ResourceMatchers []ResourceMatcher
 	Path             ctlres.Path
+	IsDefault        bool `json:"isDefault"`
 }
 
 type TemplateRule struct {

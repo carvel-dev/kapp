@@ -21,6 +21,8 @@ type DeployFlags struct {
 
 	AppChangesMaxToKeep int
 
+	DefaultLabelScopingRules bool
+
 	Logs            bool
 	LogsAll         bool
 	AppMetadataFile string
@@ -44,6 +46,9 @@ func (s *DeployFlags) Set(cmd *cobra.Command) {
 		100, "Concurrency to check for existing non-labeled resources")
 	cmd.Flags().BoolVar(&s.OverrideOwnershipOfExistingResources, "dangerous-override-ownership-of-existing-resources",
 		false, "Steal existing resources from another app")
+
+	cmd.Flags().BoolVar(&s.DefaultLabelScopingRules, "default-label-scoping-rules",
+		true, "Use default label scoping rules")
 
 	cmd.Flags().IntVar(&s.AppChangesMaxToKeep, "app-changes-max-to-keep", ctlapp.AppChangesMaxToKeepDefault, "Maximum number of app changes to keep")
 
