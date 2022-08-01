@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/k14s/kapp/pkg/kapp/logger"
-	"github.com/k14s/kapp/pkg/kapp/util"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/util"
 	"golang.org/x/net/http2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

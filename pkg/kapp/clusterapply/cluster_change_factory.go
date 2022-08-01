@@ -4,9 +4,9 @@
 package clusterapply
 
 import (
-	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
-	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
+	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 type ClusterChangeFactory struct {

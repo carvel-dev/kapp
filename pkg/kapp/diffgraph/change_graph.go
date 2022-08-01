@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
-	"github.com/k14s/kapp/pkg/kapp/logger"
+	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 )
 
 type ChangeGraph struct {

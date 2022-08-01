@@ -6,8 +6,8 @@ package cmd
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
-	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	"github.com/spf13/cobra"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
 )
 
 type UIFlags struct {

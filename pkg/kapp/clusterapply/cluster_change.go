@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	uierrs "github.com/cppforlife/go-cli-ui/errors"
-	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
-	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
+	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
+	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	ctlresm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
 )
 
 const (

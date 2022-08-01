@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
-	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
-	"github.com/k14s/kapp/pkg/kapp/diffui/assets"
+	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffui/assets"
 )
 
 type ServerOpts struct {

@@ -7,10 +7,10 @@ import (
 	"fmt"
 
 	"github.com/ghodss/yaml"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 type OverlayContractV1Mod struct {

@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/k14s/kapp/pkg/kapp/logger"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

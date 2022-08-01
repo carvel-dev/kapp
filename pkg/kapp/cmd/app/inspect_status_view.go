@@ -8,8 +8,8 @@ import (
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
-	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 type InspectStatusView struct {

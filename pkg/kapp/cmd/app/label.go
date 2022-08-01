@@ -5,9 +5,9 @@ package app
 
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
-	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 )
 
 type LabelOptions struct {

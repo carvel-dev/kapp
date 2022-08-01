@@ -10,8 +10,8 @@ import (
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	"github.com/ghodss/yaml"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/stretchr/testify/require"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 func TestConfig(t *testing.T) {

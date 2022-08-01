@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 type ResourceFilterFlags struct {

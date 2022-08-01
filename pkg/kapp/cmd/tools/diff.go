@@ -5,11 +5,11 @@ package tools
 
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
-	ctlcap "github.com/k14s/kapp/pkg/kapp/clusterapply"
-	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
+	ctlcap "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/clusterapply"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
+	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 type DiffOptions struct {
