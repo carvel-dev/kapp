@@ -5,6 +5,7 @@ package app
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
@@ -225,8 +226,24 @@ func (o *DeployOptions) Run() error {
 		}
 
 		// Remove unused GVs and GKs
-		return app.UpdateUsedGVsAndGKs(failingAPIServicesPolicy.GVs(newResources, nil),
+		err = app.UpdateUsedGVsAndGKs(failingAPIServicesPolicy.GVs(newResources, nil),
 			NewUsedGKsScope(newResources).GKs())
+		if err != nil {
+			return err
+		}
+
+		if o.DeployFlags.AppMetadataFile != "" {
+			meta, err := app.Meta()
+			if err != nil {
+				return err
+			}
+			err = os.WriteFile(o.DeployFlags.AppMetadataFile, []byte(meta.AsString()), os.ModePerm)
+			if err != nil {
+				return err
+			}
+		}
+
+		return err
 	})
 	if err != nil {
 		return err
