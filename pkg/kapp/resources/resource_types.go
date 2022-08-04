@@ -117,7 +117,7 @@ func (g *ResourceTypesImpl) serverResources() ([]*metav1.APIResourceList, error)
 	var lastErr error
 
 	for i := 0; i < 10; i++ {
-		serverResources, lastErr = g.coreClient.Discovery().ServerResources()
+		_, serverResources, lastErr = g.coreClient.Discovery().ServerGroupsAndResources()
 		if lastErr == nil {
 			return serverResources, nil
 		} else if typedLastErr, ok := lastErr.(*discovery.ErrGroupDiscoveryFailed); ok {
