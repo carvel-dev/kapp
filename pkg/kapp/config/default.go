@@ -131,6 +131,12 @@ rebaseRules:
   resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
 
+- path: [metadata, annotations, "kapp.k14s.io/last-renewed-time"]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers:
+  - allMatcher: {}
+
 # ServiceAccount controller appends secret named '${metadata.name}-token-${rand}' after the save
 # Openshift adds a secret and an imagePullSecret named '${metadata.name}-dockercfg-${rand}' after the save
 - ytt:

@@ -25,6 +25,8 @@ const (
 	updateStrategyFallbackOnReplaceAnnValue ClusterChangeApplyStrategyOp = "fallback-on-replace"
 	updateStrategyAlwaysReplaceAnnValue     ClusterChangeApplyStrategyOp = "always-replace"
 	updateStrategySkipAnnValue              ClusterChangeApplyStrategyOp = "skip"
+
+	maxDuration = "kapp.k14s.io/max-duration"
 )
 
 type AddOrUpdateChangeOpts struct {
@@ -68,6 +70,11 @@ func (c AddOrUpdateChange) ApplyStrategy() (ApplyStrategy, error) {
 
 	case ctldiff.ChangeOpUpdate:
 		newRes := c.change.NewResource()
+
+		_, found := newRes.Annotations()[maxDuration]
+		if found {
+			return UpdateAlwaysReplaceStrategy{c}, nil
+		}
 
 		strategy, found := newRes.Annotations()[updateStrategyAnnKey]
 		if !found {
