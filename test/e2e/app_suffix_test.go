@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var yaml1 string = `
+var yaml1 = `
 ---
 apiVersion: v1
 kind: Service
@@ -34,7 +34,7 @@ data:
   key: value
 `
 
-var yaml2 string = `
+var yaml2 = `
 ---
 apiVersion: v1
 kind: ConfigMap
