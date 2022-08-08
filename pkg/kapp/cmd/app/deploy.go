@@ -8,7 +8,6 @@ import (
 	"os"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
@@ -31,10 +30,7 @@ import (
 )
 
 const (
-	TTYByDefaultKey    = "cli.carvel.dev/tty-by-default"
-	versionedResAnnKey = "kapp.k14s.io/versioned"
-	maxDuration        = "kapp.k14s.io/max-duration"
-	lastRenewTime      = "kapp.k14s.io/last-renewed-time"
+	TTYByDefaultKey = "cli.carvel.dev/tty-by-default"
 )
 
 type DeployOptions struct {
@@ -415,7 +411,7 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 		changeFactory := ctldiff.NewChangeFactory(conf.RebaseMods(), conf.DiffAgainstLastAppliedFieldExclusionMods())
 		changeSetFactory := ctldiff.NewChangeSetFactory(o.DiffFlags.ChangeSetOpts, changeFactory)
 
-		err := CheckForPriodicAnnotation(existingResources, newResources)
+		err := ctldiff.CheckAndCalculateResWithPeriodicAnn(existingResources, newResources)
 		if err != nil {
 			return clusterChangeSet, nil, false, "", err
 		}
@@ -466,72 +462,6 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 	}
 
 	return clusterChangeSet, clusterChangesGraph, (len(clusterChanges) == 0), changesSummary, err
-}
-
-func CheckForPriodicAnnotation(existingResources, newResources []ctlres.Resource) error {
-
-	var (
-		duration time.Duration
-		err      error
-	)
-
-	addNonceMod := ctlres.StringMapAppendMod{
-		ResourceMatcher: ctlres.AllMatcher{},
-		Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
-		KVs: map[string]string{
-			lastRenewTime: fmt.Sprintf("%v", time.Now().UTC().Format(time.RFC3339)),
-		},
-	}
-	existRes := existingPriodicResource(existingResources)
-
-	for _, res := range newResources {
-		rs, found := existRes[res.Name()+res.Kind()]
-		if found {
-			val, found := rs.Annotations()[maxDuration]
-			if !found {
-				continue
-			}
-
-			duration, err = convertToTimeDuration(val)
-			if err != nil {
-				return err
-			}
-
-			if found && time.Now().After(rs.CreatedAt().Add(duration)) {
-				err = addNonceMod.Apply(res)
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-func existingPriodicResource(existingResources []ctlres.Resource) map[string]ctlres.Resource {
-
-	exRes := make(map[string]ctlres.Resource)
-	for _, rs := range existingResources {
-		if _, found := rs.Annotations()[maxDuration]; found {
-			if _, found := rs.Annotations()[versionedResAnnKey]; found {
-				name := strings.Split(rs.Name(), "-ver-")[0]
-				exRes[name+rs.Kind()] = rs
-			} else {
-				exRes[rs.Name()+rs.Kind()] = rs
-			}
-		}
-	}
-	return exRes
-}
-
-func convertToTimeDuration(val string) (time.Duration, error) {
-
-	duration, err := time.ParseDuration(val)
-	if err != nil {
-		return 0, err
-	}
-	return duration, nil
 }
 
 func (o *DeployOptions) existingPodResources(existingResources []ctlres.Resource) []ctlres.Resource {
