@@ -320,7 +320,7 @@ func (o *DeployOptions) newResources(
 	}
 
 	err = labeledResources.Prepare(newResources, conf.OwnershipLabelMods(),
-		conf.LabelScopingMods(), conf.AdditionalLabels())
+		conf.LabelScopingMods(o.DeployFlags.DefaultLabelScopingRules), conf.AdditionalLabels())
 	if err != nil {
 		return nil, ctlconf.Conf{}, nil, nil, err
 	}

@@ -122,11 +122,14 @@ func (c Conf) WaitRules() []WaitRule {
 	return rules
 }
 
-func (c Conf) LabelScopingMods() func(kvs map[string]string) []ctlres.StringMapAppendMod {
+func (c Conf) LabelScopingMods(defaultRules bool) func(kvs map[string]string) []ctlres.StringMapAppendMod {
 	return func(kvs map[string]string) []ctlres.StringMapAppendMod {
 		var mods []ctlres.StringMapAppendMod
 		for _, config := range c.configs {
 			for _, rule := range config.LabelScopingRules {
+				if rule.IsDefault && !defaultRules {
+					continue
+				}
 				mods = append(mods, rule.AsMod(kvs))
 			}
 		}
