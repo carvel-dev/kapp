@@ -220,30 +220,27 @@ func (o *DeployOptions) Run() error {
 	}
 
 	err = touch.Do(func() error {
+		defer func() {
+			if o.DeployFlags.AppMetadataFile != "" {
+				meta, err := app.Meta()
+				if err != nil {
+					return
+				}
+				err = os.WriteFile(o.DeployFlags.AppMetadataFile, []byte(meta.AsString()), os.ModePerm)
+				if err != nil {
+					return
+				}
+			}
+		}()
+
 		err := clusterChangeSet.Apply(clusterChangesGraph)
 		if err != nil {
 			return err
 		}
 
 		// Remove unused GVs and GKs
-		err = app.UpdateUsedGVsAndGKs(failingAPIServicesPolicy.GVs(newResources, nil),
+		return app.UpdateUsedGVsAndGKs(failingAPIServicesPolicy.GVs(newResources, nil),
 			NewUsedGKsScope(newResources).GKs())
-		if err != nil {
-			return err
-		}
-
-		if o.DeployFlags.AppMetadataFile != "" {
-			meta, err := app.Meta()
-			if err != nil {
-				return err
-			}
-			err = os.WriteFile(o.DeployFlags.AppMetadataFile, []byte(meta.AsString()), os.ModePerm)
-			if err != nil {
-				return err
-			}
-		}
-
-		return err
 	})
 	if err != nil {
 		return err
