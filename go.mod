@@ -14,9 +14,9 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.7.1
-	github.com/vmware-tanzu/carvel-kapp-controller v0.38.4
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
+	github.com/stretchr/testify v1.7.5
+	github.com/vmware-tanzu/carvel-kapp-controller v0.39.0
+	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.24.3 // kubernetes-1.22.1
 	k8s.io/apimachinery v0.24.3 // kubernetes-1.22.1
@@ -60,14 +60,14 @@ require (
 	github.com/vmware-tanzu/carvel-vendir v0.24.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
-	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog/v2 v2.60.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803164354-a70c9af30aea // indirect
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
