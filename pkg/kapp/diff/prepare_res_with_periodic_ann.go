@@ -29,33 +29,32 @@ func CheckAndCalculateResWithPeriodicAnn(existingResources, newResources []ctlre
 			lastRenewTimeAnnKey: fmt.Sprintf("%v", time.Now().UTC().Format(time.RFC3339)),
 		},
 	}
-	existRes := existingPeriodicResource(existingResources)
+	existRes := existResMap(existingResources)
 
 	for _, res := range newResources {
 		rs, found := existRes[res.Name()+res.Kind()]
 		if found {
-			val, found := rs.Annotations()[MaxDurationAnnKey]
-			if !found {
-				continue
-			}
-
-			duration, err = time.ParseDuration(val)
-			if err != nil {
-				return err
-			}
-
-			if found && time.Now().After(rs.CreatedAt().Add(duration)) {
-				err = addNonceMod.Apply(res)
+			val, exist := rs.Annotations()[MaxDurationAnnKey]
+			if exist {
+				duration, err = time.ParseDuration(val)
 				if err != nil {
 					return err
+				}
+
+				if time.Now().After(rs.CreatedAt().Add(duration)) {
+					err = addNonceMod.Apply(res)
+					if err != nil {
+						return err
+					}
 				}
 			}
 		}
 	}
+
 	return nil
 }
 
-func existingPeriodicResource(existingResources []ctlres.Resource) map[string]ctlres.Resource {
+func existResMap(existingResources []ctlres.Resource) map[string]ctlres.Resource {
 	exRes := make(map[string]ctlres.Resource)
 	for _, rs := range existingResources {
 		if _, found := rs.Annotations()[MaxDurationAnnKey]; found {
