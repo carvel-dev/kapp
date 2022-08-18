@@ -709,6 +709,126 @@ stringData:
 	require.Equal(t, expectedOutput, output)
 }
 
+func TestChangeGraphWithNamespacedResourceDelete(t *testing.T) {
+	yaml := `
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default-ns-sa
+  namespace: test
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: default-ns-role
+  namespace: test
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: default-ns-role-binding
+  namespace: test
+subjects:
+- kind: ServiceAccount
+  name: default-ns-sa
+  namespace: test
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: default-ns-role
+---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: simple-app-cr
+  namespace: test
+spec:
+  serviceAccountName: default-ns-sa
+  fetch:
+  - git: {}
+  template:
+  - ytt: {}
+  deploy:
+  - kapp: {}
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  name: pkg-demo
+  namespace: test
+spec:
+  serviceAccountName: default-ns-sa
+  packageRef:
+    refName: simple-app.corp.com
+    versionSelection:
+      constraints: 1.0.0
+  values:
+  - secretRef:
+      name: pkg-demo-values
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pkg-demo-values
+  namespace: test
+stringData:
+  values.yml: |
+    ---
+    hello_msg: "to all my internet friends"
+`
+	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
+	require.NoErrorf(t, err, "Parsing conf defaults")
+
+	opts := buildGraphOpts{
+		resourcesBs:         yaml,
+		op:                  ctldgraph.ActualChangeOpDelete,
+		changeGroupBindings: conf.ChangeGroupBindings(),
+		changeRuleBindings:  conf.ChangeRuleBindings(),
+	}
+
+	graph, err := buildChangeGraphWithOpts(opts, t)
+	require.NoErrorf(t, err, "Expected graph to build")
+
+	output := strings.TrimSpace(graph.PrintStr())
+	expectedOutput := strings.TrimSpace(`
+(delete) namespace/test (v1) cluster
+  (delete) serviceaccount/default-ns-sa (v1) namespace: test
+    (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: test
+    (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: test
+  (delete) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: test
+    (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: test
+    (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: test
+  (delete) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: test
+    (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: test
+    (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: test
+  (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: test
+  (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: test
+  (delete) secret/pkg-demo-values (v1) namespace: test
+(delete) serviceaccount/default-ns-sa (v1) namespace: test
+  (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: test
+  (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: test
+(delete) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: test
+  (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: test
+  (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: test
+(delete) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: test
+  (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: test
+  (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: test
+(delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: test
+(delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: test
+(delete) secret/pkg-demo-values (v1) namespace: test
+`)
+	require.Equal(t, expectedOutput, output)
+}
+
 func buildChangeGraph(resourcesBs string, op ctldgraph.ActualChangeOp, t *testing.T) (*ctldgraph.ChangeGraph, error) {
 	return buildChangeGraphWithOpts(buildGraphOpts{resourcesBs: resourcesBs, op: op}, t)
 }

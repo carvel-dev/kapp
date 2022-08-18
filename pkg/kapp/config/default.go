@@ -577,6 +577,7 @@ changeRuleBindings:
 # Insert namespaces before all namespaced resources
 - rules:
   - "upsert after upserting change-groups.kapp.k14s.io/namespaces-{namespace}"
+  - "delete before deleting change-groups.kapp.k14s.io/namespaces-{namespace}"
   resourceMatchers:
   - andMatcher:
       matchers:
