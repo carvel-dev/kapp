@@ -577,7 +577,6 @@ changeRuleBindings:
 # Insert namespaces before all namespaced resources
 - rules:
   - "upsert after upserting change-groups.kapp.k14s.io/namespaces-{namespace}"
-  - "delete before deleting change-groups.kapp.k14s.io/namespaces-{namespace}"
   resourceMatchers:
   - andMatcher:
       matchers:
@@ -612,6 +611,11 @@ changeRuleBindings:
           matchers:
           - anyMatcher: {matchers: *serviceAccountMatchers}
           - anyMatcher: {matchers: *rbacMatchers}
+
+- rules:  
+  - "delete after deleting change-groups.kapp.k14s.io/serviceaccount"
+  resourceMatchers:
+  - andMatcher: {matchers: *namespaceMatchers}
 
 - rules:
   - "upsert after upserting change-groups.kapp.k14s.io/storage-class"

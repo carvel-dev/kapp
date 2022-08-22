@@ -804,15 +804,6 @@ stringData:
   (delete) serviceaccount/default-ns-sa (v1) namespace: test
     (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: test
     (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: test
-  (delete) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: test
-    (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: test
-    (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: test
-  (delete) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: test
-    (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: test
-    (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: test
-  (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: test
-  (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: test
-  (delete) secret/pkg-demo-values (v1) namespace: test
 (delete) serviceaccount/default-ns-sa (v1) namespace: test
   (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: test
   (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: test
