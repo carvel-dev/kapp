@@ -57,14 +57,27 @@ type AppTemplateHelmTemplate struct {
 
 // +k8s:openapi-gen=true
 type AppTemplateValuesSource struct {
-	SecretRef    *AppTemplateValuesSourceRef `json:"secretRef,omitempty" protobuf:"bytes,1,opt,name=secretRef"`
-	ConfigMapRef *AppTemplateValuesSourceRef `json:"configMapRef,omitempty" protobuf:"bytes,2,opt,name=configMapRef"`
-	Path         string                      `json:"path,omitempty" protobuf:"bytes,3,opt,name=path"`
+	SecretRef    *AppTemplateValuesSourceRef   `json:"secretRef,omitempty" protobuf:"bytes,1,opt,name=secretRef"`
+	ConfigMapRef *AppTemplateValuesSourceRef   `json:"configMapRef,omitempty" protobuf:"bytes,2,opt,name=configMapRef"`
+	Path         string                        `json:"path,omitempty" protobuf:"bytes,3,opt,name=path"`
+	DownwardAPI  *AppTemplateValuesDownwardAPI `json:"downwardAPI,omitempty" protobuf:"bytes,4,opt,name=downwardAPI"`
 }
 
 // +k8s:openapi-gen=true
 type AppTemplateValuesSourceRef struct {
 	Name string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
+}
+
+// +k8s:openapi-gen=true
+type AppTemplateValuesDownwardAPIItem struct {
+	Name string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
+	// Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.
+	FieldPath string `json:"fieldPath,omitempty" protobuf:"bytes,2,opt,name=fieldPath"`
+}
+
+// +k8s:openapi-gen=true
+type AppTemplateValuesDownwardAPI struct {
+	Items []AppTemplateValuesDownwardAPIItem `json:"items,omitempty" protobuf:"bytes,1,opt,name=items"`
 }
 
 // TODO implement kustomize
