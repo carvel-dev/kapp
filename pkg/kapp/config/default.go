@@ -612,11 +612,18 @@ changeRuleBindings:
           - anyMatcher: {matchers: *serviceAccountMatchers}
           - anyMatcher: {matchers: *rbacMatchers}
 
+# Delete serviceAccount (SA) before namespace (if serviceAccount is part of that namespace)
+# deletion of namespace before SA sometimes leads deletion of SA before 
+# the resources on which it is dependent on like kapp-controller-packageInstall
 - rules:  
-  - "delete after deleting change-groups.kapp.k14s.io/serviceaccount"
+  - "delete before deleting change-groups.kapp.k14s.io/namespaces-{namespace}"
   ignoreIfCyclical: true
   resourceMatchers:
-  - andMatcher: {matchers: *namespaceMatchers}
+  - andMatcher: 
+      matchers:
+      - notMatcher: {matcher: *disableDefaultChangeGroupAnnMatcher}
+      - anyMatcher: {matchers: *serviceAccountMatchers}
+
 
 - rules:
   - "upsert after upserting change-groups.kapp.k14s.io/storage-class"

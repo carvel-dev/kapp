@@ -709,7 +709,7 @@ stringData:
 	require.Equal(t, expectedOutput, output)
 }
 
-func TestChangeGraphWithNamespacedResourceDelete(t *testing.T) {
+func TestChangeGraphWithNamespaceAndSA(t *testing.T) {
 	yaml := `
 apiVersion: v1
 kind: Namespace
