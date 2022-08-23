@@ -614,6 +614,7 @@ changeRuleBindings:
 
 - rules:  
   - "delete after deleting change-groups.kapp.k14s.io/serviceaccount"
+  ignoreIfCyclical: true
   resourceMatchers:
   - andMatcher: {matchers: *namespaceMatchers}
 
