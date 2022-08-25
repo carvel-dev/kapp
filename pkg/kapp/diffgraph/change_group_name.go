@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"regexp"
 
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	ctlcrd "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	ctlcrd "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
 )
 
 type ChangeGroupName struct {

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )

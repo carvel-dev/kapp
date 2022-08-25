@@ -6,8 +6,8 @@ package resources_test
 import (
 	"testing"
 
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/stretchr/testify/require"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 func TestModStringMapAppend(t *testing.T) {

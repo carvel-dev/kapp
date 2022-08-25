@@ -10,11 +10,11 @@ import (
 	"path/filepath"
 
 	"github.com/cppforlife/go-cli-ui/ui"
-	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
-	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
-	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
+	cmdapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/app"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
+	cmdtools "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/tools"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 )
 
 type DeployOptions struct {

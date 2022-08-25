@@ -9,9 +9,9 @@ import (
 	"time"
 
 	uierrs "github.com/cppforlife/go-cli-ui/errors"
-	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
-	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
-	"github.com/k14s/kapp/pkg/kapp/util"
+	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
+	ctlresm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/util"
 )
 
 type WaitingChangesOpts struct {

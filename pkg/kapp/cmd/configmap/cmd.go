@@ -4,8 +4,8 @@
 package configmap
 
 import (
-	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	"github.com/spf13/cobra"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
 )
 
 func NewCmd() *cobra.Command {

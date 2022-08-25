@@ -1,4 +1,4 @@
-module github.com/k14s/kapp
+module github.com/vmware-tanzu/carvel-kapp
 
 go 1.18
 

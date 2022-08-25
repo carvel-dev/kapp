@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/k14s/kapp/pkg/kapp/app"
 	"github.com/spf13/cobra"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/app"
 )
 
 type AppFilterFlags struct {

@@ -6,10 +6,10 @@ package configmap
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
-	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
-	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
+	cmdapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/app"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 )
 
 type ListOptions struct {

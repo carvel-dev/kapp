@@ -10,8 +10,8 @@ import (
 
 	uierrs "github.com/cppforlife/go-cli-ui/errors"
 	"github.com/cppforlife/go-cli-ui/ui"
-	"github.com/k14s/kapp/pkg/kapp/cmd"
-	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd"
+	cmdapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/app"
 
 	// Import to initialize client auth plugins.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"

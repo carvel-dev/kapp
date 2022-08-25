@@ -6,10 +6,10 @@ package clusterapply
 import (
 	"fmt"
 
-	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
-	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
-	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
-	"github.com/k14s/kapp/pkg/kapp/logger"
+	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
+	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
+	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 )
 
 type ClusterChangeSetOpts struct {

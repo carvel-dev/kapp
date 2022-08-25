@@ -8,16 +8,16 @@ import (
 
 	"github.com/cppforlife/cobrautil"
 	"github.com/cppforlife/go-cli-ui/ui"
-	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
-	cmdac "github.com/k14s/kapp/pkg/kapp/cmd/appchange"
-	cmdag "github.com/k14s/kapp/pkg/kapp/cmd/appgroup"
-	cmdcm "github.com/k14s/kapp/pkg/kapp/cmd/configmap"
-	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	cmdsa "github.com/k14s/kapp/pkg/kapp/cmd/serviceaccount"
-	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
-	"github.com/k14s/kapp/pkg/kapp/logger"
-	"github.com/k14s/kapp/pkg/kapp/version"
 	"github.com/spf13/cobra"
+	cmdapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/app"
+	cmdac "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/appchange"
+	cmdag "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/appgroup"
+	cmdcm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/configmap"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
+	cmdsa "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/serviceaccount"
+	cmdtools "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/tools"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/version"
 )
 
 type KappOptions struct {

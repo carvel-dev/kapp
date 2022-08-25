@@ -5,9 +5,9 @@ package tools
 
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
-	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/spf13/cobra"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 type InspectOptions struct {

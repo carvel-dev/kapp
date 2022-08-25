@@ -8,9 +8,9 @@ import (
 
 	"github.com/ghodss/yaml"
 	semver "github.com/hashicorp/go-version"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	"github.com/k14s/kapp/pkg/kapp/version"
-	"github.com/k14s/kapp/pkg/kapp/yttresmod"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/version"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/yttresmod"
 )
 
 const (

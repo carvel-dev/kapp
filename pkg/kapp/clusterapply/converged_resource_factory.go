@@ -4,9 +4,9 @@
 package clusterapply
 
 import (
-	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
+	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	ctlresm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 

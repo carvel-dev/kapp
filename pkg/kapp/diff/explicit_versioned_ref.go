@@ -6,7 +6,7 @@ package diff
 import (
 	"fmt"
 
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	"gopkg.in/yaml.v2"
 )
 

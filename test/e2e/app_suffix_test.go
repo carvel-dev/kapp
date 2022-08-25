@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/k14s/kapp/pkg/kapp/app"
 	"github.com/stretchr/testify/require"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/app"
 )
 
 var yaml1 = `

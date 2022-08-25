@@ -9,7 +9,7 @@ import (
 
 	"github.com/cppforlife/color"
 	"github.com/k14s/difflib"
-	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
+	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
 )
 
 type TextDiffViewOpts struct {
