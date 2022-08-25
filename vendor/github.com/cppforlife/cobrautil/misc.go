@@ -64,7 +64,7 @@ func ReconfigureCmdWithSubcmd(cmd *cobra.Command) {
 	var strs []string
 	for _, subcmd := range cmd.Commands() {
 		if !subcmd.Hidden {
-			strs = append(strs, subcmd.Use)
+			strs = append(strs, subcmd.Name())
 		}
 	}
 
@@ -87,7 +87,7 @@ func ShowSubcommands(cmd *cobra.Command, args []string) error {
 	var strs []string
 	for _, subcmd := range cmd.Commands() {
 		if !subcmd.Hidden {
-			strs = append(strs, subcmd.Use)
+			strs = append(strs, subcmd.Name())
 		}
 	}
 	return fmt.Errorf("Use one of available subcommands: %s", strings.Join(strs, ", "))
@@ -96,4 +96,23 @@ func ShowSubcommands(cmd *cobra.Command, args []string) error {
 func ShowHelp(cmd *cobra.Command, args []string) error {
 	cmd.Help()
 	return fmt.Errorf("Invalid command - see available commands/subcommands above")
+}
+
+func IsCobraInternalCommand(args []string) bool {
+	if len(args) > 1 {
+		cmdPathPieces := args[1:]
+
+		var cmdName string // first "non-flag" arguments
+		for _, arg := range cmdPathPieces {
+			if !strings.HasPrefix(arg, "-") {
+				cmdName = arg
+				break
+			}
+		}
+		switch cmdName {
+		case "help", cobra.ShellCompRequestCmd, cobra.ShellCompNoDescRequestCmd:
+			return true
+		}
+	}
+	return false
 }

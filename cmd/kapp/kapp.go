@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/cppforlife/cobrautil"
 	uierrs "github.com/cppforlife/go-cli-ui/errors"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd"
@@ -45,6 +46,9 @@ func nonExitingMain() error {
 		return err
 	}
 
-	confUI.PrintLinef("Succeeded")
+	if !cobrautil.IsCobraInternalCommand(os.Args) {
+		confUI.PrintLinef("Succeeded")
+	}
+
 	return nil
 }
