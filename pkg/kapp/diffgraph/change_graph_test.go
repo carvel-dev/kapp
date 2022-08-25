@@ -596,11 +596,13 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: default-ns-sa
+  namespace: default
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: default-ns-role
+  namespace: default
 rules:
 - apiGroups: ["*"]
   resources: ["*"]
@@ -610,6 +612,7 @@ kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: default-ns-role-binding
+  namespace: default
 subjects:
 - kind: ServiceAccount
   name: default-ns-sa
@@ -622,6 +625,7 @@ apiVersion: kappctrl.k14s.io/v1alpha1
 kind: App
 metadata:
   name: simple-app-cr
+  namespace: default
 spec:
   serviceAccountName: default-ns-sa
   fetch:
@@ -635,6 +639,7 @@ apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageInstall
 metadata:
   name: pkg-demo
+  namespace: default
 spec:
   serviceAccountName: default-ns-sa
   packageRef:
@@ -649,6 +654,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: pkg-demo-values
+  namespace: default
 stringData:
   values.yml: |
     ---
@@ -669,21 +675,23 @@ stringData:
 
 	output := strings.TrimSpace(graph.PrintStr())
 	expectedOutput := strings.TrimSpace(`
-(upsert) serviceaccount/default-ns-sa (v1) cluster
-(upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) cluster
-(upsert) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) cluster
-  (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) cluster
-(upsert) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) cluster
-  (upsert) serviceaccount/default-ns-sa (v1) cluster
-  (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) cluster
-  (upsert) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) cluster
-    (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) cluster
-(upsert) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) cluster
-  (upsert) serviceaccount/default-ns-sa (v1) cluster
-  (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) cluster
-  (upsert) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) cluster
-    (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) cluster
-(upsert) secret/pkg-demo-values (v1) cluster
+(upsert) serviceaccount/default-ns-sa (v1) namespace: default
+(upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
+(upsert) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: default
+  (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
+(upsert) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
+  (upsert) serviceaccount/default-ns-sa (v1) namespace: default
+  (upsert) secret/pkg-demo-values (v1) namespace: default
+  (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
+  (upsert) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: default
+    (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
+(upsert) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: default
+  (upsert) serviceaccount/default-ns-sa (v1) namespace: default
+  (upsert) secret/pkg-demo-values (v1) namespace: default
+  (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
+  (upsert) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: default
+    (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
+(upsert) secret/pkg-demo-values (v1) namespace: default
 `)
 	require.Equal(t, expectedOutput, output)
 
@@ -693,18 +701,18 @@ stringData:
 
 	output = strings.TrimSpace(graph.PrintStr())
 	expectedOutput = strings.TrimSpace(`
-(delete) serviceaccount/default-ns-sa (v1) cluster
-  (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) cluster
-  (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) cluster
-(delete) role/default-ns-role (rbac.authorization.k8s.io/v1) cluster
-  (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) cluster
-  (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) cluster
-(delete) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) cluster
-  (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) cluster
-  (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) cluster
-(delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) cluster
-(delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) cluster
-(delete) secret/pkg-demo-values (v1) cluster
+(delete) serviceaccount/default-ns-sa (v1) namespace: default
+  (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: default
+  (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
+(delete) role/default-ns-role (rbac.authorization.k8s.io/v1) namespace: default
+  (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: default
+  (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
+(delete) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) namespace: default
+  (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: default
+  (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
+(delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) namespace: default
+(delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) namespace: default
+(delete) secret/pkg-demo-values (v1) namespace: default
 `)
 	require.Equal(t, expectedOutput, output)
 }
