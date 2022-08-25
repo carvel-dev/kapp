@@ -66,7 +66,7 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		// TODO bash completion
 	}
 
-	cmd.SetOutput(uiBlockWriter{o.ui}) // setting output for cmd.Help()
+	cmd.SetOut(uiBlockWriter{o.ui}) // setting output for cmd.Help()
 
 	cmd.SetUsageTemplate(cobrautil.HelpSectionsUsageTemplate([]cobrautil.HelpSection{
 		cmdcore.AppHelpGroup,
