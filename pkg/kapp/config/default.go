@@ -584,6 +584,17 @@ changeRuleBindings:
       - notMatcher:
           matcher: *disableDefaultChangeGroupAnnMatcher
 
+# Delete namespaces after deleting namespaced SAs so that resources like 
+# kapp-controller PackageInstalls can be deleted gracefully.
+- rules:  
+  - "delete before deleting change-groups.kapp.k14s.io/namespaces-{namespace}"
+  ignoreIfCyclical: true
+  resourceMatchers:
+  - andMatcher: 
+      matchers:
+      - notMatcher: {matcher: *disableDefaultChangeGroupAnnMatcher}
+      - anyMatcher: {matchers: *serviceAccountMatchers}
+
 # Insert roles/ClusterRoles before inserting any roleBinding/ClusterRoleBinding
 # Sometimes Binding Creation fail as corresponding Role is not created.
 # https://github.com/vmware-tanzu/carvel-kapp/issues/145
