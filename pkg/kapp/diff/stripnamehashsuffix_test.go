@@ -6,8 +6,8 @@ package diff
 import (
 	"testing"
 
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/stretchr/testify/require"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 // test that we can exclude specific configsmaps from default

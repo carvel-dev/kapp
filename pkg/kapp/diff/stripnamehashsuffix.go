@@ -4,8 +4,8 @@
 package diff
 
 import (
-	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 type stripNameHashSuffixConfig struct {
