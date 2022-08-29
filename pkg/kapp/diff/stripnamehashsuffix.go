@@ -13,7 +13,7 @@ type stripNameHashSuffixConfig struct {
 	ResourceMatcher ctlres.ResourceMatcher
 }
 
-func (d stripNameHashSuffixConfig) EnabledFor(res ctlres.Resource) (stripEnabled bool){
+func (d stripNameHashSuffixConfig) EnabledFor(res ctlres.Resource) (stripEnabled bool) {
 	if d.Enabled {
 		return d.ResourceMatcher.Matches(res)
 	}

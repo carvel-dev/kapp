@@ -14,8 +14,8 @@ import (
 func TestStripNameHashSuffix_TestConfig_IncludeExcludeAccrossConfigs(t *testing.T) {
 	requireStripNameHashSuffixMatches(t, [][]ctlres.ResourceMatcher{
 		[]ctlres.ResourceMatcher{
-			ctlres.AnyMatcher {
-				Matchers: []ctlres.ResourceMatcher {
+			ctlres.AnyMatcher{
+				Matchers: []ctlres.ResourceMatcher{
 					ctlres.APIVersionKindMatcher{APIVersion: "v1", Kind: "ConfigMap"},
 					ctlres.APIVersionKindMatcher{APIVersion: "v2", Kind: "MyKind"},
 				},
@@ -32,8 +32,8 @@ func TestStripNameHashSuffix_TestConfig_IncludeExcludeAccrossConfigs(t *testing.
 func TestStripNameHashSuffix_TestConfig_IncludeExcludeSingleConfig(t *testing.T) {
 	requireStripNameHashSuffixMatches(t, [][]ctlres.ResourceMatcher{
 		[]ctlres.ResourceMatcher{
-			ctlres.AnyMatcher {
-				Matchers: []ctlres.ResourceMatcher {
+			ctlres.AnyMatcher{
+				Matchers: []ctlres.ResourceMatcher{
 					ctlres.APIVersionKindMatcher{APIVersion: "v1", Kind: "ConfigMap"},
 					ctlres.APIVersionKindMatcher{APIVersion: "v2", Kind: "MyKind"},
 				},
