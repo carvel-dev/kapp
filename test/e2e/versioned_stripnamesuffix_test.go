@@ -54,28 +54,15 @@ func TestStripNameSuffixBasic(t *testing.T) {
 
 	//fmt.Println(stdout)
 
-	expectedDiff := replaceAnnsLabels(`  ...
-  1,  1   data:
-  2     -   foo: foo
-      2 +   foo: bar
-  3,  3   kind: ConfigMap
-  4,  4   metadata:
-  ...
-  7,  7       kapp.k14s.io/app: "1660686583367025336"
-  8     -     kapp.k14s.io/association: v1.d0fdf34aa1d77adddf880bb323b33066
-      8 +     kapp.k14s.io/association: v1.4fda3fe945a039589026903cb477f5aa
-  9,  9     managedFields:
- 10, 10     - apiVersion: v1
-`)
 	expectedNote := "Op:      1 create, 1 delete, 0 update, 0 noop, 0 exists"
 
 	resp := uitest.JSONUIFromBytes(t, []byte(stdout))
 
-	// Ensure the diff is shown
-	require.Exactlyf(t, expectedDiff, replaceAnnsLabels(resp.Blocks[0]), "Expected to see correct diff")
+	// Ensure one diff is shown
+	require.Exactlyf(t, 1, len(resp.Blocks), "Expected to see exactly one diff")
 
 	// Ensure old ConfigMap is deleted
-	require.Exactlyf(t, expectedNote, replaceAnnsLabels(resp.Tables[0].Notes[0]), "Expected to see correct notes")
+	require.Exactlyf(t, expectedNote, replaceAnnsLabels(resp.Tables[0].Notes[0]), "Expected to one delete and one create Op")
 }
 
 func TestStripNameSuffixNoop(t *testing.T) {
@@ -98,5 +85,5 @@ func TestStripNameSuffixNoop(t *testing.T) {
 	resp := uitest.JSONUIFromBytes(t, []byte(stdout))
 
 	// Ensure current ConfigMap is not deleted
-	require.Exactlyf(t, expectedNote, replaceAnnsLabels(resp.Tables[0].Notes[0]), "Expected to see correct notes")
+	require.Exactlyf(t, expectedNote, replaceAnnsLabels(resp.Tables[0].Notes[0]), "Expected to see no Op's")
 }
