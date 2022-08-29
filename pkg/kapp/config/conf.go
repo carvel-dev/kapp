@@ -6,7 +6,7 @@ package config
 import (
 	"fmt"
 
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -31,7 +31,7 @@ func NewConfFromResources(resources []ctlres.Resource) ([]ctlres.Resource, Conf,
 			config, err := NewConfigFromResource(res)
 			if err != nil {
 				return nil, Conf{}, fmt.Errorf(
-					"Parsing resource '%s' as kapp config: %s", res.Description(), err)
+					"Parsing resource '%s' as kapp config: %w", res.Description(), err)
 			}
 			configs = append(configs, config)
 
@@ -39,7 +39,7 @@ func NewConfFromResources(resources []ctlres.Resource) ([]ctlres.Resource, Conf,
 			config, err := newConfigFromConfigMapRes(res)
 			if err != nil {
 				return nil, Conf{}, fmt.Errorf(
-					"Parsing resource '%s' labeled as kapp config: %s", res.Description(), err)
+					"Parsing resource '%s' labeled as kapp config: %w", res.Description(), err)
 			}
 			// Make sure to add ConfigMap resource to regular resources list
 			// (our goal of allowing kapp config in ConfigMaps is to allow
@@ -66,7 +66,7 @@ func newConfigFromConfigMapRes(res ctlres.Resource) (Config, error) {
 
 	err := res.AsTypedObj(&configCM)
 	if err != nil {
-		return Config{}, fmt.Errorf("Converting resource to ConfigMap: %s", err)
+		return Config{}, fmt.Errorf("Converting resource to ConfigMap: %w", err)
 	}
 
 	configStr, found := configCM.Data[configMapConfigKey]
@@ -76,7 +76,7 @@ func newConfigFromConfigMapRes(res ctlres.Resource) (Config, error) {
 
 	configRes, err := ctlres.NewResourceFromBytes([]byte(configStr))
 	if err != nil {
-		return Config{}, fmt.Errorf("Parsing kapp config as resource: %s", err)
+		return Config{}, fmt.Errorf("Parsing kapp config as resource: %w", err)
 	}
 
 	return NewConfigFromResource(configRes)
@@ -122,11 +122,14 @@ func (c Conf) WaitRules() []WaitRule {
 	return rules
 }
 
-func (c Conf) LabelScopingMods() func(kvs map[string]string) []ctlres.StringMapAppendMod {
+func (c Conf) LabelScopingMods(defaultRules bool) func(kvs map[string]string) []ctlres.StringMapAppendMod {
 	return func(kvs map[string]string) []ctlres.StringMapAppendMod {
 		var mods []ctlres.StringMapAppendMod
 		for _, config := range c.configs {
 			for _, rule := range config.LabelScopingRules {
+				if rule.IsDefault && !defaultRules {
+					continue
+				}
 				mods = append(mods, rule.AsMod(kvs))
 			}
 		}

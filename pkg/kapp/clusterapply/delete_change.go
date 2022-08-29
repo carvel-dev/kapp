@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"strings"
 
-	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
+	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	ctlresm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 )

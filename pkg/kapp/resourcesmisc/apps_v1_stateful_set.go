@@ -5,7 +5,7 @@ package resourcesmisc
 
 import (
 	"fmt"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	appsv1 "k8s.io/api/apps/v1"
 )
 

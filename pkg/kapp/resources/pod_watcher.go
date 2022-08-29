@@ -56,7 +56,7 @@ func (w PodWatcher) Watch(podsToWatchCh chan corev1.Pod, cancelCh chan struct{})
 func (w PodWatcher) watch(podsToWatchCh chan corev1.Pod, cancelCh chan struct{}) (bool, error) {
 	watcher, err := w.podsClient.Watch(context.TODO(), w.listOpts)
 	if err != nil {
-		return false, fmt.Errorf("Creating Pod watcher: %s", err)
+		return false, fmt.Errorf("Creating Pod watcher: %w", err)
 	}
 
 	defer watcher.Stop()

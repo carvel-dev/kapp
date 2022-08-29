@@ -6,7 +6,7 @@ package resourcesmisc
 import (
 	"fmt"
 
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 type APIRegistrationV1Beta1APIService struct {

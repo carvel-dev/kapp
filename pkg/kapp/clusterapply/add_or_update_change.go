@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"time"
 
-	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
-	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	"github.com/k14s/kapp/pkg/kapp/util"
+	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
+	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/util"
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -169,7 +169,7 @@ func (c AddOrUpdateChange) tryToResolveUpdateConflict(
 		return c.recordAppliedResource(updatedRes)
 	}
 
-	return fmt.Errorf(errMsgPrefix+"(tried multiple times): %s", origErr)
+	return fmt.Errorf(errMsgPrefix+"(tried multiple times): %w", origErr)
 }
 
 func (c AddOrUpdateChange) tryToUpdateAfterCreateConflict(allowNoopUpdates bool) error {
@@ -232,7 +232,7 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 	// not by other controllers)
 	applyChange, err := savedResWithHistory.CalculateChange(c.change.AppliedResource())
 	if err != nil {
-		return fmt.Errorf("Calculating change after the save: %s", err)
+		return fmt.Errorf("Calculating change after the save: %w", err)
 	}
 
 	// first time, try using memory copy
@@ -254,7 +254,7 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 		// Record last applied change on the latest version of a resource
 		latestResWithHistoryUpdated, madeAnyModifications, err := latestResWithHistory.RecordLastAppliedResource(applyChange)
 		if err != nil {
-			return true, fmt.Errorf("Recording last applied resource: %s", err)
+			return true, fmt.Errorf("Recording last applied resource: %w", err)
 		}
 
 		// when annotation value max length exceed then don't record the resource hence not making any modification
@@ -265,7 +265,7 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 		_, err = c.identifiedResources.Update(latestResWithHistoryUpdated)
 		if err != nil {
 			latestResWithHistory = nil // Get again
-			return false, fmt.Errorf("Saving record of last applied resource: %s", err)
+			return false, fmt.Errorf("Saving record of last applied resource: %w", err)
 		}
 
 		return true, nil

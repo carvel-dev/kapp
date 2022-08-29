@@ -21,7 +21,7 @@ builds:
 
     ldflags:
       - -buildid=
-      - -X github.com/k14s/kapp/pkg/kapp/version.Version={{ .Version }}
+      - -X github.com/vmware-tanzu/carvel-kapp/pkg/kapp/version.Version={{ .Version }}
 
 archives:
   - format: binary

@@ -10,10 +10,16 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:categories={carvel}
 // +kubebuilder:printcolumn:name=Description,JSONPath=.status.friendlyDescription,description=Friendly description,type=string
 // +kubebuilder:printcolumn:name=Since-Deploy,JSONPath=.status.deploy.startedAt,description=Last time app started being deployed. Does not mean anything was changed.,type=date
 // +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date
 // +protobuf=false
+// An App is a set of Kubernetes resources. These resources could span any number of namespaces or could be cluster-wide (e.g. CRDs). An App is represented in kapp-controller using a App CR.
+// The App CR comprises of three main sections:
+// spec.fetch – declare source for fetching configuration and OCI images
+// spec.template – declare templating tool and values
+// spec.deploy – declare deployment tool and any deploy specific configuration
 type App struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
@@ -39,8 +45,12 @@ type AppList struct {
 
 // +k8s:openapi-gen=true
 type AppSpec struct {
+	// Specifies that app should be deployed authenticated via
+	// given service account, found in this namespace (optional; v0.6.0+)
 	// +optional
 	ServiceAccountName string `json:"serviceAccountName,omitempty" protobuf:"bytes,1,opt,name=serviceAccountName"`
+	// Specifies that app should be deployed to destination cluster;
+	// by default, cluster is same as where this resource resides (optional; v0.5.0+)
 	// +optional
 	Cluster *AppCluster `json:"cluster,omitempty" protobuf:"bytes,2,opt,name=cluster"`
 	// +optional
@@ -49,34 +59,41 @@ type AppSpec struct {
 	Template []AppTemplate `json:"template,omitempty" protobuf:"bytes,4,rep,name=template"`
 	// +optional
 	Deploy []AppDeploy `json:"deploy,omitempty" protobuf:"bytes,5,rep,name=deploy"`
-	// Paused when set to true will ignore all pending changes,
-	// once it set back to false, pending changes will be applied
+	// Pauses _future_ reconciliation; does _not_ affect
+	// currently running reconciliation (optional; default=false)
 	// +optional
 	Paused bool `json:"paused,omitempty" protobuf:"varint,6,opt,name=paused"`
-	// Canceled when set to true will stop all active changes
+	// Cancels current and future reconciliations (optional; default=false)
 	// +optional
 	Canceled bool `json:"canceled,omitempty" protobuf:"varint,7,opt,name=canceled"`
-	// Controls frequency of app reconciliation
+	// Specifies the length of time to wait, in time + unit
+	// format, before reconciling. Always >= 30s. If value below
+	// 30s is specified, 30s will be used. (optional; v0.9.0+; default=30s)
 	// +optional
 	SyncPeriod *metav1.Duration `json:"syncPeriod,omitempty" protobuf:"bytes,8,opt,name=syncPeriod"`
-	// When NoopDeletion set to true, App deletion should
-	// delete App CR but preserve App's associated resources
+	// Deletion requests for the App will result in the App CR being
+	// deleted, but its associated resources will not be deleted
+	// (optional; default=false; v0.18.0+)
 	// +optional
 	NoopDelete bool `json:"noopDelete,omitempty" protobuf:"varint,9,opt,name=noopDelete"`
 }
 
 // +k8s:openapi-gen=true
 type AppCluster struct {
+	// Specifies namespace in destination cluster (optional)
 	// +optional
 	Namespace string `json:"namespace,omitempty" protobuf:"bytes,1,opt,name=namespace"`
+	// Specifies secret containing kubeconfig (required)
 	// +optional
 	KubeconfigSecretRef *AppClusterKubeconfigSecretRef `json:"kubeconfigSecretRef,omitempty" protobuf:"bytes,2,opt,name=kubeconfigSecretRef"`
 }
 
 // +k8s:openapi-gen=true
 type AppClusterKubeconfigSecretRef struct {
+	// Specifies secret name within app's namespace (required)
 	// +optional
 	Name string `json:"name,omitempty" protobuf:"bytes,1,opt,name=name"`
+	// Specifies key that contains kubeconfig (optional)
 	// +optional
 	Key string `json:"key,omitempty" protobuf:"bytes,2,opt,name=key"`
 }
@@ -145,6 +162,22 @@ type AppStatusDeploy struct {
 	StartedAt metav1.Time `json:"startedAt,omitempty"`
 	// +optional
 	UpdatedAt metav1.Time `json:"updatedAt,omitempty"`
+	// +optional
+	KappDeployStatus *KappDeployStatus `json:"kapp,omitempty"`
+}
+
+// KappDeployStatus contains the associated AppCR deployed resources
+// +protobuf=false
+type KappDeployStatus struct {
+	AssociatedResources AssociatedResources `json:"associatedResources,omitempty"`
+}
+
+// AssociatedResources contains the associated App label, namespaces and GKs
+// +protobuf=false
+type AssociatedResources struct {
+	Label      string             `json:"label,omitempty"`
+	Namespaces []string           `json:"namespaces,omitempty"`
+	GroupKinds []metav1.GroupKind `json:"groupKinds,omitempty"`
 }
 
 // +protobuf=false

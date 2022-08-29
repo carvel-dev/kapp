@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/k14s/kapp/pkg/kapp/matcher" // TODO inject
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/matcher" // TODO inject
 	"k8s.io/apimachinery/pkg/labels"
 )
 

@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
-	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/stretchr/testify/require"
+	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
+	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 func TestChangeGraphCFForK8sUpsert(t *testing.T) {

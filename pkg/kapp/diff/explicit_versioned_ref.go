@@ -6,7 +6,7 @@ package diff
 import (
 	"fmt"
 
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	"gopkg.in/yaml.v2"
 )
 
@@ -28,7 +28,7 @@ func (e *ExplicitVersionedRef) AsObjectRef() (map[string]interface{}, error) {
 	var objectRef map[string]interface{}
 	err := yaml.Unmarshal([]byte(e.Annotation), &objectRef)
 	if err != nil {
-		return nil, fmt.Errorf("Parsing versioned explicit reference from annotation '%s': %s", e.AnnotationKey, err)
+		return nil, fmt.Errorf("Parsing versioned explicit reference from annotation '%s': %w", e.AnnotationKey, err)
 	}
 
 	_, hasAPIVersionKey := objectRef["apiVersion"]
@@ -45,7 +45,7 @@ func (e *ExplicitVersionedRef) AsObjectRef() (map[string]interface{}, error) {
 func (e *ExplicitVersionedRef) AnnotationMod(objectRef map[string]interface{}) (ctlres.StringMapAppendMod, error) {
 	value, err := yaml.Marshal(objectRef)
 	if err != nil {
-		return ctlres.StringMapAppendMod{}, fmt.Errorf("Marshalling explicit reference: %s", err)
+		return ctlres.StringMapAppendMod{}, fmt.Errorf("Marshalling explicit reference: %w", err)
 	}
 
 	return ctlres.StringMapAppendMod{

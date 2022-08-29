@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
-	"github.com/k14s/kapp/pkg/kapp/util"
+	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/util"
 )
 
 type ApplyingChangesOpts struct {
@@ -103,7 +103,7 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 		}
 
 		if time.Now().Sub(startTime) > c.opts.Timeout {
-			return nil, fmt.Errorf("Timed out waiting after %s: Last error: %s", c.opts.Timeout, lastErr)
+			return nil, fmt.Errorf("Timed out waiting after %s: Last error: %w", c.opts.Timeout, lastErr)
 		}
 
 		time.Sleep(c.opts.CheckInterval)

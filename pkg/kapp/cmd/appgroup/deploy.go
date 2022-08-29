@@ -10,11 +10,11 @@ import (
 	"path/filepath"
 
 	"github.com/cppforlife/go-cli-ui/ui"
-	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
-	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
-	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
+	cmdapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/app"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
+	cmdtools "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/tools"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 )
 
 type DeployOptions struct {
@@ -71,7 +71,7 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	var exitCode float64 = 0
+	var exitCode float64
 	// TODO is there some order between apps?
 	for _, appGroupApp := range updatedApps {
 		err := o.deployApp(appGroupApp)
@@ -123,7 +123,7 @@ func (o *DeployOptions) appsToUpdate() (map[string]appGroupApp, error) {
 
 	fileInfos, err := ioutil.ReadDir(dir)
 	if err != nil {
-		return nil, fmt.Errorf("Reading directory '%s': %s", dir, err)
+		return nil, fmt.Errorf("Reading directory '%s': %w", dir, err)
 	}
 
 	for _, fi := range fileInfos {

@@ -25,7 +25,7 @@ func (t FieldRemoveMod) Apply(res Resource) error {
 	}
 	err := t.apply(res.unstructured().Object, t.Path)
 	if err != nil {
-		return fmt.Errorf("FieldRemoveMod for path '%s' on resource '%s': %s", t.Path.AsString(), res.Description(), err)
+		return fmt.Errorf("FieldRemoveMod for path '%s' on resource '%s': %w", t.Path.AsString(), res.Description(), err)
 	}
 	return nil
 }

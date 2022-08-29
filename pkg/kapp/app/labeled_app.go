@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -55,7 +55,7 @@ func (a *LabeledApp) Delete() error {
 
 	rs, err := a.identifiedResources.List(labelSelector, nil, ctlres.IdentifiedResourcesListOpts{IgnoreCachedResTypes: true})
 	if err != nil {
-		return fmt.Errorf("Relisting app resources: %s", err)
+		return fmt.Errorf("Relisting app resources: %w", err)
 	}
 
 	if len(rs) > 0 {

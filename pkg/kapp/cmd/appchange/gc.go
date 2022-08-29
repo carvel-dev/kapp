@@ -5,11 +5,11 @@ package appchange
 
 import (
 	"github.com/cppforlife/go-cli-ui/ui"
-	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
-	cmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
-	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/spf13/cobra"
+	ctlapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/app"
+	cmdapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/app"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 )
 
 type GCOptions struct {

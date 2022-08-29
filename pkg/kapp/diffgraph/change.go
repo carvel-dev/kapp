@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 const (
@@ -153,7 +153,7 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 			}
 			rule, err := NewChangeRuleFromAnnString(ruleStr)
 			if err != nil {
-				return nil, fmt.Errorf("Resource %s: %s", res.Description(), err)
+				return nil, fmt.Errorf("Resource %s: %w", res.Description(), err)
 			}
 			rules = append(rules, rule)
 		}
@@ -170,7 +170,7 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 				}
 				rule, err := NewChangeRuleFromAnnString(ruleStr)
 				if err != nil {
-					return nil, fmt.Errorf("Resource %s: %s", res.Description(), err)
+					return nil, fmt.Errorf("Resource %s: %w", res.Description(), err)
 				}
 				rule.IgnoreIfCyclical = ruleConfig.IgnoreIfCyclical
 				rule.weight = 100 + i // start at 100

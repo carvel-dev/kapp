@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	ctlresm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
 )
 
 const (

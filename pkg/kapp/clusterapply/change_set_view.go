@@ -8,10 +8,10 @@ import (
 
 	"github.com/cppforlife/color"
 	"github.com/cppforlife/go-cli-ui/ui"
-	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
-	"github.com/k14s/kapp/pkg/kapp/diff"
-	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
+	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 type ChangeSetViewOpts struct {

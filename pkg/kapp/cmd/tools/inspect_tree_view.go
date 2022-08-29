@@ -11,9 +11,9 @@ import (
 	"github.com/cppforlife/color"
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
-	ctlcap "github.com/k14s/kapp/pkg/kapp/clusterapply"
-	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlcap "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/clusterapply"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 type InspectTreeView struct {

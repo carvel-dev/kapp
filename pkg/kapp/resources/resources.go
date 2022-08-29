@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/k14s/kapp/pkg/kapp/logger"
-	"github.com/k14s/kapp/pkg/kapp/util"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/util"
 	"golang.org/x/net/http2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -139,7 +139,7 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 					if c.resourceTypes.CanIgnoreFailingGroupVersion(resType.GroupVersion()) {
 						c.logger.Info("Ignoring group version: %#v: %s", resType.GroupVersionResource, err)
 					} else {
-						fatalErrsCh <- fmt.Errorf("Listing %#v, namespaced: %t: %s", resType.GroupVersionResource, resType.Namespaced(), err)
+						fatalErrsCh <- fmt.Errorf("Listing %#v, namespaced: %t: %w", resType.GroupVersionResource, resType.Namespaced(), err)
 					}
 					return
 				}
@@ -160,7 +160,7 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 					if c.resourceTypes.CanIgnoreFailingGroupVersion(resType.GroupVersion()) {
 						c.logger.Info("Ignoring group version: %#v", resType.GroupVersionResource)
 					} else {
-						fatalErrsCh <- fmt.Errorf("Listing %#v, namespaced: %t: %s", resType.GroupVersionResource, resType.Namespaced(), err)
+						fatalErrsCh <- fmt.Errorf("Listing %#v, namespaced: %t: %w", resType.GroupVersionResource, resType.Namespaced(), err)
 					}
 					return
 				}
@@ -545,7 +545,7 @@ func (c *ResourcesImpl) assumedAllowedNamespaces() ([]string, error) {
 				return c.opts.FallbackAllowedNamespaces, nil
 			}
 		}
-		return nil, fmt.Errorf("Fetching all namespaces: %s", err)
+		return nil, fmt.Errorf("Fetching all namespaces: %w", err)
 	}
 
 	c.logger.Info("Falling back to checking each namespace separately (much slower)")

@@ -4,7 +4,7 @@
 package config
 
 import (
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 const defaultConfigYAML = `---
@@ -324,6 +324,7 @@ ownershipLabelRules:
 
 labelScopingRules:
 - path: [spec, selector]
+  isDefault: true
   resourceMatchers:
   - andMatcher:
       matchers:
@@ -339,6 +340,7 @@ labelScopingRules:
       - apiVersionKindMatcher: {apiVersion: v1, kind: Service}
 
 - path: [spec, selector, matchLabels]
+  isDefault: true
   resourceMatchers:
   - andMatcher:
       matchers:
@@ -350,6 +352,7 @@ labelScopingRules:
           matchers: *withPodTemplate
 
 - path: [spec, selector, matchLabels]
+  isDefault: true
   resourceMatchers:
   - andMatcher:
       matchers:
@@ -515,6 +518,18 @@ changeGroupBindings:
   # delay other resources with load balancer provisioning
   # - apiVersionKindMatcher: {kind: Service, apiVersion: v1}
 
+- name: change-groups.kapp.k14s.io/serviceaccount
+  resourceMatchers: &serviceAccountMatchers
+  - apiVersionKindMatcher: {kind: ServiceAccount, apiVersion: v1}
+
+- name: change-groups.kapp.k14s.io/kapp-controller-app
+  resourceMatchers:
+  - apiVersionKindMatcher: {kind: App, apiVersion: kappctrl.k14s.io/v1alpha1}
+
+- name: change-groups.kapp.k14s.io/kapp-controller-packageinstall
+  resourceMatchers:
+  - apiVersionKindMatcher: {kind: PackageInstall, apiVersion: packaging.carvel.dev/v1alpha1}
+
 changeRuleBindings:
 # Insert CRDs before all CRs
 - rules:
@@ -581,6 +596,21 @@ changeRuleBindings:
       - anyMatcher: {matchers: *rbacRoleBindingMatchers}
       - notMatcher:
           matcher: *disableDefaultChangeGroupAnnMatcher
+
+- rules:
+  - "upsert before upserting change-groups.kapp.k14s.io/kapp-controller-packageinstall"
+  - "upsert before upserting change-groups.kapp.k14s.io/kapp-controller-app"
+  - "delete after deleting change-groups.kapp.k14s.io/kapp-controller-packageinstall"
+  - "delete after deleting change-groups.kapp.k14s.io/kapp-controller-app"
+  ignoreIfCyclical: true
+  resourceMatchers:
+  - andMatcher:
+      matchers:
+      - notMatcher: {matcher: *disableDefaultChangeGroupAnnMatcher}
+      - anyMatcher:
+          matchers:
+          - anyMatcher: {matchers: *serviceAccountMatchers}
+          - anyMatcher: {matchers: *rbacMatchers}
 
 - rules:
   - "upsert after upserting change-groups.kapp.k14s.io/storage-class"

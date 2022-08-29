@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
-	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
-	"github.com/k14s/kapp/pkg/kapp/logger"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/stretchr/testify/require"
+	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
+	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 func TestChangeGraph(t *testing.T) {
@@ -586,6 +586,125 @@ roleRef:
 (upsert) clusterrole/test-rbac-cluster-role (rbac.authorization.k8s.io/v1) cluster
 (upsert) clusterrolebinding/test-rbac-cluster-role-binding (rbac.authorization.k8s.io/v1) cluster
   (upsert) clusterrole/test-rbac-cluster-role (rbac.authorization.k8s.io/v1) cluster
+`)
+	require.Equal(t, expectedOutput, output)
+}
+
+func TestChangeGraphWithAppCR_RoleRoleBindingAndSA(t *testing.T) {
+	yaml := `
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default-ns-sa
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: default-ns-role
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: default-ns-role-binding
+subjects:
+- kind: ServiceAccount
+  name: default-ns-sa
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: default-ns-role
+---
+apiVersion: kappctrl.k14s.io/v1alpha1
+kind: App
+metadata:
+  name: simple-app-cr
+spec:
+  serviceAccountName: default-ns-sa
+  fetch:
+  - git: {}
+  template:
+  - ytt: {}
+  deploy:
+  - kapp: {}
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  name: pkg-demo
+spec:
+  serviceAccountName: default-ns-sa
+  packageRef:
+    refName: simple-app.corp.com
+    versionSelection:
+      constraints: 1.0.0
+  values:
+  - secretRef:
+      name: pkg-demo-values
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pkg-demo-values
+stringData:
+  values.yml: |
+    ---
+    hello_msg: "to all my internet friends"
+`
+	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
+	require.NoErrorf(t, err, "Parsing conf defaults")
+
+	opts := buildGraphOpts{
+		resourcesBs:         yaml,
+		op:                  ctldgraph.ActualChangeOpUpsert,
+		changeGroupBindings: conf.ChangeGroupBindings(),
+		changeRuleBindings:  conf.ChangeRuleBindings(),
+	}
+
+	graph, err := buildChangeGraphWithOpts(opts, t)
+	require.NoErrorf(t, err, "Expected graph to build")
+
+	output := strings.TrimSpace(graph.PrintStr())
+	expectedOutput := strings.TrimSpace(`
+(upsert) serviceaccount/default-ns-sa (v1) cluster
+(upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) cluster
+(upsert) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) cluster
+  (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) cluster
+(upsert) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) cluster
+  (upsert) serviceaccount/default-ns-sa (v1) cluster
+  (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) cluster
+  (upsert) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) cluster
+    (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) cluster
+(upsert) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) cluster
+  (upsert) serviceaccount/default-ns-sa (v1) cluster
+  (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) cluster
+  (upsert) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) cluster
+    (upsert) role/default-ns-role (rbac.authorization.k8s.io/v1) cluster
+(upsert) secret/pkg-demo-values (v1) cluster
+`)
+	require.Equal(t, expectedOutput, output)
+
+	opts.op = ctldgraph.ActualChangeOpDelete
+	graph, err = buildChangeGraphWithOpts(opts, t)
+	require.NoErrorf(t, err, "Expected graph to build")
+
+	output = strings.TrimSpace(graph.PrintStr())
+	expectedOutput = strings.TrimSpace(`
+(delete) serviceaccount/default-ns-sa (v1) cluster
+  (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) cluster
+  (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) cluster
+(delete) role/default-ns-role (rbac.authorization.k8s.io/v1) cluster
+  (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) cluster
+  (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) cluster
+(delete) rolebinding/default-ns-role-binding (rbac.authorization.k8s.io/v1) cluster
+  (delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) cluster
+  (delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) cluster
+(delete) app/simple-app-cr (kappctrl.k14s.io/v1alpha1) cluster
+(delete) packageinstall/pkg-demo (packaging.carvel.dev/v1alpha1) cluster
+(delete) secret/pkg-demo-values (v1) cluster
 `)
 	require.Equal(t, expectedOutput, output)
 }

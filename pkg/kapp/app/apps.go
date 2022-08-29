@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/k14s/kapp/pkg/kapp/logger"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
@@ -44,7 +44,7 @@ func (a Apps) Find(name string) (App, error) {
 	if strings.HasPrefix(name, labelPrefix) {
 		sel, err := labels.Parse(strings.TrimPrefix(name, labelPrefix))
 		if err != nil {
-			return nil, fmt.Errorf("Parsing app name (or label selector): %s", err)
+			return nil, fmt.Errorf("Parsing app name (or label selector): %w", err)
 		}
 		return &LabeledApp{sel, a.identifiedResources}, nil
 	}

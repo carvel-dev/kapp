@@ -5,7 +5,7 @@ package serviceaccount
 
 import (
 	"github.com/ghodss/yaml"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 type ServiceAccount struct {

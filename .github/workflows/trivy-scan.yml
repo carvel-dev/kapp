@@ -5,74 +5,12 @@ on:
     - cron: '0 0 * * *'
 
 jobs:
-  scan:
-    runs-on: ubuntu-latest
-    # Set permissions of github token. See https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#permissions
-    permissions:
-      security-events: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.18.0
-
-      - name: Build the kapp binary file
-        run: |
-          # Build kapp Binary File
-          ./hack/build.sh
-
-      - name: Install trivy
-        run: |
-          # Download trivy binary.
-          brew install aquasecurity/trivy/trivy
-          
-          # Create trivy binary file
-          git clone --depth 1 -b "v0.22.0" https://github.com/aquasecurity/trivy
-        
-      - name: Run trivy to generate reports
-        run: |  
-          # Generate trivy report in sarif format
-          trivy rootfs --ignore-unfixed --format template --template  "@trivy/contrib/sarif.tpl" --output trivy-results.sarif kapp
-          
-          # Generate trivy report in json format
-          trivy rootfs --ignore-unfixed --format json --output results.json kapp
-      
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v1
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-      - name: Create Issues Summary
-        run: |
-          # We should fail the github action even if there is an issue with `jq` parsing. Hence set -o pipefail
-          set -o pipefail
-          summary=$(jq '.Results[] | select(.Vulnerabilities) | .Vulnerabilities | group_by(.Severity) | map({Severity: .[0].Severity, Count: length}) | tostring' results.json | tr -d \\)
-          
-          if [ -z $summary ]
-          then
-            summary="0 Issues"
-          fi
-          echo "SUMMARY=$summary" >> $GITHUB_ENV
-      
-      - name: Send Slack Notification if Scan Ran Successfully
-        if: success()
-        uses: slackapi/slack-github-action@v1.15.0
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-        with:
-          channel-id: C026Z8V6XPE
-          slack-message: "Trivy Scan Summary is: ${{ env.SUMMARY }} "
-          
-      - name: Send Slack Notification if Scan Failed
-        if: failure()
-        uses: slackapi/slack-github-action@v1.15.0
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-        with:
-          channel-id: C026Z8V6XPE
-          slack-message: "Trivy Scan Github Workflow is failing. Please look into it."
+  trivy-scan:
+    uses: vmware-tanzu/carvel-release-scripts/.github/workflows/trivy-scan.yml@main
+    with:
+      repo: vmware-tanzu/carvel-kapp
+      tool: kapp
+      goVersion: 1.18
+    secrets:
+      githubToken: ${{ secrets.GITHUB_TOKEN }}
+      slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL }}

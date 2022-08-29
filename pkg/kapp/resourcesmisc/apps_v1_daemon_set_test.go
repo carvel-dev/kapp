@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 	"github.com/stretchr/testify/require"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	ctlresm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
 )
 
 func TestAppsV1DaemonSetCreation(t *testing.T) {

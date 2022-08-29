@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/k14s/kapp/pkg/kapp/app"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/stretchr/testify/require"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/app"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 func TestCreateUpdateDelete(t *testing.T) {

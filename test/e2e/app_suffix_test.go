@@ -8,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/k14s/kapp/pkg/kapp/app"
 	"github.com/stretchr/testify/require"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/app"
 )
 
-var yaml1 string = `
+var yaml1 = `
 ---
 apiVersion: v1
 kind: Service
@@ -34,7 +34,7 @@ data:
   key: value
 `
 
-var yaml2 string = `
+var yaml2 = `
 ---
 apiVersion: v1
 kind: ConfigMap

@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
-	"github.com/k14s/kapp/pkg/kapp/logger"
+	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 )
 
 type ChangeGraph struct {
@@ -42,7 +42,7 @@ func NewChangeGraph(changes []ActualChange,
 		func(_, _ *Change) bool { return true },
 	)
 	if err != nil {
-		return graph, fmt.Errorf("Change graph: Calculating required deps: %s", err)
+		return graph, fmt.Errorf("Change graph: Calculating required deps: %w", err)
 	}
 
 	err = graph.checkCycles()
@@ -69,7 +69,7 @@ func NewChangeGraph(changes []ActualChange,
 		},
 	)
 	if err != nil {
-		return graph, fmt.Errorf("Change graph: Calculating optional deps: %s", err)
+		return graph, fmt.Errorf("Change graph: Calculating optional deps: %w", err)
 	}
 
 	graph.dedup()
@@ -286,7 +286,7 @@ func (g *ChangeGraph) checkCycles() error {
 		unmarked = unmarked[1:]
 		err := g.checkCyclesVisit(nodeN, markedTemp, markedPerm)
 		if err != nil {
-			return fmt.Errorf("Detected cycle while ordering changes: [%s] %s",
+			return fmt.Errorf("Detected cycle while ordering changes: [%s] %w",
 				nodeN.Change.Resource().Description(), err)
 		}
 	}
@@ -306,7 +306,7 @@ func (g *ChangeGraph) checkCyclesVisit(nodeN *Change, markedTemp, markedPerm map
 	for _, nodeM := range nodeN.WaitingFor {
 		err := g.checkCyclesVisit(nodeM, markedTemp, markedPerm)
 		if err != nil {
-			return fmt.Errorf("-> [%s] %s", nodeM.Change.Resource().Description(), err)
+			return fmt.Errorf("-> [%s] %w", nodeM.Change.Resource().Description(), err)
 		}
 	}
 

@@ -75,7 +75,7 @@ func (f *ConfigFactoryImpl) RESTConfig() (*rest.Config, error) {
 			hintMsg = " (hint: " + hintMsg + ")"
 		}
 
-		return nil, fmt.Errorf("Building Kubernetes config%s: %s%s", prefixMsg, err, hintMsg)
+		return nil, fmt.Errorf("Building Kubernetes config%s: %w%s", prefixMsg, err, hintMsg)
 	}
 
 	if f.qps > 0.0 {
@@ -99,17 +99,17 @@ func (f *ConfigFactoryImpl) DefaultNamespace() (string, error) {
 func (f *ConfigFactoryImpl) clientConfig() (bool, clientcmd.ClientConfig, error) {
 	path, err := f.pathResolverFunc()
 	if err != nil {
-		return false, nil, fmt.Errorf("Resolving config path: %s", err)
+		return false, nil, fmt.Errorf("Resolving config path: %w", err)
 	}
 
 	context, err := f.contextResolverFunc()
 	if err != nil {
-		return false, nil, fmt.Errorf("Resolving config context: %s", err)
+		return false, nil, fmt.Errorf("Resolving config context: %w", err)
 	}
 
 	configYAML, err := f.yamlResolverFunc()
 	if err != nil {
-		return false, nil, fmt.Errorf("Resolving config YAML: %s", err)
+		return false, nil, fmt.Errorf("Resolving config YAML: %w", err)
 	}
 
 	if len(configYAML) > 0 {

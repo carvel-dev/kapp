@@ -5,23 +5,24 @@ package app
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
 	"github.com/cppforlife/go-cli-ui/ui"
-	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
-	ctlcap "github.com/k14s/kapp/pkg/kapp/clusterapply"
-	cmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	cmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
-	ctlconf "github.com/k14s/kapp/pkg/kapp/config"
-	ctldiff "github.com/k14s/kapp/pkg/kapp/diff"
-	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
-	ctldiffui "github.com/k14s/kapp/pkg/kapp/diffui"
-	"github.com/k14s/kapp/pkg/kapp/logger"
-	ctllogs "github.com/k14s/kapp/pkg/kapp/logs"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
 	"github.com/spf13/cobra"
+	ctlapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/app"
+	ctlcap "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/clusterapply"
+	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
+	cmdtools "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/tools"
+	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
+	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
+	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
+	ctldiffui "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffui"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
+	ctllogs "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logs"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	ctlresm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -219,6 +220,19 @@ func (o *DeployOptions) Run() error {
 	}
 
 	err = touch.Do(func() error {
+		defer func() {
+			if o.DeployFlags.AppMetadataFile != "" {
+				meta, err := app.Meta()
+				if err != nil {
+					return
+				}
+				err = os.WriteFile(o.DeployFlags.AppMetadataFile, []byte(meta.AsString()), os.ModePerm)
+				if err != nil {
+					return
+				}
+			}
+		}()
+
 		err := clusterChangeSet.Apply(clusterChangesGraph)
 		if err != nil {
 			return err
@@ -303,7 +317,7 @@ func (o *DeployOptions) newResources(
 	}
 
 	err = labeledResources.Prepare(newResources, conf.OwnershipLabelMods(),
-		conf.LabelScopingMods(), conf.AdditionalLabels())
+		conf.LabelScopingMods(o.DeployFlags.DefaultLabelScopingRules), conf.AdditionalLabels())
 	if err != nil {
 		return nil, ctlconf.Conf{}, nil, nil, err
 	}

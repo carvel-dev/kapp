@@ -9,9 +9,9 @@ import (
 	"time"
 
 	uierrs "github.com/cppforlife/go-cli-ui/errors"
-	ctldgraph "github.com/k14s/kapp/pkg/kapp/diffgraph"
-	ctlresm "github.com/k14s/kapp/pkg/kapp/resourcesmisc"
-	"github.com/k14s/kapp/pkg/kapp/util"
+	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
+	ctlresm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/util"
 )
 
 type WaitingChangesOpts struct {
@@ -92,7 +92,7 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, error) {
 			c.ui.Notify(descMsgs)
 
 			if err != nil {
-				return nil, fmt.Errorf("%s: Errored: %s", desc, err)
+				return nil, fmt.Errorf("%s: Errored: %w", desc, err)
 			}
 			if state.Done {
 				c.numWaited++

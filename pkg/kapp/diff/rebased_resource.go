@@ -6,7 +6,7 @@ package diff
 import (
 	"fmt"
 
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 type RebasedResource struct {
@@ -52,7 +52,7 @@ func (r RebasedResource) Resource() (ctlres.Resource, error) {
 
 		err := t.ApplyFromMultiple(result, resSources)
 		if err != nil {
-			return nil, fmt.Errorf("Applying rebase rule to %s: %s", resultDesc, err)
+			return nil, fmt.Errorf("Applying rebase rule to %s: %w", resultDesc, err)
 		}
 	}
 

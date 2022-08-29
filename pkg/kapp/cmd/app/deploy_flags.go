@@ -6,8 +6,8 @@ package app
 import (
 	"fmt"
 
-	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
 	"github.com/spf13/cobra"
+	ctlapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/app"
 )
 
 type DeployFlags struct {
@@ -21,8 +21,11 @@ type DeployFlags struct {
 
 	AppChangesMaxToKeep int
 
-	Logs    bool
-	LogsAll bool
+	DefaultLabelScopingRules bool
+
+	Logs            bool
+	LogsAll         bool
+	AppMetadataFile string
 }
 
 func (s *DeployFlags) Set(cmd *cobra.Command) {
@@ -44,8 +47,12 @@ func (s *DeployFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&s.OverrideOwnershipOfExistingResources, "dangerous-override-ownership-of-existing-resources",
 		false, "Steal existing resources from another app")
 
+	cmd.Flags().BoolVar(&s.DefaultLabelScopingRules, "default-label-scoping-rules",
+		true, "Use default label scoping rules")
+
 	cmd.Flags().IntVar(&s.AppChangesMaxToKeep, "app-changes-max-to-keep", ctlapp.AppChangesMaxToKeepDefault, "Maximum number of app changes to keep")
 
 	cmd.Flags().BoolVar(&s.Logs, "logs", true, fmt.Sprintf("Show logs from Pods annotated as '%s'", deployLogsAnnKey))
 	cmd.Flags().BoolVar(&s.LogsAll, "logs-all", false, "Show logs from all Pods")
+	cmd.Flags().StringVar(&s.AppMetadataFile, "app-metadata-file-output", "", "Set filename to write app metadata")
 }
