@@ -755,7 +755,7 @@ metadata:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: default-ns-sa1
+  name: default-sa1
   namespace: test1
 ---
 apiVersion: v1
@@ -766,7 +766,7 @@ metadata:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: default-ns-sa2
+  name: default-sa2
   namespace: test2
 ---
 apiVersion: v1
@@ -776,6 +776,12 @@ metadata:
   namespace: test2
 data:
   hello_msg: carvel
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default-sa3
+  namespace: default
 `
 	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
 	require.NoErrorf(t, err, "Parsing conf defaults")
@@ -792,12 +798,13 @@ data:
 	output := strings.TrimSpace(graph.PrintStr())
 	expectedOutput := strings.TrimSpace(`
 (delete) namespace/test1 (v1) cluster
-  (delete) serviceaccount/default-ns-sa1 (v1) namespace: test1
-(delete) serviceaccount/default-ns-sa1 (v1) namespace: test1
+  (delete) serviceaccount/default-sa1 (v1) namespace: test1
+(delete) serviceaccount/default-sa1 (v1) namespace: test1
 (delete) namespace/test2 (v1) cluster
-  (delete) serviceaccount/default-ns-sa2 (v1) namespace: test2
-(delete) serviceaccount/default-ns-sa2 (v1) namespace: test2
+  (delete) serviceaccount/default-sa2 (v1) namespace: test2
+(delete) serviceaccount/default-sa2 (v1) namespace: test2
 (delete) configmap/simple-cm (v1) namespace: test2
+(delete) serviceaccount/default-sa3 (v1) namespace: default
 `)
 	require.Equal(t, expectedOutput, output)
 }
