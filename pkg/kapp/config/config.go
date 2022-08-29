@@ -39,7 +39,7 @@ type Config struct {
 	ChangeGroupBindings []ChangeGroupBinding
 	ChangeRuleBindings  []ChangeRuleBinding
 
-	StripNameHashSuffix bool
+	StripNameHashSuffixConfig StripNameHashSuffixConfig
 }
 
 type WaitRule struct {
@@ -137,6 +137,11 @@ type ChangeGroupBinding struct {
 type ChangeRuleBinding struct {
 	Rules            []string
 	IgnoreIfCyclical bool
+	ResourceMatchers []ResourceMatcher
+}
+
+type StripNameHashSuffixConfig struct {
+	Enabled          bool
 	ResourceMatchers []ResourceMatcher
 }
 

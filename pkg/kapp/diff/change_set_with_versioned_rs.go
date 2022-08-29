@@ -19,17 +19,17 @@ const (
 )
 
 type ChangeSetWithVersionedRs struct {
-	existingRs, newRs   []ctlres.Resource
-	rules               []ctlconf.TemplateRule
-	opts                ChangeSetOpts
-	changeFactory       ChangeFactory
-	stripNameHashSuffix bool
+	existingRs, newRs         []ctlres.Resource
+	rules                     []ctlconf.TemplateRule
+	opts                      ChangeSetOpts
+	changeFactory             ChangeFactory
+	stripNameHashSuffixConfig stripNameHashSuffixConfig
 }
 
 func NewChangeSetWithVersionedRs(existingRs, newRs []ctlres.Resource,
-	rules []ctlconf.TemplateRule, opts ChangeSetOpts, changeFactory ChangeFactory, stripNameHashSuffix bool) *ChangeSetWithVersionedRs {
+	rules []ctlconf.TemplateRule, opts ChangeSetOpts, changeFactory ChangeFactory, stripNameHashSuffixConfigs ctlconf.StripNameHashSuffixConfigs) *ChangeSetWithVersionedRs {
 
-	return &ChangeSetWithVersionedRs{existingRs, newRs, rules, opts, changeFactory, stripNameHashSuffix}
+	return &ChangeSetWithVersionedRs{existingRs, newRs, rules, opts, changeFactory, newStripNameHashSuffixConfigFromConf(stripNameHashSuffixConfigs)}
 }
 
 func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
@@ -78,7 +78,7 @@ func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 }
 
 func (d ChangeSetWithVersionedRs) versionedResourceName(res ctlres.Resource) VersionedResource {
-	return VersionedResource{res, nil, d.stripNameHashSuffix}
+	return VersionedResource{res, nil, d.stripNameHashSuffixConfig}
 }
 
 func (d ChangeSetWithVersionedRs) groupResources(rs []ctlres.Resource) map[string][]ctlres.Resource {
@@ -162,7 +162,7 @@ func (d ChangeSetWithVersionedRs) addAndKeepChanges(
 		}
 
 		// Update both versioned and non-versioned
-		verRes := VersionedResource{usedRes, d.rules, d.stripNameHashSuffix}
+		verRes := VersionedResource{usedRes, d.rules, d.stripNameHashSuffixConfig}
 
 		err := verRes.UpdateAffected(newRs.NonVersioned)
 		if err != nil {

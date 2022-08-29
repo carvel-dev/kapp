@@ -19,20 +19,13 @@ const (
 )
 
 type VersionedResource struct {
-	res                 ctlres.Resource
-	allRules            []ctlconf.TemplateRule
-	stripNameHashSuffix bool
+	res                       ctlres.Resource
+	allRules                  []ctlconf.TemplateRule
+	stripNameHashSuffixConfig stripNameHashSuffixConfig
 }
 
 func (d VersionedResource) StripNameHashSuffix() bool {
-
-	stripEnabled := d.stripNameHashSuffix
-
-	// TODO should properly check using a ResourceMatcher
-	matchesRequiredKind := d.res.Kind() == "ConfigMap" || d.res.Kind() == "Secret"
-
-	return stripEnabled && matchesRequiredKind
-
+	return d.stripNameHashSuffixConfig.EnabledFor(d.res)
 }
 
 func (d VersionedResource) SetBaseName(ver int) {

@@ -176,8 +176,8 @@ data:
   foo: bar
 `))
 
-	stripNameHashSuffix := true
-	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRs}, []ctlres.Resource{newRs}, nil, ChangeSetOpts{}, ChangeFactory{}, stripNameHashSuffix)
+	stripNameHashSuffix := stripNameHashSuffixConfig{Enabled: true, ResourceMatcher: ctlres.AllMatcher{}}
+	changeSetWithVerRes := ChangeSetWithVersionedRs{[]ctlres.Resource{existingRs}, []ctlres.Resource{newRs}, nil, ChangeSetOpts{}, ChangeFactory{}, stripNameHashSuffix}
 
 	changes, err := changeSetWithVerRes.Calculate()
 	require.NoError(t, err)
@@ -199,50 +199,9 @@ data:
 
 }
 
-func TestChangeSet_StripKustomizeSuffix_CMonly(t *testing.T) {
-	newRs := ctlres.MustNewResourceFromBytes([]byte(`
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-deployment
-spec:
-  replicas: 2
-`))
-
-	existingRs := ctlres.MustNewResourceFromBytes([]byte(`
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-deployment
-spec:
-  replicas: 1
-`))
-
-	changeSetWithVerRes := newChangeSet(existingRs, newRs)
-	changeSetWithVerRes.stripNameHashSuffix = true
-
-	changes, err := changeSetWithVerRes.Calculate()
-	require.NoError(t, err)
-
-	require.Equal(t, ChangeOpUpdate, changes[0].Op(), "Expect to get updated")
-
-	expectedDiff := `  0,  0   apiVersion: apps/v1
-  1,  1   kind: Deployment
-  2,  2   metadata:
-  3,  3     name: my-deployment
-  4,  4   spec:
-  5,  5 -   replicas: 1
-  6,  5 +   replicas: 2
-  6,  6   
-`
-
-	checkChangeDiff(t, changes[0], expectedDiff)
-
-}
-
 func newChangeSet(existingRes, newRes ctlres.Resource) *ChangeSetWithVersionedRs {
-	stripNameHashSuffix := false
-	return NewChangeSetWithVersionedRs([]ctlres.Resource{existingRes}, []ctlres.Resource{newRes}, nil, ChangeSetOpts{}, ChangeFactory{}, stripNameHashSuffix)
+	stripNameHashSuffix := stripNameHashSuffixConfig{Enabled: false}
+	return &ChangeSetWithVersionedRs{[]ctlres.Resource{existingRes}, []ctlres.Resource{newRes}, nil, ChangeSetOpts{}, ChangeFactory{}, stripNameHashSuffix}
 }
 
 func checkChangeDiff(t *testing.T, change Change, expectedDiff string) {
