@@ -24,7 +24,7 @@ type App interface {
 
 	CreateOrUpdate(map[string]string, bool) error
 	Exists() (bool, string, error)
-	Delete() error
+	Delete(bool) error
 	Rename(string, string) error
 	RenamePrevApp(string, map[string]string, bool) error
 
