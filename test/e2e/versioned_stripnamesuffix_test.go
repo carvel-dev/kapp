@@ -5,8 +5,8 @@ package e2e
 
 import (
 	"fmt"
-	"testing"
 	"regexp"
+	"testing"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	"github.com/stretchr/testify/require"
