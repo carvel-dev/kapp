@@ -18,11 +18,14 @@ else
     interactive="$interactive -v $PWD/$dlv_conf:/root/.config/dlv"
 fi
 
+gopath_vol=${KAPP_GOPATH_VOL:-gopath}
+gobuild_vol=${KAPP_GOBUILD_VOL:-gobuild}
+
 # SYS_PTRACE for dlv
 # host network for minikube
 podman run --rm \
-    -v gopath:/go \
-    -v gobuild:/root/.cache/go-build \
+    -v $gopath_vol:/go \
+    -v $gobuild_vol:/root/.cache/go-build \
     -v $HOME/.kube:/root/.kube \
     -v $HOME/.minikube:$HOME/.minikube \
     -v $(realpath $PWD/..):/mnt -w /mnt \
