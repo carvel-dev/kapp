@@ -5,7 +5,8 @@ kind: ConfigMap
 metadata:
   name: config-map-5bghbfbdc8
 ---
-StripNameHashSuffix: true
+StripNameHashSuffixConfig:
+  Enabled: true
 apiVersion: kapp.k14s.io/v1alpha1
 kind: Config
 metadata:

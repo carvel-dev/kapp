@@ -3,4 +3,5 @@ kind: Config
 metadata:
   name: irrelevant
 
-StripNameHashSuffix: true
+StripNameHashSuffixConfig:
+  Enabled: true
