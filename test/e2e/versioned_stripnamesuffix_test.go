@@ -6,6 +6,7 @@ package e2e
 import (
 	"fmt"
 	"testing"
+	"regexp"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	"github.com/stretchr/testify/require"
@@ -52,17 +53,25 @@ func TestStripNameSuffixBasic(t *testing.T) {
 		return
 	}
 
-	//fmt.Println(stdout)
+	// comparing the whole diff is unreliable; depending on the k8s version
+	// managedFields will (not) be set and as such (not) included in the diff.
+	// in that regard it also seems unreliable to assume "data" diff will
+	// always be in the first lines.
+	addRE := regexp.MustCompile(`(?m)^      \d+ \+   foo: bar$`)
+	delRE := regexp.MustCompile(`(?m)^  \d+     \-   foo: foo$`)
 
 	expectedNote := "Op:      1 create, 1 delete, 0 update, 0 noop, 0 exists"
 
 	resp := uitest.JSONUIFromBytes(t, []byte(stdout))
 
-	// Ensure one diff is shown
-	require.Exactlyf(t, 1, len(resp.Blocks), "Expected to see exactly one diff")
+	diffBlock := resp.Blocks[0]
+	actualNote := resp.Tables[0].Notes[0]
+
+	require.Regexpf(t, addRE, diffBlock, "Expected to see new line in diff")
+	require.Regexpf(t, delRE, diffBlock, "Expected to see old line in diff")
 
 	// Ensure old ConfigMap is deleted
-	require.Exactlyf(t, expectedNote, replaceAnnsLabels(resp.Tables[0].Notes[0]), "Expected to one delete and one create Op")
+	require.Exactlyf(t, expectedNote, actualNote, "Expected to one delete and one create Op")
 }
 
 func TestStripNameSuffixNoop(t *testing.T) {
