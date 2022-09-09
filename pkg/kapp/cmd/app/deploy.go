@@ -178,6 +178,8 @@ func (o *DeployOptions) Run() error {
 	}
 
 	if o.DiffFlags.Run || hasNoChanges {
+		o.writeAppMetadataToFile(app)
+
 		if o.DiffFlags.Run && o.DiffFlags.ExitStatus {
 			return DeployDiffExitStatus{hasNoChanges}
 		}
@@ -220,18 +222,7 @@ func (o *DeployOptions) Run() error {
 	}
 
 	err = touch.Do(func() error {
-		defer func() {
-			if o.DeployFlags.AppMetadataFile != "" {
-				meta, err := app.Meta()
-				if err != nil {
-					return
-				}
-				err = os.WriteFile(o.DeployFlags.AppMetadataFile, []byte(meta.AsString()), os.ModePerm)
-				if err != nil {
-					return
-				}
-			}
-		}()
+		defer o.writeAppMetadataToFile(app)
 
 		err := clusterChangeSet.Apply(clusterChangesGraph)
 		if err != nil {
@@ -470,6 +461,17 @@ func (o *DeployOptions) existingPodResources(existingResources []ctlres.Resource
 		}
 	}
 	return existingPods
+}
+
+func (o *DeployOptions) writeAppMetadataToFile(app ctlapp.App) error {
+	if o.DeployFlags.AppMetadataFile != "" {
+		meta, err := app.Meta()
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(o.DeployFlags.AppMetadataFile, []byte(meta.AsString()), os.ModePerm)
+	}
+	return nil
 }
 
 const (
