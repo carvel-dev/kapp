@@ -1,5 +1,6 @@
-// Copyright 2020 VMware, Inc.
+// Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
+
 package e2e
 
 import (
@@ -7,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestNonTypedCharError(t *testing.T) {
+func TestNonTypedArrayFields(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -15,26 +16,38 @@ func TestNonTypedCharError(t *testing.T) {
 
 	yaml := `
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Service
 metadata:
-  name: simple-app
+  name: simple-svc
+  labels:
+    app: simple-svc
 spec:
+  ports:
+  - port: 80
+    name: test
+  clusterIP: None
+  selector:
+    app: simple-svc
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: test
+spec:
+  replicas: 1
   selector:
     matchLabels:
-      simple-app: ""
+      app: simple-svc
   template:
     metadata:
       labels:
-        simple-app: ""
+        app: simple-svc
     spec:
+      initContainers: null
       containers:
       - name: simple-app
         image: docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0
-        env:
-        - name: HELLO_MSG
-          value: stranger
-        envFrom:
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -46,7 +59,7 @@ data:
   hello_msg: carvel
 `
 
-	name := "test-non-typed-character-error"
+	name := "test-non-typed-array-fields"
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
 	}
@@ -56,7 +69,8 @@ data:
 	logger.Section("Initial deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(yaml)})
 
-		NewPresentClusterResource("deployment", "simple-app", env.Namespace, kubectl)
+		NewPresentClusterResource("statefulset", "test", env.Namespace, kubectl)
 		NewPresentClusterResource("configmap", "simple-cm-ver-1", env.Namespace, kubectl)
+		NewPresentClusterResource("service", "simple-svc", env.Namespace, kubectl)
 	})
 }
