@@ -8,22 +8,36 @@ import (
 	"regexp"
 	"testing"
 
+	ui "github.com/cppforlife/go-cli-ui/ui"
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	"github.com/stretchr/testify/require"
 )
 
-func setup(t *testing.T) (kapp Kapp, appName string, cleanUp func()) {
+func run(t *testing.T, overlay1, overlay2 string) (resp ui.JSONUIResp) {
 	env := BuildEnv(t)
 	logger := Logger{}
-	kapp = Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
 
-	appName = "test-versioned-stripnamesuffix"
-	cleanUp = func() {
+	appName := "test-versioned-stripnamesuffix"
+	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", appName})
 	}
 
 	cleanUp()
-	return
+
+	if _, err := kappDeployOverlay(kapp, overlay1, appName); err != nil {
+		t.Errorf("Failed to deploy initial overlay!")
+	}
+
+	stdout, err := kappDeployOverlay(kapp, overlay2, appName)
+
+	defer cleanUp()
+
+	if err != nil {
+		t.Errorf("Failed to deploy next overlay!")
+	}
+
+	return uitest.JSONUIFromBytes(t, []byte(stdout))
 }
 
 func testResOverlayPath(name string) string {
@@ -40,22 +54,7 @@ func kappDeployOverlay(kapp Kapp, name string, app string) (string, error) {
 
 func TestStripNameSuffixBasic(t *testing.T) {
 
-	t.Skip("not implemented yet")
-	return
-
-	kapp, appName, cleanup := setup(t)
-	defer cleanup()
-
-	if _, err := kappDeployOverlay(kapp, "versioned1", appName); err != nil {
-		t.Errorf("Failed to deploy initial overlay!")
-	}
-
-	stdout, err := kappDeployOverlay(kapp, "versioned2", appName)
-
-	if err != nil {
-		t.Errorf("Failed to deploy next overlay!")
-		return
-	}
+	resp := run(t, "versioned1", "versioned2")
 
 	// comparing the whole diff is unreliable; depending on the k8s version
 	// managedFields will (not) be set and as such (not) included in the diff.
@@ -64,15 +63,21 @@ func TestStripNameSuffixBasic(t *testing.T) {
 	addRE := regexp.MustCompile(`(?m)^      \d+ \+   foo: bar$`)
 	delRE := regexp.MustCompile(`(?m)^  \d+     \-   foo: foo$`)
 
-	expectedNote := "Op:      1 create, 1 delete, 0 update, 0 noop, 0 exists"
-
-	resp := uitest.JSONUIFromBytes(t, []byte(stdout))
-
 	diffBlock := resp.Blocks[0]
-	actualNote := resp.Tables[0].Notes[0]
 
 	require.Regexpf(t, addRE, diffBlock, "Expected to see new line in diff")
 	require.Regexpf(t, delRE, diffBlock, "Expected to see old line in diff")
+}
+
+func TestStripNameSuffixDeleteOld(t *testing.T) {
+
+	t.Skip("not yet implemented")
+
+	resp := run(t, "versioned1", "versioned2")
+
+	expectedNote := "Op:      1 create, 1 delete, 0 update, 0 noop, 0 exists"
+
+	actualNote := resp.Tables[0].Notes[0]
 
 	// Ensure old ConfigMap is deleted
 	require.Exactlyf(t, expectedNote, actualNote, "Expected to one delete and one create Op")
@@ -80,27 +85,12 @@ func TestStripNameSuffixBasic(t *testing.T) {
 
 func TestStripNameSuffixNoop(t *testing.T) {
 
-	t.Skip("not implemented yet")
-	return
-
-	kapp, appName, cleanup := setup(t)
-	defer cleanup()
-
-	if _, err := kappDeployOverlay(kapp, "versioned1", appName); err != nil {
-		t.Errorf("Failed to deploy initial overlay!")
-	}
-
-	stdout, err := kappDeployOverlay(kapp, "versioned1", appName)
-
-	if err != nil {
-		t.Errorf("Failed to deploy next overlay!")
-		return
-	}
+	resp := run(t, "versioned1", "versioned1")
 
 	expectedNote := "Op:      0 create, 0 delete, 0 update, 0 noop, 0 exists"
 
-	resp := uitest.JSONUIFromBytes(t, []byte(stdout))
+	actualNote := resp.Tables[0].Notes[0]
 
 	// Ensure current ConfigMap is not deleted
-	require.Exactlyf(t, expectedNote, replaceAnnsLabels(resp.Tables[0].Notes[0]), "Expected to see no Op's")
+	require.Exactlyf(t, expectedNote, actualNote, "Expected to see no Op's")
 }
