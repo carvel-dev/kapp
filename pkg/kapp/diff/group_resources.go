@@ -3,17 +3,13 @@
 
 package diff
 
-import (
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
-)
-
-type GroupResources struct {
-	resources []ctlres.Resource
-	groupFunc func(ctlres.Resource) string
+type GroupVersionedResources struct {
+	resources []VersionedResource
+	groupFunc func(VersionedResource) string
 }
 
-func (r GroupResources) Resources() map[string][]ctlres.Resource {
-	result := map[string][]ctlres.Resource{}
+func (r GroupVersionedResources) Resources() map[string][]VersionedResource {
+	result := map[string][]VersionedResource{}
 
 	for _, res := range r.resources {
 		id := r.groupFunc(res)
