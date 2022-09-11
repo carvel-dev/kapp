@@ -39,6 +39,10 @@ func kappDeployOverlay(kapp Kapp, name string, app string) (string, error) {
 }
 
 func TestStripNameSuffixBasic(t *testing.T) {
+
+	t.Skip("not implemented yet")
+	return
+
 	kapp, appName, cleanup := setup(t)
 	defer cleanup()
 
@@ -75,6 +79,10 @@ func TestStripNameSuffixBasic(t *testing.T) {
 }
 
 func TestStripNameSuffixNoop(t *testing.T) {
+
+	t.Skip("not implemented yet")
+	return
+
 	kapp, appName, cleanup := setup(t)
 	defer cleanup()
 
