@@ -18,17 +18,30 @@ const (
 	nameSuffixSep = "-ver-"
 )
 
-type VersionedResource struct {
+type VersionedResource interface {
+	Res() ctlres.Resource
+	SetBaseName(ver int)
+	BaseNameAndVersion() (string, string)
+	Version() int
+	UniqVersionedKey() ctlres.UniqueResourceKey
+	UpdateAffected(rs []ctlres.Resource) error
+}
+
+type VersionedResourceImpl struct {
 	res      ctlres.Resource
 	allRules []ctlconf.TemplateRule
 }
 
-func (d VersionedResource) SetBaseName(ver int) {
+func (d VersionedResourceImpl) Res() ctlres.Resource {
+	return d.res
+}
+
+func (d VersionedResourceImpl) SetBaseName(ver int) {
 	name := fmt.Sprintf("%s%s%d", d.res.Name(), nameSuffixSep, ver)
 	d.res.SetName(name)
 }
 
-func (d VersionedResource) BaseNameAndVersion() (string, string) {
+func (d VersionedResourceImpl) BaseNameAndVersion() (string, string) {
 	name := d.res.Name()
 	pieces := strings.Split(name, nameSuffixSep)
 	if len(pieces) > 1 {
@@ -37,7 +50,7 @@ func (d VersionedResource) BaseNameAndVersion() (string, string) {
 	return name, ""
 }
 
-func (d VersionedResource) Version() int {
+func (d VersionedResourceImpl) Version() int {
 	_, ver := d.BaseNameAndVersion()
 	if len(ver) == 0 {
 		panic(fmt.Sprintf("Missing version in versioned resource '%s'", d.res.Description()))
@@ -51,12 +64,12 @@ func (d VersionedResource) Version() int {
 	return verInt
 }
 
-func (d VersionedResource) UniqVersionedKey() ctlres.UniqueResourceKey {
+func (d VersionedResourceImpl) UniqVersionedKey() ctlres.UniqueResourceKey {
 	baseName, _ := d.BaseNameAndVersion()
 	return ctlres.NewUniqueResourceKeyWithCustomName(d.res, baseName)
 }
 
-func (d VersionedResource) UpdateAffected(rs []ctlres.Resource) error {
+func (d VersionedResourceImpl) UpdateAffected(rs []ctlres.Resource) error {
 	rules, err := d.matchingRules()
 	if err != nil {
 		return err
@@ -73,7 +86,7 @@ func (d VersionedResource) UpdateAffected(rs []ctlres.Resource) error {
 	return nil
 }
 
-func (d VersionedResource) updateAffected(rule ctlconf.TemplateRule, rs []ctlres.Resource) error {
+func (d VersionedResourceImpl) updateAffected(rule ctlconf.TemplateRule, rs []ctlres.Resource) error {
 	for _, affectedObjRef := range rule.AffectedResources.ObjectReferences {
 		matchers := ctlconf.ResourceMatchers(affectedObjRef.ResourceMatchers).AsResourceMatchers()
 
@@ -122,7 +135,7 @@ func (d VersionedResource) updateAffected(rule ctlconf.TemplateRule, rs []ctlres
 	return nil
 }
 
-func (d VersionedResource) buildObjRefReplacementFunc(
+func (d VersionedResourceImpl) buildObjRefReplacementFunc(
 	affectedObjRef ctlconf.TemplateAffectedObjRef) func(map[string]interface{}) error {
 
 	baseName, _ := d.BaseNameAndVersion()
@@ -171,7 +184,7 @@ func (d VersionedResource) buildObjRefReplacementFunc(
 	}
 }
 
-func (d VersionedResource) matchingRules() ([]ctlconf.TemplateRule, error) {
+func (d VersionedResourceImpl) matchingRules() ([]ctlconf.TemplateRule, error) {
 	var result []ctlconf.TemplateRule
 
 	for _, rule := range d.allRules {

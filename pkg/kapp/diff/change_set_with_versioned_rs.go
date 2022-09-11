@@ -81,7 +81,7 @@ func (d ChangeSetWithVersionedRs) groupResources(vrs []VersionedResource) map[st
 	result := map[string][]VersionedResource{}
 
 	groupByFunc := func(ver VersionedResource) string {
-		res := ver.res
+		res := ver.Res()
 		if _, found := res.Annotations()[versionedResAnnKey]; found {
 			return ver.UniqVersionedKey().String()
 		}
@@ -129,24 +129,24 @@ func (d ChangeSetWithVersionedRs) addAndKeepChanges(
 			existingVerRes := existingVRs[len(existingVRs)-1]
 
 			// Calculate update change to determine if anything changed
-			updateChange, err := d.newChange(existingVerRes.res, newVerRes.res)
+			updateChange, err := d.newChange(existingVerRes.Res(), newVerRes.Res())
 			if err != nil {
 				return nil, nil, err
 			}
 
 			switch updateChange.Op() {
 			case ChangeOpUpdate:
-				changes = append(changes, d.newAddChangeFromUpdateChange(newVerRes.res, updateChange))
+				changes = append(changes, d.newAddChangeFromUpdateChange(newVerRes.Res(), updateChange))
 			case ChangeOpKeep:
 				// Use latest copy of resource to update affected resources
 				usedVerRes = existingVerRes
-				changes = append(changes, d.newKeepChange(existingVerRes.res))
+				changes = append(changes, d.newKeepChange(existingVerRes.Res()))
 			default:
 				panic(fmt.Sprintf("Unexpected change op %s", updateChange.Op()))
 			}
 		} else {
 			// Since there no existing resource, create change for new resource
-			addChange, err := d.newChange(nil, newVerRes.res)
+			addChange, err := d.newChange(nil, newVerRes.Res())
 			if err != nil {
 				return nil, nil, err
 			}
@@ -165,7 +165,7 @@ func (d ChangeSetWithVersionedRs) addAndKeepChanges(
 		// workaround:
 		newRs := []ctlres.Resource{}
 		for _, newVerRes := range newVRs.Versioned {
-			newRs = append(newRs, newVerRes.res)
+			newRs = append(newRs, newVerRes.Res())
 		}
 		// workaround end
 		err = usedVerRes.UpdateAffected(newRs)
@@ -198,7 +198,7 @@ func (d ChangeSetWithVersionedRs) noopAndDeleteChanges(
 
 		if newVRes, found := alreadyAdded[existingResKey]; found {
 			var err error
-			numToKeep, err = d.numOfResourcesToKeep(newVRes.res)
+			numToKeep, err = d.numOfResourcesToKeep(newVRes.Res())
 			if err != nil {
 				return nil, err
 			}
@@ -209,7 +209,7 @@ func (d ChangeSetWithVersionedRs) noopAndDeleteChanges(
 
 		// Create changes to delete all or extra resources
 		for _, existingVRes := range existingVRs[0 : len(existingVRs)-numToKeep] {
-			change, err := d.newChange(existingVRes.res, nil)
+			change, err := d.newChange(existingVRes.Res(), nil)
 			if err != nil {
 				return nil, err
 			}
@@ -218,7 +218,7 @@ func (d ChangeSetWithVersionedRs) noopAndDeleteChanges(
 
 		// Create changes that "noop" resources
 		for _, existingVRes := range existingVRs[len(existingVRs)-numToKeep:] {
-			changes = append(changes, d.newNoopChange(existingVRes.res))
+			changes = append(changes, d.newNoopChange(existingVRes.Res()))
 		}
 	}
 
@@ -273,7 +273,7 @@ func (d ChangeSetWithVersionedRs) newVersionedResources() versionedResources {
 		_, hasVersionedOrigAnn := res.Annotations()[versionedResOrigAnnKey]
 
 		if hasVersionedAnn {
-			result.Versioned = append(result.Versioned, VersionedResource{res, d.rules})
+			result.Versioned = append(result.Versioned, VersionedResourceImpl{res, d.rules})
 			if hasVersionedOrigAnn {
 				result.NonVersioned = append(result.NonVersioned, res.DeepCopy())
 			}
@@ -292,7 +292,7 @@ func (d ChangeSetWithVersionedRs) existingVersionedResources() versionedResource
 		// onto transient resources for non-versioning related purposes).
 		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
 
-		versionedRes := VersionedResource{res, d.rules}
+		versionedRes := VersionedResourceImpl{res, d.rules}
 		_, version := versionedRes.BaseNameAndVersion()
 
 		if hasVersionedAnn && !res.Transient() && version != "" {
