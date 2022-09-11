@@ -192,9 +192,10 @@ func (d ChangeSetWithVersionedRs) noopAndDeleteChanges(
 	for existingResKey, existingVRs := range existingVRsGrouped {
 		numToKeep := 0
 
-		if newVRes, found := alreadyAdded[existingResKey]; found {
+		newVRes, found := alreadyAdded[existingResKey]
+		if found {
 			var err error
-			numToKeep, err = d.numOfResourcesToKeep(newVRes.Res())
+			numToKeep, err = d.numOfResourcesToKeep(newVRes)
 			if err != nil {
 				return nil, err
 			}
@@ -205,7 +206,18 @@ func (d ChangeSetWithVersionedRs) noopAndDeleteChanges(
 
 		// Create changes to delete all or extra resources
 		for _, existingVRes := range existingVRs[0 : len(existingVRs)-numToKeep] {
-			change, err := d.newChange(existingVRes.Res(), nil)
+
+			existingRes := existingVRes.Res()
+
+			var newRes ctlres.Resource
+			if numToKeep == 0 && found && existingRes.Name() == newVRes.Res().Name() {
+				// versioned resources without "last X" semantics would also
+				// delete the not-actually-old existing resource when it is
+				// reapplied without changes.
+				newRes = newVRes.Res()
+			}
+
+			change, err := d.newChange(existingRes, newRes)
 			if err != nil {
 				return nil, err
 			}
@@ -229,9 +241,17 @@ func (d ChangeSetWithVersionedRs) newNoopChange(existingRes ctlres.Resource) Cha
 	return NewChangePrecalculated(existingRes, nil, nil, ChangeOpNoop, nil, OpsDiff{})
 }
 
-func (ChangeSetWithVersionedRs) numOfResourcesToKeep(res ctlres.Resource) (int, error) {
+func (ChangeSetWithVersionedRs) numOfResourcesToKeep(vres VersionedResource) (int, error) {
+	switch vres.(type) {
+	case HashSuffixResource:
+		// there is no meaningful way to order hash-suffixed resources and as such there is no "last X" resources semantic.
+		// thus simply delete all old resources.
+		return 0, nil
+	}
+
 	// TODO get rid of arbitrary cut off
 	numToKeep := 5
+	res := vres.Res()
 
 	if numToKeepAnn, found := res.Annotations()[versionedResNumVersAnnKey]; found {
 		var err error

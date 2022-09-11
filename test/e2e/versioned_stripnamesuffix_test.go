@@ -71,8 +71,6 @@ func TestStripNameSuffixBasic(t *testing.T) {
 
 func TestStripNameSuffixDeleteOld(t *testing.T) {
 
-	t.Skip("not yet implemented")
-
 	resp := run(t, "versioned1", "versioned2")
 
 	expectedNote := "Op:      1 create, 1 delete, 0 update, 0 noop, 0 exists"
