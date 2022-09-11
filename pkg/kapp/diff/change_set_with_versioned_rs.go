@@ -151,20 +151,12 @@ func (d ChangeSetWithVersionedRs) addAndKeepChanges(
 
 		// Update both versioned and non-versioned
 
-		err := usedVerRes.UpdateAffected(newVRs.NonVersioned)
+		err := usedVerRes.UpdateAffected(newVRs.NonVersionedRs())
 		if err != nil {
 			return nil, nil, err
 		}
 
-		// TODO ResourceHolder?
-		// err = usedVerRes.UpdateAffected(newVRs.Versioned)
-		// workaround:
-		newRs := []ctlres.Resource{}
-		for _, newVerRes := range newVRs.Versioned {
-			newRs = append(newRs, newVerRes.Res())
-		}
-		// workaround end
-		err = usedVerRes.UpdateAffected(newRs)
+		err = usedVerRes.UpdateAffected(newVRs.VersionedRs())
 		if err != nil {
 			return nil, nil, err
 		}
@@ -280,6 +272,17 @@ func (d ChangeSetWithVersionedRs) newChange(existingRes, newRes ctlres.Resource)
 type versionedResources struct {
 	Versioned    []VersionedResource
 	NonVersioned []ctlres.Resource
+}
+
+func (d versionedResources) VersionedRs() (rs []ctlres.Resource) {
+	for _, vres := range d.Versioned {
+		rs = append(rs, vres.Res())
+	}
+	return
+}
+
+func (d versionedResources) NonVersionedRs() []ctlres.Resource {
+	return d.NonVersioned
 }
 
 func (d ChangeSetWithVersionedRs) newVersionedResources() versionedResources {
