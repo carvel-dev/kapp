@@ -19,21 +19,13 @@ const (
 )
 
 type VersionedResource struct {
-	res                       ctlres.Resource
-	allRules                  []ctlconf.TemplateRule
-	stripNameHashSuffixConfig stripNameHashSuffixConfig
-}
-
-func (d VersionedResource) StripNameHashSuffix() bool {
-	return d.stripNameHashSuffixConfig.EnabledFor(d.res)
+	res      ctlres.Resource
+	allRules []ctlconf.TemplateRule
 }
 
 func (d VersionedResource) SetBaseName(ver int) {
-	if d.trackVersions() {
-		currentName, _ := d.BaseNameAndVersion()
-		name := fmt.Sprintf("%s%s%d", currentName, nameSuffixSep, ver)
-		d.res.SetName(name)
-	}
+	name := fmt.Sprintf("%s%s%d", d.res.Name(), nameSuffixSep, ver)
+	d.res.SetName(name)
 }
 
 func (d VersionedResource) BaseNameAndVersion() (string, string) {
@@ -42,21 +34,12 @@ func (d VersionedResource) BaseNameAndVersion() (string, string) {
 	if len(pieces) > 1 {
 		return strings.Join(pieces[0:len(pieces)-1], nameSuffixSep), pieces[len(pieces)-1]
 	}
-	if d.StripNameHashSuffix() {
-		pieces = strings.Split(name, "-")
-		if len(pieces) > 1 {
-			return strings.Join(pieces[0:len(pieces)-1], "-"), ""
-		}
-	}
 	return name, ""
 }
 
 func (d VersionedResource) Version() int {
 	_, ver := d.BaseNameAndVersion()
 	if len(ver) == 0 {
-		if d.StripNameHashSuffix() {
-			return -1
-		}
 		panic(fmt.Sprintf("Missing version in versioned resource '%s'", d.res.Description()))
 	}
 
@@ -73,55 +56,7 @@ func (d VersionedResource) UniqVersionedKey() ctlres.UniqueResourceKey {
 	return ctlres.NewUniqueResourceKeyWithCustomName(d.res, baseName)
 }
 
-func (d VersionedResource) trackVersions() bool {
-	_, hasVersionedAnn := d.res.Annotations()[versionedResAnnKey]
-	return hasVersionedAnn
-}
-
-func (d VersionedResource) IsVersioned() bool {
-	if d.StripNameHashSuffix() {
-		return true
-	}
-	return d.trackVersions()
-}
-
-func (d VersionedResource) IsTracked() bool {
-	return d.IsVersioned() && d.trackVersions()
-}
-
-func (d VersionedResource) IsExistingVersioned() bool {
-
-	// Expect that versioned resources should not be transient
-	// (Annotations may have been copied from versioned resources
-	// onto transient resources for non-versioning related purposes).
-	notTransient := !d.res.Transient()
-
-	// TODO check moved during refactoring, but not sure why it is required
-	_, version := d.BaseNameAndVersion()
-	hasVersion := version != ""
-
-	versionUnnecessary := !d.trackVersions()
-
-	return d.IsVersioned() && notTransient && (hasVersion || versionUnnecessary)
-
-}
-
-func (d VersionedResource) AssignNextVersion(old VersionedResource) {
-	d.SetBaseName(old.Version() + 1)
-}
-
-func (d VersionedResource) AssignNewVersion() {
-	d.SetBaseName(1)
-}
-
 func (d VersionedResource) UpdateAffected(rs []ctlres.Resource) error {
-
-	if !d.trackVersions() {
-		// if we're not tracking versions we don't update any names and thus
-		// don't need to update any references.
-		return nil
-	}
-
 	rules, err := d.matchingRules()
 	if err != nil {
 		return err
