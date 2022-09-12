@@ -20,6 +20,7 @@ func TestFallbackAllowedNamespaces(t *testing.T) {
 	kubectl := Kubectl{t, env.Namespace, logger}
 
 	testNamespace := "test-fallback-allowed-namespace"
+	testNamespace2 := "test-fallback-allowed-namespace-2"
 
 	rbac := `
 ---
@@ -105,6 +106,7 @@ roleRef:
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", rbacName})
 		kapp.Run([]string{"delete", "-a", appName})
+		RemoveClusterResource(t, "ns", testNamespace2, "", kubectl)
 	}
 	cleanUp()
 	defer cleanUp()
@@ -215,6 +217,119 @@ data:
 
 	logger.Section("delete app", func() {
 		kapp.Run([]string{"delete", "-a", appName, fmt.Sprintf("--kubeconfig-context=%s", scopedContext)})
+
+		NewMissingClusterResource(t, "configmap", "cm-1", env.Namespace, kubectl)
+		NewMissingClusterResource(t, "configmap", "cm-2", testNamespace, kubectl)
+		NewMissingClusterResource(t, "configmap", "cm-3", testNamespace, kubectl)
+	})
+
+	logger.Section("deploy app with admin permission but scope-to-fallback-allowed-namespaces", func() {
+		kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-", "--dangerous-scope-to-fallback-allowed-namespaces"},
+			RunOpts{StdinReader: strings.NewReader(yaml1)})
+
+		NewPresentClusterResource("configmap", "cm-1", env.Namespace, kubectl)
+		NewPresentClusterResource("configmap", "cm-2", testNamespace, kubectl)
+		NewPresentClusterResource("configmap", "cm-3", testNamespace, kubectl)
+	})
+
+	logger.Section("inspect app without scope-to-fallback-allowed-namespaces", func() {
+		const appLabelKey string = "kapp.k14s.io/app"
+		NewClusterResource(t, "ns", testNamespace2, "", kubectl)
+		NewClusterResource(t, "cm", "cm-4", testNamespace2, kubectl)
+		labels := NewPresentClusterResource("cm", "cm-2", testNamespace, kubectl).Labels()
+		appLabel := labels[appLabelKey]
+
+		patch := fmt.Sprintf(`[{ "op": "add", "path": "/metadata/labels", "value": {%s: "%s"}}]`, appLabelKey, appLabel)
+		PatchClusterResource("cm", "cm-4", testNamespace2, patch, kubectl)
+
+		out := kapp.Run([]string{"inspect", "-a", appName, "--json"})
+
+		// Should get the newly added configmap
+		expectedResources := []map[string]string{{
+			"age":             "<replaced>",
+			"kind":            "ConfigMap",
+			"name":            "cm-1",
+			"namespace":       env.Namespace,
+			"owner":           "kapp",
+			"reconcile_info":  "",
+			"reconcile_state": "ok",
+		}, {
+			"age":             "<replaced>",
+			"kind":            "ConfigMap",
+			"name":            "cm-2",
+			"namespace":       testNamespace,
+			"owner":           "kapp",
+			"reconcile_info":  "",
+			"reconcile_state": "ok",
+		}, {
+			"age":             "<replaced>",
+			"kind":            "ConfigMap",
+			"name":            "cm-3",
+			"namespace":       testNamespace,
+			"owner":           "kapp",
+			"reconcile_info":  "",
+			"reconcile_state": "ok",
+		}, {
+			"age":             "<replaced>",
+			"kind":            "ConfigMap",
+			"name":            "cm-4",
+			"namespace":       testNamespace2,
+			"owner":           "cluster",
+			"reconcile_info":  "",
+			"reconcile_state": "ok",
+		}}
+
+		resp := uitest.JSONUIFromBytes(t, []byte(out))
+
+		require.Equalf(t, expectedResources, replaceAge((resp.Tables[0].Rows)), "Expected resources to match")
+	})
+
+	logger.Section("inspect app with scope-to-fallback-allowed-namespaces", func() {
+		out := kapp.Run([]string{"inspect", "-a", appName, "--json", "--dangerous-scope-to-fallback-allowed-namespaces"})
+
+		// Shouldn't get the newly added configmap
+		expectedResources := []map[string]string{{
+			"age":             "<replaced>",
+			"kind":            "ConfigMap",
+			"name":            "cm-1",
+			"namespace":       env.Namespace,
+			"owner":           "kapp",
+			"reconcile_info":  "",
+			"reconcile_state": "ok",
+		}, {
+			"age":             "<replaced>",
+			"kind":            "ConfigMap",
+			"name":            "cm-2",
+			"namespace":       testNamespace,
+			"owner":           "kapp",
+			"reconcile_info":  "",
+			"reconcile_state": "ok",
+		}, {
+			"age":             "<replaced>",
+			"kind":            "ConfigMap",
+			"name":            "cm-3",
+			"namespace":       testNamespace,
+			"owner":           "kapp",
+			"reconcile_info":  "",
+			"reconcile_state": "ok",
+		}}
+
+		resp := uitest.JSONUIFromBytes(t, []byte(out))
+
+		require.Equalf(t, expectedResources, replaceAge((resp.Tables[0].Rows)), "Expected resources to match")
+	})
+
+	logger.Section("delete one configmap and deploy again with scope-to-fallback-allowed-namespaces", func() {
+		kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-", "--dangerous-scope-to-fallback-allowed-namespaces"},
+			RunOpts{StdinReader: strings.NewReader(yaml2)})
+
+		NewPresentClusterResource("configmap", "cm-1", env.Namespace, kubectl)
+		NewPresentClusterResource("configmap", "cm-2", testNamespace, kubectl)
+		NewMissingClusterResource(t, "configmap", "cm-3", testNamespace, kubectl)
+	})
+
+	logger.Section("delete app", func() {
+		kapp.Run([]string{"delete", "-a", appName, "--dangerous-scope-to-fallback-allowed-namespaces"})
 
 		NewMissingClusterResource(t, "configmap", "cm-1", env.Namespace, kubectl)
 		NewMissingClusterResource(t, "configmap", "cm-2", testNamespace, kubectl)
