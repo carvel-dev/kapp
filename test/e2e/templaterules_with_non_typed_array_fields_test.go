@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestNonTypedArrayFields(t *testing.T) {
+func TestTemplateRulesWithNonTypedArrayFields(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -16,38 +16,27 @@ func TestNonTypedArrayFields(t *testing.T) {
 
 	yaml := `
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: simple-svc
-  labels:
-    app: simple-svc
-spec:
-  ports:
-  - port: 80
-    name: test
-  clusterIP: None
-  selector:
-    app: simple-svc
----
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
-  name: test
+  name: simple-app
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      app: simple-svc
+      simple-app: ""
   template:
     metadata:
       labels:
-        app: simple-svc
-    spec:
+        simple-app: ""
+    spec:   
       initContainers: null
       containers:
       - name: simple-app
         image: docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0
+        env:
+        - name: HELLO_MSG
+          value: stranger
+        envFrom:
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -59,7 +48,7 @@ data:
   hello_msg: carvel
 `
 
-	name := "test-non-typed-array-fields"
+	name := "test-templaterules-with-non-typed-array-fields"
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
 	}
@@ -69,8 +58,7 @@ data:
 	logger.Section("Initial deploy", func() {
 		kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-"}, RunOpts{StdinReader: strings.NewReader(yaml)})
 
-		NewPresentClusterResource("statefulset", "test", env.Namespace, kubectl)
+		NewPresentClusterResource("deployment", "simple-app", env.Namespace, kubectl)
 		NewPresentClusterResource("configmap", "simple-cm-ver-1", env.Namespace, kubectl)
-		NewPresentClusterResource("service", "simple-svc", env.Namespace, kubectl)
 	})
 }
