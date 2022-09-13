@@ -39,6 +39,8 @@ func (c ClusterChangeSet) Calculate() ([]*ClusterChange, *ctldgraph.ChangeGraph,
 	var wrappedClusterChanges []ctldgraph.ActualChange
 
 	for _, change := range c.changes {
+		//fmt.Printf("\nChange: %+v\n", change.NewResource())
+		//fmt.Printf("\nexisting Change: %+v\n", change.ExistingResource())
 		clusterChange := c.clusterChangeFactory.NewClusterChange(change)
 		wrappedClusterChanges = append(wrappedClusterChanges, wrappedClusterChange{clusterChange})
 	}
