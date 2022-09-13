@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"time"
 
 	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
@@ -16,6 +17,8 @@ const (
 	versionedResAnnKey        = "kapp.k14s.io/versioned"               // Value is ignored
 	versionedResOrigAnnKey    = "kapp.k14s.io/versioned-keep-original" // Value is ignored
 	versionedResNumVersAnnKey = "kapp.k14s.io/num-versions"
+	MaxDurationAnnKey         = "kapp.k14s.io/max-duration"
+	lastRenewTimeAnnKey       = "kapp.k14s.io/last-renewed-time"
 )
 
 type ChangeSetWithVersionedRs struct {
@@ -35,6 +38,12 @@ func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 	existingRs := existingVersionedResources(d.existingRs)
 	existingRsGrouped := d.groupResources(existingRs.Versioned)
 
+	existingNonVerRsGrouped := d.groupNonVerResources(existingRs.NonVersioned)
+	err := d.checkForMaxDurationAnn(existingRsGrouped, existingNonVerRsGrouped)
+	if err != nil {
+		return nil, err
+	}
+
 	newRs := newVersionedResources(d.newRs)
 	allChanges := []Change{}
 
@@ -42,7 +51,7 @@ func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 
 	// First try to calculate changes will update references on all resources
 	// (which includes versioned and non-versioned resources)
-	_, _, err := d.addAndKeepChanges(newRs, existingRsGrouped)
+	_, _, err = d.addAndKeepChanges(newRs, existingRsGrouped)
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +85,50 @@ func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 	return allChanges, nil
 }
 
+func (d ChangeSetWithVersionedRs) checkForMaxDurationAnn(existingRsGrouped map[string][]ctlres.Resource,
+	existingNonVerRsGrouped map[string]ctlres.Resource) error {
+
+	var err error
+	for _, res := range d.newRs {
+		if _, found := res.Annotations()[MaxDurationAnnKey]; found {
+			resKey := VersionedResource{res, nil}.UniqVersionedKey().String()
+			if exRes, found := existingNonVerRsGrouped[resKey]; found {
+				err = updateLastRenewedTime(res, exRes)
+			} else if exRes, found := existingRsGrouped[resKey]; found {
+				err = updateLastRenewedTime(res, exRes[len(exRes)-1])
+			} else {
+				return nil
+			}
+		}
+	}
+	return err
+}
+
+func updateLastRenewedTime(res, exRes ctlres.Resource) error {
+
+	updateLastRenewAnn := ctlres.StringMapAppendMod{
+		ResourceMatcher: ctlres.AllMatcher{},
+		Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
+		KVs: map[string]string{
+			lastRenewTimeAnnKey: fmt.Sprintf("%v", time.Now().UTC().Format(time.RFC3339)),
+		},
+	}
+
+	val := exRes.Annotations()[MaxDurationAnnKey]
+	duration, err := time.ParseDuration(val)
+	if err != nil {
+		return err
+	}
+
+	if time.Now().After(exRes.CreatedAt().Add(duration)) {
+		err := updateLastRenewAnn.Apply(res)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (d ChangeSetWithVersionedRs) groupResources(rs []ctlres.Resource) map[string][]ctlres.Resource {
 	result := map[string][]ctlres.Resource{}
 
@@ -93,6 +146,16 @@ func (d ChangeSetWithVersionedRs) groupResources(rs []ctlres.Resource) map[strin
 		result[resKey] = subRs
 	}
 
+	return result
+}
+
+func (d ChangeSetWithVersionedRs) groupNonVerResources(rs []ctlres.Resource) map[string]ctlres.Resource {
+	result := map[string]ctlres.Resource{}
+
+	for _, res := range rs {
+		resKey := VersionedResource{res, nil}.UniqVersionedKey().String()
+		result[resKey] = res
+	}
 	return result
 }
 

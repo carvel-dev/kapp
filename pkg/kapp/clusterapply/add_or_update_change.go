@@ -69,14 +69,14 @@ func (c AddOrUpdateChange) ApplyStrategy() (ApplyStrategy, error) {
 	case ctldiff.ChangeOpUpdate:
 		newRes := c.change.NewResource()
 
-		_, found := newRes.Annotations()[ctldiff.MaxDurationAnnKey]
-		if found {
-			return UpdateAlwaysReplaceStrategy{c}, nil
-		}
-
 		strategy, found := newRes.Annotations()[updateStrategyAnnKey]
 		if !found {
 			strategy = c.opts.DefaultUpdateStrategy
+		}
+
+		_, found = newRes.Annotations()[ctldiff.MaxDurationAnnKey]
+		if found && strategy != "always-replace" {
+			return nil, fmt.Errorf("For non-versioned resource expected update strategy is: always-replace")
 		}
 
 		switch ClusterChangeApplyStrategyOp(strategy) {
