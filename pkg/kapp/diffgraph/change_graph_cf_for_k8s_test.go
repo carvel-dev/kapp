@@ -413,7 +413,6 @@ const (
 (delete) role/kpack-watcher-pod-logs-reader (rbac.authorization.k8s.io/v1) namespace: cf-workloads
 (delete) rolebinding/kpack-watcher-pod-logs-binding (rbac.authorization.k8s.io/v1) namespace: cf-workloads
 (delete) configmap/cloud-controller-ng-yaml (v1) namespace: cf-system
-(delete) namespace/cf-workloads-staging (v1) cluster
 (delete) deployment/capi-clock (apps/v1) namespace: cf-system
 (delete) deployment/capi-deployment-updater (apps/v1) namespace: cf-system
 (delete) configmap/nginx (v1) namespace: cf-system
@@ -446,7 +445,6 @@ const (
 (delete) networkpolicy/allow-app-ingress-from-ingressgateway (networking.k8s.io/v1) namespace: cf-workloads
 (delete) secret/app-registry-credentials (v1) namespace: cf-workloads
 (delete) secret/istio-ingressgateway-certs (v1) namespace: istio-system
-(delete) namespace/kpack (v1) cluster
 (delete) deployment/kpack-controller (apps/v1) namespace: kpack
 (delete) serviceaccount/controller (v1) namespace: kpack
 (delete) clusterrole/kpack-controller-admin (rbac.authorization.k8s.io/v1) cluster
@@ -479,7 +477,6 @@ const (
 (delete) secret/metric-proxy-cert (v1) namespace: cf-system
 (delete) secret/metric-proxy-ca (v1) namespace: cf-system
 (delete) deployment/metric-proxy (apps/v1) namespace: cf-system
-(delete) namespace/cf-blobstore (v1) cluster
 (delete) secret/cf-blobstore-minio (v1) namespace: cf-blobstore
 (delete) configmap/cf-blobstore-minio (v1) namespace: cf-blobstore
 (delete) persistentvolumeclaim/cf-blobstore-minio (v1) namespace: cf-blobstore
@@ -492,7 +489,6 @@ const (
 (delete) service/cfroutesync (v1) namespace: cf-system
 (delete) clusterrole/istio-reader-istio-system (rbac.authorization.k8s.io/v1) cluster
 (delete) clusterrolebinding/istio-reader-istio-system (rbac.authorization.k8s.io/v1) cluster
-(delete) namespace/istio-system (v1) cluster
 (delete) serviceaccount/istio-reader-service-account (v1) namespace: istio-system
 (delete) clusterrole/istio-citadel-istio-system (rbac.authorization.k8s.io/v1) cluster
 (delete) clusterrolebinding/istio-citadel-istio-system (rbac.authorization.k8s.io/v1) cluster
@@ -554,7 +550,6 @@ const (
 (delete) networkpolicy/mixer-network-policy (networking.k8s.io/v1) namespace: istio-system
 (delete) networkpolicy/sidecar-injector-network-policy (networking.k8s.io/v1) namespace: istio-system
 (delete) networkpolicy/ingressgateway-network-policy-pilot (networking.k8s.io/v1) namespace: istio-system
-(delete) namespace/metacontroller (v1) cluster
 (delete) serviceaccount/metacontroller (v1) namespace: metacontroller
 (delete) clusterrole/metacontroller (rbac.authorization.k8s.io/v1) cluster
 (delete) clusterrolebinding/metacontroller (rbac.authorization.k8s.io/v1) cluster
@@ -568,12 +563,18 @@ const (
 (delete) service/cf-db-postgresql-headless (v1) namespace: cf-db
 (delete) service/cf-db-postgresql (v1) namespace: cf-db
 (delete) statefulset/cf-db-postgresql (apps/v1) namespace: cf-db
-(delete) namespace/cf-system (v1) cluster
 (delete) configmap/uaa-config (v1) namespace: cf-system
 (delete) deployment/uaa (apps/v1) namespace: cf-system
 (delete) service/uaa (v1) namespace: cf-system
 (delete) serviceaccount/uaa (v1) namespace: cf-system
 (delete) secret/uaa-certs (v1) namespace: cf-system
+---
+(delete) namespace/cf-workloads-staging (v1) cluster
+(delete) namespace/kpack (v1) cluster
+(delete) namespace/cf-blobstore (v1) cluster
+(delete) namespace/istio-system (v1) cluster
+(delete) namespace/metacontroller (v1) cluster
+(delete) namespace/cf-system (v1) cluster
 (delete) namespace/cf-workloads (v1) cluster
 `
 )
