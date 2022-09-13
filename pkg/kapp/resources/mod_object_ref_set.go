@@ -44,6 +44,9 @@ func (t ObjectRefSetMod) apply(obj interface{}, path Path) error {
 		case part.ArrayIndex != nil:
 			switch {
 			case part.ArrayIndex.All != nil:
+				if obj == nil {
+					return nil
+				}
 				typedObj, ok := obj.([]interface{})
 				if !ok {
 					return fmt.Errorf("Unexpected non-array found: %T", obj)
