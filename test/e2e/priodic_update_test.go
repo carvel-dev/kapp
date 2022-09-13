@@ -26,6 +26,7 @@ data:
 kind: ConfigMap
 metadata:
   annotations:
+    kapp.k14s.io/update-strategy: "always-replace"
     kapp.k14s.io/max-duration: 2s
   name: simple-cm1
 ---
@@ -95,7 +96,7 @@ metadata:
   5,  5     annotations:
       6 +     kapp.k14s.io/last-renewed-time: "2006-01-02T15:04:05Z07:00"
   6,  7       kapp.k14s.io/max-duration: 2s
-  7,  8     creationTimestamp: "2006-01-02T15:04:05Z07:00"
+  7,  8       kapp.k14s.io/update-strategy: always-replace
 `
 
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
