@@ -26,6 +26,27 @@ data:
 kind: ConfigMap
 metadata:
   annotations:
+    kapp.k14s.io/max-duration: 2s
+  name: simple-cm1
+---
+apiVersion: v1
+data: 
+  hello_msg: carvel
+kind: ConfigMap
+metadata: 
+  annotations: 
+    kapp.k14s.io/versioned: ""
+    kapp.k14s.io/max-duration: 2s
+  name: simple-cm2
+`
+	yaml1 := `
+---
+apiVersion: v1
+data:
+  hello_msg: carvel
+kind: ConfigMap
+metadata:
+  annotations:
     kapp.k14s.io/update-strategy: "always-replace"
     kapp.k14s.io/max-duration: 2s
   name: simple-cm1
@@ -41,7 +62,7 @@ metadata:
   name: simple-cm2
 `
 
-	yaml1 := `
+	yaml2 := `
 --- 
 apiVersion: v1
 data:
@@ -69,20 +90,25 @@ metadata:
 	cleanUp()
 	defer cleanUp()
 
-	logger.Section("Initial deploy", func() {
-		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(yaml)})
+	logger.Section("Initial deploy with no update strategy set for non-versioned resource", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{AllowError: true, StdinReader: strings.NewReader(yaml)})
+		require.Contains(t, err.Error(), "kapp: Error: For non-versioned resource: configmap/simple-cm1 (v1) namespace: kapp-test, expected update strategy is: always-replace", "output does not match")
+	})
+
+	logger.Section("Deploy again with update strategy set for non-versioned resource as always-replace", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(yaml1)})
 		NewPresentClusterResource("ConfigMap", "simple-cm1", env.Namespace, kubectl)
 		NewPresentClusterResource("ConfigMap", "simple-cm2-ver-1", env.Namespace, kubectl)
 	})
 
 	logger.Section("Deploy again", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes", "--diff-run", "--diff-summary=false", "--tty=false"}, RunOpts{StdinReader: strings.NewReader(yaml)})
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes", "--diff-run", "--diff-summary=false", "--tty=false"}, RunOpts{StdinReader: strings.NewReader(yaml1)})
 		require.Equal(t, "", out, "output does not match")
 	})
 
 	time.Sleep(2 * time.Second)
 	logger.Section("Deploy again after 2 second deploy", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes", "--diff-run", "--diff-summary=false"}, RunOpts{StdinReader: strings.NewReader(yaml)})
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes", "--diff-run", "--diff-summary=false"}, RunOpts{StdinReader: strings.NewReader(yaml1)})
 
 		expectedOutput := `
 @@ create configmap/simple-cm2-ver-2 (v1) namespace: kapp-test @@
@@ -107,7 +133,7 @@ metadata:
 
 	time.Sleep(2 * time.Second)
 	logger.Section("Deploy again after 2 second", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run"}, RunOpts{StdinReader: strings.NewReader(yaml1)})
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run"}, RunOpts{StdinReader: strings.NewReader(yaml2)})
 
 		expectedOutput := `
 Changes
@@ -129,11 +155,11 @@ Succeeded
 		require.Equal(t, expectedOutput, out, "output does not match")
 	})
 
-	kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(yaml1)})
+	kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(yaml2)})
 
 	time.Sleep(2 * time.Second)
 	logger.Section("Deploy again after 2 second", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run"}, RunOpts{StdinReader: strings.NewReader(yaml)})
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run"}, RunOpts{StdinReader: strings.NewReader(yaml1)})
 
 		expectedOutput := `
 Changes
