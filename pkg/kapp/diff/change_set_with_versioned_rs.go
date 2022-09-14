@@ -87,21 +87,30 @@ func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 
 func (d ChangeSetWithVersionedRs) checkForMaxDurationAnn(existingRsGrouped map[string][]ctlres.Resource,
 	existingNonVerRsGrouped map[string]ctlres.Resource) error {
-
 	var err error
+
 	for _, res := range d.newRs {
-		if _, found := res.Annotations()[MaxDurationAnnKey]; found {
+		if val, found := res.Annotations()[MaxDurationAnnKey]; found {
 			resKey := VersionedResource{res, nil}.UniqVersionedKey().String()
 			if exRes, found := existingNonVerRsGrouped[resKey]; found {
 				err = updateLastRenewedTime(res, exRes)
 			} else if exRes, found := existingRsGrouped[resKey]; found {
+				// exRes contains list of all versioned resources currently present on the cluster for particular resource and are sorted
+				// here we will be using last created resource
 				err = updateLastRenewedTime(res, exRes[len(exRes)-1])
 			} else {
-				return nil
+				// Validate value of ann `kapp.k14s.io/max-duration`
+				_, err = time.ParseDuration(val)
+				if err != nil {
+					return fmt.Errorf("%s for resource: %s", err.Error(), res.Description())
+				}
+			}
+			if err != nil {
+				return err
 			}
 		}
 	}
-	return err
+	return nil
 }
 
 func updateLastRenewedTime(res, exRes ctlres.Resource) error {
@@ -114,17 +123,14 @@ func updateLastRenewedTime(res, exRes ctlres.Resource) error {
 		},
 	}
 
-	val := exRes.Annotations()[MaxDurationAnnKey]
+	val := res.Annotations()[MaxDurationAnnKey]
 	duration, err := time.ParseDuration(val)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s for resource: %s", err.Error(), res.Description())
 	}
 
 	if time.Now().After(exRes.CreatedAt().Add(duration)) {
-		err := updateLastRenewAnn.Apply(res)
-		if err != nil {
-			return err
-		}
+		return updateLastRenewAnn.Apply(res)
 	}
 	return nil
 }
