@@ -411,6 +411,11 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 		changeFactory := ctldiff.NewChangeFactory(conf.RebaseMods(), conf.DiffAgainstLastAppliedFieldExclusionMods())
 		changeSetFactory := ctldiff.NewChangeSetFactory(o.DiffFlags.ChangeSetOpts, changeFactory)
 
+		err := ctldiff.NewChangeSetWithPeriodicRs(existingResources, newResources).Calculate()
+		if err != nil {
+			return clusterChangeSet, nil, false, "", err
+		}
+
 		changes, err := ctldiff.NewChangeSetWithVersionedRs(
 			existingResources, newResources, conf.TemplateRules(),
 			o.DiffFlags.ChangeSetOpts, changeFactory).Calculate()

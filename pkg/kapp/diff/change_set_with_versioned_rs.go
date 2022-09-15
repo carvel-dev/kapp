@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
-	"time"
 
 	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
@@ -19,7 +18,6 @@ const (
 	versionedResNumVersAnnKey = "kapp.k14s.io/num-versions"
 	maxDurationAnnKey         = "kapp.k14s.io/max-duration"
 	lastRenewTimeAnnKey       = "kapp.k14s.io/last-renewed-time"
-	updateStrategyAnnKey      = "kapp.k14s.io/update-strategy"
 )
 
 type ChangeSetWithVersionedRs struct {
@@ -37,13 +35,7 @@ func NewChangeSetWithVersionedRs(existingRs, newRs []ctlres.Resource,
 
 func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 	existingRs := existingVersionedResources(d.existingRs)
-	existingRsGrouped := d.groupResources(existingRs.Versioned)
-
-	existingNonVerRsGrouped := d.groupNonVerResources(existingRs.NonVersioned)
-	err := d.checkForMaxDurationAnn(existingRsGrouped, existingNonVerRsGrouped)
-	if err != nil {
-		return nil, err
-	}
+	existingRsGrouped := newGroupedVersionedResources(existingRs.Versioned).groupedRes
 
 	newRs := newVersionedResources(d.newRs)
 	allChanges := []Change{}
@@ -52,7 +44,7 @@ func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 
 	// First try to calculate changes will update references on all resources
 	// (which includes versioned and non-versioned resources)
-	_, _, err = d.addAndKeepChanges(newRs, existingRsGrouped)
+	_, _, err := d.addAndKeepChanges(newRs, existingRsGrouped)
 	if err != nil {
 		return nil, err
 	}
@@ -84,102 +76,6 @@ func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 	allChanges = append(allChanges, nonVersionedChanges...)
 
 	return allChanges, nil
-}
-
-func (d ChangeSetWithVersionedRs) checkForMaxDurationAnn(existingRsGrouped map[string][]ctlres.Resource,
-	existingNonVerRsGrouped map[string]ctlres.Resource) error {
-
-	for _, res := range d.newRs {
-		if val, found := res.Annotations()[maxDurationAnnKey]; found {
-
-			// Validate value of annotation `kapp.k14s.io/max-duration`.
-			duration, err := time.ParseDuration(val)
-			if err != nil {
-				return fmt.Errorf("%s for resource: %s", err.Error(), res.Description())
-			}
-
-			resKey := VersionedResource{res, nil}.UniqVersionedKey().String()
-			if exRes, found := existingNonVerRsGrouped[resKey]; found {
-				err = updateLastRenewedTime(res, exRes, duration)
-				if err != nil {
-					return err
-				}
-			} else if exRes, found := existingRsGrouped[resKey]; found {
-				// exRes contains list of all versioned resources currently present on the cluster for particular resource and are sorted
-				// here we will be using last created resource.
-				err = updateLastRenewedTime(res, exRes[len(exRes)-1], duration)
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-	return nil
-}
-
-func updateLastRenewedTime(res, exRes ctlres.Resource, duration time.Duration) error {
-	var (
-		lastRenewed time.Time
-		err         error
-	)
-
-	val := exRes.Annotations()[lastRenewTimeAnnKey]
-	if val != "" {
-		lastRenewed, err = time.Parse(time.RFC3339, val)
-		if err != nil {
-			return fmt.Errorf("%s for resource: %s", err.Error(), res.Description())
-		}
-	}
-
-	lastUpdate := exRes.CreatedAt()
-	if exRes.CreatedAt().Before(lastRenewed) {
-		lastUpdate = lastRenewed
-	}
-	if time.Now().After(lastUpdate.Add(duration)) {
-		return addOrUpdateLastRenewedAnn(res)
-	}
-	return nil
-}
-
-func addOrUpdateLastRenewedAnn(res ctlres.Resource) error {
-	lastRenewAnn := ctlres.StringMapAppendMod{
-		ResourceMatcher: ctlres.AllMatcher{},
-		Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
-		KVs: map[string]string{
-			lastRenewTimeAnnKey: fmt.Sprintf("%v", time.Now().UTC().Format(time.RFC3339)),
-		},
-	}
-	return lastRenewAnn.Apply(res)
-}
-
-func (d ChangeSetWithVersionedRs) groupResources(rs []ctlres.Resource) map[string][]ctlres.Resource {
-	result := map[string][]ctlres.Resource{}
-
-	groupByFunc := func(res ctlres.Resource) string {
-		if _, found := res.Annotations()[versionedResAnnKey]; found {
-			return VersionedResource{res, nil}.UniqVersionedKey().String()
-		}
-		panic("Expected to find versioned annotation on resource")
-	}
-
-	for resKey, subRs := range (GroupResources{rs, groupByFunc}).Resources() {
-		sort.Slice(subRs, func(i, j int) bool {
-			return VersionedResource{subRs[i], nil}.Version() < VersionedResource{subRs[j], nil}.Version()
-		})
-		result[resKey] = subRs
-	}
-
-	return result
-}
-
-func (d ChangeSetWithVersionedRs) groupNonVerResources(rs []ctlres.Resource) map[string]ctlres.Resource {
-	result := map[string]ctlres.Resource{}
-
-	for _, res := range rs {
-		resKey := VersionedResource{res, nil}.UniqVersionedKey().String()
-		result[resKey] = res
-	}
-	return result
 }
 
 func (d ChangeSetWithVersionedRs) assignNewNames(
@@ -380,4 +276,28 @@ func existingVersionedResources(rs []ctlres.Resource) versionedResources {
 		}
 	}
 	return result
+}
+
+type groupedVersionedResources struct {
+	groupedRes map[string][]ctlres.Resource
+}
+
+func newGroupedVersionedResources(rs []ctlres.Resource) groupedVersionedResources {
+	result := map[string][]ctlres.Resource{}
+
+	groupByFunc := func(res ctlres.Resource) string {
+		if _, found := res.Annotations()[versionedResAnnKey]; found {
+			return VersionedResource{res, nil}.UniqVersionedKey().String()
+		}
+		panic("Expected to find versioned annotation on resource")
+	}
+
+	for resKey, subRs := range (GroupResources{rs, groupByFunc}).Resources() {
+		sort.Slice(subRs, func(i, j int) bool {
+			return VersionedResource{subRs[i], nil}.Version() < VersionedResource{subRs[j], nil}.Version()
+		})
+		result[resKey] = subRs
+	}
+
+	return groupedVersionedResources{groupedRes: result}
 }
