@@ -17,7 +17,7 @@ const (
 	versionedResAnnKey        = "kapp.k14s.io/versioned"               // Value is ignored
 	versionedResOrigAnnKey    = "kapp.k14s.io/versioned-keep-original" // Value is ignored
 	versionedResNumVersAnnKey = "kapp.k14s.io/num-versions"
-	MaxDurationAnnKey         = "kapp.k14s.io/max-duration"
+	maxDurationAnnKey         = "kapp.k14s.io/max-duration"
 	lastRenewTimeAnnKey       = "kapp.k14s.io/last-renewed-time"
 	updateStrategyAnnKey      = "kapp.k14s.io/update-strategy"
 )
@@ -88,36 +88,28 @@ func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 
 func (d ChangeSetWithVersionedRs) checkForMaxDurationAnn(existingRsGrouped map[string][]ctlres.Resource,
 	existingNonVerRsGrouped map[string]ctlres.Resource) error {
-	var err error
 
 	for _, res := range d.newRs {
-		if val, found := res.Annotations()[MaxDurationAnnKey]; found {
+		if val, found := res.Annotations()[maxDurationAnnKey]; found {
+
+			// Validate value of annotation `kapp.k14s.io/max-duration`.
+			duration, err := time.ParseDuration(val)
+			if err != nil {
+				return fmt.Errorf("%s for resource: %s", err.Error(), res.Description())
+			}
+
 			resKey := VersionedResource{res, nil}.UniqVersionedKey().String()
 			if exRes, found := existingNonVerRsGrouped[resKey]; found {
-				err = updateLastRenewedTime(res, exRes)
+				err = updateLastRenewedTime(res, exRes, duration)
 				if err != nil {
 					return err
 				}
 			} else if exRes, found := existingRsGrouped[resKey]; found {
 				// exRes contains list of all versioned resources currently present on the cluster for particular resource and are sorted
 				// here we will be using last created resource.
-				err = updateLastRenewedTime(res, exRes[len(exRes)-1])
+				err = updateLastRenewedTime(res, exRes[len(exRes)-1], duration)
 				if err != nil {
 					return err
-				}
-			} else {
-				// Validate value of annotation `kapp.k14s.io/max-duration`.
-				_, err = time.ParseDuration(val)
-				if err != nil {
-					return fmt.Errorf("%s for resource: %s", err.Error(), res.Description())
-				}
-
-				// Validate update-strategy for non-versioned resources.
-				if _, found := res.Annotations()[versionedResAnnKey]; !found {
-					strategy, _ := res.Annotations()[updateStrategyAnnKey]
-					if strategy != "always-replace" {
-						return fmt.Errorf("For non-versioned resource: %s, expected update strategy is: always-replace", res.Description())
-					}
 				}
 			}
 		}
@@ -125,26 +117,39 @@ func (d ChangeSetWithVersionedRs) checkForMaxDurationAnn(existingRsGrouped map[s
 	return nil
 }
 
-func updateLastRenewedTime(res, exRes ctlres.Resource) error {
+func updateLastRenewedTime(res, exRes ctlres.Resource, duration time.Duration) error {
+	var (
+		lastRenewed time.Time
+		err         error
+	)
 
-	updateLastRenewAnn := ctlres.StringMapAppendMod{
+	val := exRes.Annotations()[lastRenewTimeAnnKey]
+	if val != "" {
+		lastRenewed, err = time.Parse(time.RFC3339, val)
+		if err != nil {
+			return fmt.Errorf("%s for resource: %s", err.Error(), res.Description())
+		}
+	}
+
+	lastUpdate := exRes.CreatedAt()
+	if exRes.CreatedAt().Before(lastRenewed) {
+		lastUpdate = lastRenewed
+	}
+	if time.Now().After(lastUpdate.Add(duration)) {
+		return addOrUpdateLastRenewedAnn(res)
+	}
+	return nil
+}
+
+func addOrUpdateLastRenewedAnn(res ctlres.Resource) error {
+	lastRenewAnn := ctlres.StringMapAppendMod{
 		ResourceMatcher: ctlres.AllMatcher{},
 		Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
 		KVs: map[string]string{
 			lastRenewTimeAnnKey: fmt.Sprintf("%v", time.Now().UTC().Format(time.RFC3339)),
 		},
 	}
-
-	val := res.Annotations()[MaxDurationAnnKey]
-	duration, err := time.ParseDuration(val)
-	if err != nil {
-		return fmt.Errorf("%s for resource: %s", err.Error(), res.Description())
-	}
-
-	if time.Now().After(exRes.CreatedAt().Add(duration)) {
-		return updateLastRenewAnn.Apply(res)
-	}
-	return nil
+	return lastRenewAnn.Apply(res)
 }
 
 func (d ChangeSetWithVersionedRs) groupResources(rs []ctlres.Resource) map[string][]ctlres.Resource {
