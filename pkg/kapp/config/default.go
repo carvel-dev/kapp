@@ -78,6 +78,7 @@ rebaseRules:
 - paths:
   - [metadata, annotations, pv.kubernetes.io/bind-completed]
   - [metadata, annotations, pv.kubernetes.io/bound-by-controller]
+  - [metadata, annotations, pv.kubernetes.io/migrated-to]
   - [metadata, annotations, volume.beta.kubernetes.io/storage-provisioner]
   - [spec, storageClassName]
   - [spec, volumeMode]
