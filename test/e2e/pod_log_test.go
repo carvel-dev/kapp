@@ -52,9 +52,9 @@ spec:
 	logger.Section("Show logs for new Pods only when annotation value is default", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true,
 			StdinReader: strings.NewReader(fmt.Sprintf(yaml, 1, ""))})
-		NewPresentClusterResource("Pod", "simple-app-0", "default", kubectl)
+		NewPresentClusterResource("Pod", "simple-app-0", env.Namespace, kubectl)
 		out, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(fmt.Sprintf(yaml, 2, ""))})
-		NewPresentClusterResource("Pod", "simple-app-1", "default", kubectl)
+		NewPresentClusterResource("Pod", "simple-app-1", env.Namespace, kubectl)
 		require.NotContains(t, out, "logs | simple-app-0 > demo-container | ", "Should not contain log for the existing Pod")
 		require.Contains(t, out, "logs | simple-app-1 > demo-container | ", "Should contain log for the new Pod")
 	})
@@ -63,9 +63,9 @@ spec:
 
 	logger.Section("Show logs only for existing Pods with for-existing annotation value", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(fmt.Sprintf(yaml, 1, "for-existing"))})
-		NewPresentClusterResource("Pod", "simple-app-0", "default", kubectl)
+		NewPresentClusterResource("Pod", "simple-app-0", env.Namespace, kubectl)
 		out, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(fmt.Sprintf(yaml, 2, "for-existing"))})
-		NewPresentClusterResource("Pod", "simple-app-1", "default", kubectl)
+		NewPresentClusterResource("Pod", "simple-app-1", env.Namespace, kubectl)
 		require.Contains(t, out, "logs | simple-app-0 > demo-container | ", "Should contain log for the existing Pod")
 		require.NotContains(t, out, "logs | simple-app-1 > demo-container | ", "Should not contain log for the new Pod")
 	})

@@ -96,15 +96,8 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 		opts.ListOpts = &metav1.ListOptions{}
 	}
 
-	nsScope := "" // all namespaces by default
-	nsScopeLimited := c.opts.ScopeToFallbackAllowedNamespaces && len(c.opts.FallbackAllowedNamespaces) == 1
-
-	// Eagerly use single fallback namespace to avoid making all-namespaces request
-	// just to see it fail, and fallback to making namespace-scoped request
-	if nsScopeLimited {
-		nsScope = c.opts.FallbackAllowedNamespaces[0]
-		c.logger.Info("Scoping listings to single namespace: %s", nsScope)
-	}
+	// Populate FallbackAllowedNamespace with resource namespaces stored during deploy
+	c.opts.FallbackAllowedNamespaces = uniqAndValidNamespaces(append(c.opts.FallbackAllowedNamespaces, opts.ResourceNamespaces...))
 
 	unstructItemsCh := make(chan unstructItems, len(resTypes))
 	fatalErrsCh := make(chan error, len(resTypes))
@@ -124,16 +117,23 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 
 			client := c.mutedDynamicClient.Resource(resType.GroupVersionResource)
 
-			err = util.Retry2(time.Second, 5*time.Second, c.isServerRescaleErr, func() error {
-				if resType.Namespaced() {
-					list, err = client.Namespace(nsScope).List(context.TODO(), *opts.ListOpts)
-				} else {
-					list, err = client.List(context.TODO(), *opts.ListOpts)
-				}
-				return err
-			})
+			// If resource is cluster scoped or request is not scoped to fallback
+			// allowed namespaces manually, then scope list to all namespaces
+			if !c.opts.ScopeToFallbackAllowedNamespaces || !resType.Namespaced() {
+				err = util.Retry2(time.Second, 5*time.Second, c.isServerRescaleErr, func() error {
+					if resType.Namespaced() {
+						list, err = client.Namespace("").List(context.TODO(), *opts.ListOpts)
+					} else {
+						list, err = client.List(context.TODO(), *opts.ListOpts)
+					}
+					return err
+				})
 
-			if err != nil {
+				if err == nil {
+					unstructItemsCh <- unstructItems{resType, list.Items}
+					return
+				}
+
 				if !errors.IsForbidden(err) {
 					// Ignore certain GVs due to failing API backing
 					if c.resourceTypes.CanIgnoreFailingGroupVersion(resType.GroupVersion()) {
@@ -143,27 +143,24 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 					}
 					return
 				}
-				// At this point err==Forbidden...
 
-				// In case ns scope is limited already, we will not gain anything
-				// by trying to run namespace scoped lists for allowed namespaced
-				// (ie since it's would be same request that just failed)
-				if !resType.Namespaced() || nsScopeLimited {
+				if !resType.Namespaced() {
 					c.logger.Debug("Skipping forbidden group version: %#v", resType.GroupVersionResource)
 					return
 				}
+			}
 
-				// TODO improve perf somehow
-				list, err = c.allForNamespaces(client, opts.ListOpts)
-				if err != nil {
-					// Ignore certain GVs due to failing API backing
-					if c.resourceTypes.CanIgnoreFailingGroupVersion(resType.GroupVersion()) {
-						c.logger.Info("Ignoring group version: %#v", resType.GroupVersionResource)
-					} else {
-						fatalErrsCh <- fmt.Errorf("Listing %#v, namespaced: %t: %w", resType.GroupVersionResource, resType.Namespaced(), err)
-					}
-					return
+			// At this point err==Forbidden...
+			// or requests are scoped to fallback allowed namespaces manually
+			list, err = c.allForNamespaces(client, opts.ListOpts)
+			if err != nil {
+				// Ignore certain GVs due to failing API backing
+				if c.resourceTypes.CanIgnoreFailingGroupVersion(resType.GroupVersion()) {
+					c.logger.Info("Ignoring group version: %#v", resType.GroupVersionResource)
+				} else {
+					fatalErrsCh <- fmt.Errorf("Listing %#v, namespaced: %t: %w", resType.GroupVersionResource, resType.Namespaced(), err)
 				}
+				return
 			}
 
 			unstructItemsCh <- unstructItems{resType, list.Items}
@@ -207,8 +204,13 @@ func (c *ResourcesImpl) allForNamespaces(client dynamic.NamespaceableResourceInt
 
 		go func() {
 			defer itemsDone.Done()
+			var resList *unstructured.UnstructuredList
+			var err error
 
-			resList, err := client.Namespace(ns).List(context.TODO(), *listOpts)
+			err = util.Retry2(time.Second, 5*time.Second, c.isServerRescaleErr, func() error {
+				resList, err = client.Namespace(ns).List(context.TODO(), *listOpts)
+				return err
+			})
 			if err != nil {
 				if !errors.IsForbidden(err) {
 					fatalErrsCh <- err
@@ -538,6 +540,10 @@ func (c *ResourcesImpl) assumedAllowedNamespaces() ([]string, error) {
 		return *c.assumedAllowedNamespacesMemo, nil
 	}
 
+	if c.opts.ScopeToFallbackAllowedNamespaces {
+		return c.opts.FallbackAllowedNamespaces, nil
+	}
+
 	nsList, err := c.coreClient.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		if errors.IsForbidden(err) {
@@ -593,8 +599,23 @@ func (c *ResourcesImpl) isEtcdRetryableError(err error) bool {
 	return etcdserverRetryableErrCheck.MatchString(err.Error())
 }
 
+func uniqAndValidNamespaces(in []string) []string {
+	var out []string
+	if len(in) > 0 {
+		uniqNamespaces := map[string]struct{}{}
+		for _, ns := range in {
+			if _, exists := uniqNamespaces[ns]; !exists && ns != "(cluster)" {
+				out = append(out, ns)
+				uniqNamespaces[ns] = struct{}{}
+			}
+		}
+	}
+	return out
+}
+
 type AllOpts struct {
-	ListOpts *metav1.ListOptions
+	ListOpts           *metav1.ListOptions
+	ResourceNamespaces []string
 }
 
 type resourceStatusErr struct {

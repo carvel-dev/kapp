@@ -71,7 +71,7 @@ func (o *LogsOptions) Run() error {
 			}
 			return true
 		},
-		supportObjs.IdentifiedResources.PodResources(labelSelector),
+		supportObjs.IdentifiedResources.PodResources(labelSelector, nil),
 	}
 
 	contFilter := func(pod corev1.Pod) []string {

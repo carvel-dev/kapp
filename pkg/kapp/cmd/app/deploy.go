@@ -152,8 +152,13 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
+	meta, err := app.Meta()
+	if err != nil {
+		return err
+	}
+
 	existingResources, existingPodRs, err := o.existingResources(
-		newResources, labeledResources, resourceFilter, supportObjs.Apps, usedGKs)
+		newResources, labeledResources, resourceFilter, supportObjs.Apps, usedGKs, append(meta.LastChange.Namespaces, nsNames...))
 	if err != nil {
 		return err
 	}
@@ -204,7 +209,7 @@ func (o *DeployOptions) Run() error {
 	if o.DeployFlags.Logs {
 		cancelLogsCh := make(chan struct{})
 		defer func() { close(cancelLogsCh) }()
-		go o.showLogs(supportObjs.CoreClient, supportObjs.IdentifiedResources, existingPodRs, labelSelector, cancelLogsCh)
+		go o.showLogs(supportObjs.CoreClient, supportObjs.IdentifiedResources, existingPodRs, labelSelector, cancelLogsCh, append(meta.LastChange.Namespaces, nsNames...))
 	}
 
 	defer func() {
@@ -347,7 +352,7 @@ func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
 
 func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 	labeledResources *ctlres.LabeledResources, resourceFilter ctlres.ResourceFilter,
-	apps ctlapp.Apps, usedGKs []schema.GroupKind) ([]ctlres.Resource, []ctlres.Resource, error) {
+	apps ctlapp.Apps, usedGKs []schema.GroupKind, resourceNamespaces []string) ([]ctlres.Resource, []ctlres.Resource, error) {
 
 	labelErrorResolutionFunc := func(key string, val string) string {
 		items, _ := apps.List(nil)
@@ -371,7 +376,8 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 
 		//Scope resource searching to UsedGKs
 		IdentifiedResourcesListOpts: ctlres.IdentifiedResourcesListOpts{
-			GKsScope: usedGKs,
+			GKsScope:           usedGKs,
+			ResourceNamespaces: resourceNamespaces,
 		},
 	}
 
@@ -486,7 +492,7 @@ const (
 
 func (o *DeployOptions) showLogs(
 	coreClient kubernetes.Interface, identifiedResources ctlres.IdentifiedResources,
-	existingPodRs []ctlres.Resource, labelSelector labels.Selector, cancelCh chan struct{}) {
+	existingPodRs []ctlres.Resource, labelSelector labels.Selector, cancelCh chan struct{}, resourceNamespaces []string) {
 
 	existingPodsByUID := map[string]struct{}{}
 
@@ -520,7 +526,7 @@ func (o *DeployOptions) showLogs(
 
 	podWatcher := ctlres.FilteringPodWatcher{
 		podMatcherFunc,
-		identifiedResources.PodResources(labelSelector),
+		identifiedResources.PodResources(labelSelector, resourceNamespaces),
 	}
 
 	contFilterFunc := func(pod corev1.Pod) []string {

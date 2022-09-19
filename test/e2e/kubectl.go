@@ -30,7 +30,7 @@ func (k Kubectl) RunWithOpts(args []string, opts RunOpts) (string, error) {
 		args = append(args, []string{"-n", k.namespace}...)
 	}
 
-	k.l.Debugf("Running '%s'...\n", k.cmdDesc(args))
+	k.l.Debugf("Running '%s'...\n", k.cmdDesc(args, opts))
 
 	var stderr bytes.Buffer
 	var stdout bytes.Buffer
@@ -59,12 +59,16 @@ func (k Kubectl) RunWithOpts(args []string, opts RunOpts) (string, error) {
 	if err != nil {
 		err = fmt.Errorf("Execution error: stderr: '%s' error: '%s'", stderr.String(), err)
 
-		require.Truef(k.t, opts.AllowError, "Failed to successfully execute '%s': %v", k.cmdDesc(args), err)
+		require.Truef(k.t, opts.AllowError, "Failed to successfully execute '%s': %v", k.cmdDesc(args, opts), err)
 	}
 
 	return stdout.String(), err
 }
 
-func (k Kubectl) cmdDesc(args []string) string {
-	return fmt.Sprintf("kubectl %s", strings.Join(args, " "))
+func (k Kubectl) cmdDesc(args []string, opts RunOpts) string {
+	prefix := "kubectl"
+	if opts.Redact {
+		return prefix + " -redacted-"
+	}
+	return fmt.Sprintf("%s %s", prefix, strings.Join(args, " "))
 }

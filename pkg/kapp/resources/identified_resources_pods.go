@@ -5,6 +5,8 @@ package resources
 
 import (
 	"fmt"
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,8 +14,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func (r IdentifiedResources) PodResources(labelSelector labels.Selector) UniquePodWatcher {
-	return UniquePodWatcher{labelSelector, r.fallbackAllowedNamespaces, r.coreClient}
+func (r IdentifiedResources) PodResources(labelSelector labels.Selector, resourceNamespaces []string) UniquePodWatcher {
+	return UniquePodWatcher{labelSelector, uniqAndValidNamespaces(append(r.fallbackAllowedNamespaces, resourceNamespaces...)), r.coreClient}
 }
 
 type PodWatcherI interface {
@@ -34,32 +36,34 @@ func (w UniquePodWatcher) Watch(podsToWatchCh chan corev1.Pod, cancelCh chan str
 	go func() {
 		// Watch Pods in all namespaces first and fallback to the
 		// fallbackAllowedNamespaces if lack of permission
-		namespace := ""
-		for {
+		namespaces := []string{""}
+		namespaces = append(namespaces, w.fallbackAllowedNamespaces...)
+		var forbiddenNamespaces []string
+
+		for _, namespace := range namespaces {
 			podWatcher := NewPodWatcher(
 				w.coreClient.CoreV1().Pods(namespace),
 				metav1.ListOptions{LabelSelector: w.labelSelector.String()},
 			)
-
 			err := podWatcher.Watch(nonUniquePodsToWatchCh, cancelCh)
 			if err == nil {
-				break
-			}
-			if errors.IsForbidden(err) && namespace == "" {
-				// The '-n' flag or default state namespace can specify only 1 namespace, so there
-				// should be at most 1 item in fallbackAllowedNamespaces
-				if len(w.fallbackAllowedNamespaces) > 0 {
-					namespace = w.fallbackAllowedNamespaces[0]
-					if namespace == "" {
-						break
-					}
+				if namespace == "" {
+					break
 				}
-			} else {
+				continue
+			}
+			if !errors.IsForbidden(err) {
 				fmt.Printf("Pod watching error: %s\n", err) // TODO
 				break
 			}
+			if namespace != "" {
+				forbiddenNamespaces = append(forbiddenNamespaces, fmt.Sprintf(`"%s"`, namespace))
+			}
 		}
 
+		if len(forbiddenNamespaces) > 0 {
+			fmt.Printf(`Pod watching error: pods is forbidden: User cannot list resource "pods" in API group "" in the namespace(s) %s`, strings.Join(forbiddenNamespaces, ", "))
+		}
 		close(nonUniquePodsToWatchCh)
 	}()
 

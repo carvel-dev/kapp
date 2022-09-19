@@ -36,7 +36,7 @@ func NewPresentClusterResource(kind, name, ns string, kubectl Kubectl) ClusterRe
 		args = append(args, "--show-managed-fields")
 	}
 
-	out, _ := kubectl.RunWithOpts(args, RunOpts{})
+	out, _ := kubectl.RunWithOpts(args, RunOpts{NoNamespace: true})
 	return ClusterResource{ctlres.MustNewResourceFromBytes([]byte(out))}
 }
 
@@ -60,7 +60,7 @@ func RemoveClusterResource(t *testing.T, kind, name, ns string, kubectl Kubectl)
 }
 
 func PatchClusterResource(kind, name, ns, patch string, kubectl Kubectl) {
-	kubectl.Run([]string{"patch", kind, name, "--type=json", "--patch", patch, "-n", ns})
+	kubectl.RunWithOpts([]string{"patch", kind, name, "--type=json", "--patch", patch, "-n", ns}, RunOpts{NoNamespace: true})
 }
 
 func ClusterResourceExists(kind, name string, kubectl Kubectl) (bool, error) {

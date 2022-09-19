@@ -179,7 +179,13 @@ func (o *DeleteOptions) existingResources(app ctlapp.App,
 		return nil, false, err
 	}
 
-	existingResources, err := supportObjs.IdentifiedResources.List(labelSelector, nil, ctlres.IdentifiedResourcesListOpts{})
+	meta, err := app.Meta()
+	if err != nil {
+		return nil, false, err
+	}
+
+	existingResources, err := supportObjs.IdentifiedResources.List(labelSelector, nil, ctlres.IdentifiedResourcesListOpts{
+		ResourceNamespaces: meta.LastChange.Namespaces})
 	if err != nil {
 		return nil, false, err
 	}
