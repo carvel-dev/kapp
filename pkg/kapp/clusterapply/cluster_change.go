@@ -280,7 +280,7 @@ func (c *ClusterChange) applyErr(err error) error {
 		}
 	}
 
-	return fmt.Errorf("Applying %s: %s%s", c.ApplyDescription(),
+	return fmt.Errorf("%s: %s%s", c.ApplyDescription(),
 		uierrs.NewSemiStructuredError(err), hintMsg)
 }
 

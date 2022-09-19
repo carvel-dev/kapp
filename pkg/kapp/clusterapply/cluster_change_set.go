@@ -5,7 +5,9 @@ package clusterapply
 
 import (
 	"fmt"
+	"strings"
 
+	uierrs "github.com/cppforlife/go-cli-ui/errors"
 	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
 	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
 	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
@@ -15,6 +17,9 @@ import (
 type ClusterChangeSetOpts struct {
 	ApplyingChangesOpts
 	WaitingChangesOpts
+
+	ExitEarlyOnApplyError bool
+	ExitEarlyOnWaitError  bool
 }
 
 type ClusterChangeSet struct {
@@ -95,18 +100,30 @@ func (c ClusterChangeSet) Apply(changesGraph *ctldgraph.ChangeGraph) error {
 
 	blockedChanges := ctldgraph.NewBlockedChanges(changesGraph)
 	applyingChanges := NewApplyingChanges(
-		expectedNumChanges, c.opts.ApplyingChangesOpts, c.clusterChangeFactory, c.ui)
-	waitingChanges := NewWaitingChanges(expectedNumChanges, c.opts.WaitingChangesOpts, c.ui)
+		expectedNumChanges, c.opts.ApplyingChangesOpts, c.clusterChangeFactory, c.ui, c.opts.ExitEarlyOnApplyError)
+	waitingChanges := NewWaitingChanges(expectedNumChanges, c.opts.WaitingChangesOpts, c.ui, c.opts.ExitEarlyOnWaitError)
+
+	var unsuccessfulChanges []string
 
 	for {
-		appliedChanges, err := applyingChanges.Apply(blockedChanges.Unblocked())
+		appliedChanges, unsuccessfulChangeDesc, err := applyingChanges.Apply(blockedChanges.Unblocked())
 		if err != nil {
 			return err
 		}
 
+		unsuccessfulChanges = append(unsuccessfulChanges, unsuccessfulChangeDesc...)
+
 		waitingChanges.Track(appliedChanges)
 
 		if waitingChanges.IsEmpty() {
+			if len(unsuccessfulChanges) == 1 {
+				return fmt.Errorf("%s", unsuccessfulChanges[0])
+			}
+
+			if len(unsuccessfulChanges) > 0 {
+				return uierrs.NewSemiStructuredError(fmt.Errorf("[%s]", strings.Join(unsuccessfulChanges, ", ")))
+			}
+
 			err := applyingChanges.Complete()
 			if err != nil {
 				c.ui.Notify([]string{fmt.Sprintf("Blocked changes:\n%s\n", blockedChanges.WhyBlocked(blockedChanges.Blocked()))})
@@ -116,10 +133,12 @@ func (c ClusterChangeSet) Apply(changesGraph *ctldgraph.ChangeGraph) error {
 			return waitingChanges.Complete()
 		}
 
-		doneChanges, err := waitingChanges.WaitForAny()
+		doneChanges, unsuccessfulChangeDesc, err := waitingChanges.WaitForAny()
 		if err != nil {
 			return err
 		}
+
+		unsuccessfulChanges = append(unsuccessfulChanges, unsuccessfulChangeDesc...)
 
 		for _, change := range doneChanges {
 			blockedChanges.Unblock(change.Graph)
