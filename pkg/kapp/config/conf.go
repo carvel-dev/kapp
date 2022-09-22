@@ -181,12 +181,14 @@ func (c Conf) ChangeRuleBindings() []ChangeRuleBinding {
 
 type StripNameHashSuffixConfigs []StripNameHashSuffixConfig
 
-func (c StripNameHashSuffixConfigs) AggregateToCtlRes() (enabled bool, resourceMatchers [][]ctlres.ResourceMatcher) {
+func (c StripNameHashSuffixConfigs) AggregateToCtlRes() (bool, [][]ctlres.ResourceMatcher) {
+	var enabled bool
+	var resourceMatchers [][]ctlres.ResourceMatcher
 	for _, conf := range c {
 		enabled = enabled || conf.Enabled
 		resourceMatchers = append(resourceMatchers, ResourceMatchers(conf.ResourceMatchers).AsResourceMatchers())
 	}
-	return
+	return enabled, resourceMatchers
 }
 
 func (c Conf) StripNameHashSuffixConfigs() StripNameHashSuffixConfigs {
