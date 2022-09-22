@@ -274,6 +274,14 @@ type versionedResources struct {
 	NonVersioned []ctlres.Resource
 }
 
+func (d *versionedResources) AddVersionedRes(vr VersionedResource) {
+	d.Versioned = append(d.Versioned, vr)
+}
+
+func (d *versionedResources) AddNonVersionedRes(res ctlres.Resource) {
+	d.NonVersioned = append(d.NonVersioned, res)
+}
+
 func (d versionedResources) VersionedRs() (rs []ctlres.Resource) {
 	for _, vres := range d.Versioned {
 		rs = append(rs, vres.Res())
@@ -287,70 +295,60 @@ func (d versionedResources) NonVersionedRs() []ctlres.Resource {
 
 func (d ChangeSetWithVersionedRs) newVersionedResources() versionedResources {
 	var result versionedResources
+
 	for _, res := range d.newRs {
-		result.appendRes(d.VersionedFromNewResource(res))
+
+		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
+		_, hasVersionedOrigAnn := res.Annotations()[versionedResOrigAnnKey]
+
+		if hasVersionedAnn {
+			result.AddVersionedRes(VersionedResourceImpl{res, d.rules})
+			if hasVersionedOrigAnn {
+				result.AddNonVersionedRes(res.DeepCopy())
+			}
+			continue
+		}
+
+		if d.stripNameHashSuffixConfig.EnabledFor(res) {
+			result.AddVersionedRes(HashSuffixResource{res})
+			continue
+		}
+
+		result.AddNonVersionedRes(res)
 	}
+
 	return result
 }
 
 func (d ChangeSetWithVersionedRs) existingVersionedResources() versionedResources {
 	var result versionedResources
+
 	for _, res := range d.existingRs {
-		result.appendRes(d.VersionedFromExistingResource(res))
-	}
-	return result
-}
 
-func (d *versionedResources) appendRes(ver VersionedResource, nonVer ctlres.Resource) {
-	if ver != nil {
-		d.Versioned = append(d.Versioned, ver)
-	}
-	if nonVer != nil {
-		d.NonVersioned = append(d.NonVersioned, nonVer)
-	}
-}
+		// Expect that versioned resources should not be transient
+		// (Annotations may have been copied from versioned resources
+		// onto transient resources for non-versioning related purposes).
+		if !res.Transient() {
 
-func (d ChangeSetWithVersionedRs) VersionedFromNewResource(res ctlres.Resource) (versioned VersionedResource, nonVersioned ctlres.Resource) {
-
-	_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
-	_, hasVersionedOrigAnn := res.Annotations()[versionedResOrigAnnKey]
-
-	if hasVersionedAnn {
-		versioned = VersionedResourceImpl{res, d.rules}
-		if hasVersionedOrigAnn {
-			nonVersioned = res.DeepCopy()
-		}
-		return
-	}
-
-	if d.stripNameHashSuffixConfig.EnabledFor(res) {
-		versioned = HashSuffixResource{res}
-		return
-	}
-
-	return nil, res
-}
-
-func (d ChangeSetWithVersionedRs) VersionedFromExistingResource(res ctlres.Resource) (versioned VersionedResource, nonVersioned ctlres.Resource) {
-
-	// Expect that versioned resources should not be transient
-	// (Annotations may have been copied from versioned resources
-	// onto transient resources for non-versioning related purposes).
-	if !res.Transient() {
-
-		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
-		if hasVersionedAnn {
-			versionedRes := VersionedResourceImpl{res, d.rules}
-			_, version := versionedRes.BaseNameAndVersion()
-			if version != "" {
-				return versionedRes, nil
+			_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
+			if hasVersionedAnn {
+				versionedRes := VersionedResourceImpl{res, d.rules}
+				_, version := versionedRes.BaseNameAndVersion()
+				if version != "" {
+					result.AddVersionedRes(versionedRes)
+					continue
+				}
 			}
+
+			if d.stripNameHashSuffixConfig.EnabledFor(res) {
+				result.AddVersionedRes(HashSuffixResource{res})
+				continue
+			}
+
 		}
 
-		if d.stripNameHashSuffixConfig.EnabledFor(res) {
-			return HashSuffixResource{res}, nil
-		}
+		result.AddNonVersionedRes(res)
 	}
 
-	return nil, res
+	return result
 }
