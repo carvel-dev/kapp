@@ -182,8 +182,6 @@ data:
 	changes, err := changeSetWithVerRes.Calculate()
 	require.NoError(t, err)
 
-	//require.Equal(t, ChangeOpUpdate, changes[0].Op(), "Expect to get updated") // TODO: check why this is add, not update
-
 	expectedDiff := `  0,  0   apiVersion: v1
   1,  1   data:
   2,  2 -   foo: foo
