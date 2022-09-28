@@ -48,12 +48,6 @@ rebaseRules:
   resourceMatchers:
   - allMatcher: {}
 
-- path: [metadata, annotations, "kapp.k14s.io/last-renewed-time"]
-  type: copy
-  sources: [new, existing]
-  resourceMatchers:
-  - allMatcher: {}
-
 # Prefer user provided, but allow cluster set
 - paths:
   - [spec, clusterIP]

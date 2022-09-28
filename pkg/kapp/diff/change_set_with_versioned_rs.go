@@ -16,8 +16,6 @@ const (
 	versionedResAnnKey        = "kapp.k14s.io/versioned"               // Value is ignored
 	versionedResOrigAnnKey    = "kapp.k14s.io/versioned-keep-original" // Value is ignored
 	versionedResNumVersAnnKey = "kapp.k14s.io/num-versions"
-	maxDurationAnnKey         = "kapp.k14s.io/max-duration"
-	lastRenewTimeAnnKey       = "kapp.k14s.io/last-renewed-time"
 )
 
 type ChangeSetWithVersionedRs struct {
@@ -35,7 +33,7 @@ func NewChangeSetWithVersionedRs(existingRs, newRs []ctlres.Resource,
 
 func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 	existingRs := existingVersionedResources(d.existingRs)
-	existingRsGrouped := newGroupedVersionedResources(existingRs.Versioned).groupedRes
+	existingRsGrouped := newGroupedVersionedResources(existingRs.Versioned)
 
 	newRs := newVersionedResources(d.newRs)
 	allChanges := []Change{}
@@ -278,15 +276,12 @@ func existingVersionedResources(rs []ctlres.Resource) versionedResources {
 	return result
 }
 
-type groupedVersionedResources struct {
-	groupedRes map[string][]ctlres.Resource
-}
-
-func newGroupedVersionedResources(rs []ctlres.Resource) groupedVersionedResources {
+func newGroupedVersionedResources(rs []ctlres.Resource) map[string][]ctlres.Resource {
 	result := map[string][]ctlres.Resource{}
 
 	groupByFunc := func(res ctlres.Resource) string {
-		if _, found := res.Annotations()[versionedResAnnKey]; found {
+		_, found := res.Annotations()[versionedResAnnKey]
+		if found {
 			return VersionedResource{res, nil}.UniqVersionedKey().String()
 		}
 		panic("Expected to find versioned annotation on resource")
@@ -298,6 +293,22 @@ func newGroupedVersionedResources(rs []ctlres.Resource) groupedVersionedResource
 		})
 		result[resKey] = subRs
 	}
+	return result
+}
 
-	return groupedVersionedResources{groupedRes: result}
+func existingResourcesMap(res []ctlres.Resource) map[string]ctlres.Resource {
+	result := map[string]ctlres.Resource{}
+
+	existingRs := existingVersionedResources(res)
+	existingVersionRsGrouped := newGroupedVersionedResources(existingRs.Versioned)
+
+	for _, res := range existingRs.NonVersioned {
+		resKey := ctlres.NewUniqueResourceKey(res).String()
+		result[resKey] = res
+	}
+
+	for resKey, res := range existingVersionRsGrouped {
+		result[resKey] = res[len(res)-1]
+	}
+	return result
 }

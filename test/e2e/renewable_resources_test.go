@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPeriodicUpdate(t *testing.T) {
+func TestRenewableResources(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -34,7 +34,7 @@ kind: ConfigMap
 metadata: 
   annotations: 
     kapp.k14s.io/versioned: ""
-    kapp.k14s.io/max-duration: 2s
+    kapp.k14s.io/renew-duration: 2s
   name: simple-cm2
 `
 
@@ -46,7 +46,7 @@ data:
 kind: ConfigMap
 metadata:
   annotations:
-    kapp.k14s.io/max-duration: 2s
+    kapp.k14s.io/renew-duration: 2s
   name: simple-cm1
 ---
 apiVersion: v1
@@ -56,11 +56,11 @@ kind: ConfigMap
 metadata: 
   annotations: 
     kapp.k14s.io/versioned: ""
-    kapp.k14s.io/max-duration: 2s
+    kapp.k14s.io/renew-duration: 2s
   name: simple-cm2
 `
 
-	name := "test-periodic-update"
+	name := "test-renewable-resources"
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
 	}
@@ -74,7 +74,7 @@ metadata:
 		NewPresentClusterResource("ConfigMap", "simple-cm2-ver-1", env.Namespace, kubectl)
 	})
 
-	logger.Section("Deploy again before max-duration expired", func() {
+	logger.Section("Deploy again before renew-duration expired", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
 			RunOpts{AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
@@ -84,7 +84,7 @@ metadata:
 	})
 
 	time.Sleep(2 * time.Second)
-	logger.Section("Deploy again after max-duration expire", func() {
+	logger.Section("Deploy again after renew-duration expired", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes"}, RunOpts{StdinReader: strings.NewReader(yaml1)})
 
 		expectedOutput := `
@@ -92,7 +92,7 @@ metadata:
   ...
   5,  5     annotations:
       6 +     kapp.k14s.io/last-renewed-time: "2006-01-02T15:04:05Z07:00"
-  6,  7       kapp.k14s.io/max-duration: 2s
+  6,  7       kapp.k14s.io/renew-duration: 2s
   7,  8       kapp.k14s.io/versioned: ""
 `
 
@@ -104,7 +104,7 @@ metadata:
 	})
 
 	time.Sleep(2 * time.Second)
-	logger.Section("Deploy again after adding max-duration annotation in simple-cm1", func() {
+	logger.Section("Deploy again after adding renew-duration annotation in simple-cm1", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes"}, RunOpts{StdinReader: strings.NewReader(yaml2)})
 
 		expectedOutput := `
@@ -113,14 +113,14 @@ metadata:
   5,  5     annotations:
   6     -     kapp.k14s.io/last-renewed-time: "2006-01-02T15:04:05Z07:00"
       6 +     kapp.k14s.io/last-renewed-time: "2006-01-02T15:04:05Z07:00"
-  7,  7       kapp.k14s.io/max-duration: 2s
+  7,  7       kapp.k14s.io/renew-duration: 2s
   8,  8       kapp.k14s.io/versioned: ""
 @@ update configmap/simple-cm1 (v1) namespace: kapp-test @@
   ...
   4,  4   metadata:
       5 +   annotations:
       6 +     kapp.k14s.io/last-renewed-time: "2006-01-02T15:04:05Z07:00"
-      7 +     kapp.k14s.io/max-duration: 2s
+      7 +     kapp.k14s.io/renew-duration: 2s
   5,  8     creationTimestamp: "2006-01-02T15:04:05Z07:00"
   6,  9     labels:
 `
@@ -134,7 +134,7 @@ metadata:
 	kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{StdinReader: strings.NewReader(yaml2)})
 
 	time.Sleep(2 * time.Second)
-	logger.Section("Deploy again after max-duration expired for both resources", func() {
+	logger.Section("Deploy again after renew-duration expired for both resources", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes"}, RunOpts{StdinReader: strings.NewReader(yaml2)})
 
 		expectedOutput := `
@@ -143,14 +143,14 @@ metadata:
   5,  5     annotations:
   6     -     kapp.k14s.io/last-renewed-time: "2006-01-02T15:04:05Z07:00"
       6 +     kapp.k14s.io/last-renewed-time: "2006-01-02T15:04:05Z07:00"
-  7,  7       kapp.k14s.io/max-duration: 2s
+  7,  7       kapp.k14s.io/renew-duration: 2s
   8,  8       kapp.k14s.io/versioned: ""
 @@ update configmap/simple-cm1 (v1) namespace: kapp-test @@
   ...
   5,  5     annotations:
   6     -     kapp.k14s.io/last-renewed-time: "2006-01-02T15:04:05Z07:00"
       6 +     kapp.k14s.io/last-renewed-time: "2006-01-02T15:04:05Z07:00"
-  7,  7       kapp.k14s.io/max-duration: 2s
+  7,  7       kapp.k14s.io/renew-duration: 2s
   8,  8     creationTimestamp: "2006-01-02T15:04:05Z07:00"
 `
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
@@ -161,7 +161,7 @@ metadata:
 	})
 
 	time.Sleep(2 * time.Second)
-	logger.Section("Deploy again after removing annotaion from simple-cm1", func() {
+	logger.Section("Deploy again after removing renew-duration annotaion from simple-cm1", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes"}, RunOpts{StdinReader: strings.NewReader(yaml1)})
 
 		expectedOutput := `
@@ -170,14 +170,16 @@ metadata:
   5,  5     annotations:
   6     -     kapp.k14s.io/last-renewed-time: "2006-01-02T15:04:05Z07:00"
       6 +     kapp.k14s.io/last-renewed-time: "2006-01-02T15:04:05Z07:00"
-  7,  7       kapp.k14s.io/max-duration: 2s
+  7,  7       kapp.k14s.io/renew-duration: 2s
   8,  8       kapp.k14s.io/versioned: ""
 @@ update configmap/simple-cm1 (v1) namespace: kapp-test @@
   ...
-  6,  6       kapp.k14s.io/last-renewed-time: "2006-01-02T15:04:05Z07:00"
-  7     -     kapp.k14s.io/max-duration: 2s
-  8,  7     creationTimestamp: "2006-01-02T15:04:05Z07:00"
-  9,  8     labels:
+  4,  4   metadata:
+  5     -   annotations:
+  6     -     kapp.k14s.io/last-renewed-time: "2006-01-02T15:04:05Z07:00"
+  7     -     kapp.k14s.io/renew-duration: 2s
+  8,  5     creationTimestamp: "2006-01-02T15:04:05Z07:00"
+  9,  6     labels:
 `
 
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
