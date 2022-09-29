@@ -77,6 +77,9 @@ type AndMatcher struct {
 var _ ResourceMatcher = AndMatcher{}
 
 func (m AndMatcher) Matches(res Resource) bool {
+	if m.Matchers == nil {
+		return false
+	}
 	for _, m := range m.Matchers {
 		if !m.Matches(res) {
 			return false

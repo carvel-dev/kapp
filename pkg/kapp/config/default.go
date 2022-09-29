@@ -645,10 +645,7 @@ changeRuleBindings:
       - hasNamespaceMatcher: {}
 
 StripNameHashSuffix:
-  enabled: false
-  resourceMatchers:
-  - apiVersionKindMatcher: {kind: ConfigMap, apiVersion: v1}
-  - apiVersionKindMatcher: {kind: Secret, apiVersion: v1}
+  enabled: true
 `
 
 var defaultConfigRes = ctlres.MustNewResourceFromBytes([]byte(defaultConfigYAML))

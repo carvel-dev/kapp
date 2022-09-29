@@ -4,4 +4,9 @@ metadata:
   name: irrelevant
 
 StripNameHashSuffixConfig:
-  Enabled: true
+  enabled: true
+  resourceMatchers:
+    - anyMatcher:
+        matchers:
+          - apiVersionKindMatcher: {kind: ConfigMap, apiVersion: v1}
+          - apiVersionKindMatcher: {kind: Secret, apiVersion: v1}

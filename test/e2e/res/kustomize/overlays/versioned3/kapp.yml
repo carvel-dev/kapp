@@ -6,7 +6,16 @@ metadata:
   name: config-map-5bghbfbdc8
 ---
 StripNameHashSuffixConfig:
-  Enabled: true
+  enabled: true
+  resourceMatchers:
+  - anyMatcher:
+      matchers:
+      - apiVersionKindMatcher:
+          apiVersion: v1
+          kind: ConfigMap
+      - apiVersionKindMatcher:
+          apiVersion: v1
+          kind: Secret
 apiVersion: kapp.k14s.io/v1alpha1
 kind: Config
 metadata:

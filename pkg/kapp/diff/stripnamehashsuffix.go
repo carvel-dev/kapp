@@ -27,10 +27,21 @@ func newStripNameHashSuffixConfig(enabled bool, resourceMatchers [][]ctlres.Reso
 	if enabled {
 		var allMatchers []ctlres.ResourceMatcher
 		for _, matchers := range resourceMatchers {
-			allMatchers = append(allMatchers, ctlres.AndMatcher{
-				Matchers: matchers,
-			})
+			// configurations that do not specify any matchers (like default
+			// config) have nil, which would lead AndMatcher to never match.
+			// as all the configs AndMatchers are ANDed, too, this would prevent
+			// matchers from any configuration to match, which would strip the
+			// whole suffix-strip configuration of any usefulness; as such we
+			// exclude nil matchers. :)
+			if matchers != nil {
+				allMatchers = append(allMatchers, ctlres.AndMatcher{
+					Matchers: matchers,
+				})
+			}
 		}
+		// N.B. if no config specifies any matchers (the default), then
+		// allMatchers will stay uninitialized/nil and the AndMatcher will never
+		// match, effectively disabling suffix strip.
 		result.ResourceMatcher = ctlres.AndMatcher{Matchers: allMatchers}
 	}
 	return result
