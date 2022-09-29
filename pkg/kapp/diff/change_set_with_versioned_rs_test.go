@@ -176,7 +176,7 @@ data:
   foo: bar
 `))
 
-	stripNameHashSuffix := stripNameHashSuffixConfig{Enabled: true, ResourceMatcher: ctlres.AllMatcher{}}
+	stripNameHashSuffix := stripNameHashSuffixConfig{ResourceMatcher: ctlres.AllMatcher{}}
 	changeSetWithVerRes := ChangeSetWithVersionedRs{[]ctlres.Resource{existingRs}, []ctlres.Resource{newRs}, nil, ChangeSetOpts{}, ChangeFactory{}, stripNameHashSuffix}
 
 	changes, err := changeSetWithVerRes.Calculate()
@@ -198,7 +198,7 @@ data:
 }
 
 func newChangeSet(existingRes, newRes ctlres.Resource) *ChangeSetWithVersionedRs {
-	stripNameHashSuffix := stripNameHashSuffixConfig{Enabled: false}
+	stripNameHashSuffix := stripNameHashSuffixConfig{nil}
 	return &ChangeSetWithVersionedRs{[]ctlres.Resource{existingRes}, []ctlres.Resource{newRes}, nil, ChangeSetOpts{}, ChangeFactory{}, stripNameHashSuffix}
 }
 

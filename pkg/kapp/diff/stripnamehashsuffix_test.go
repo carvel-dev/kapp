@@ -82,7 +82,7 @@ spec:
   replicas: 1
 `))
 
-	config := newStripNameHashSuffixConfig(true, [][]ctlres.ResourceMatcher{nil})
+	config := newStripNameHashSuffixConfig([][]ctlres.ResourceMatcher{nil})
 
 	require.False(t, config.EnabledFor(excludedCM), "expected not matching anything (here: ConfigMap) by default!")
 	require.False(t, config.EnabledFor(excludedKind), "expected not matching anything (here: Deployment) by default!")
@@ -125,7 +125,7 @@ spec:
   replicas: 1
 `))
 
-	config := newStripNameHashSuffixConfig(true, matchers)
+	config := newStripNameHashSuffixConfig(matchers)
 
 	require.True(t, config.EnabledFor(includedCM), "expected included ConfigMap to match!")
 	require.True(t, config.EnabledFor(includedKind), "expected included Kind to match!")

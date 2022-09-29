@@ -644,8 +644,7 @@ changeRuleBindings:
               - anyMatcher: {matchers: *podRelatedMatchers}
       - hasNamespaceMatcher: {}
 
-StripNameHashSuffix:
-  enabled: true
+StripNameHashSuffix: {}
 `
 
 var defaultConfigRes = ctlres.MustNewResourceFromBytes([]byte(defaultConfigYAML))

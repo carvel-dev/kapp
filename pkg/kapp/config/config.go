@@ -142,7 +142,6 @@ type ChangeRuleBinding struct {
 }
 
 type StripNameHashSuffixConfig struct {
-	Enabled          bool
 	ResourceMatchers []ResourceMatcher
 }
 
