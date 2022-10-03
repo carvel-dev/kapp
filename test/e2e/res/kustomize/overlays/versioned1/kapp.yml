@@ -1,0 +1,22 @@
+apiVersion: v1
+data:
+  foo: foo
+kind: ConfigMap
+metadata:
+  name: config-map-7tgk8db28b
+---
+StripNameHashSuffixConfig:
+  enabled: true
+  resourceMatchers:
+  - anyMatcher:
+      matchers:
+      - apiVersionKindMatcher:
+          apiVersion: v1
+          kind: ConfigMap
+      - apiVersionKindMatcher:
+          apiVersion: v1
+          kind: Secret
+apiVersion: kapp.k14s.io/v1alpha1
+kind: Config
+metadata:
+  name: irrelevant

@@ -178,3 +178,21 @@ func (c Conf) ChangeRuleBindings() []ChangeRuleBinding {
 	}
 	return result
 }
+
+type StripNameHashSuffixConfigs []StripNameHashSuffixConfig
+
+func (c StripNameHashSuffixConfigs) AggregateToCtlRes() [][]ctlres.ResourceMatcher {
+	var resourceMatchers [][]ctlres.ResourceMatcher
+	for _, conf := range c {
+		resourceMatchers = append(resourceMatchers, ResourceMatchers(conf.ResourceMatchers).AsResourceMatchers())
+	}
+	return resourceMatchers
+}
+
+func (c Conf) StripNameHashSuffixConfigs() StripNameHashSuffixConfigs {
+	var configs []StripNameHashSuffixConfig
+	for _, config := range c.configs {
+		configs = append(configs, config.StripNameHashSuffixConfig)
+	}
+	return StripNameHashSuffixConfigs(configs)
+}

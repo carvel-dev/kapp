@@ -19,23 +19,24 @@ const (
 )
 
 type ChangeSetWithVersionedRs struct {
-	existingRs, newRs []ctlres.Resource
-	rules             []ctlconf.TemplateRule
-	opts              ChangeSetOpts
-	changeFactory     ChangeFactory
+	existingRs, newRs         []ctlres.Resource
+	rules                     []ctlconf.TemplateRule
+	opts                      ChangeSetOpts
+	changeFactory             ChangeFactory
+	stripNameHashSuffixConfig stripNameHashSuffixConfig
 }
 
 func NewChangeSetWithVersionedRs(existingRs, newRs []ctlres.Resource,
-	rules []ctlconf.TemplateRule, opts ChangeSetOpts, changeFactory ChangeFactory) *ChangeSetWithVersionedRs {
+	rules []ctlconf.TemplateRule, opts ChangeSetOpts, changeFactory ChangeFactory, stripNameHashSuffixConfigs ctlconf.StripNameHashSuffixConfigs) *ChangeSetWithVersionedRs {
 
-	return &ChangeSetWithVersionedRs{existingRs, newRs, rules, opts, changeFactory}
+	return &ChangeSetWithVersionedRs{existingRs, newRs, rules, opts, changeFactory, newStripNameHashSuffixConfigFromConf(stripNameHashSuffixConfigs)}
 }
 
 func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
-	existingRs := existingVersionedResources(d.existingRs)
+	existingRs := d.existingVersionedResources()
 	existingRsGrouped := d.groupResources(existingRs.Versioned)
 
-	newRs := newVersionedResources(d.newRs)
+	newRs := d.newVersionedResources()
 	allChanges := []Change{}
 
 	d.assignNewNames(newRs, existingRsGrouped)
@@ -76,37 +77,33 @@ func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 	return allChanges, nil
 }
 
-func (d ChangeSetWithVersionedRs) groupResources(rs []ctlres.Resource) map[string][]ctlres.Resource {
-	result := map[string][]ctlres.Resource{}
+func (d ChangeSetWithVersionedRs) groupResources(vrs []VersionedResource) map[string][]VersionedResource {
+	result := map[string][]VersionedResource{}
 
-	groupByFunc := func(res ctlres.Resource) string {
-		if _, found := res.Annotations()[versionedResAnnKey]; found {
-			return VersionedResource{res, nil}.UniqVersionedKey().String()
-		}
-		panic("Expected to find versioned annotation on resource")
+	groupByFunc := func(ver VersionedResource) string {
+		return ver.UniqVersionedKey().String()
 	}
 
-	for resKey, subRs := range (GroupResources{rs, groupByFunc}).Resources() {
-		sort.Slice(subRs, func(i, j int) bool {
-			return VersionedResource{subRs[i], nil}.Version() < VersionedResource{subRs[j], nil}.Version()
+	for resKey, subVRs := range (GroupVersionedResources{vrs, groupByFunc}).Resources() {
+		sort.Slice(subVRs, func(i, j int) bool {
+			return subVRs[i].Version() < subVRs[j].Version()
 		})
-		result[resKey] = subRs
+		result[resKey] = subVRs
 	}
 
 	return result
 }
 
 func (d ChangeSetWithVersionedRs) assignNewNames(
-	newRs versionedResources, existingRsGrouped map[string][]ctlres.Resource) {
+	newVRs versionedResources, existingVRsGrouped map[string][]VersionedResource) {
 
 	// TODO name isnt used during diffing, should it?
-	for _, newRes := range newRs.Versioned {
-		newVerRes := VersionedResource{newRes, nil}
+	for _, newVerRes := range newVRs.Versioned {
 		newResKey := newVerRes.UniqVersionedKey().String()
 
-		if existingRs, found := existingRsGrouped[newResKey]; found {
-			existingRes := existingRs[len(existingRs)-1]
-			newVerRes.SetBaseName(VersionedResource{existingRes, nil}.Version() + 1)
+		if existingVRs, found := existingVRsGrouped[newResKey]; found {
+			existingVerRes := existingVRs[len(existingVRs)-1]
+			newVerRes.SetBaseName(existingVerRes.Version() + 1)
 		} else {
 			newVerRes.SetBaseName(1)
 		}
@@ -114,38 +111,38 @@ func (d ChangeSetWithVersionedRs) assignNewNames(
 }
 
 func (d ChangeSetWithVersionedRs) addAndKeepChanges(
-	newRs versionedResources, existingRsGrouped map[string][]ctlres.Resource) (
-	[]Change, map[string]ctlres.Resource, error) {
+	newVRs versionedResources, existingVRsGrouped map[string][]VersionedResource) (
+	[]Change, map[string]VersionedResource, error) {
 
 	changes := []Change{}
-	alreadyAdded := map[string]ctlres.Resource{}
+	alreadyAdded := map[string]VersionedResource{}
 
-	for _, newRes := range newRs.Versioned {
-		newResKey := VersionedResource{newRes, nil}.UniqVersionedKey().String()
-		usedRes := newRes
+	for _, newVerRes := range newVRs.Versioned {
+		newResKey := newVerRes.UniqVersionedKey().String()
+		usedVerRes := newVerRes
 
-		if existingRs, found := existingRsGrouped[newResKey]; found {
-			existingRes := existingRs[len(existingRs)-1]
+		if existingVRs, found := existingVRsGrouped[newResKey]; found {
+			existingVerRes := existingVRs[len(existingVRs)-1]
 
 			// Calculate update change to determine if anything changed
-			updateChange, err := d.newChange(existingRes, newRes)
+			updateChange, err := d.newChange(existingVerRes.Res(), newVerRes.Res())
 			if err != nil {
 				return nil, nil, err
 			}
 
 			switch updateChange.Op() {
 			case ChangeOpUpdate:
-				changes = append(changes, d.newAddChangeFromUpdateChange(newRes, updateChange))
+				changes = append(changes, d.newAddChangeFromUpdateChange(newVerRes.Res(), updateChange))
 			case ChangeOpKeep:
 				// Use latest copy of resource to update affected resources
-				usedRes = existingRes
-				changes = append(changes, d.newKeepChange(existingRes))
+				usedVerRes = existingVerRes
+				changes = append(changes, d.newKeepChange(existingVerRes.Res()))
 			default:
 				panic(fmt.Sprintf("Unexpected change op %s", updateChange.Op()))
 			}
 		} else {
 			// Since there no existing resource, create change for new resource
-			addChange, err := d.newChange(nil, newRes)
+			addChange, err := d.newChange(nil, newVerRes.Res())
 			if err != nil {
 				return nil, nil, err
 			}
@@ -153,19 +150,18 @@ func (d ChangeSetWithVersionedRs) addAndKeepChanges(
 		}
 
 		// Update both versioned and non-versioned
-		verRes := VersionedResource{usedRes, d.rules}
 
-		err := verRes.UpdateAffected(newRs.NonVersioned)
+		err := usedVerRes.UpdateAffected(newVRs.NonVersionedRs())
 		if err != nil {
 			return nil, nil, err
 		}
 
-		err = verRes.UpdateAffected(newRs.Versioned)
+		err = usedVerRes.UpdateAffected(newVRs.VersionedRs())
 		if err != nil {
 			return nil, nil, err
 		}
 
-		alreadyAdded[newResKey] = newRes
+		alreadyAdded[newResKey] = newVerRes
 	}
 
 	return changes, alreadyAdded, nil
@@ -179,29 +175,41 @@ func (d ChangeSetWithVersionedRs) newAddChangeFromUpdateChange(
 }
 
 func (d ChangeSetWithVersionedRs) noopAndDeleteChanges(
-	existingRsGrouped map[string][]ctlres.Resource,
-	alreadyAdded map[string]ctlres.Resource) ([]Change, error) {
+	existingVRsGrouped map[string][]VersionedResource,
+	alreadyAdded map[string]VersionedResource) ([]Change, error) {
 
 	changes := []Change{}
 
 	// Find existing resources that were not already diffed (not in new set of resources)
-	for existingResKey, existingRs := range existingRsGrouped {
+	for existingResKey, existingVRs := range existingVRsGrouped {
 		numToKeep := 0
 
-		if newRes, found := alreadyAdded[existingResKey]; found {
+		newVRes, found := alreadyAdded[existingResKey]
+		if found {
 			var err error
-			numToKeep, err = d.numOfResourcesToKeep(newRes)
+			numToKeep, err = d.numOfResourcesToKeep(newVRes)
 			if err != nil {
 				return nil, err
 			}
 		}
-		if numToKeep > len(existingRs) {
-			numToKeep = len(existingRs)
+		if numToKeep > len(existingVRs) {
+			numToKeep = len(existingVRs)
 		}
 
 		// Create changes to delete all or extra resources
-		for _, existingRes := range existingRs[0 : len(existingRs)-numToKeep] {
-			change, err := d.newChange(existingRes, nil)
+		for _, existingVRes := range existingVRs[0 : len(existingVRs)-numToKeep] {
+
+			existingRes := existingVRes.Res()
+
+			var newRes ctlres.Resource
+			if numToKeep == 0 && found && existingRes.Name() == newVRes.Res().Name() {
+				// versioned resources without "last X" semantics would also
+				// delete the not-actually-old existing resource when it is
+				// reapplied without changes.
+				newRes = newVRes.Res()
+			}
+
+			change, err := d.newChange(existingRes, newRes)
 			if err != nil {
 				return nil, err
 			}
@@ -209,8 +217,8 @@ func (d ChangeSetWithVersionedRs) noopAndDeleteChanges(
 		}
 
 		// Create changes that "noop" resources
-		for _, existingRes := range existingRs[len(existingRs)-numToKeep:] {
-			changes = append(changes, d.newNoopChange(existingRes))
+		for _, existingVRes := range existingVRs[len(existingVRs)-numToKeep:] {
+			changes = append(changes, d.newNoopChange(existingVRes.Res()))
 		}
 	}
 
@@ -225,9 +233,17 @@ func (d ChangeSetWithVersionedRs) newNoopChange(existingRes ctlres.Resource) Cha
 	return NewChangePrecalculated(existingRes, nil, nil, ChangeOpNoop, nil, OpsDiff{})
 }
 
-func (ChangeSetWithVersionedRs) numOfResourcesToKeep(res ctlres.Resource) (int, error) {
+func (ChangeSetWithVersionedRs) numOfResourcesToKeep(vres VersionedResource) (int, error) {
+	switch vres.(type) {
+	case HashSuffixResource:
+		// there is no meaningful way to order hash-suffixed resources and as such there is no "last X" resources semantic.
+		// thus simply delete all old resources.
+		return 0, nil
+	}
+
 	// TODO get rid of arbitrary cut off
 	numToKeep := 5
+	res := vres.Res()
 
 	if numToKeepAnn, found := res.Annotations()[versionedResNumVersAnnKey]; found {
 		var err error
@@ -254,44 +270,85 @@ func (d ChangeSetWithVersionedRs) newChange(existingRes, newRes ctlres.Resource)
 }
 
 type versionedResources struct {
-	Versioned    []ctlres.Resource
+	Versioned    []VersionedResource
 	NonVersioned []ctlres.Resource
 }
 
-func newVersionedResources(rs []ctlres.Resource) versionedResources {
+func (d *versionedResources) AddVersionedRes(vr VersionedResource) {
+	d.Versioned = append(d.Versioned, vr)
+}
+
+func (d *versionedResources) AddNonVersionedRes(res ctlres.Resource) {
+	d.NonVersioned = append(d.NonVersioned, res)
+}
+
+func (d versionedResources) VersionedRs() (rs []ctlres.Resource) {
+	for _, vres := range d.Versioned {
+		rs = append(rs, vres.Res())
+	}
+	return
+}
+
+func (d versionedResources) NonVersionedRs() []ctlres.Resource {
+	return d.NonVersioned
+}
+
+func (d ChangeSetWithVersionedRs) newVersionedResources() versionedResources {
 	var result versionedResources
-	for _, res := range rs {
+
+	for _, res := range d.newRs {
+
 		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
 		_, hasVersionedOrigAnn := res.Annotations()[versionedResOrigAnnKey]
 
 		if hasVersionedAnn {
-			result.Versioned = append(result.Versioned, res)
+			result.AddVersionedRes(VersionedResourceImpl{res, d.rules})
 			if hasVersionedOrigAnn {
-				result.NonVersioned = append(result.NonVersioned, res.DeepCopy())
+				result.AddNonVersionedRes(res.DeepCopy())
 			}
-		} else {
-			result.NonVersioned = append(result.NonVersioned, res)
+			continue
 		}
+
+		if d.stripNameHashSuffixConfig.EnabledFor(res) {
+			result.AddVersionedRes(HashSuffixResource{res})
+			continue
+		}
+
+		result.AddNonVersionedRes(res)
 	}
+
 	return result
 }
 
-func existingVersionedResources(rs []ctlres.Resource) versionedResources {
+func (d ChangeSetWithVersionedRs) existingVersionedResources() versionedResources {
 	var result versionedResources
-	for _, res := range rs {
+
+	for _, res := range d.existingRs {
+
 		// Expect that versioned resources should not be transient
 		// (Annotations may have been copied from versioned resources
 		// onto transient resources for non-versioning related purposes).
-		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
+		if !res.Transient() {
 
-		versionedRs := VersionedResource{res: res}
-		_, version := versionedRs.BaseNameAndVersion()
+			_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
+			if hasVersionedAnn {
+				versionedRes := VersionedResourceImpl{res, d.rules}
+				_, version := versionedRes.BaseNameAndVersion()
+				if version != "" {
+					result.AddVersionedRes(versionedRes)
+					continue
+				}
+			}
 
-		if hasVersionedAnn && !res.Transient() && version != "" {
-			result.Versioned = append(result.Versioned, res)
-		} else {
-			result.NonVersioned = append(result.NonVersioned, res)
+			if d.stripNameHashSuffixConfig.EnabledFor(res) {
+				result.AddVersionedRes(HashSuffixResource{res})
+				continue
+			}
+
 		}
+
+		result.AddNonVersionedRes(res)
 	}
+
 	return result
 }

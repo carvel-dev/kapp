@@ -1,0 +1,12 @@
+apiVersion: kapp.k14s.io/v1alpha1
+kind: Config
+metadata:
+  name: irrelevant
+
+StripNameHashSuffixConfig:
+  enabled: true
+  resourceMatchers:
+    - anyMatcher:
+        matchers:
+          - apiVersionKindMatcher: {kind: ConfigMap, apiVersion: v1}
+          - apiVersionKindMatcher: {kind: Secret, apiVersion: v1}

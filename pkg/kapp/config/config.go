@@ -38,6 +38,8 @@ type Config struct {
 	// TODO validations
 	ChangeGroupBindings []ChangeGroupBinding
 	ChangeRuleBindings  []ChangeRuleBinding
+
+	StripNameHashSuffixConfig StripNameHashSuffixConfig
 }
 
 type WaitRule struct {
@@ -136,6 +138,10 @@ type ChangeGroupBinding struct {
 type ChangeRuleBinding struct {
 	Rules            []string
 	IgnoreIfCyclical bool
+	ResourceMatchers []ResourceMatcher
+}
+
+type StripNameHashSuffixConfig struct {
 	ResourceMatchers []ResourceMatcher
 }
 
