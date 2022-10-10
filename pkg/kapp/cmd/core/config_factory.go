@@ -113,12 +113,13 @@ func (f *ConfigFactoryImpl) clientConfig() (bool, clientcmd.ClientConfig, error)
 	}
 
 	if len(configYAML) > 0 {
-		// If it is not provided, we default the Kubernetes service port to 443
-		kubernetesServicePort, ok := os.LookupEnv("KUBERNETES_SERVICE_PORT")
-		if !ok {
-			kubernetesServicePort = "443"
+		kubernetesHost := os.Getenv("KUBERNETES_SERVICE_HOST")
+		kubernetesServicePort := os.Getenv("KUBERNETES_SERVICE_PORT")
+		envHostPort := net.JoinHostPort(kubernetesHost, kubernetesServicePort)
+		if kubernetesServicePort == "" {
+			// client-go will manually add the port based on http/https
+			envHostPort = kubernetesHost
 		}
-		envHostPort := net.JoinHostPort(os.Getenv("KUBERNETES_SERVICE_HOST"), kubernetesServicePort)
 		configYAML = strings.ReplaceAll(configYAML, "${KAPP_KUBERNETES_SERVICE_HOST_PORT}", envHostPort)
 		config, err := clientcmd.NewClientConfigFromBytes([]byte(configYAML))
 		return true, config, err
