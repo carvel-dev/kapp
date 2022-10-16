@@ -198,7 +198,7 @@ data:
 }
 
 func newChangeSet(existingRes, newRes ctlres.Resource) *ChangeSetWithVersionedRs {
-	stripNameHashSuffix := newStripNameHashSuffixConfig(nil)
+	stripNameHashSuffix := newStripNameHashSuffixConfigEmpty()
 	return &ChangeSetWithVersionedRs{[]ctlres.Resource{existingRes}, []ctlres.Resource{newRes}, nil, ChangeSetOpts{}, ChangeFactory{}, stripNameHashSuffix}
 }
 

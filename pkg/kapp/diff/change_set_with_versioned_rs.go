@@ -27,7 +27,7 @@ type ChangeSetWithVersionedRs struct {
 }
 
 func NewChangeSetWithVersionedRs(existingRs, newRs []ctlres.Resource,
-	rules []ctlconf.TemplateRule, opts ChangeSetOpts, changeFactory ChangeFactory, stripNameHashSuffixConfigs ctlconf.StripNameHashSuffixConfigs) *ChangeSetWithVersionedRs {
+	rules []ctlconf.TemplateRule, opts ChangeSetOpts, changeFactory ChangeFactory, stripNameHashSuffixConfigs []ctlconf.StripNameHashSuffixConfig) *ChangeSetWithVersionedRs {
 
 	return &ChangeSetWithVersionedRs{existingRs, newRs, rules, opts, changeFactory, newStripNameHashSuffixConfigFromConf(stripNameHashSuffixConfigs)}
 }

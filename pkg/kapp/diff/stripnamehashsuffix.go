@@ -18,34 +18,27 @@ func (d stripNameHashSuffixConfig) EnabledFor(res ctlres.Resource) (stripEnabled
 	return d.ResourceMatcher.Matches(res)
 }
 
-func newStripNameHashSuffixConfig(resourceMatchers [][]ctlres.ResourceMatcher) (result stripNameHashSuffixConfig) {
-	result = stripNameHashSuffixConfig{}
-
-	var allMatchers []ctlres.ResourceMatcher
-	for _, matchers := range resourceMatchers {
-		// configurations that do not specify any matchers (like default
-		// config) have nil, which would lead AndMatcher to never match.
-		// as all the configs AndMatchers are ANDed, too, this would prevent
-		// matchers from any configuration to match, which would strip the
-		// whole suffix-strip configuration of any usefulness; as such we
-		// exclude nil matchers. :)
-		if matchers != nil {
-			allMatchers = append(allMatchers, ctlres.AndMatcher{
-				Matchers: matchers,
-			})
-		}
+func newStripNameHashSuffixConfigFromConf(confs []ctlconf.StripNameHashSuffixConfig) stripNameHashSuffixConfig {
+	includeMatchers := []ctlres.ResourceMatcher{}
+	excludeMatchers := []ctlres.ResourceMatcher{}
+	for _, conf := range confs {
+		includeMatchers = append(includeMatchers, conf.IncludeMatchers()...)
+		excludeMatchers = append(excludeMatchers, conf.ExcludeMatchers()...)
 	}
-	// N.B. if no config specifies any matchers (the default), then
-	// allMatchers will stay uninitialized/nil and the AndMatcher will never
-	// match, effectively disabling suffix strip.
-	result.ResourceMatcher = ctlres.AndMatcher{Matchers: allMatchers}
-
-	return result
+	return stripNameHashSuffixConfig{
+		ResourceMatcher: ctlres.AndMatcher{
+			Matchers: []ctlres.ResourceMatcher{
+				ctlres.AnyMatcher{Matchers: includeMatchers},
+				ctlres.NotMatcher{
+					Matcher: ctlres.AnyMatcher{Matchers: excludeMatchers},
+				},
+			},
+		},
+	}
 }
 
-func newStripNameHashSuffixConfigFromConf(confs ctlconf.StripNameHashSuffixConfigs) stripNameHashSuffixConfig {
-	matchers := confs.AggregateToCtlRes()
-	return newStripNameHashSuffixConfig(matchers)
+func newStripNameHashSuffixConfigEmpty() stripNameHashSuffixConfig {
+	return newStripNameHashSuffixConfigFromConf([]ctlconf.StripNameHashSuffixConfig{})
 }
 
 type HashSuffixResource struct {

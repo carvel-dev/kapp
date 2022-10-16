@@ -39,7 +39,7 @@ type Config struct {
 	ChangeGroupBindings []ChangeGroupBinding
 	ChangeRuleBindings  []ChangeRuleBinding
 
-	StripNameHashSuffixConfig StripNameHashSuffixConfig
+	StripNameHashSuffixConfigs []StripNameHashSuffixConfig
 }
 
 type WaitRule struct {
@@ -142,7 +142,8 @@ type ChangeRuleBinding struct {
 }
 
 type StripNameHashSuffixConfig struct {
-	ResourceMatchers []ResourceMatcher
+	Includes []ResourceMatcher
+	Excludes []ResourceMatcher
 }
 
 func NewConfigFromResource(res ctlres.Resource) (Config, error) {
@@ -319,4 +320,12 @@ func (r WaitRule) ResourceMatcher() ctlres.ResourceMatcher {
 	return ctlres.AnyMatcher{
 		Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
 	}
+}
+
+func (r StripNameHashSuffixConfig) IncludeMatchers() []ctlres.ResourceMatcher {
+	return ResourceMatchers(r.Includes).AsResourceMatchers()
+}
+
+func (r StripNameHashSuffixConfig) ExcludeMatchers() []ctlres.ResourceMatcher {
+	return ResourceMatchers(r.Excludes).AsResourceMatchers()
 }

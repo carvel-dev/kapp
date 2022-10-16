@@ -3,10 +3,6 @@ kind: Config
 metadata:
   name: irrelevant
 
-StripNameHashSuffixConfig:
-  enabled: true
-  resourceMatchers:
-    - anyMatcher:
-        matchers:
-          - apiVersionKindMatcher: {kind: ConfigMap, apiVersion: v1}
-          - apiVersionKindMatcher: {kind: Secret, apiVersion: v1}
+stripNameHashSuffixConfigs:
+- includes:
+  - apiVersionKindMatcher: {apiVersion: v1, kind: ConfigMap}

@@ -7,57 +7,47 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 func TestStripNameHashSuffix_TestConfig_IncludeExcludeAccrossConfigs(t *testing.T) {
-	requireStripNameHashSuffixMatches(t, [][]ctlres.ResourceMatcher{
-		[]ctlres.ResourceMatcher{
-			ctlres.AnyMatcher{
-				Matchers: []ctlres.ResourceMatcher{
-					ctlres.APIVersionKindMatcher{APIVersion: "v1", Kind: "ConfigMap"},
-					ctlres.APIVersionKindMatcher{APIVersion: "v2", Kind: "MyKind"},
+	requireStripNameHashSuffixMatches(t, []ctlconf.StripNameHashSuffixConfig{
+		ctlconf.StripNameHashSuffixConfig{
+			Includes: []ctlconf.ResourceMatcher{
+				ctlconf.ResourceMatcher{
+					APIVersionKindMatcher: &ctlconf.APIVersionKindMatcher{APIVersion: "v1", Kind: "ConfigMap"},
+				},
+				ctlconf.ResourceMatcher{
+					APIVersionKindMatcher: &ctlconf.APIVersionKindMatcher{APIVersion: "v2", Kind: "MyKind"},
 				},
 			},
 		},
-		[]ctlres.ResourceMatcher{
-			ctlres.NotMatcher{
-				Matcher: ctlres.KindNamespaceNameMatcher{Kind: "ConfigMap", Name: "foo"},
+		ctlconf.StripNameHashSuffixConfig{
+			Excludes: []ctlconf.ResourceMatcher{
+				ctlconf.ResourceMatcher{
+					KindNamespaceNameMatcher: &ctlconf.KindNamespaceNameMatcher{Kind: "ConfigMap", Name: "foo"},
+				},
 			},
 		},
 	})
 }
 
 func TestStripNameHashSuffix_TestConfig_IncludeExcludeSingleConfig(t *testing.T) {
-	requireStripNameHashSuffixMatches(t, [][]ctlres.ResourceMatcher{
-		[]ctlres.ResourceMatcher{
-			ctlres.AnyMatcher{
-				Matchers: []ctlres.ResourceMatcher{
-					ctlres.APIVersionKindMatcher{APIVersion: "v1", Kind: "ConfigMap"},
-					ctlres.APIVersionKindMatcher{APIVersion: "v2", Kind: "MyKind"},
+	requireStripNameHashSuffixMatches(t, []ctlconf.StripNameHashSuffixConfig{
+		ctlconf.StripNameHashSuffixConfig{
+			Includes: []ctlconf.ResourceMatcher{
+				ctlconf.ResourceMatcher{
+					APIVersionKindMatcher: &ctlconf.APIVersionKindMatcher{APIVersion: "v1", Kind: "ConfigMap"},
+				},
+				ctlconf.ResourceMatcher{
+					APIVersionKindMatcher: &ctlconf.APIVersionKindMatcher{APIVersion: "v2", Kind: "MyKind"},
 				},
 			},
-			ctlres.NotMatcher{
-				Matcher: ctlres.KindNamespaceNameMatcher{Kind: "ConfigMap", Name: "foo"},
-			},
-		},
-	})
-}
-
-func TestStripNameHashSuffix_TestConfig_DefaultInclude(t *testing.T) {
-	requireStripNameHashSuffixMatches(t, [][]ctlres.ResourceMatcher{
-		nil,
-		[]ctlres.ResourceMatcher{
-			ctlres.AnyMatcher{
-				Matchers: []ctlres.ResourceMatcher{
-					ctlres.APIVersionKindMatcher{APIVersion: "v1", Kind: "ConfigMap"},
-					ctlres.APIVersionKindMatcher{APIVersion: "v2", Kind: "MyKind"},
+			Excludes: []ctlconf.ResourceMatcher{
+				ctlconf.ResourceMatcher{
+					KindNamespaceNameMatcher: &ctlconf.KindNamespaceNameMatcher{Kind: "ConfigMap", Name: "foo"},
 				},
-			},
-		},
-		[]ctlres.ResourceMatcher{
-			ctlres.NotMatcher{
-				Matcher: ctlres.KindNamespaceNameMatcher{Kind: "ConfigMap", Name: "foo"},
 			},
 		},
 	})
@@ -82,13 +72,13 @@ spec:
   replicas: 1
 `))
 
-	config := newStripNameHashSuffixConfig([][]ctlres.ResourceMatcher{nil})
+	config := newStripNameHashSuffixConfigEmpty()
 
 	require.False(t, config.EnabledFor(excludedCM), "expected not matching anything (here: ConfigMap) by default!")
 	require.False(t, config.EnabledFor(excludedKind), "expected not matching anything (here: Deployment) by default!")
 }
 
-func requireStripNameHashSuffixMatches(t *testing.T, matchers [][]ctlres.ResourceMatcher) {
+func requireStripNameHashSuffixMatches(t *testing.T, confs []ctlconf.StripNameHashSuffixConfig) {
 	includedCM := ctlres.MustNewResourceFromBytes([]byte(`
 apiVersion: v1
 kind: ConfigMap
@@ -125,7 +115,7 @@ spec:
   replicas: 1
 `))
 
-	config := newStripNameHashSuffixConfig(matchers)
+	config := newStripNameHashSuffixConfigFromConf(confs)
 
 	require.True(t, config.EnabledFor(includedCM), "expected included ConfigMap to match!")
 	require.True(t, config.EnabledFor(includedKind), "expected included Kind to match!")
