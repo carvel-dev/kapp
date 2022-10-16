@@ -52,36 +52,41 @@ func kappDeployOverlay(kapp Kapp, name string, app string) (string, error) {
 	return kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", app, "--json", "-c"}, RunOpts{IntoNs: true, StdinReader: testResReader})
 }
 
-func TestStripNameSuffixBasic(t *testing.T) {
+func TestStripNameSuffix(t *testing.T) {
+	t.Run("Basic", testStripNameSuffixBasic)
+	t.Run("NoOp", testStripNameSuffixNoop)
+}
+
+func testStripNameSuffixBasic(t *testing.T) {
 
 	resp := run(t, "versioned1", "versioned2")
 
-	// comparing the whole diff is unreliable; depending on the k8s version
-	// managedFields will (not) be set and as such (not) included in the diff.
-	// in that regard it also seems unreliable to assume "data" diff will
-	// always be in the first lines.
-	addRE := regexp.MustCompile(`(?m)^      \d+ \+   foo: bar$`)
-	delRE := regexp.MustCompile(`(?m)^  \d+     \-   foo: foo$`)
+	for _, tc := range []struct {
+		name  string
+		regex *regexp.Regexp
+	}{
+		// comparing the whole diff is unreliable; depending on the k8s version
+		// managedFields will (not) be set and as such (not) included in the diff.
+		// in that regard it also seems unreliable to assume "data" diff will
+		// always be in the first lines.
+		{"new", regexp.MustCompile(`(?m)^      \d+ \+   foo: bar$`)},
+		{"old", regexp.MustCompile(`(?m)^  \d+     \-   foo: foo$`)},
+	} {
+		t.Run("Diff_"+tc.name, func(t *testing.T) {
+			diffBlock := resp.Blocks[0]
+			require.Regexpf(t, tc.regex, diffBlock, "Expected to see %s line in diff", tc.name)
+		})
+	}
 
-	diffBlock := resp.Blocks[0]
-
-	require.Regexpf(t, addRE, diffBlock, "Expected to see new line in diff")
-	require.Regexpf(t, delRE, diffBlock, "Expected to see old line in diff")
+	t.Run("DeleteOld", func(t *testing.T) {
+		expectedNote := "Op:      1 create, 1 delete, 0 update, 0 noop, 0 exists"
+		actualNote := resp.Tables[0].Notes[0]
+		// Ensure old ConfigMap is deleted
+		require.Exactlyf(t, expectedNote, actualNote, "Expected one delete and one create Op")
+	})
 }
 
-func TestStripNameSuffixDeleteOld(t *testing.T) {
-
-	resp := run(t, "versioned1", "versioned2")
-
-	expectedNote := "Op:      1 create, 1 delete, 0 update, 0 noop, 0 exists"
-
-	actualNote := resp.Tables[0].Notes[0]
-
-	// Ensure old ConfigMap is deleted
-	require.Exactlyf(t, expectedNote, actualNote, "Expected to one delete and one create Op")
-}
-
-func TestStripNameSuffixNoop(t *testing.T) {
+func testStripNameSuffixNoop(t *testing.T) {
 
 	resp := run(t, "versioned1", "versioned1")
 
