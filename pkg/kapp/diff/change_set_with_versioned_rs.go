@@ -282,11 +282,12 @@ func (d *versionedResources) AddNonVersionedRes(res ctlres.Resource) {
 	d.NonVersioned = append(d.NonVersioned, res)
 }
 
-func (d versionedResources) VersionedRs() (rs []ctlres.Resource) {
+func (d versionedResources) VersionedRs() []ctlres.Resource {
+	var rs []ctlres.Resource
 	for _, vres := range d.Versioned {
 		rs = append(rs, vres.Res())
 	}
-	return
+	return rs
 }
 
 func (d versionedResources) NonVersionedRs() []ctlres.Resource {
