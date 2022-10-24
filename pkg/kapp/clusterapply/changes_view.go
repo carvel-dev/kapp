@@ -136,8 +136,9 @@ var (
 
 	applyStrategyCodeUI = map[ClusterChangeApplyOp]map[ClusterChangeApplyStrategyOp]string{
 		ClusterChangeApplyOpAdd: {
-			createStrategyPlainAnnValue:            "",
-			createStrategyFallbackOnUpdateAnnValue: "fallback on update",
+			createStrategyPlainAnnValue:                  "",
+			createStrategyFallbackOnUpdateAnnValue:       "fallback on update",
+			createStrategyFallbackOnUpdateOrNoopAnnValue: "fallback on update or noop",
 		},
 
 		ClusterChangeApplyOpUpdate: {
