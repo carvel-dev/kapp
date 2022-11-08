@@ -21,15 +21,16 @@ type ResourceModWithMultiple interface {
 type Path []*PathPart
 
 type PathPart struct {
-	MapKey     *string
-	ArrayIndex *PathPartArrayIndex
+	MapKey        *string
+	IndexAndRegex *PathPartIndexAndRegex
 }
 
 var _ json.Unmarshaler = &PathPart{}
 
-type PathPartArrayIndex struct {
+type PathPartIndexAndRegex struct {
 	Index *int
 	All   *bool `json:"allIndexes"`
+	Regex *string `json:"regex"`
 }
 
 func NewPathFromStrings(strs []string) Path {
@@ -88,22 +89,24 @@ func NewPathPartFromString(str string) *PathPart {
 }
 
 func NewPathPartFromIndex(i int) *PathPart {
-	return &PathPart{ArrayIndex: &PathPartArrayIndex{Index: &i}}
+	return &PathPart{IndexAndRegex: &PathPartIndexAndRegex{Index: &i}}
 }
 
 func NewPathPartFromIndexAll() *PathPart {
 	trueBool := true
-	return &PathPart{ArrayIndex: &PathPartArrayIndex{All: &trueBool}}
+	return &PathPart{IndexAndRegex: &PathPartIndexAndRegex{All: &trueBool}}
 }
 
 func (p *PathPart) AsString() string {
 	switch {
 	case p.MapKey != nil:
 		return *p.MapKey
-	case p.ArrayIndex != nil && p.ArrayIndex.Index != nil:
-		return fmt.Sprintf("%d", *p.ArrayIndex.Index)
-	case p.ArrayIndex != nil && p.ArrayIndex.All != nil:
+	case p.IndexAndRegex != nil && p.IndexAndRegex.Index != nil:
+		return fmt.Sprintf("%d", *p.IndexAndRegex.Index)
+	case p.IndexAndRegex != nil && p.IndexAndRegex.All != nil:
 		return "(all)"
+	case p.IndexAndRegex != nil && p.IndexAndRegex.Regex != nil:
+		return *p.IndexAndRegex.Regex
 	default:
 		panic("Unknown path part")
 	}
@@ -111,13 +114,13 @@ func (p *PathPart) AsString() string {
 
 func (p *PathPart) UnmarshalJSON(data []byte) error {
 	var str string
-	var idx PathPartArrayIndex
+	var idx PathPartIndexAndRegex
 
 	switch {
 	case json.Unmarshal(data, &str) == nil:
 		p.MapKey = &str
 	case json.Unmarshal(data, &idx) == nil:
-		p.ArrayIndex = &idx
+		p.IndexAndRegex = &idx
 	default:
 		return fmt.Errorf("Unknown path part")
 	}

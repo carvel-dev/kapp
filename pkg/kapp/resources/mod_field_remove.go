@@ -60,13 +60,13 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 				return nil // map key is not found, nothing to remove
 			}
 
-		case part.ArrayIndex != nil:
+		case part.IndexAndRegex != nil:
 			if isLast {
 				return fmt.Errorf("Expected last part of the path to be map key")
 			}
 
 			switch {
-			case part.ArrayIndex.All != nil:
+			case part.IndexAndRegex.All != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
 					return fmt.Errorf("Unexpected non-array found: %T", obj)
@@ -81,20 +81,20 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 
 				return nil // dealt with children, get out
 
-			case part.ArrayIndex.Index != nil:
+			case part.IndexAndRegex.Index != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
 					return fmt.Errorf("Unexpected non-array found: %T", obj)
 				}
 
-				if *part.ArrayIndex.Index < len(typedObj) {
-					obj = typedObj[*part.ArrayIndex.Index]
+				if *part.IndexAndRegex.Index < len(typedObj) {
+					obj = typedObj[*part.IndexAndRegex.Index]
 				} else {
 					return nil // index not found, nothing to remove
 				}
 
 			default:
-				panic(fmt.Sprintf("Unknown array index: %#v", part.ArrayIndex))
+				panic(fmt.Sprintf("Unknown array index: %#v", part.IndexAndRegex))
 			}
 
 		default:

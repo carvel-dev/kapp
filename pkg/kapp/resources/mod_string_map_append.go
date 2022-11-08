@@ -51,9 +51,9 @@ func (t StringMapAppendMod) apply(obj interface{}, path Path) error {
 				typedObj[*part.MapKey] = obj
 			}
 
-		case part.ArrayIndex != nil:
+		case part.IndexAndRegex != nil:
 			switch {
-			case part.ArrayIndex.All != nil:
+			case part.IndexAndRegex.All != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
 					return fmt.Errorf("Unexpected non-array found: %T", obj)
@@ -68,20 +68,20 @@ func (t StringMapAppendMod) apply(obj interface{}, path Path) error {
 
 				return nil // dealt with children, get out
 
-			case part.ArrayIndex.Index != nil:
+			case part.IndexAndRegex.Index != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
 					return fmt.Errorf("Unexpected non-array found: %T", obj)
 				}
 
-				if *part.ArrayIndex.Index < len(typedObj) {
-					return t.apply(typedObj[*part.ArrayIndex.Index], path[i+1:])
+				if *part.IndexAndRegex.Index < len(typedObj) {
+					return t.apply(typedObj[*part.IndexAndRegex.Index], path[i+1:])
 				}
 
 				return nil // index not found, nothing to append to
 
 			default:
-				panic(fmt.Sprintf("Unknown array index: %#v", part.ArrayIndex))
+				panic(fmt.Sprintf("Unknown array index: %#v", part.IndexAndRegex))
 			}
 
 		default:

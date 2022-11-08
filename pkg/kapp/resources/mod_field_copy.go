@@ -75,13 +75,13 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 				typedObj[*part.MapKey] = obj
 			}
 
-		case part.ArrayIndex != nil:
+		case part.IndexAndRegex != nil:
 			if isLast {
 				return false, fmt.Errorf("Expected last part of the path to be map key")
 			}
 
 			switch {
-			case part.ArrayIndex.All != nil:
+			case part.IndexAndRegex.All != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
 					return false, fmt.Errorf("Unexpected non-array found: %T", obj)
@@ -93,7 +93,7 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 					objI := objI
 
 					newFullPath := append([]*PathPart{}, fullPath...)
-					newFullPath[len(newFullPath)-1] = &PathPart{ArrayIndex: &PathPartArrayIndex{Index: &objI}}
+					newFullPath[len(newFullPath)-1] = &PathPart{IndexAndRegex: &PathPartIndexAndRegex{Index: &objI}}
 
 					updated, err := t.apply(obj, path[i+1:], newFullPath, srcs)
 					if err != nil {
@@ -106,21 +106,20 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 
 				return anyUpdated, nil // dealt with children, get out
 
-			case part.ArrayIndex.Index != nil:
+			case part.IndexAndRegex.Index != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
 					return false, fmt.Errorf("Unexpected non-array found: %T", obj)
 				}
 
-				if *part.ArrayIndex.Index < len(typedObj) {
-					obj = typedObj[*part.ArrayIndex.Index]
+				if *part.IndexAndRegex.Index < len(typedObj) {
+					obj = typedObj[*part.IndexAndRegex.Index]
 					return t.apply(obj, path[i+1:], fullPath, srcs)
 				}
 
 				return false, nil // index not found, nothing to append to
-
 			default:
-				panic(fmt.Sprintf("Unknown array index: %#v", part.ArrayIndex))
+				panic(fmt.Sprintf("Unknown array index: %#v", part.IndexAndRegex))
 			}
 
 		default:
@@ -174,26 +173,26 @@ func (t FieldCopyMod) obtainValue(obj interface{}, path Path) (interface{}, bool
 				return nil, false, nil // index is not found return
 			}
 
-		case part.ArrayIndex != nil:
+		case part.IndexAndRegex != nil:
 			if isLast {
 				return nil, false, fmt.Errorf("Expected last part of the path to be map key")
 			}
 
 			switch {
-			case part.ArrayIndex.Index != nil:
+			case part.IndexAndRegex.Index != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
 					return nil, false, fmt.Errorf("Unexpected non-array found: %T", obj)
 				}
 
-				if *part.ArrayIndex.Index < len(typedObj) {
-					obj = typedObj[*part.ArrayIndex.Index]
+				if *part.IndexAndRegex.Index < len(typedObj) {
+					obj = typedObj[*part.IndexAndRegex.Index]
 				} else {
 					return nil, false, nil // index not found, return
 				}
 
 			default:
-				panic(fmt.Sprintf("Unknown array index: %#v", part.ArrayIndex))
+				panic(fmt.Sprintf("Unknown array index: %#v", part.IndexAndRegex))
 			}
 
 		default:

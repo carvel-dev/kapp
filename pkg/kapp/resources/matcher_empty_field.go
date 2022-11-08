@@ -33,9 +33,9 @@ func (m EmptyFieldMatcher) check(obj interface{}, path Path) bool {
 				return true
 			}
 
-		case part.ArrayIndex != nil:
+		case part.IndexAndRegex != nil:
 			switch {
-			case part.ArrayIndex.All != nil:
+			case part.IndexAndRegex.All != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
 					return obj == nil
@@ -50,21 +50,21 @@ func (m EmptyFieldMatcher) check(obj interface{}, path Path) bool {
 
 				return true
 
-			case part.ArrayIndex.Index != nil:
+			case part.IndexAndRegex.Index != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
 					return obj == nil
 				}
 
-				if *part.ArrayIndex.Index < len(typedObj) {
-					obj = typedObj[*part.ArrayIndex.Index]
+				if *part.IndexAndRegex.Index < len(typedObj) {
+					obj = typedObj[*part.IndexAndRegex.Index]
 				} else {
 					// Index not found, it's empty
 					return true
 				}
 
 			default:
-				panic(fmt.Sprintf("Unknown array index: %#v", part.ArrayIndex))
+				panic(fmt.Sprintf("Unknown array index: %#v", part.IndexAndRegex))
 			}
 
 		default:

@@ -104,15 +104,15 @@ func (r ClusterResource) RawPath(path ctlres.Path) interface{} {
 				panic(fmt.Sprintf("Expected to find key %s", *part.MapKey))
 			}
 
-		case part.ArrayIndex != nil:
+		case part.IndexAndRegex != nil:
 			typedResult, ok := result.([]interface{})
 			if !ok {
 				panic("Expected to find array")
 			}
 			switch {
-			case part.ArrayIndex.Index != nil:
-				result = typedResult[*part.ArrayIndex.Index]
-			case part.ArrayIndex.All != nil:
+			case part.IndexAndRegex.Index != nil:
+				result = typedResult[*part.IndexAndRegex.Index]
+			case part.IndexAndRegex.All != nil:
 				panic("Unsupported array index all")
 			default:
 				panic("Unknown array index")
