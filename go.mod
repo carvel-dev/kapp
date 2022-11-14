@@ -15,7 +15,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.0
-	github.com/vmware-tanzu/carvel-kapp-controller v0.41.2
+	github.com/vmware-tanzu/carvel-kapp-controller v0.42.0
 	golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.25.4
