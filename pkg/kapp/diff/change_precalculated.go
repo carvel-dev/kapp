@@ -51,9 +51,10 @@ func (d *ChangePrecalculated) NewOrExistingResource() ctlres.Resource {
 	panic("Not possible")
 }
 
-func (d *ChangePrecalculated) NewResource() ctlres.Resource      { return d.newRes }
-func (d *ChangePrecalculated) ExistingResource() ctlres.Resource { return d.existingRes }
-func (d *ChangePrecalculated) AppliedResource() ctlres.Resource  { return d.appliedRes }
+func (d *ChangePrecalculated) NewResource() ctlres.Resource             { return d.newRes }
+func (d *ChangePrecalculated) ExistingResource() ctlres.Resource        { return d.existingRes }
+func (d *ChangePrecalculated) AppliedResource() ctlres.Resource         { return d.appliedRes }
+func (d *ChangePrecalculated) ClusterOriginalResource() ctlres.Resource { return d.existingRes }
 
 func (d *ChangePrecalculated) Op() ChangeOp { return d.op }
 func (d *ChangePrecalculated) ConfigurableTextDiff() *ConfigurableTextDiff {
