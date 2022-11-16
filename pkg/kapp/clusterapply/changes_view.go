@@ -17,7 +17,7 @@ import (
 
 type ChangeView interface {
 	Resource() ctlres.Resource
-	ExistingResource() ctlres.Resource
+	ClusterOriginalResource() ctlres.Resource
 
 	ApplyOp() ClusterChangeApplyOp
 	ApplyStrategyOp() (ClusterChangeApplyStrategyOp, error)
@@ -105,8 +105,8 @@ func (v *ChangesView) Print(ui ui.UI) {
 			v.waitOpCode(view.WaitOp()),
 		)
 
-		if view.ExistingResource() != nil {
-			syncVal := NewValueResourceConverged(view.ExistingResource())
+		if view.ClusterOriginalResource() != nil {
+			syncVal := NewValueResourceConverged(view.ClusterOriginalResource())
 			row = append(row, syncVal.StateVal, syncVal.ReasonVal)
 		} else {
 			row = append(row,

@@ -25,6 +25,7 @@ type Change interface {
 	NewResource() ctlres.Resource
 	ExistingResource() ctlres.Resource
 	AppliedResource() ctlres.Resource
+	ClusterOriginalResource() ctlres.Resource
 
 	Op() ChangeOp
 	ConfigurableTextDiff() *ConfigurableTextDiff
@@ -39,13 +40,16 @@ type ChangeImpl struct {
 	// appliedRes is an unmodified copy of what's being applied
 	appliedRes ctlres.Resource
 
+	// clusterOriginalRes is an unmodified copy of what's present on the cluster
+	clusterOriginalRes ctlres.Resource
+
 	configurableTextDiff *ConfigurableTextDiff
 	opsDiff              *OpsDiff
 }
 
 var _ Change = &ChangeImpl{}
 
-func NewChange(existingRes, newRes, appliedRes ctlres.Resource) *ChangeImpl {
+func NewChange(existingRes, newRes, appliedRes, clusterOriginalRes ctlres.Resource) *ChangeImpl {
 	if existingRes == nil && newRes == nil {
 		panic("Expected either existingRes or newRes be non-nil")
 	}
@@ -59,8 +63,11 @@ func NewChange(existingRes, newRes, appliedRes ctlres.Resource) *ChangeImpl {
 	if appliedRes != nil {
 		appliedRes = appliedRes.DeepCopy()
 	}
+	if clusterOriginalRes != nil {
+		clusterOriginalRes = clusterOriginalRes.DeepCopy()
+	}
 
-	return &ChangeImpl{existingRes: existingRes, newRes: newRes, appliedRes: appliedRes}
+	return &ChangeImpl{existingRes: existingRes, newRes: newRes, appliedRes: appliedRes, clusterOriginalRes: clusterOriginalRes}
 }
 
 func (d *ChangeImpl) NewOrExistingResource() ctlres.Resource {
@@ -73,9 +80,10 @@ func (d *ChangeImpl) NewOrExistingResource() ctlres.Resource {
 	panic("Not possible")
 }
 
-func (d *ChangeImpl) NewResource() ctlres.Resource      { return d.newRes }
-func (d *ChangeImpl) ExistingResource() ctlres.Resource { return d.existingRes }
-func (d *ChangeImpl) AppliedResource() ctlres.Resource  { return d.appliedRes }
+func (d *ChangeImpl) NewResource() ctlres.Resource             { return d.newRes }
+func (d *ChangeImpl) ExistingResource() ctlres.Resource        { return d.existingRes }
+func (d *ChangeImpl) AppliedResource() ctlres.Resource         { return d.appliedRes }
+func (d *ChangeImpl) ClusterOriginalResource() ctlres.Resource { return d.clusterOriginalRes }
 
 func (d *ChangeImpl) Op() ChangeOp {
 	if d.newRes != nil {
