@@ -41,13 +41,6 @@ rebaseRules:
   resourceMatchers:
   - allMatcher: {}
 
-# Copy over all status, since cluster owns that
-- path: [status]
-  type: copy
-  sources: [existing]
-  resourceMatchers:
-  - allMatcher: {}
-
 # Prefer user provided, but allow cluster set
 - paths:
   - [spec, clusterIP]
@@ -237,6 +230,10 @@ rebaseRules:
 diffAgainstLastAppliedFieldExclusionRules:
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
   resourceMatchers: *appsV1DeploymentWithRevAnnKey
+
+- path: [status]
+  resourceMatchers:
+  - allMatcher: {}
 
 diffMaskRules:
 - path: [data]
