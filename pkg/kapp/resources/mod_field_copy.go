@@ -77,7 +77,6 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 			}
 
 		case part.IndexAndRegex != nil:
-			//if isLast {
 			if isLast && part.IndexAndRegex.Regex == nil {
 				return false, fmt.Errorf("Expected last part of the path to be map key")
 			}
@@ -132,36 +131,22 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 				if !ok {
 					return false, fmt.Errorf("Unexpected non-map found: %T", obj)
 				}
-				//var newObj []interface{}
-				//path = append(path, &PathPart{
-				//	IndexAndRegex: &PathPartIndexAndRegex{
-				//		All: func() *bool {
-				//			all := true
-				//			return &all
-				//		}(),
-				//	}})
-				success := true
+				var anyUpdated bool
 				for key, _ := range typedObj {
-
 					if regex.MatchString(key) {
 						keyPointer := key
-						newFullPath := fullPath[:len(fullPath)-1]
-						//pathPart := PathPart{MapKey: &keyPointer}
-						//newFullPath = append(newFullPath, &pathPart)
-						//newPath := path[:len(path)-1]
-						//newPath = append(newPath, &pathPart)
+						path[len(path)-1] = &PathPart{MapKey: &keyPointer}
 
-						status, err := t.apply(obj, []*PathPart{&PathPart{MapKey: &keyPointer}}, newFullPath, srcs)
+						updated, err := t.apply(obj, path[i:], fullPath[:len(fullPath)-1], srcs)
 						if err != nil {
-							return false, nil
+							return false, err
 						}
-						success = success && status
-						//path = append(path, &PathPart{MapKey: &keyAddr})
-						//newObj = append(newObj, &PathPart{MapKey: &keyAddr})
+						if updated {
+							anyUpdated = true
+						}
 					}
 				}
-				//return t.apply(newObj, path[i+1:], fullPath, srcs)
-				return success, nil
+				return anyUpdated, nil
 
 			default:
 				panic(fmt.Sprintf("Unknown array index: %#v", part.IndexAndRegex))
