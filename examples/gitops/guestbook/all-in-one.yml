@@ -87,7 +87,7 @@ spec:
     spec:
       containers:
       - name: replica
-        image: gcr.io/google_samples/gb-redisslave:v1
+        image: gcr.io/google_samples/gb-redisslave:v1 # wokeignore:rule=slave
         resources:
           requests:
             cpu: 100m

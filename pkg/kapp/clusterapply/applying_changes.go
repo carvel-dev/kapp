@@ -118,7 +118,7 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 }
 
 func (c *ApplyingChanges) Complete() error {
-	// Sanity check that we applied all changes
+	// Confidence check that we applied all changes
 	if c.numTotal != c.numApplied() {
 		return fmt.Errorf("Internal inconsistency: did not apply all changes: %d != %d",
 			c.numTotal, c.numApplied())

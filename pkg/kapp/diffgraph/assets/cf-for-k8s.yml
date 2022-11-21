@@ -1,5 +1,5 @@
 # This file was generated from github.com/cloudfoundry/cf-for-k8s@bb1b88a0c22eb265378258b0f0a65eead00b94de
-# with bunch of dummy secrets. It's used as a complex test fixture for testing ordering.
+# with bunch of placeholder secrets. It's used as a complex test fixture for testing ordering.
 
 apiVersion: apps/v1
 kind: Deployment
@@ -10484,7 +10484,7 @@ data:
             require_client_certificate: true
 
 
-      # Manual 'whitebox' mode
+      # Manual 'open-box' mode
       - name: "local.15019"
         address:
           socket_address:
@@ -13851,7 +13851,7 @@ data:
         url: https://uaa.cf.cppforlife.io/authenticate
       limitedFunctionality:
         enabled: false
-        whitelist:
+        whitelist: # wokeignore:rule=whitelist
           endpoints:
           - /oauth/authorize/**
           - /oauth/token/**
