@@ -20,13 +20,13 @@ type SpecificResource interface {
 	IsDoneApplying() ctlresm.DoneApplyState
 }
 
-func (c ReconcilingChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
+func (c ReconcilingChange) IsDoneApplying(wait bool) (ctlresm.DoneApplyState, []string, error) {
 	labeledResources := ctlres.NewLabeledResources(nil, c.identifiedResources, logger.NewTODOLogger())
 
 	// Refresh resource with latest changes from the server
 	// Pick up new or existing resource (and not just new resource),
 	// as some changes may be apply->noop, wait->reconcile.
-	parentRes, err := c.identifiedResources.Get(c.change.NewOrExistingResource())
+	parentRes, err := c.identifiedResources.Get(c.change.NewOrExistingResource(), wait)
 	if err != nil {
 		return ctlresm.DoneApplyState{}, nil, err
 	}

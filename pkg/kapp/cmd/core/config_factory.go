@@ -55,12 +55,12 @@ func (f *ConfigFactoryImpl) ConfigureClient(qps float32, burst int) {
 }
 
 func (f *ConfigFactoryImpl) RESTConfig() (*rest.Config, error) {
-	isExplicitYAMLConfig, config, err := f.clientConfig()
+	isExplicitYAMLConfig, config, err := f.clientConfig() // reading host and port
 	if err != nil {
 		return nil, err
 	}
 
-	restConfig, err := config.ClientConfig()
+	restConfig, err := config.ClientConfig() // reading cluster context, cluster info, auth info
 	if err != nil {
 		prefixMsg := ""
 		if isExplicitYAMLConfig {

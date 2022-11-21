@@ -78,7 +78,7 @@ func (c DeleteChange) ApplyStrategy() (ApplyStrategy, error) {
 	}
 }
 
-func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
+func (c DeleteChange) IsDoneApplying(wait bool) (ctlresm.DoneApplyState, []string, error) {
 	res := c.change.ExistingResource()
 
 	if c.isInoperableResource() {

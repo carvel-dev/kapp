@@ -16,7 +16,7 @@ import (
 )
 
 type DepsFactory interface {
-	DynamicClient(opts DynamicClientOpts) (dynamic.Interface, error)
+	DynamicClient(opts DynamicClientOpts, test bool) (dynamic.Interface, error)
 	CoreClient() (kubernetes.Interface, error)
 	ConfigureWarnings(warnings bool)
 }
@@ -42,22 +42,26 @@ type DynamicClientOpts struct {
 	Warnings bool
 }
 
-func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts) (dynamic.Interface, error) {
+func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts, test bool) (dynamic.Interface, error) {
 	config, err := f.configFactory.RESTConfig()
 	if err != nil {
 		return nil, err
 	}
-
+	var cpConfig *rest.Config
 	// copy to avoid mutating the passed-in config
-	cpConfig := rest.CopyConfig(config)
+	cpConfig = rest.CopyConfig(config)
 
 	if opts.Warnings {
 		cpConfig.WarningHandler = f.newWarningHandler()
 	} else {
 		cpConfig.WarningHandler = rest.NoWarnings{}
 	}
-
-	clientset, err := dynamic.NewForConfig(cpConfig)
+	if test {
+		cpConfig.UserAgent = "kapp-test-wait-check-interval"
+		fmt.Printf("Useragent for cluster req: %s\n", cpConfig.UserAgent)
+	}
+	//cpConfig.WrapTransport =
+	clientset, err := dynamic.NewForConfig(cpConfig) // creating dynamic client
 	if err != nil {
 		return nil, fmt.Errorf("Building Dynamic clientset: %w", err)
 	}

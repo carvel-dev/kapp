@@ -223,6 +223,7 @@ func (c *ClusterChange) applyStrategy() (ApplyStrategy, error) {
 }
 
 func (c *ClusterChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error) {
+
 	state, descMsgs, err := c.isDoneApplying()
 	primaryDescMsg := fmt.Sprintf("%s: %s", NewDoneApplyStateUI(state, err).State, c.WaitDescription())
 	return state, append([]string{primaryDescMsg}, descMsgs...), err
@@ -230,13 +231,14 @@ func (c *ClusterChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, erro
 
 func (c *ClusterChange) isDoneApplying() (ctlresm.DoneApplyState, []string, error) {
 	op := c.WaitOp()
+	wait := true
 
 	switch op {
 	case ClusterChangeWaitOpOK:
-		return ReconcilingChange{c.change, c.identifiedResources, c.convergedResFactory}.IsDoneApplying()
+		return ReconcilingChange{c.change, c.identifiedResources, c.convergedResFactory}.IsDoneApplying(wait)
 
 	case ClusterChangeWaitOpDelete:
-		return DeleteChange{c.change, c.identifiedResources}.IsDoneApplying()
+		return DeleteChange{c.change, c.identifiedResources}.IsDoneApplying(wait)
 
 	case ClusterChangeWaitOpNoop:
 		return ctlresm.DoneApplyState{Done: true, Successful: true}, nil, nil
