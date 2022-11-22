@@ -14,8 +14,8 @@ time kapp deploy -y -a cert-manager -f examples/cert-manager-v1.6.1/
 time kapp delete -y -a cert-manager
 
 # TODO Add knative - Commenting because it need > resources than what github action provides.
-#time kapp deploy -y -a knative -f examples/knative-v1.1.0/
-#time kapp delete -y -a knative
+# time kapp deploy -y -a knative -f examples/knative-v1.8.0/
+# time kapp delete -y -a knative
 
 # TODO Add cf-for-k8s-v5.4.3
 
