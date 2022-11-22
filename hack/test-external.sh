@@ -20,9 +20,8 @@ time kapp delete -y -a cert-manager
 
 # TODO Add cf-for-k8s-v5.4.3
 
-# TODO Add gatekeeper 3.10.0 when it's available
-# time kapp deploy -y -a gk -f examples/gatekeeper-v3.7.0/config.yml
-# time kapp delete -y -a gk
+time kapp deploy -y -a gk -f examples/gatekeeper-v3.10.0/config.yml
+time kapp delete -y -a gk
 
 time kapp deploy -y -a pinniped -f examples/pinniped-v0.13.0/
 time kapp delete -y -a pinniped
