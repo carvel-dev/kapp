@@ -132,12 +132,12 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 					return false, fmt.Errorf("Unexpected non-map found: %T", obj)
 				}
 				var anyUpdated bool
-				for key, _ := range typedObj {
+				for key, obj := range typedObj {
 					if regex.MatchString(key) {
 						keyPointer := key
 						path[len(path)-1] = &PathPart{MapKey: &keyPointer}
-
-						updated, err := t.apply(obj, path[i:], fullPath[:len(fullPath)-1], srcs)
+						newFullPath := fullPath[:len(fullPath)-1]
+						updated, err := t.apply(obj, path[i:], newFullPath, srcs)
 						if err != nil {
 							return false, err
 						}

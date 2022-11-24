@@ -107,8 +107,6 @@ func (p *PathPart) AsString() string {
 		return "(all)"
 	case p.IndexAndRegex != nil && p.IndexAndRegex.Regex != nil:
 		return *p.IndexAndRegex.Regex
-	//case p.RegexPath != nil && p.RegexPath.Regex != nil:
-	//	return *p.RegexPath.Regex
 	default:
 		panic("Unknown path part")
 	}
@@ -117,19 +115,12 @@ func (p *PathPart) AsString() string {
 func (p *PathPart) UnmarshalJSON(data []byte) error {
 	var str string
 	var idx PathPartIndexAndRegex
-	//var regx PathPartRegex
 
 	switch {
 	case json.Unmarshal(data, &str) == nil:
-		//if strings.Contains(str, "regex") {
-		//	fmt.Println(str)
-		//}
 		p.MapKey = &str
 	case json.Unmarshal(data, &idx) == nil:
 		p.IndexAndRegex = &idx
-	//case json.Unmarshal(data, &regx) == nil:
-	//	fmt.Println(regx)
-	//	p.RegexPath = &regx
 	default:
 		return fmt.Errorf("Unknown path part")
 	}
