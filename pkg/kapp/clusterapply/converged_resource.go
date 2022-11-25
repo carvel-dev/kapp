@@ -39,7 +39,7 @@ func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 		return ctlresm.DoneApplyState{}, nil, err
 	}
 
-	convergedResState, err := c.isResourceDoneApplying(c.res, associatedRs)
+	convergedResState, err := c.isResourceDoneApplying(c.res, associatedRs, true)
 	if err != nil {
 		return ctlresm.DoneApplyState{Done: true}, descMsgs, err
 	}
@@ -75,7 +75,7 @@ func (c ConvergedResource) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 	// Show associated resources even though we are waiting for the parent.
 	// This additional info may be helpful in identifying what parent is waiting for.
 	for _, res := range associatedRs {
-		state, err := c.isResourceDoneApplying(res, associatedRs)
+		state, err := c.isResourceDoneApplying(res, associatedRs, true)
 		if state == nil {
 			state = &ctlresm.DoneApplyState{Done: true, Successful: true}
 		}
@@ -149,7 +149,7 @@ func (c ConvergedResource) sortAssociatedRs(associatedRs []ctlres.Resource) []ct
 }
 
 func (c ConvergedResource) isResourceDoneApplying(res ctlres.Resource,
-	associatedRs []ctlres.Resource) (*ctlresm.DoneApplyState, error) {
+	associatedRs []ctlres.Resource, wait bool) (*ctlresm.DoneApplyState, error) {
 
 	for _, f := range c.specificResFactories {
 		matchedRes, _ := f(res, associatedRs)

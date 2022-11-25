@@ -34,7 +34,7 @@ type FakeResources struct {
 	t *testing.T
 }
 
-func (r *FakeResources) All([]ctlres.ResourceType, ctlres.AllOpts) ([]ctlres.Resource, error) {
+func (r *FakeResources) All([]ctlres.ResourceType, ctlres.AllOpts, bool) ([]ctlres.Resource, error) {
 	antreaBs := `---
 apiVersion: clusterinformation.antrea.tanzu.vmware.com/v1beta1
 kind: AntreaControllerInfo
@@ -69,7 +69,7 @@ func (r *FakeResources) Create(ctlres.Resource) (ctlres.Resource, error) { retur
 
 type FakeResourceTypes struct{}
 
-func (r *FakeResourceTypes) All(ignoreCachedResTypes bool) ([]ctlres.ResourceType, error) {
+func (r *FakeResourceTypes) All(ignoreCachedResTypes bool, wait bool) ([]ctlres.ResourceType, error) {
 	return nil, nil
 }
 func (r *FakeResourceTypes) Find(ctlres.Resource) (ctlres.ResourceType, error) {

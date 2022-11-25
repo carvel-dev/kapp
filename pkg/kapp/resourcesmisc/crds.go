@@ -82,7 +82,7 @@ func (c *ResourceTypes) scopeMap() (map[string]bool, error) {
 func (c *ResourceTypes) clusterScopes() (map[string]bool, error) {
 	scopeMap := map[string]bool{}
 
-	resTypes, err := c.resourceTypes.All(false)
+	resTypes, err := c.resourceTypes.All(false, false)
 	if err != nil {
 		return nil, err
 	}

@@ -39,7 +39,7 @@ const (
 )
 
 type Resources interface {
-	All([]ResourceType, AllOpts) ([]Resource, error)
+	All([]ResourceType, AllOpts, bool) ([]Resource, error)
 	Delete(Resource) error
 	Exists(Resource, ExistsOpts) (Resource, bool, error)
 	Get(Resource, bool) (Resource, error)
@@ -92,7 +92,7 @@ type unstructItems struct {
 	Items   []unstructured.Unstructured
 }
 
-func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, error) {
+func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts, wait bool) ([]Resource, error) {
 	defer c.logger.DebugFunc("All").Finish()
 
 	if opts.ListOpts == nil {
@@ -117,8 +117,12 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 
 			var list *unstructured.UnstructuredList
 			var err error
-
-			client := c.mutedDynamicClient.Resource(resType.GroupVersionResource)
+			var client dynamic.NamespaceableResourceInterface
+			if wait {
+				client = c.testDynamicClient.Resource(resType.GroupVersionResource)
+			} else {
+				client = c.mutedDynamicClient.Resource(resType.GroupVersionResource)
+			}
 
 			// If resource is cluster scoped or request is not scoped to fallback
 			// allowed namespaces manually, then scope list to all namespaces
@@ -253,7 +257,7 @@ func (c *ResourcesImpl) Create(resource Resource) (Resource, error) {
 		c.logger.Debug("create resource %s\n%s\n", resource.Description(), bs)
 	}
 
-	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: true}, false)
+	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: true})
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +284,7 @@ func (c *ResourcesImpl) Update(resource Resource) (Resource, error) {
 		c.logger.Debug("update resource %s\n%s\n", resource.Description(), bs)
 	}
 
-	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: true}, false)
+	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: true})
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +308,7 @@ func (c *ResourcesImpl) Patch(resource Resource, patchType types.PatchType, data
 		defer func() { c.logger.Debug("patch %s", time.Now().UTC().Sub(t1)) }()
 	}
 
-	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: true}, false)
+	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: true})
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +337,7 @@ func (c *ResourcesImpl) Delete(resource Resource) error {
 		return nil
 	}
 
-	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: true}, false)
+	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: true})
 	if err != nil {
 		return err
 	}
@@ -374,7 +378,7 @@ func (c *ResourcesImpl) Get(resource Resource, wait bool) (Resource, error) {
 		defer func() { c.logger.Debug("get %s", time.Now().UTC().Sub(t1)) }()
 	}
 
-	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: false}, wait)
+	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: false, wait: wait})
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +403,7 @@ func (c *ResourcesImpl) Exists(resource Resource, existsOpts ExistsOpts) (Resour
 		defer func() { c.logger.Debug("exists %s", time.Now().UTC().Sub(t1)) }()
 	}
 
-	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: false}, false)
+	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: false})
 	if err != nil {
 		// Assume if type is not known to the API server
 		// then such resource cannot exist on the server
@@ -517,26 +521,24 @@ func (c *ResourcesImpl) resourceErr(err error, action string, resource Resource)
 
 type resourceClientOpts struct {
 	Warnings bool
+	wait     bool
 }
 
-func (c *ResourcesImpl) resourceClient(resource Resource, opts resourceClientOpts, wait bool) (dynamic.ResourceInterface, ResourceType, error) {
+func (c *ResourcesImpl) resourceClient(resource Resource, opts resourceClientOpts) (dynamic.ResourceInterface, ResourceType, error) {
 	resType, err := c.resourceTypes.Find(resource)
 	if err != nil {
 		return nil, ResourceType{}, err
 	}
 
 	var dynamicClient dynamic.Interface
-	if wait {
-		//fmt.Printf("***** Wait dynamic client *****\n")
-		dynamicClient = c.testDynamicClient
+
+	if opts.Warnings {
+		dynamicClient = c.dynamicClient
 	} else {
-		if opts.Warnings {
-			//fmt.Printf("***** non-Wait dynamic client-1 *****\n")
-			dynamicClient = c.dynamicClient
-		} else {
-			//fmt.Printf("***** non-Wait dynamic client-2 *****\n")
-			dynamicClient = c.mutedDynamicClient
-		}
+		dynamicClient = c.mutedDynamicClient
+	}
+	if opts.wait {
+		dynamicClient = c.testDynamicClient
 	}
 
 	return dynamicClient.Resource(resType.GroupVersionResource).Namespace(resource.Namespace()), resType, nil

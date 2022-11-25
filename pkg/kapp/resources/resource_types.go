@@ -16,7 +16,7 @@ import (
 )
 
 type ResourceTypes interface {
-	All(ignoreCachedResTypes bool) ([]ResourceType, error)
+	All(ignoreCachedResTypes bool, wait bool) ([]ResourceType, error)
 	Find(Resource) (ResourceType, error)
 	CanIgnoreFailingGroupVersion(schema.GroupVersion) bool
 }
@@ -27,8 +27,9 @@ type ResourceTypesImplOpts struct {
 }
 
 type ResourceTypesImpl struct {
-	coreClient kubernetes.Interface
-	opts       ResourceTypesImplOpts
+	coreClient     kubernetes.Interface
+	testCoreClient kubernetes.Interface
+	opts           ResourceTypesImplOpts
 
 	memoizedResTypes     *[]ResourceType
 	memoizedResTypesLock sync.RWMutex
@@ -41,20 +42,20 @@ type ResourceType struct {
 	metav1.APIResource
 }
 
-func NewResourceTypesImpl(coreClient kubernetes.Interface, opts ResourceTypesImplOpts) *ResourceTypesImpl {
-	return &ResourceTypesImpl{coreClient: coreClient, opts: opts}
+func NewResourceTypesImpl(coreClient kubernetes.Interface, testCoreClient kubernetes.Interface, opts ResourceTypesImplOpts) *ResourceTypesImpl {
+	return &ResourceTypesImpl{coreClient: coreClient, testCoreClient: testCoreClient, opts: opts}
 }
 
-func (g *ResourceTypesImpl) All(ignoreCachedResTypes bool) ([]ResourceType, error) {
+func (g *ResourceTypesImpl) All(ignoreCachedResTypes bool, wait bool) ([]ResourceType, error) {
 	if ignoreCachedResTypes {
 		// TODO Update cache while doing a fresh fetch
-		return g.all()
+		return g.all(wait)
 	}
-	return g.memoizedAll()
+	return g.memoizedAll(wait)
 }
 
-func (g *ResourceTypesImpl) all() ([]ResourceType, error) {
-	serverResources, err := g.serverResources()
+func (g *ResourceTypesImpl) all(wait bool) ([]ResourceType, error) {
+	serverResources, err := g.serverResources(wait)
 	if err != nil {
 		return nil, err
 	}
@@ -112,12 +113,16 @@ func (g *ResourceTypesImpl) canIgnoreFailingGroupVersions(groupVers map[schema.G
 	return false
 }
 
-func (g *ResourceTypesImpl) serverResources() ([]*metav1.APIResourceList, error) {
+func (g *ResourceTypesImpl) serverResources(wait bool) ([]*metav1.APIResourceList, error) {
 	var serverResources []*metav1.APIResourceList
 	var lastErr error
 
 	for i := 0; i < 10; i++ {
-		_, serverResources, lastErr = g.coreClient.Discovery().ServerGroupsAndResources()
+		if wait {
+			_, serverResources, lastErr = g.testCoreClient.Discovery().ServerGroupsAndResources()
+		} else {
+			_, serverResources, lastErr = g.coreClient.Discovery().ServerGroupsAndResources()
+		}
 		if lastErr == nil {
 			return serverResources, nil
 		} else if typedLastErr, ok := lastErr.(*discovery.ErrGroupDiscoveryFailed); ok {
@@ -133,7 +138,7 @@ func (g *ResourceTypesImpl) serverResources() ([]*metav1.APIResourceList, error)
 	return nil, lastErr
 }
 
-func (g *ResourceTypesImpl) memoizedAll() ([]ResourceType, error) {
+func (g *ResourceTypesImpl) memoizedAll(wait bool) ([]ResourceType, error) {
 	g.memoizedResTypesLock.RLock()
 
 	if g.memoizedResTypes != nil {
@@ -149,7 +154,7 @@ func (g *ResourceTypesImpl) memoizedAll() ([]ResourceType, error) {
 	g.memoizedResTypesLock.Lock()
 	defer g.memoizedResTypesLock.Unlock()
 
-	resTypes, err := g.all()
+	resTypes, err := g.all(wait)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +185,7 @@ func (e ResourceTypesUnknownTypeErr) Error() string {
 }
 
 func (g *ResourceTypesImpl) findOnce(resource Resource) (ResourceType, error) {
-	pairs, err := g.memoizedAll()
+	pairs, err := g.memoizedAll(false)
 	if err != nil {
 		return ResourceType{}, err
 	}

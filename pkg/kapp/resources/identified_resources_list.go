@@ -15,12 +15,13 @@ type IdentifiedResourcesListOpts struct {
 	IgnoreCachedResTypes bool
 	GKsScope             []schema.GroupKind
 	ResourceNamespaces   []string
+	Wait                 bool
 }
 
 func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []ResourceRef, opts IdentifiedResourcesListOpts) ([]Resource, error) {
 	defer r.logger.DebugFunc("List").Finish()
 
-	resTypes, err := r.resourceTypes.All(opts.IgnoreCachedResTypes)
+	resTypes, err := r.resourceTypes.All(opts.IgnoreCachedResTypes, opts.Wait)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +54,7 @@ func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []Resou
 		ResourceNamespaces: opts.ResourceNamespaces,
 	}
 
-	resources, err := r.resources.All(resTypes, allOpts)
+	resources, err := r.resources.All(resTypes, allOpts, opts.Wait)
 	if err != nil {
 		return nil, err
 	}

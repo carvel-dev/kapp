@@ -21,7 +21,12 @@ type FactorySupportObjs struct {
 func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFlags,
 	resTypesFlags ResourceTypesFlags, logger logger.Logger) (FactorySupportObjs, error) {
 
-	coreClient, err := depsFactory.CoreClient()
+	coreClient, err := depsFactory.CoreClient(false)
+	if err != nil {
+		return FactorySupportObjs{}, err
+	}
+
+	testCoreClient, err := depsFactory.CoreClient(true)
 	if err != nil {
 		return FactorySupportObjs{}, err
 	}
@@ -40,7 +45,7 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 		return FactorySupportObjs{}, err
 	}
 	_ = testDynamicClient
-	resTypes := ctlres.NewResourceTypesImpl(coreClient, ctlres.ResourceTypesImplOpts{
+	resTypes := ctlres.NewResourceTypesImpl(coreClient, testCoreClient, ctlres.ResourceTypesImplOpts{
 		IgnoreFailingAPIServices:   resTypesFlags.IgnoreFailingAPIServices,
 		CanIgnoreFailingAPIService: resTypesFlags.CanIgnoreFailingAPIService,
 	})

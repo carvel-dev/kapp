@@ -17,7 +17,7 @@ import (
 
 type DepsFactory interface {
 	DynamicClient(opts DynamicClientOpts, test bool) (dynamic.Interface, error)
-	CoreClient() (kubernetes.Interface, error)
+	CoreClient(test bool) (kubernetes.Interface, error)
 	ConfigureWarnings(warnings bool)
 }
 
@@ -58,10 +58,10 @@ func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts, test bool) (dyna
 	}
 	if test {
 		cpConfig.UserAgent = "kapp-test-wait-check-interval"
-		fmt.Printf("Useragent for cluster req: %s\n", cpConfig.UserAgent)
+		//fmt.Printf("Useragent for cluster req: %s\n", cpConfig.UserAgent)
 	}
-	//cpConfig.WrapTransport =
-	clientset, err := dynamic.NewForConfig(cpConfig) // creating dynamic client
+
+	clientset, err := dynamic.NewForConfig(cpConfig)
 	if err != nil {
 		return nil, fmt.Errorf("Building Dynamic clientset: %w", err)
 	}
@@ -71,12 +71,14 @@ func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts, test bool) (dyna
 	return clientset, nil
 }
 
-func (f *DepsFactoryImpl) CoreClient() (kubernetes.Interface, error) {
+func (f *DepsFactoryImpl) CoreClient(test bool) (kubernetes.Interface, error) {
 	config, err := f.configFactory.RESTConfig()
 	if err != nil {
 		return nil, err
 	}
-
+	if test {
+		config.UserAgent = "kapp-test-wait-check-interval"
+	}
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("Building Core clientset: %w", err)
