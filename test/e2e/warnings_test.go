@@ -69,9 +69,6 @@ apiVersion: "stable.example.com/v1alpha1"
 kind: CronTab
 metadata:
   name: <cr-name>
-spec:
-  cronSpec: "* * * * */5"
-  image: my-awesome-cron-image
 `
 
 	logger.Section("deploying crd with deprecated version", func() {
