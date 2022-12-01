@@ -1,6 +1,6 @@
 module github.com/k14s/kapp
 
-go 1.17
+go 1.19
 
 require (
 	github.com/cppforlife/cobrautil v0.0.0-20200514214827-bb86e6965d72
@@ -16,7 +16,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.27.0
-	golang.org/x/net v0.0.0-20210520170846-37e1c6afe023
+	golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.22.1 // kubernetes-1.22.1
 	k8s.io/apimachinery v0.22.1 // kubernetes-1.22.1
@@ -50,11 +50,11 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/vito/go-interact v0.0.0-20171111012221-fa338ed9e9ec // indirect
 	github.com/vmware-tanzu/carvel-vendir v0.23.0 // indirect
-	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
+	golang.org/x/crypto v0.0.0-20220314234659-1baeb1ce4c0b // indirect
 	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914 // indirect
-	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22 // indirect
-	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
+	golang.org/x/text v0.3.8 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/protobuf v1.26.0 // indirect
