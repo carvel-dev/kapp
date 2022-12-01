@@ -18,18 +18,20 @@ import (
 const (
 	isChangeLabelKey   = "kapp.k14s.io/is-app-change"
 	isChangeLabelValue = ""
-	changeLabelKey     = "kapp.k14s.io/app-change-app" // holds app name
+	changeLabelKey     = "kapp.k14s.io/app-change-app" // holds app label
 )
 
 type RecordedAppChanges struct {
 	nsName  string
 	appName string
 
+	changeLabelValue string
+
 	coreClient kubernetes.Interface
 }
 
-func NewRecordedAppChanges(nsName, appName string, coreClient kubernetes.Interface) RecordedAppChanges {
-	return RecordedAppChanges{nsName, appName, coreClient}
+func NewRecordedAppChanges(nsName, appName, changeLabelValue string, coreClient kubernetes.Interface) RecordedAppChanges {
+	return RecordedAppChanges{nsName, appName, changeLabelValue, coreClient}
 }
 
 func (a RecordedAppChanges) List() ([]Change, error) {
@@ -38,7 +40,7 @@ func (a RecordedAppChanges) List() ([]Change, error) {
 	listOpts := metav1.ListOptions{
 		LabelSelector: labels.Set(map[string]string{
 			isChangeLabelKey: isChangeLabelValue,
-			changeLabelKey:   a.appName,
+			changeLabelKey:   a.changeLabelValue,
 		}).String(),
 	}
 
@@ -70,7 +72,7 @@ func (a RecordedAppChanges) DeleteAll() error {
 	listOpts := metav1.ListOptions{
 		LabelSelector: labels.Set(map[string]string{
 			isChangeLabelKey: isChangeLabelValue,
-			changeLabelKey:   a.appName,
+			changeLabelKey:   a.changeLabelValue,
 		}).String(),
 	}
 
@@ -102,7 +104,7 @@ func (a RecordedAppChanges) Begin(meta ChangeMeta) (*ChangeImpl, error) {
 			Namespace:    a.nsName,
 			Labels: map[string]string{
 				isChangeLabelKey: isChangeLabelValue,
-				changeLabelKey:   a.appName,
+				changeLabelKey:   a.changeLabelValue,
 			},
 		},
 		Data: newMeta.AsData(),
