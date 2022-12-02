@@ -1,6 +1,6 @@
 module github.com/k14s/kapp
 
-go 1.17
+go 1.19
 
 require (
 	github.com/cppforlife/cobrautil v0.0.0-20200514214827-bb86e6965d72
