@@ -53,11 +53,12 @@ type ExistsOpts struct {
 }
 
 type ResourcesImpl struct {
-	resourceTypes      ResourceTypes
-	coreClient         kubernetes.Interface
-	dynamicClient      dynamic.Interface
-	mutedDynamicClient dynamic.Interface
-	opts               ResourcesImplOpts
+	resourceTypes          ResourceTypes
+	coreClient             kubernetes.Interface
+	dynamicClient          dynamic.Interface
+	mutedDynamicClient     dynamic.Interface
+	testMutedDynamicClient dynamic.Interface
+	opts                   ResourcesImplOpts
 
 	assumedAllowedNamespacesMemoLock sync.Mutex
 	assumedAllowedNamespacesMemo     *[]string
@@ -71,16 +72,17 @@ type ResourcesImplOpts struct {
 }
 
 func NewResourcesImpl(resourceTypes ResourceTypes, coreClient kubernetes.Interface,
-	dynamicClient dynamic.Interface, mutedDynamicClient dynamic.Interface,
+	dynamicClient dynamic.Interface, mutedDynamicClient dynamic.Interface, testMutedDynamicClient dynamic.Interface,
 	opts ResourcesImplOpts, logger logger.Logger) *ResourcesImpl {
 
 	return &ResourcesImpl{
-		resourceTypes:      resourceTypes,
-		coreClient:         coreClient,
-		dynamicClient:      dynamicClient,
-		mutedDynamicClient: mutedDynamicClient,
-		opts:               opts,
-		logger:             logger.NewPrefixed("Resources"),
+		resourceTypes:          resourceTypes,
+		coreClient:             coreClient,
+		dynamicClient:          dynamicClient,
+		mutedDynamicClient:     mutedDynamicClient,
+		testMutedDynamicClient: testMutedDynamicClient,
+		opts:                   opts,
+		logger:                 logger.NewPrefixed("Resources"),
 	}
 }
 
@@ -105,6 +107,7 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 
 	for _, resType := range resTypes {
 		resType := resType // copy
+		fmt.Printf("ResType: %s\n", resType.GroupVersionResource.String())
 		itemsDone.Add(1)
 
 		go func() {
@@ -114,8 +117,13 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 
 			var list *unstructured.UnstructuredList
 			var err error
+			var client dynamic.NamespaceableResourceInterface
 
-			client := c.mutedDynamicClient.Resource(resType.GroupVersionResource)
+			if opts.NewApp {
+				client = c.testMutedDynamicClient.Resource(resType.GroupVersionResource)
+			} else {
+				client = c.mutedDynamicClient.Resource(resType.GroupVersionResource)
+			}
 
 			// If resource is cluster scoped or request is not scoped to fallback
 			// allowed namespaces manually, then scope list to all namespaces
@@ -128,7 +136,6 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 					}
 					return err
 				})
-
 				if err == nil {
 					unstructItemsCh <- unstructItems{resType, list.Items}
 					return
@@ -616,6 +623,7 @@ func uniqAndValidNamespaces(in []string) []string {
 type AllOpts struct {
 	ListOpts           *metav1.ListOptions
 	ResourceNamespaces []string
+	NewApp             bool
 }
 
 type resourceStatusErr struct {

@@ -103,11 +103,11 @@ func (o *DeployOptions) Run() error {
 	if err != nil {
 		return err
 	}
-
+	var newApp bool
 	if o.PrevAppFlags.PrevAppName != "" {
 		err = app.RenamePrevApp(o.PrevAppFlags.PrevAppName, appLabels, o.DiffFlags.Run)
 	} else {
-		err = app.CreateOrUpdate(appLabels, o.DiffFlags.Run)
+		err, newApp = app.CreateOrUpdate(appLabels, o.DiffFlags.Run)
 	}
 
 	if err != nil {
@@ -158,7 +158,7 @@ func (o *DeployOptions) Run() error {
 	}
 
 	existingResources, existingPodRs, err := o.existingResources(
-		newResources, labeledResources, resourceFilter, supportObjs.Apps, usedGKs, append(meta.LastChange.Namespaces, nsNames...))
+		newResources, labeledResources, resourceFilter, supportObjs.Apps, usedGKs, append(meta.LastChange.Namespaces, nsNames...), newApp)
 	if err != nil {
 		return err
 	}
@@ -352,8 +352,8 @@ func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
 
 func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 	labeledResources *ctlres.LabeledResources, resourceFilter ctlres.ResourceFilter,
-	apps ctlapp.Apps, usedGKs []schema.GroupKind, resourceNamespaces []string) ([]ctlres.Resource, []ctlres.Resource, error) {
-
+	apps ctlapp.Apps, usedGKs []schema.GroupKind, resourceNamespaces []string, newApp bool) ([]ctlres.Resource, []ctlres.Resource, error) {
+	fmt.Printf("HELLO TEST \n\n")
 	labelErrorResolutionFunc := func(key string, val string) string {
 		items, _ := apps.List(nil)
 		for _, item := range items {
@@ -364,7 +364,7 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 		}
 		return ""
 	}
-
+	fmt.Printf("New app deploy: %v\n", newApp)
 	matchingOpts := ctlres.AllAndMatchingOpts{
 		ExistingNonLabeledResourcesCheck:            o.DeployFlags.ExistingNonLabeledResourcesCheck,
 		ExistingNonLabeledResourcesCheckConcurrency: o.DeployFlags.ExistingNonLabeledResourcesCheckConcurrency,
@@ -378,6 +378,7 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 		IdentifiedResourcesListOpts: ctlres.IdentifiedResourcesListOpts{
 			GKsScope:           usedGKs,
 			ResourceNamespaces: resourceNamespaces,
+			NewApp:             newApp,
 		},
 	}
 

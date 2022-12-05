@@ -40,6 +40,7 @@ func NewDepsFactoryImpl(configFactory ConfigFactory, ui ui.UI) *DepsFactoryImpl 
 
 type DynamicClientOpts struct {
 	Warnings bool
+	Muted    bool
 }
 
 func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts) (dynamic.Interface, error) {
@@ -54,6 +55,9 @@ func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts) (dynamic.Interfa
 	if opts.Warnings {
 		cpConfig.WarningHandler = f.newWarningHandler()
 	} else {
+		if opts.Muted {
+			cpConfig.UserAgent = "test-muted-client-for-new-app"
+		}
 		cpConfig.WarningHandler = rest.NoWarnings{}
 	}
 
