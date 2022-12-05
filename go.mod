@@ -16,13 +16,12 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.27.0
+	golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.22.1 // kubernetes-1.22.1
 	k8s.io/apimachinery v0.22.1 // kubernetes-1.22.1
 	k8s.io/client-go v0.22.1 // kubernetes-1.22.1
 )
-
-require golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
 
 require (
 	cloud.google.com/go v0.65.0 // indirect
