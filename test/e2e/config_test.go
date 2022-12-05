@@ -127,6 +127,13 @@ data:
 }
 
 func TestYttRebaseRule_ServiceAccountRebaseTokenSecret(t *testing.T) {
+	minorVersion, err := getServerMinorVersion()
+	require.NoErrorf(t, err, "Error getting k8s server minor version")
+
+	if minorVersion >= 24 {
+		t.Skip("Automatic creation of service account token is turned off in k8s v1.24.0+")
+	}
+
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -250,6 +257,13 @@ secrets:
 }
 
 func TestYttRebaseRule_ServiceAccountRebaseTokenSecret_Openshift(t *testing.T) {
+	minorVersion, err := getServerMinorVersion()
+	require.NoErrorf(t, err, "Error getting k8s server minor version")
+
+	if minorVersion >= 24 {
+		t.Skip("Automatic creation of service account token is turned off in k8s v1.24.0+")
+	}
+
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}

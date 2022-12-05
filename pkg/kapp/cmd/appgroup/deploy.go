@@ -70,7 +70,7 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	var exitCode float64 = 0
+	var exitCode float64
 	// TODO is there some order between apps?
 	for _, appGroupApp := range updatedApps {
 		err := o.deployApp(appGroupApp)

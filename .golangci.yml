@@ -3,8 +3,7 @@ run:
 linters:
   enable:
     - goheader
-    - golint
-    - deadcode
+    - revive
     - unused
   disable-all: true
 # all available settings of specific linters
