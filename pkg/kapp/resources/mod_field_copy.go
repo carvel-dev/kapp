@@ -121,7 +121,6 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 				return false, nil // index not found, nothing to append to
 
 			case part.IndexAndRegex.Regex != nil:
-
 				regex, err := regexp.Compile(*part.IndexAndRegex.Regex)
 				if err != nil {
 					return false, err
@@ -131,11 +130,11 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 				if !ok {
 					return false, fmt.Errorf("Unexpected non-map found: %T", obj)
 				}
+
 				var anyUpdated bool
-				for key, obj := range typedObj {
+				for key, _ := range typedObj {
 					if regex.MatchString(key) {
-						keyPointer := key
-						path[len(path)-1] = &PathPart{MapKey: &keyPointer}
+						path[len(path)-1] = &PathPart{MapKey: &key}
 						newFullPath := fullPath[:len(fullPath)-1]
 						updated, err := t.apply(obj, path[i:], newFullPath, srcs)
 						if err != nil {

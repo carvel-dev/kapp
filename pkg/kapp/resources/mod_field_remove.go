@@ -5,6 +5,7 @@ package resources
 
 import (
 	"fmt"
+	"regexp"
 )
 
 type FieldRemoveMod struct {
@@ -61,7 +62,7 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 			}
 
 		case part.IndexAndRegex != nil:
-			if isLast {
+			if isLast && part.IndexAndRegex.Regex == nil {
 				return fmt.Errorf("Expected last part of the path to be map key")
 			}
 
@@ -93,6 +94,26 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 					return nil // index not found, nothing to remove
 				}
 
+			case part.IndexAndRegex.Regex != nil:
+				regex, err := regexp.Compile(*part.IndexAndRegex.Regex)
+				if err != nil {
+					return err
+				}
+
+				typedObj, ok := obj.(map[string]interface{})
+				if !ok {
+					return fmt.Errorf("Unexpected non-map found: %T", obj)
+				}
+				for key, _ := range typedObj {
+					if regex.MatchString(key) {
+						path[len(path)-1] = &PathPart{MapKey: &key}
+						err := t.apply(obj, path[i:])
+						if err != nil {
+							return err
+						}
+					}
+				}
+				return nil
 			default:
 				panic(fmt.Sprintf("Unknown array index: %#v", part.IndexAndRegex))
 			}
