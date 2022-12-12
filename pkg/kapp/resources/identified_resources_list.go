@@ -62,7 +62,7 @@ func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []Resou
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("non-newly created app\n")
+	//fmt.Printf("non-newly created app\n")
 	//}
 	fmt.Printf("Resource list: %d\n\n", len(resources))
 	// Check returned resources against label selector

@@ -129,7 +129,7 @@ func (c AddOrUpdateChange) tryToResolveUpdateConflict(
 	errMsgPrefix := "Failed to update due to resource conflict "
 
 	for i := 0; i < 10; i++ {
-		latestExistingRes, err := c.identifiedResources.Get(c.change.ExistingResource())
+		latestExistingRes, err := c.identifiedResources.Get(c.change.ExistingResource(), false)
 		if err != nil {
 			return err
 		}
@@ -176,7 +176,7 @@ func (c AddOrUpdateChange) tryToUpdateAfterCreateConflict(allowNoopUpdates bool)
 	var lastUpdateErr error
 
 	for i := 0; i < 10; i++ {
-		latestExistingRes, err := c.identifiedResources.Get(c.change.NewResource())
+		latestExistingRes, err := c.identifiedResources.Get(c.change.NewResource(), false)
 		if err != nil {
 			return err
 		}
@@ -242,7 +242,7 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 		// subsequent times try to retrieve latest copy,
 		// for example, ServiceAccount seems to change immediately
 		if latestResWithHistory == nil {
-			res, err := c.identifiedResources.Get(savedRes)
+			res, err := c.identifiedResources.Get(savedRes, false)
 			if err != nil {
 				return false, err
 			}

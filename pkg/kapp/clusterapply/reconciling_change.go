@@ -4,6 +4,8 @@
 package clusterapply
 
 import (
+	"fmt"
+
 	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
@@ -26,7 +28,8 @@ func (c ReconcilingChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, e
 	// Refresh resource with latest changes from the server
 	// Pick up new or existing resource (and not just new resource),
 	// as some changes may be apply->noop, wait->reconcile.
-	parentRes, err := c.identifiedResources.Get(c.change.NewOrExistingResource())
+	fmt.Printf("waiting stage\n")
+	parentRes, err := c.identifiedResources.Get(c.change.NewOrExistingResource(), true)
 	if err != nil {
 		return ctlresm.DoneApplyState{}, nil, err
 	}

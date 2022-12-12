@@ -82,10 +82,10 @@ func (r IdentifiedResources) Delete(resource Resource) error {
 	return r.resources.Delete(resource)
 }
 
-func (r IdentifiedResources) Get(resource Resource) (Resource, error) {
+func (r IdentifiedResources) Get(resource Resource, wait bool) (Resource, error) {
 	defer r.logger.DebugFunc(fmt.Sprintf("Get(%s)", resource.Description())).Finish()
 
-	resource, err := r.resources.Get(resource)
+	resource, err := r.resources.Get(resource, wait)
 	if err != nil {
 		return nil, err
 	}

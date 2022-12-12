@@ -42,7 +42,7 @@ type Resources interface {
 	All([]ResourceType, AllOpts) ([]Resource, error)
 	Delete(Resource) error
 	Exists(Resource, ExistsOpts) (Resource, bool, error)
-	Get(Resource) (Resource, error)
+	Get(Resource, bool) (Resource, error)
 	Patch(Resource, types.PatchType, []byte) (Resource, error)
 	Update(Resource) (Resource, error)
 	Create(resource Resource) (Resource, error)
@@ -58,6 +58,7 @@ type ResourcesImpl struct {
 	dynamicClient          dynamic.Interface
 	mutedDynamicClient     dynamic.Interface
 	testMutedDynamicClient dynamic.Interface
+	testDynamicClient      dynamic.Interface
 	opts                   ResourcesImplOpts
 
 	assumedAllowedNamespacesMemoLock sync.Mutex
@@ -73,7 +74,7 @@ type ResourcesImplOpts struct {
 
 func NewResourcesImpl(resourceTypes ResourceTypes, coreClient kubernetes.Interface,
 	dynamicClient dynamic.Interface, mutedDynamicClient dynamic.Interface, testMutedDynamicClient dynamic.Interface,
-	opts ResourcesImplOpts, logger logger.Logger) *ResourcesImpl {
+	testDynamicClient dynamic.Interface, opts ResourcesImplOpts, logger logger.Logger) *ResourcesImpl {
 
 	return &ResourcesImpl{
 		resourceTypes:          resourceTypes,
@@ -81,6 +82,7 @@ func NewResourcesImpl(resourceTypes ResourceTypes, coreClient kubernetes.Interfa
 		dynamicClient:          dynamicClient,
 		mutedDynamicClient:     mutedDynamicClient,
 		testMutedDynamicClient: testMutedDynamicClient,
+		testDynamicClient:      testDynamicClient,
 		opts:                   opts,
 		logger:                 logger.NewPrefixed("Resources"),
 	}
@@ -372,13 +374,13 @@ func (c *ResourcesImpl) Delete(resource Resource) error {
 	return nil
 }
 
-func (c *ResourcesImpl) Get(resource Resource) (Resource, error) {
+func (c *ResourcesImpl) Get(resource Resource, wait bool) (Resource, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { c.logger.Debug("get %s", time.Now().UTC().Sub(t1)) }()
 	}
 
-	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: false})
+	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: false, Wait: wait})
 	if err != nil {
 		return nil, err
 	}
@@ -521,6 +523,7 @@ func (c *ResourcesImpl) resourceErr(err error, action string, resource Resource)
 
 type resourceClientOpts struct {
 	Warnings bool
+	Wait     bool
 }
 
 func (c *ResourcesImpl) resourceClient(resource Resource, opts resourceClientOpts) (dynamic.ResourceInterface, ResourceType, error) {
@@ -531,9 +534,17 @@ func (c *ResourcesImpl) resourceClient(resource Resource, opts resourceClientOpt
 
 	var dynamicClient dynamic.Interface
 	if opts.Warnings {
-		dynamicClient = c.dynamicClient
+		if opts.Wait {
+			dynamicClient = c.testDynamicClient
+		} else {
+			dynamicClient = c.dynamicClient
+		}
 	} else {
-		dynamicClient = c.mutedDynamicClient
+		if opts.Wait {
+			dynamicClient = c.testDynamicClient
+		} else {
+			dynamicClient = c.mutedDynamicClient
+		}
 	}
 
 	return dynamicClient.Resource(resType.GroupVersionResource).Namespace(resource.Namespace()), resType, nil

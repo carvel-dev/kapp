@@ -41,6 +41,7 @@ func NewDepsFactoryImpl(configFactory ConfigFactory, ui ui.UI) *DepsFactoryImpl 
 type DynamicClientOpts struct {
 	Warnings bool
 	Muted    bool
+	Wait     bool
 }
 
 func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts) (dynamic.Interface, error) {
@@ -53,6 +54,9 @@ func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts) (dynamic.Interfa
 	cpConfig := rest.CopyConfig(config)
 
 	if opts.Warnings {
+		if opts.Wait {
+			cpConfig.UserAgent = "test-wait-agent"
+		}
 		cpConfig.WarningHandler = f.newWarningHandler()
 	} else {
 		if opts.Muted {

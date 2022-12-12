@@ -364,7 +364,7 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 		}
 		return ""
 	}
-	fmt.Printf("New app deploy: %v\n", newApp)
+	fmt.Printf("Night run with new changes: %v\n", newApp)
 	matchingOpts := ctlres.AllAndMatchingOpts{
 		ExistingNonLabeledResourcesCheck:            o.DeployFlags.ExistingNonLabeledResourcesCheck,
 		ExistingNonLabeledResourcesCheckConcurrency: o.DeployFlags.ExistingNonLabeledResourcesCheckConcurrency,

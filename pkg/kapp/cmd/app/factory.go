@@ -30,6 +30,10 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 	if err != nil {
 		return FactorySupportObjs{}, err
 	}
+	testDynamicClient, err := depsFactory.DynamicClient(cmdcore.DynamicClientOpts{Warnings: true, Wait: true})
+	if err != nil {
+		return FactorySupportObjs{}, err
+	}
 
 	mutedDynamicClient, err := depsFactory.DynamicClient(cmdcore.DynamicClientOpts{Warnings: false})
 	if err != nil {
@@ -51,7 +55,7 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 	}
 
 	resources := ctlres.NewResourcesImpl(
-		resTypes, coreClient, dynamicClient, mutedDynamicClient, testMutedDynamicClient, resourcesImplOpts, logger)
+		resTypes, coreClient, dynamicClient, mutedDynamicClient, testMutedDynamicClient, testDynamicClient, resourcesImplOpts, logger)
 
 	identifiedResources := ctlres.NewIdentifiedResources(
 		coreClient, resTypes, resources, resourcesImplOpts.FallbackAllowedNamespaces, logger)
