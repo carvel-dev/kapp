@@ -127,32 +127,32 @@ func (a *RecordedApp) UpdateUsedGVsAndGKs(gvs []schema.GroupVersion, gks []schem
 	})
 }
 
-func (a *RecordedApp) CreateOrUpdate(labels map[string]string, isDiffRun bool) error {
+func (a *RecordedApp) CreateOrUpdate(labels map[string]string, isDiffRun bool) (bool, error) {
 	defer a.logger.DebugFunc("CreateOrUpdate").Finish()
 
 	app, foundMigratedApp, err := a.find(a.fqName())
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if foundMigratedApp {
 		a.isMigrated = true
-		return a.updateApp(app, labels)
+		return false, a.updateApp(app, labels)
 	}
 
 	app, foundNonMigratedApp, err := a.find(a.name)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if foundNonMigratedApp {
 		if a.isMigrationEnabled() {
-			return a.migrate(app, labels, a.fqName())
+			return false, a.migrate(app, labels, a.fqName())
 		}
-		return a.updateApp(app, labels)
+		return false, a.updateApp(app, labels)
 	}
 
-	return a.create(labels, isDiffRun)
+	return true, a.create(labels, isDiffRun)
 }
 
 func (a *RecordedApp) find(name string) (*corev1.ConfigMap, bool, error) {
