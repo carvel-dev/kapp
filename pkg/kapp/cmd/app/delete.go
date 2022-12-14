@@ -154,6 +154,12 @@ func (o *DeleteOptions) Run() error {
 	err = touch.Do(func() error {
 		err := clusterChangeSet.Apply(clusterChangesGraph)
 		if err != nil {
+			if shouldFullyDeleteApp {
+				_, numDeleted, _ := app.GCChanges(5, nil)
+				if numDeleted > 0 {
+					o.ui.PrintLinef("Deleted %d older app changes", numDeleted)
+				}
+			}
 			return err
 		}
 		if shouldFullyDeleteApp {
