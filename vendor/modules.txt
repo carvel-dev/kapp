@@ -1,4 +1,4 @@
-# github.com/cppforlife/cobrautil v0.0.0-20220907150944-da5ee3a6ab1f
+# github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef
 ## explicit
 github.com/cppforlife/cobrautil
 # github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
