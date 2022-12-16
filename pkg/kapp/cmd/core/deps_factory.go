@@ -17,7 +17,7 @@ import (
 
 type DepsFactory interface {
 	DynamicClient(opts DynamicClientOpts) (dynamic.Interface, error)
-	CoreClient() (kubernetes.Interface, error)
+	CoreClient(testApp bool) (kubernetes.Interface, error)
 	ConfigureWarnings(warnings bool)
 }
 
@@ -41,7 +41,6 @@ func NewDepsFactoryImpl(configFactory ConfigFactory, ui ui.UI) *DepsFactoryImpl 
 type DynamicClientOpts struct {
 	Warnings bool
 	Muted    bool
-	Wait     bool
 }
 
 func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts) (dynamic.Interface, error) {
@@ -54,9 +53,6 @@ func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts) (dynamic.Interfa
 	cpConfig := rest.CopyConfig(config)
 
 	if opts.Warnings {
-		if opts.Wait {
-			cpConfig.UserAgent = "test-wait-agent"
-		}
 		cpConfig.WarningHandler = f.newWarningHandler()
 	} else {
 		if opts.Muted {
@@ -75,12 +71,14 @@ func (f *DepsFactoryImpl) DynamicClient(opts DynamicClientOpts) (dynamic.Interfa
 	return clientset, nil
 }
 
-func (f *DepsFactoryImpl) CoreClient() (kubernetes.Interface, error) {
+func (f *DepsFactoryImpl) CoreClient(testApp bool) (kubernetes.Interface, error) {
 	config, err := f.configFactory.RESTConfig()
 	if err != nil {
 		return nil, err
 	}
-
+	if testApp {
+		config.UserAgent = "test-muted-client-for-new-app"
+	}
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("Building Core clientset: %w", err)

@@ -4,7 +4,6 @@
 package resources
 
 import (
-	"fmt"
 	"sort"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,15 +55,11 @@ func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []Resou
 		NewApp:             opts.NewApp,
 	}
 	var resources []Resource
-	fmt.Printf("New app: %v, label selector: %s\n", opts.NewApp, labelSelector.String())
-	//if !opts.NewApp {
 	resources, err = r.resources.All(resTypes, allOpts)
 	if err != nil {
 		return nil, err
 	}
-	//fmt.Printf("non-newly created app\n")
-	//}
-	fmt.Printf("Resource list: %d\n\n", len(resources))
+
 	// Check returned resources against label selector
 	// in case of Kubernetes APIs returned resources that do not match.
 	// This can happen if custom aggregated APIs did not implement label selector filtering.

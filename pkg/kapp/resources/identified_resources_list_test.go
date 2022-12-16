@@ -60,7 +60,7 @@ func (r *FakeResources) Delete(ctlres.Resource) error { return nil }
 func (r *FakeResources) Exists(ctlres.Resource, ctlres.ExistsOpts) (ctlres.Resource, bool, error) {
 	return nil, true, nil
 }
-func (r *FakeResources) Get(ctlres.Resource, bool) (ctlres.Resource, error) { return nil, nil }
+func (r *FakeResources) Get(ctlres.Resource) (ctlres.Resource, error) { return nil, nil }
 func (r *FakeResources) Patch(ctlres.Resource, types.PatchType, []byte) (ctlres.Resource, error) {
 	return nil, nil
 }

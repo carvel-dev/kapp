@@ -14,6 +14,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/util"
 	"golang.org/x/net/http2"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -42,7 +43,7 @@ type Resources interface {
 	All([]ResourceType, AllOpts) ([]Resource, error)
 	Delete(Resource) error
 	Exists(Resource, ExistsOpts) (Resource, bool, error)
-	Get(Resource, bool) (Resource, error)
+	Get(Resource) (Resource, error)
 	Patch(Resource, types.PatchType, []byte) (Resource, error)
 	Update(Resource) (Resource, error)
 	Create(resource Resource) (Resource, error)
@@ -55,14 +56,15 @@ type ExistsOpts struct {
 type ResourcesImpl struct {
 	resourceTypes          ResourceTypes
 	coreClient             kubernetes.Interface
+	testCoreClient         kubernetes.Interface
 	dynamicClient          dynamic.Interface
 	mutedDynamicClient     dynamic.Interface
 	testMutedDynamicClient dynamic.Interface
-	testDynamicClient      dynamic.Interface
 	opts                   ResourcesImplOpts
 
 	assumedAllowedNamespacesMemoLock sync.Mutex
 	assumedAllowedNamespacesMemo     *[]string
+	newApp                           bool
 
 	logger logger.Logger
 }
@@ -72,17 +74,17 @@ type ResourcesImplOpts struct {
 	ScopeToFallbackAllowedNamespaces bool
 }
 
-func NewResourcesImpl(resourceTypes ResourceTypes, coreClient kubernetes.Interface,
+func NewResourcesImpl(resourceTypes ResourceTypes, coreClient kubernetes.Interface, testCoreClient kubernetes.Interface,
 	dynamicClient dynamic.Interface, mutedDynamicClient dynamic.Interface, testMutedDynamicClient dynamic.Interface,
-	testDynamicClient dynamic.Interface, opts ResourcesImplOpts, logger logger.Logger) *ResourcesImpl {
+	opts ResourcesImplOpts, logger logger.Logger) *ResourcesImpl {
 
 	return &ResourcesImpl{
 		resourceTypes:          resourceTypes,
 		coreClient:             coreClient,
+		testCoreClient:         testCoreClient,
 		dynamicClient:          dynamicClient,
 		mutedDynamicClient:     mutedDynamicClient,
 		testMutedDynamicClient: testMutedDynamicClient,
-		testDynamicClient:      testDynamicClient,
 		opts:                   opts,
 		logger:                 logger.NewPrefixed("Resources"),
 	}
@@ -109,7 +111,6 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 
 	for _, resType := range resTypes {
 		resType := resType // copy
-		fmt.Printf("ResType: %s\n", resType.GroupVersionResource.String())
 		itemsDone.Add(1)
 
 		go func() {
@@ -161,6 +162,7 @@ func (c *ResourcesImpl) All(resTypes []ResourceType, opts AllOpts) ([]Resource, 
 
 			// At this point err==Forbidden...
 			// or requests are scoped to fallback allowed namespaces manually
+			c.newApp = opts.NewApp
 			list, err = c.allForNamespaces(client, opts.ListOpts)
 			if err != nil {
 				// Ignore certain GVs due to failing API backing
@@ -374,13 +376,13 @@ func (c *ResourcesImpl) Delete(resource Resource) error {
 	return nil
 }
 
-func (c *ResourcesImpl) Get(resource Resource, wait bool) (Resource, error) {
+func (c *ResourcesImpl) Get(resource Resource) (Resource, error) {
 	if resourcesDebug {
 		t1 := time.Now().UTC()
 		defer func() { c.logger.Debug("get %s", time.Now().UTC().Sub(t1)) }()
 	}
 
-	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: false, Wait: wait})
+	resClient, resType, err := c.resourceClient(resource, resourceClientOpts{Warnings: false})
 	if err != nil {
 		return nil, err
 	}
@@ -534,17 +536,9 @@ func (c *ResourcesImpl) resourceClient(resource Resource, opts resourceClientOpt
 
 	var dynamicClient dynamic.Interface
 	if opts.Warnings {
-		if opts.Wait {
-			dynamicClient = c.testDynamicClient
-		} else {
-			dynamicClient = c.dynamicClient
-		}
+		dynamicClient = c.dynamicClient
 	} else {
-		if opts.Wait {
-			dynamicClient = c.testDynamicClient
-		} else {
-			dynamicClient = c.mutedDynamicClient
-		}
+		dynamicClient = c.mutedDynamicClient
 	}
 
 	return dynamicClient.Resource(resType.GroupVersionResource).Namespace(resource.Namespace()), resType, nil
@@ -561,8 +555,15 @@ func (c *ResourcesImpl) assumedAllowedNamespaces() ([]string, error) {
 	if c.opts.ScopeToFallbackAllowedNamespaces {
 		return c.opts.FallbackAllowedNamespaces, nil
 	}
-
-	nsList, err := c.coreClient.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+	var (
+		nsList *v1.NamespaceList
+		err    error
+	)
+	if c.newApp {
+		nsList, err = c.testCoreClient.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+	} else {
+		nsList, err = c.coreClient.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+	}
 	if err != nil {
 		if errors.IsForbidden(err) {
 			if len(c.opts.FallbackAllowedNamespaces) > 0 {

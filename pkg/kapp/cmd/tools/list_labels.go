@@ -117,7 +117,7 @@ func (o *ListLabelsOptions) Run() error {
 }
 
 func (o *ListLabelsOptions) listResources() ([]ctlres.Resource, error) {
-	coreClient, err := o.depsFactory.CoreClient()
+	coreClient, err := o.depsFactory.CoreClient(false)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (o *ListLabelsOptions) listResources() ([]ctlres.Resource, error) {
 
 	resTypes := ctlres.NewResourceTypesImpl(coreClient, ctlres.ResourceTypesImplOpts{})
 	resources := ctlres.NewResourcesImpl(
-		resTypes, coreClient, dynamicClient, mutedDynamicClient, nil, nil, ctlres.ResourcesImplOpts{}, o.logger)
+		resTypes, coreClient, nil, dynamicClient, mutedDynamicClient, nil, ctlres.ResourcesImplOpts{}, o.logger)
 	identifiedResources := ctlres.NewIdentifiedResources(coreClient, resTypes, resources, nil, o.logger)
 
 	labelSelector, err := labels.Parse("!kapp")

@@ -353,7 +353,7 @@ func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
 func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 	labeledResources *ctlres.LabeledResources, resourceFilter ctlres.ResourceFilter,
 	apps ctlapp.Apps, usedGKs []schema.GroupKind, resourceNamespaces []string, newApp bool) ([]ctlres.Resource, []ctlres.Resource, error) {
-	fmt.Printf("HELLO TEST \n\n")
+
 	labelErrorResolutionFunc := func(key string, val string) string {
 		items, _ := apps.List(nil)
 		for _, item := range items {
@@ -364,7 +364,7 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 		}
 		return ""
 	}
-	fmt.Printf("Night run with new changes: %v\n", newApp)
+
 	matchingOpts := ctlres.AllAndMatchingOpts{
 		ExistingNonLabeledResourcesCheck:            o.DeployFlags.ExistingNonLabeledResourcesCheck,
 		ExistingNonLabeledResourcesCheckConcurrency: o.DeployFlags.ExistingNonLabeledResourcesCheckConcurrency,

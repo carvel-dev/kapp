@@ -21,16 +21,17 @@ type FactorySupportObjs struct {
 func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFlags,
 	resTypesFlags ResourceTypesFlags, logger logger.Logger) (FactorySupportObjs, error) {
 
-	coreClient, err := depsFactory.CoreClient()
+	coreClient, err := depsFactory.CoreClient(false)
+	if err != nil {
+		return FactorySupportObjs{}, err
+	}
+
+	testCoreClient, err := depsFactory.CoreClient(true)
 	if err != nil {
 		return FactorySupportObjs{}, err
 	}
 
 	dynamicClient, err := depsFactory.DynamicClient(cmdcore.DynamicClientOpts{Warnings: true})
-	if err != nil {
-		return FactorySupportObjs{}, err
-	}
-	testDynamicClient, err := depsFactory.DynamicClient(cmdcore.DynamicClientOpts{Warnings: true, Wait: true})
 	if err != nil {
 		return FactorySupportObjs{}, err
 	}
@@ -55,7 +56,7 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 	}
 
 	resources := ctlres.NewResourcesImpl(
-		resTypes, coreClient, dynamicClient, mutedDynamicClient, testMutedDynamicClient, testDynamicClient, resourcesImplOpts, logger)
+		resTypes, coreClient, testCoreClient, dynamicClient, mutedDynamicClient, testMutedDynamicClient, resourcesImplOpts, logger)
 
 	identifiedResources := ctlres.NewIdentifiedResources(
 		coreClient, resTypes, resources, resourcesImplOpts.FallbackAllowedNamespaces, logger)
