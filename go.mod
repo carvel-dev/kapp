@@ -3,7 +3,7 @@ module github.com/vmware-tanzu/carvel-kapp
 go 1.19
 
 require (
-	github.com/cppforlife/cobrautil v0.0.0-20220907150944-da5ee3a6ab1f
+	github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
 	github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
 	github.com/cppforlife/go-patch v0.2.0

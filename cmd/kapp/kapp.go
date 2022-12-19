@@ -46,7 +46,7 @@ func nonExitingMain() error {
 		return err
 	}
 
-	if !cobrautil.IsCobraInternalCommand(os.Args) {
+	if !cobrautil.IsCobraManagedCommand(os.Args) {
 		confUI.PrintLinef("Succeeded")
 	}
 
