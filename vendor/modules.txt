@@ -152,12 +152,12 @@ github.com/stretchr/testify/require
 ## explicit
 github.com/vito/go-interact/interact
 github.com/vito/go-interact/interact/terminal
-# github.com/vmware-tanzu/carvel-kapp-controller v0.43.4
+# github.com/vmware-tanzu/carvel-kapp-controller v0.44.1
 ## explicit; go 1.19
 github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1
 github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1
-# github.com/vmware-tanzu/carvel-vendir v0.30.0
-## explicit; go 1.18
+# github.com/vmware-tanzu/carvel-vendir v0.30.1
+## explicit; go 1.19
 github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1
 # golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
 ## explicit; go 1.17
