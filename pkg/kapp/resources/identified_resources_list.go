@@ -15,7 +15,6 @@ type IdentifiedResourcesListOpts struct {
 	IgnoreCachedResTypes bool
 	GKsScope             []schema.GroupKind
 	ResourceNamespaces   []string
-	NewApp               bool
 }
 
 func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []ResourceRef, opts IdentifiedResourcesListOpts) ([]Resource, error) {
@@ -24,11 +23,6 @@ func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []Resou
 	resTypes, err := r.resourceTypes.All(opts.IgnoreCachedResTypes)
 	if err != nil {
 		return nil, err
-	}
-
-	// avoid listing labeled resources for newly created app
-	if opts.NewApp {
-		return nil, nil
 	}
 
 	// TODO non-listable types
