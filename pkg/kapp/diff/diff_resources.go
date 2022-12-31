@@ -14,12 +14,16 @@ type DiffResources struct {
 	ExisitingResources, NewResources versionedResources
 	ExistingResourcesGrouped         map[string][]ctlres.Resource
 
-	existingRs, newRs []ctlres.Resource
-	rules             []ctlconf.TemplateRule
+	rules []ctlconf.TemplateRule
 }
 
 func NewDiffResources(existingRs, newRs []ctlres.Resource, rules []ctlconf.TemplateRule) DiffResources {
-	return DiffResources{versionedResources{}, versionedResources{}, nil, existingRs, newRs, rules}
+	existingVRs := existingVersionedResources(existingRs)
+	newVRs := newVersionedResources(newRs)
+
+	existingRsGrouped := newGroupedVersionedResources(existingVRs.Versioned)
+
+	return DiffResources{existingVRs, newVRs, existingRsGrouped, rules}
 }
 
 type versionedResources struct {
