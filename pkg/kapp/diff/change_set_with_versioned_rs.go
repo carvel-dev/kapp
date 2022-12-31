@@ -28,7 +28,7 @@ func NewChangeSetWithVersionedRs(drs DiffResources, opts ChangeSetOpts, changeFa
 }
 
 func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
-	existingRs := d.diffResources.ExisitingResources
+	existingRs := d.diffResources.ExistingResources
 	existingRsGrouped := d.diffResources.ExistingResourcesGrouped
 
 	newRs := d.diffResources.NewResources
