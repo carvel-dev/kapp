@@ -14,6 +14,7 @@ type DiffResources struct {
 	ExisitingResources, NewResources versionedResources
 	ExistingResourcesGrouped         map[string][]ctlres.Resource
 
+	newRs []ctlres.Resource
 	rules []ctlconf.TemplateRule
 }
 
@@ -23,7 +24,7 @@ func NewDiffResources(existingRs, newRs []ctlres.Resource, rules []ctlconf.Templ
 
 	existingRsGrouped := newGroupedVersionedResources(existingVRs.Versioned)
 
-	return DiffResources{existingVRs, newVRs, existingRsGrouped, rules}
+	return DiffResources{existingVRs, newVRs, existingRsGrouped, newRs, rules}
 }
 
 type versionedResources struct {
@@ -89,18 +90,15 @@ func newGroupedVersionedResources(rs []ctlres.Resource) map[string][]ctlres.Reso
 	return result
 }
 
-func existingResourcesMap(res []ctlres.Resource) map[string]ctlres.Resource {
+func (d DiffResources) existingResourcesMap() map[string]ctlres.Resource {
 	result := map[string]ctlres.Resource{}
 
-	existingRs := existingVersionedResources(res)
-	existingVersionRsGrouped := newGroupedVersionedResources(existingRs.Versioned)
-
-	for _, res := range existingRs.NonVersioned {
+	for _, res := range d.ExisitingResources.NonVersioned {
 		resKey := ctlres.NewUniqueResourceKey(res).String()
 		result[resKey] = res
 	}
 
-	for resKey, res := range existingVersionRsGrouped {
+	for resKey, res := range d.ExistingResourcesGrouped {
 		result[resKey] = res[len(res)-1]
 	}
 	return result

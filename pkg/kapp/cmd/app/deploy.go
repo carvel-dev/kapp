@@ -413,7 +413,7 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 
 		diffResources := ctldiff.NewDiffResources(existingResources, newResources, conf.TemplateRules())
 
-		err := ctldiff.NewRenewableResources(existingResources, newResources).Prepare()
+		err := ctldiff.NewRenewableResources(diffResources).Prepare()
 		if err != nil {
 			return clusterChangeSet, nil, false, "", err
 		}
