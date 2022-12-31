@@ -4,9 +4,23 @@
 package diff
 
 import (
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	"sort"
+
+	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
+
+type DiffResources struct {
+	ExisitingResources, NewResources versionedResources
+	ExistingResourcesGrouped         map[string][]ctlres.Resource
+
+	existingRs, newRs []ctlres.Resource
+	rules             []ctlconf.TemplateRule
+}
+
+func NewDiffResources(existingRs, newRs []ctlres.Resource, rules []ctlconf.TemplateRule) DiffResources {
+	return DiffResources{versionedResources{}, versionedResources{}, nil, existingRs, newRs, rules}
+}
 
 type versionedResources struct {
 	Versioned    []ctlres.Resource

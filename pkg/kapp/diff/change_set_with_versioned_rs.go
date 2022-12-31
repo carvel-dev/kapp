@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strconv"
 
-	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
@@ -18,23 +17,21 @@ const (
 )
 
 type ChangeSetWithVersionedRs struct {
-	existingRs, newRs []ctlres.Resource
-	rules             []ctlconf.TemplateRule
-	opts              ChangeSetOpts
-	changeFactory     ChangeFactory
+	diffResources DiffResources
+	opts          ChangeSetOpts
+	changeFactory ChangeFactory
 }
 
-func NewChangeSetWithVersionedRs(existingRs, newRs []ctlres.Resource,
-	rules []ctlconf.TemplateRule, opts ChangeSetOpts, changeFactory ChangeFactory) *ChangeSetWithVersionedRs {
+func NewChangeSetWithVersionedRs(drs DiffResources, opts ChangeSetOpts, changeFactory ChangeFactory) *ChangeSetWithVersionedRs {
 
-	return &ChangeSetWithVersionedRs{existingRs, newRs, rules, opts, changeFactory}
+	return &ChangeSetWithVersionedRs{drs, opts, changeFactory}
 }
 
 func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
-	existingRs := existingVersionedResources(d.existingRs)
+	existingRs := existingVersionedResources(d.diffResources.existingRs)
 	existingRsGrouped := newGroupedVersionedResources(existingRs.Versioned)
 
-	newRs := newVersionedResources(d.newRs)
+	newRs := newVersionedResources(d.diffResources.newRs)
 	allChanges := []Change{}
 
 	d.assignNewNames(newRs, existingRsGrouped)
@@ -132,7 +129,7 @@ func (d ChangeSetWithVersionedRs) addAndKeepChanges(
 		}
 
 		// Update both versioned and non-versioned
-		verRes := VersionedResource{usedRes, d.rules}
+		verRes := VersionedResource{usedRes, d.diffResources.rules}
 
 		err := verRes.UpdateAffected(newRs.NonVersioned)
 		if err != nil {
