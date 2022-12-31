@@ -17,21 +17,21 @@ const (
 )
 
 type ChangeSetWithVersionedRs struct {
-	diffResources DiffResources
+	diffRs        DiffResources
 	opts          ChangeSetOpts
 	changeFactory ChangeFactory
 }
 
-func NewChangeSetWithVersionedRs(drs DiffResources, opts ChangeSetOpts, changeFactory ChangeFactory) *ChangeSetWithVersionedRs {
+func NewChangeSetWithVersionedRs(diffRs DiffResources, opts ChangeSetOpts, changeFactory ChangeFactory) *ChangeSetWithVersionedRs {
 
-	return &ChangeSetWithVersionedRs{drs, opts, changeFactory}
+	return &ChangeSetWithVersionedRs{diffRs, opts, changeFactory}
 }
 
 func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
-	existingRs := d.diffResources.ExistingResources
-	existingRsGrouped := d.diffResources.ExistingResourcesGrouped
+	existingRs := d.diffRs.ExistingResources
+	existingRsGrouped := d.diffRs.ExistingResourcesGrouped
 
-	newRs := d.diffResources.NewResources
+	newRs := d.diffRs.NewResources
 	allChanges := []Change{}
 
 	d.assignNewNames(newRs, existingRsGrouped)
@@ -129,7 +129,7 @@ func (d ChangeSetWithVersionedRs) addAndKeepChanges(
 		}
 
 		// Update both versioned and non-versioned
-		verRes := VersionedResource{usedRes, d.diffResources.rules}
+		verRes := VersionedResource{usedRes, d.diffRs.rules}
 
 		err := verRes.UpdateAffected(newRs.NonVersioned)
 		if err != nil {
