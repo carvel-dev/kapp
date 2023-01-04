@@ -8,12 +8,14 @@ import (
 	"strings"
 
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type ResourceTypes struct {
 	localCRDs      []*APIExtensionsVxCRD
 	resourceTypes  ctlres.ResourceTypes
 	memoizedScopes map[string]bool
+	gvs            []schema.GroupVersion
 }
 
 func NewResourceTypes(newResources []ctlres.Resource, resourceTypes ctlres.ResourceTypes) *ResourceTypes {
@@ -26,10 +28,11 @@ func NewResourceTypes(newResources []ctlres.Resource, resourceTypes ctlres.Resou
 		}
 	}
 
-	return &ResourceTypes{localCRDs, resourceTypes, nil}
+	return &ResourceTypes{localCRDs, resourceTypes, nil, nil}
 }
 
-func (c *ResourceTypes) IsNamespaced(res ctlres.Resource) (bool, error) {
+func (c *ResourceTypes) IsNamespaced(res ctlres.Resource, gvs []schema.GroupVersion) (bool, error) {
+	c.gvs = gvs
 	scopeMap, err := c.scopeMap()
 	if err != nil {
 		return false, err
@@ -82,7 +85,7 @@ func (c *ResourceTypes) scopeMap() (map[string]bool, error) {
 func (c *ResourceTypes) clusterScopes() (map[string]bool, error) {
 	scopeMap := map[string]bool{}
 
-	resTypes, err := c.resourceTypes.All(false)
+	resTypes, err := c.resourceTypes.All(false, c.gvs)
 	if err != nil {
 		return nil, err
 	}

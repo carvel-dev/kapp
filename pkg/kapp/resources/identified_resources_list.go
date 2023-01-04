@@ -20,7 +20,7 @@ type IdentifiedResourcesListOpts struct {
 func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []ResourceRef, opts IdentifiedResourcesListOpts) ([]Resource, error) {
 	defer r.logger.DebugFunc("List").Finish()
 
-	resTypes, err := r.resourceTypes.All(opts.IgnoreCachedResTypes)
+	resTypes, err := r.resourceTypes.All(opts.IgnoreCachedResTypes, nil)
 	if err != nil {
 		return nil, err
 	}

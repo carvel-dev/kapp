@@ -69,7 +69,7 @@ func (r *FakeResources) Create(ctlres.Resource) (ctlres.Resource, error) { retur
 
 type FakeResourceTypes struct{}
 
-func (r *FakeResourceTypes) All(ignoreCachedResTypes bool) ([]ctlres.ResourceType, error) {
+func (r *FakeResourceTypes) All(ignoreCachedResTypes bool, gvs []schema.GroupVersion) ([]ctlres.ResourceType, error) {
 	return nil, nil
 }
 func (r *FakeResourceTypes) Find(ctlres.Resource) (ctlres.ResourceType, error) {

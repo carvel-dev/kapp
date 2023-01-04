@@ -16,7 +16,7 @@ import (
 )
 
 type ResourceTypes interface {
-	All(ignoreCachedResTypes bool) ([]ResourceType, error)
+	All(ignoreCachedResTypes bool, gvs []schema.GroupVersion) ([]ResourceType, error)
 	Find(Resource) (ResourceType, error)
 	CanIgnoreFailingGroupVersion(schema.GroupVersion) bool
 }
@@ -29,6 +29,7 @@ type ResourceTypesImplOpts struct {
 type ResourceTypesImpl struct {
 	coreClient kubernetes.Interface
 	opts       ResourceTypesImplOpts
+	gvs        []schema.GroupVersion
 
 	memoizedResTypes     *[]ResourceType
 	memoizedResTypesLock sync.RWMutex
@@ -45,9 +46,11 @@ func NewResourceTypesImpl(coreClient kubernetes.Interface, opts ResourceTypesImp
 	return &ResourceTypesImpl{coreClient: coreClient, opts: opts}
 }
 
-func (g *ResourceTypesImpl) All(ignoreCachedResTypes bool) ([]ResourceType, error) {
+func (g *ResourceTypesImpl) All(ignoreCachedResTypes bool, gvs []schema.GroupVersion) ([]ResourceType, error) {
+	g.gvs = gvs
 	if ignoreCachedResTypes {
 		// TODO Update cache while doing a fresh fetch
+		fmt.Printf("Non-memoized res with ignoreCachedResTypes=true\n")
 		return g.all()
 	}
 	return g.memoizedAll()
@@ -116,27 +119,62 @@ func (g *ResourceTypesImpl) serverResources() ([]*metav1.APIResourceList, error)
 	var serverResources []*metav1.APIResourceList
 	var lastErr error
 
-	for i := 0; i < 10; i++ {
-		_, serverResources, lastErr = g.coreClient.Discovery().ServerGroupsAndResources()
-		if lastErr == nil {
-			return serverResources, nil
-		} else if typedLastErr, ok := lastErr.(*discovery.ErrGroupDiscoveryFailed); ok {
-			if len(serverResources) > 0 && g.canIgnoreFailingGroupVersions(typedLastErr.Groups) {
-				return serverResources, nil
-			}
-			// Even local services may not be Available immediately, so retry
-			lastErr = fmt.Errorf("%w (possibly related issue: https://github.com/vmware-tanzu/carvel-kapp/issues/12)", lastErr)
-		}
-		time.Sleep(1 * time.Second)
+	groupList, err := g.coreClient.Discovery().ServerGroups()
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, lastErr
+	gvsFromServer := make(map[string]bool)
+	for _, grp := range groupList.Groups {
+		for _, gpVer := range grp.Versions {
+			gvsFromServer[gpVer.GroupVersion] = true
+		}
+	}
+
+	//for i := 0; i < 10; i++ {
+	// _, serverResources, lastErr = g.coreClient.Discovery().ServerGroupsAndResources()
+	// if lastErr == nil {
+	// 	return serverResources, nil
+	// } else if typedLastErr, ok := lastErr.(*discovery.ErrGroupDiscoveryFailed); ok {
+	// 	if len(serverResources) > 0 && g.canIgnoreFailingGroupVersions(typedLastErr.Groups) {
+	// 		return serverResources, nil
+	// 	}
+	// 	// Even local services may not be Available immediately, so retry
+	// 	lastErr = fmt.Errorf("%w (possibly related issue: https://github.com/vmware-tanzu/carvel-kapp/issues/12)", lastErr)
+	// }
+	// time.Sleep(1 * time.Second)
+	//}
+
+	for _, gv := range g.gvs {
+		if _, found := gvsFromServer[gv.String()]; found {
+			delete(gvsFromServer, gv.String())
+			for i := 0; i < 10; i++ {
+				resList, err1 := g.coreClient.Discovery().ServerResourcesForGroupVersion(gv.String())
+				if err1 == nil {
+					serverResources = append(serverResources, resList)
+					//fmt.Printf("ServRes: [%+v], groupVer: %s\n", serverResources, gv.String())
+					break
+				} else if typedLastErr, ok := lastErr.(*discovery.ErrGroupDiscoveryFailed); ok {
+					if len(serverResources) > 0 && g.canIgnoreFailingGroupVersions(typedLastErr.Groups) {
+						return serverResources, nil
+					}
+					// Even local services may not be Available immediately, so retry
+					lastErr = fmt.Errorf("%w (possibly related issue: https://github.com/vmware-tanzu/carvel-kapp/issues/12)", lastErr)
+				}
+				time.Sleep(1 * time.Second)
+			}
+		}
+
+	}
+
+	return serverResources, lastErr
 }
 
 func (g *ResourceTypesImpl) memoizedAll() ([]ResourceType, error) {
 	g.memoizedResTypesLock.RLock()
 
 	if g.memoizedResTypes != nil {
+		fmt.Printf("Memoized res\n")
 		defer g.memoizedResTypesLock.RUnlock()
 		return *g.memoizedResTypes, nil
 	}
@@ -148,7 +186,7 @@ func (g *ResourceTypesImpl) memoizedAll() ([]ResourceType, error) {
 	// may win and save older copy on res types
 	g.memoizedResTypesLock.Lock()
 	defer g.memoizedResTypesLock.Unlock()
-
+	fmt.Printf("Non-Memoized res with ignoreCachedResTypes=false\n")
 	resTypes, err := g.all()
 	if err != nil {
 		return nil, err
@@ -200,7 +238,7 @@ func (g *ResourceTypesImpl) findOnce(resource Resource) (ResourceType, error) {
 			return pair, nil
 		}
 	}
-
+	fmt.Printf("Find once: %s\n", ResourceTypesUnknownTypeErr{resource})
 	return ResourceType{}, ResourceTypesUnknownTypeErr{resource}
 }
 

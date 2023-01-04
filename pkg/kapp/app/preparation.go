@@ -10,6 +10,7 @@ import (
 
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	ctlresm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const (
@@ -76,8 +77,16 @@ func (a Preparation) placeIntoNamespace(resources []ctlres.Resource) ([]ctlres.R
 
 	resTypes := ctlresm.NewResourceTypes(resources, a.resourceTypes)
 
+	var gvs []schema.GroupVersion
+	for _, res := range resources {
+		// crd := ctlresm.NewAPIExtensionsVxCRD(res)
+		// if crd == nil {
+		gvs = append(gvs, res.GroupVersion())
+		//}
+	}
+
 	for i, res := range resources {
-		isNsed, err := resTypes.IsNamespaced(res)
+		isNsed, err := resTypes.IsNamespaced(res, gvs)
 		if err != nil {
 			return nil, err
 		}

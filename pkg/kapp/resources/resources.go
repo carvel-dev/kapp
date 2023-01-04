@@ -400,7 +400,9 @@ func (c *ResourcesImpl) Exists(resource Resource, existsOpts ExistsOpts) (Resour
 	if err != nil {
 		// Assume if type is not known to the API server
 		// then such resource cannot exist on the server
+		fmt.Printf("Exist test\n")
 		if _, ok := err.(ResourceTypesUnknownTypeErr); ok {
+			fmt.Printf("Exist test and return error\n")
 			return nil, false, nil
 		}
 		return nil, false, err
