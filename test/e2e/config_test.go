@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 	"testing"
@@ -852,6 +853,152 @@ rules:
 
 		require.Containsf(t, err.Error(), "Exiting after diffing with no pending changes (exit status 2)", "Expected to find stderr output")
 		require.Containsf(t, err.Error(), "exit code: '2'", "Expected to find exit code")
+	})
+}
+
+func TestConfigHavingRegex(t *testing.T) {
+	yaml1 := `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: game-demo
+  annotations:
+    foo1: bar1
+    foo2: bar2
+data:
+  player_initial_lives: "3"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: game-test
+  annotations:
+    foo2: bar2
+data:
+  player_initial_lives: "3"
+`
+
+	yaml2 := `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: game-demo
+data:
+  player_initial_lives: "3"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: game-test
+data:
+  player_initial_lives: "3"
+`
+
+	configYaml := `
+---
+apiVersion: kapp.k14s.io/v1alpha1
+kind: Config
+rebaseRules:
+  - path: [metadata, annotations, {regex: "^foo"}]
+    type: %s
+    sources: [new, existing]
+    resourceMatchers:
+      - apiVersionKindMatcher: {apiVersion: v1, kind: ConfigMap}
+`
+
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	fieldsExcludedInMatch := []string{"kapp.k14s.io/app", "creationTimestamp:", "resourceVersion:", "uid:", "selfLink:", "kapp.k14s.io/association"}
+	name := "test-config-path-regex"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("creating an app with multiple resources", func() {
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml"},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+		expectedOutput := `
+---
+# create: configmap/game-demo (v1) namespace: kapp-test
+apiVersion: v1
+data:
+  player_initial_lives: "3"
+kind: ConfigMap
+metadata:
+  annotations:
+    foo1: bar1
+    foo2: bar2
+  labels:
+  name: game-demo
+  namespace: kapp-test
+---
+# create: configmap/game-test (v1) namespace: kapp-test
+apiVersion: v1
+data:
+  player_initial_lives: "3"
+kind: ConfigMap
+metadata:
+  annotations:
+    foo2: bar2
+  labels:
+  name: game-test
+  namespace: kapp-test
+`
+		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
+		out = clearKeys(fieldsExcludedInMatch, out)
+
+		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
+		require.Contains(t, out, expectedOutput, "output does not match")
+	})
+
+	logger.Section("Deploy with new yaml with removed annotations and copying from existing resource", func() {
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml"}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2 + fmt.Sprintf(configYaml, "copy"))})
+		expectedOutput := ``
+
+		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
+		out = clearKeys(fieldsExcludedInMatch, out)
+
+		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
+		require.Contains(t, out, expectedOutput, "output does not match")
+	})
+
+	logger.Section("Remove all the annotation with remove config", func() {
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml"},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1 + fmt.Sprintf(configYaml, "remove"))})
+
+		expectedOutput := `
+---
+# update: configmap/game-demo (v1) namespace: kapp-test
+apiVersion: v1
+data:
+  player_initial_lives: "3"
+kind: ConfigMap
+metadata:
+  annotations: {}
+  labels:
+  name: game-demo
+  namespace: kapp-test
+---
+# update: configmap/game-test (v1) namespace: kapp-test
+apiVersion: v1
+data:
+  player_initial_lives: "3"
+kind: ConfigMap
+metadata:
+  annotations: {}
+  labels:
+  name: game-test
+  namespace: kapp-test
+`
+		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
+		out = clearKeys(fieldsExcludedInMatch, out)
+
+		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
+		require.Contains(t, out, expectedOutput, "output does not match")
 	})
 }
 
