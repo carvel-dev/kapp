@@ -121,32 +121,23 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 				return false, nil // index not found, nothing to append to
 
 			case part.IndexAndRegex.Regex != nil:
-				regex, err := regexp.Compile(*part.IndexAndRegex.Regex)
+				matchedKeys, err := t.matchRegexWithSources(path, srcs)
 				if err != nil {
 					return false, err
 				}
-
-				typedObj, ok := obj.(map[string]interface{})
-				if !ok {
-					return false, fmt.Errorf("Unexpected non-map found: %T", obj)
-				}
-
-				var anyUpdated bool
-				for key, _ := range typedObj {
-					if regex.MatchString(key) {
-						path[len(path)-1] = &PathPart{MapKey: &key}
-						newFullPath := fullPath[:len(fullPath)-1]
-						updated, err := t.apply(obj, path[i:], newFullPath, srcs)
-						if err != nil {
-							return false, err
-						}
-						if updated {
-							anyUpdated = true
-						}
+				allUpdated := true
+				for _, key := range matchedKeys {
+					newPath := append(Path{&PathPart{MapKey: &key}}, path[i+1:]...)
+					newFullPath := fullPath[:len(fullPath)-1]
+					updated, err := t.apply(obj, newPath, newFullPath, srcs)
+					if err != nil {
+						return false, err
+					}
+					if !updated {
+						allUpdated = false
 					}
 				}
-				return anyUpdated, nil
-
+				return allUpdated, nil
 			default:
 				panic(fmt.Sprintf("Unknown array index: %#v", part.IndexAndRegex))
 			}
@@ -230,4 +221,54 @@ func (t FieldCopyMod) obtainValue(obj interface{}, path Path) (interface{}, bool
 	}
 
 	return obj, true, nil
+}
+
+func (t FieldCopyMod) matchRegexWithSources(path Path, srcs map[FieldCopyModSource]Resource) ([]string, error) {
+	// always looking into existing resource?
+	srcRes, found := srcs[FieldCopyModSourceExisting]
+	if !found || srcRes == nil {
+		return []string{}, fmt.Errorf("Existing resource not found")
+	}
+	return t.obtainMatchingRegexKeys(srcRes.unstructured().Object, path)
+}
+
+func (t FieldCopyMod) obtainMatchingRegexKeys(obj interface{}, path Path) ([]string, error) {
+	var matchedKeys []string
+	for _, part := range path {
+		switch {
+		case part.MapKey != nil:
+			typedObj, ok := obj.(map[string]interface{})
+			if !ok && typedObj != nil {
+				return matchedKeys, fmt.Errorf("Unexpected non-map found: %T", obj)
+			}
+
+			var found bool
+			obj, found = typedObj[*part.MapKey]
+			if !found {
+				return matchedKeys, nil
+			}
+
+		case part.IndexAndRegex != nil:
+			switch {
+			case part.IndexAndRegex.Regex != nil:
+				regex, err := regexp.Compile(*part.IndexAndRegex.Regex)
+				if err != nil {
+					return matchedKeys, err
+				}
+				typedObj, ok := obj.(map[string]interface{})
+				if !ok && typedObj != nil {
+					return matchedKeys, fmt.Errorf("Unexpected non-map found: %T", obj)
+				}
+				for key := range typedObj {
+					if regex.MatchString(key) {
+						matchedKeys = append(matchedKeys, key)
+					}
+				}
+			}
+
+		default:
+			panic(fmt.Sprintf("Unexpected path part: %#v", part))
+		}
+	}
+	return matchedKeys, nil
 }

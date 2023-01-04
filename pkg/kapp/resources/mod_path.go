@@ -77,7 +77,7 @@ func (p Path) AsString() string {
 
 func (p Path) ContainsNonMapKeys() bool {
 	for _, part := range p {
-		if part.MapKey == nil {
+		if part.MapKey == nil && part.IndexAndRegex.Regex == nil {
 			return true
 		}
 	}

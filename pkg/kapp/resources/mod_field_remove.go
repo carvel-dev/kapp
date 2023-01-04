@@ -95,22 +95,15 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 				}
 
 			case part.IndexAndRegex.Regex != nil:
-				regex, err := regexp.Compile(*part.IndexAndRegex.Regex)
+				matchedKeys, err := t.obtainMatchingRegexKeys(obj, part)
 				if err != nil {
 					return err
 				}
-
-				typedObj, ok := obj.(map[string]interface{})
-				if !ok {
-					return fmt.Errorf("Unexpected non-map found: %T", obj)
-				}
-				for key, _ := range typedObj {
-					if regex.MatchString(key) {
-						path[len(path)-1] = &PathPart{MapKey: &key}
-						err := t.apply(obj, path[i:])
-						if err != nil {
-							return err
-						}
+				for _, key := range matchedKeys {
+					newPath := append(Path{&PathPart{MapKey: &key}}, path[i+1:]...)
+					err := t.apply(obj, newPath)
+					if err != nil {
+						return err
 					}
 				}
 				return nil
@@ -124,4 +117,22 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 	}
 
 	panic("unreachable")
+}
+
+func (t FieldRemoveMod) obtainMatchingRegexKeys(obj interface{}, part *PathPart) ([]string, error) {
+	var matchedKeys []string
+	regex, err := regexp.Compile(*part.IndexAndRegex.Regex)
+	if err != nil {
+		return matchedKeys, err
+	}
+	typedObj, ok := obj.(map[string]interface{})
+	if !ok && typedObj != nil {
+		return matchedKeys, fmt.Errorf("Unexpected non-map found: %T", obj)
+	}
+	for key := range typedObj {
+		if regex.MatchString(key) {
+			matchedKeys = append(matchedKeys, key)
+		}
+	}
+	return matchedKeys, nil
 }
