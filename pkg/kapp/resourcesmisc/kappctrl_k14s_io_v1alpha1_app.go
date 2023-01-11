@@ -51,12 +51,20 @@ func (s KappctrlK14sIoV1alpha1App) IsDoneApplying() DoneApplyState {
 			return DoneApplyState{Done: false, Message: "Reconciling"}
 
 		case cond.Type == kcv1alpha1.ReconcileFailed && cond.Status == corev1.ConditionTrue:
+			errorMsg := app.Status.UsefulErrorMessage
+			if errorMsg == "" {
+				errorMsg = cond.Message
+			}
 			return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
-				"Reconcile failed: %s (message: %s)", cond.Reason, cond.Message)}
+				"Reconcile failed: %s (message: %s)", cond.Reason, errorMsg)}
 
 		case cond.Type == kcv1alpha1.DeleteFailed && cond.Status == corev1.ConditionTrue:
+			errorMsg := app.Status.UsefulErrorMessage
+			if errorMsg == "" {
+				errorMsg = cond.Message
+			}
 			return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
-				"Delete failed: %s (message: %s)", cond.Reason, cond.Message)}
+				"Delete failed: %s (message: %s)", cond.Reason, errorMsg)}
 		}
 	}
 

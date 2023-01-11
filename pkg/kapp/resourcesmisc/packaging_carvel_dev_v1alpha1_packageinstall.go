@@ -52,12 +52,20 @@ func (s PackagingCarvelDevV1alpha1PackageInstall) IsDoneApplying() DoneApplyStat
 			return DoneApplyState{Done: false, Message: "Reconciling"}
 
 		case cond.Type == appv1alpha1.ReconcileFailed && cond.Status == corev1.ConditionTrue:
+			errorMsg := pkgInstall.Status.UsefulErrorMessage
+			if errorMsg == "" {
+				errorMsg = cond.Message
+			}
 			return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
-				"Reconcile failed: %s (message: %s)", cond.Reason, cond.Message)}
+				"Reconcile failed: %s (message: %s)", cond.Reason, errorMsg)}
 
 		case cond.Type == appv1alpha1.DeleteFailed && cond.Status == corev1.ConditionTrue:
+			errorMsg := pkgInstall.Status.UsefulErrorMessage
+			if errorMsg == "" {
+				errorMsg = cond.Message
+			}
 			return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
-				"Delete failed: %s (message: %s)", cond.Reason, cond.Message)}
+				"Delete failed: %s (message: %s)", cond.Reason, errorMsg)}
 		}
 	}
 
