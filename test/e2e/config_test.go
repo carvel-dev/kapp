@@ -918,44 +918,12 @@ rebaseRules:
 	cleanUp()
 	defer cleanUp()
 
-	logger.Section("creating an app with multiple resources", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml"},
+	logger.Section("deploy configmaps with annotations", func() {
+		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml"},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
-		expectedOutput := `
----
-# create: configmap/game-demo (v1) namespace: kapp-test
-apiVersion: v1
-data:
-  player_initial_lives: "3"
-kind: ConfigMap
-metadata:
-  annotations:
-    foo1: bar1
-    foo2: bar2
-  labels:
-  name: game-demo
-  namespace: kapp-test
----
-# create: configmap/game-test (v1) namespace: kapp-test
-apiVersion: v1
-data:
-  player_initial_lives: "3"
-kind: ConfigMap
-metadata:
-  annotations:
-    foo2: bar2
-  labels:
-  name: game-test
-  namespace: kapp-test
-`
-		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
-		out = clearKeys(fieldsExcludedInMatch, out)
-
-		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
-		require.Contains(t, out, expectedOutput, "output does not match")
 	})
 
-	logger.Section("Deploy with new yaml with removed annotations and copying from existing resource", func() {
+	logger.Section("deploy configmaps without annotations", func() {
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml"}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2 + fmt.Sprintf(configYaml, "copy"))})
 		expectedOutput := ``
 
@@ -963,6 +931,7 @@ metadata:
 		out = clearKeys(fieldsExcludedInMatch, out)
 
 		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
+		// rebase rule should copy the annotations matched with regex
 		require.Contains(t, out, expectedOutput, "output does not match")
 	})
 
