@@ -41,9 +41,9 @@ func (t ObjectRefSetMod) apply(obj interface{}, path Path) error {
 				return nil
 			}
 
-		case part.IndexAndRegex != nil:
+		case part.ArrayIndex != nil:
 			switch {
-			case part.IndexAndRegex.All != nil:
+			case part.ArrayIndex.All != nil:
 				if obj == nil {
 					return nil
 				}
@@ -61,20 +61,20 @@ func (t ObjectRefSetMod) apply(obj interface{}, path Path) error {
 
 				return nil // dealt with children, get out
 
-			case part.IndexAndRegex.Index != nil:
+			case part.ArrayIndex.Index != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
 					return fmt.Errorf("Unexpected non-array found: %T", obj)
 				}
 
-				if *part.IndexAndRegex.Index < len(typedObj) {
-					return t.apply(typedObj[*part.IndexAndRegex.Index], path[i+1:])
+				if *part.ArrayIndex.Index < len(typedObj) {
+					return t.apply(typedObj[*part.ArrayIndex.Index], path[i+1:])
 				}
 
 				return nil // index not found, nothing to append to
 
 			default:
-				panic(fmt.Sprintf("Unknown array index: %#v", part.IndexAndRegex))
+				panic(fmt.Sprintf("Unknown array index: %#v", part.ArrayIndex))
 			}
 
 		default:

@@ -61,13 +61,13 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 				return nil // map key is not found, nothing to remove
 			}
 
-		case part.IndexAndRegex != nil:
-			if isLast && part.IndexAndRegex.Regex == nil {
+		case part.ArrayIndex != nil:
+			if isLast && part.RegexObj.Regex == nil {
 				return fmt.Errorf("Expected last part of the path to be map key")
 			}
 
 			switch {
-			case part.IndexAndRegex.All != nil:
+			case part.ArrayIndex.All != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
 					return fmt.Errorf("Unexpected non-array found: %T", obj)
@@ -79,37 +79,36 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 						return err
 					}
 				}
-
 				return nil // dealt with children, get out
 
-			case part.IndexAndRegex.Index != nil:
+			case part.ArrayIndex.Index != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
 					return fmt.Errorf("Unexpected non-array found: %T", obj)
 				}
 
-				if *part.IndexAndRegex.Index < len(typedObj) {
-					obj = typedObj[*part.IndexAndRegex.Index]
+				if *part.ArrayIndex.Index < len(typedObj) {
+					obj = typedObj[*part.ArrayIndex.Index]
 				} else {
 					return nil // index not found, nothing to remove
 				}
 
-			case part.IndexAndRegex.Regex != nil:
-				matchedKeys, err := t.obtainMatchingRegexKeys(obj, part)
+			default:
+				panic(fmt.Sprintf("Unknown array index: %#v", part.ArrayIndex))
+			}
+		case part.RegexObj.Regex != nil:
+			matchedKeys, err := t.obtainMatchingRegexKeys(obj, part)
+			if err != nil {
+				return err
+			}
+			for _, key := range matchedKeys {
+				newPath := append(Path{&PathPart{MapKey: &key}}, path[i+1:]...)
+				err := t.apply(obj, newPath)
 				if err != nil {
 					return err
 				}
-				for _, key := range matchedKeys {
-					newPath := append(Path{&PathPart{MapKey: &key}}, path[i+1:]...)
-					err := t.apply(obj, newPath)
-					if err != nil {
-						return err
-					}
-				}
-				return nil
-			default:
-				panic(fmt.Sprintf("Unknown array index: %#v", part.IndexAndRegex))
 			}
+			return nil
 
 		default:
 			panic(fmt.Sprintf("Unexpected path part: %#v", part))
@@ -121,7 +120,7 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 
 func (t FieldRemoveMod) obtainMatchingRegexKeys(obj interface{}, part *PathPart) ([]string, error) {
 	var matchedKeys []string
-	regex, err := regexp.Compile(*part.IndexAndRegex.Regex)
+	regex, err := regexp.Compile(*part.RegexObj.Regex)
 	if err != nil {
 		return matchedKeys, err
 	}

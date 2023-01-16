@@ -76,13 +76,13 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 				typedObj[*part.MapKey] = obj
 			}
 
-		case part.IndexAndRegex != nil:
-			if isLast && part.IndexAndRegex.Regex == nil {
+		case part.ArrayIndex != nil:
+			if isLast && part.RegexObj == nil {
 				return false, fmt.Errorf("Expected last part of the path to be map key")
 			}
 
 			switch {
-			case part.IndexAndRegex.All != nil:
+			case part.ArrayIndex.All != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
 					return false, fmt.Errorf("Unexpected non-array found: %T", obj)
@@ -94,7 +94,7 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 					objI := objI
 
 					newFullPath := append([]*PathPart{}, fullPath...)
-					newFullPath[len(newFullPath)-1] = &PathPart{IndexAndRegex: &PathPartIndexAndRegex{Index: &objI}}
+					newFullPath[len(newFullPath)-1] = &PathPart{ArrayIndex: &PathPartArrayIndex{Index: &objI}}
 
 					updated, err := t.apply(obj, path[i+1:], newFullPath, srcs)
 					if err != nil {
@@ -107,20 +107,25 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 
 				return anyUpdated, nil // dealt with children, get out
 
-			case part.IndexAndRegex.Index != nil:
+			case part.ArrayIndex.Index != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
 					return false, fmt.Errorf("Unexpected non-array found: %T", obj)
 				}
 
-				if *part.IndexAndRegex.Index < len(typedObj) {
-					obj = typedObj[*part.IndexAndRegex.Index]
+				if *part.ArrayIndex.Index < len(typedObj) {
+					obj = typedObj[*part.ArrayIndex.Index]
 					return t.apply(obj, path[i+1:], fullPath, srcs)
 				}
 
 				return false, nil // index not found, nothing to append to
 
-			case part.IndexAndRegex.Regex != nil:
+			default:
+				panic(fmt.Sprintf("Unknown array index: %#v", part.ArrayIndex))
+			}
+
+		case part.RegexObj != nil:
+			if part.RegexObj.Regex != nil {
 				matchedKeys, err := t.matchRegexWithSources(path, srcs)
 				if err != nil {
 					return false, err
@@ -138,10 +143,7 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 					}
 				}
 				return allUpdated, nil
-			default:
-				panic(fmt.Sprintf("Unknown array index: %#v", part.IndexAndRegex))
 			}
-
 		default:
 			panic(fmt.Sprintf("Unexpected path part: %#v", part))
 		}
@@ -193,26 +195,26 @@ func (t FieldCopyMod) obtainValue(obj interface{}, path Path) (interface{}, bool
 				return nil, false, nil // index is not found return
 			}
 
-		case part.IndexAndRegex != nil:
+		case part.ArrayIndex != nil:
 			if isLast {
 				return nil, false, fmt.Errorf("Expected last part of the path to be map key")
 			}
 
 			switch {
-			case part.IndexAndRegex.Index != nil:
+			case part.ArrayIndex.Index != nil:
 				typedObj, ok := obj.([]interface{})
 				if !ok {
 					return nil, false, fmt.Errorf("Unexpected non-array found: %T", obj)
 				}
 
-				if *part.IndexAndRegex.Index < len(typedObj) {
-					obj = typedObj[*part.IndexAndRegex.Index]
+				if *part.ArrayIndex.Index < len(typedObj) {
+					obj = typedObj[*part.ArrayIndex.Index]
 				} else {
 					return nil, false, nil // index not found, return
 				}
 
 			default:
-				panic(fmt.Sprintf("Unknown array index: %#v", part.IndexAndRegex))
+				panic(fmt.Sprintf("Unknown array index: %#v", part.ArrayIndex))
 			}
 
 		default:
@@ -224,7 +226,7 @@ func (t FieldCopyMod) obtainValue(obj interface{}, path Path) (interface{}, bool
 }
 
 func (t FieldCopyMod) matchRegexWithSources(path Path, srcs map[FieldCopyModSource]Resource) ([]string, error) {
-	// always looking into existing resource?
+	// always looking into existing resource
 	srcRes, found := srcs[FieldCopyModSourceExisting]
 	if !found || srcRes == nil {
 		return []string{}, fmt.Errorf("Existing resource not found")
@@ -248,10 +250,10 @@ func (t FieldCopyMod) obtainMatchingRegexKeys(obj interface{}, path Path) ([]str
 				return matchedKeys, nil
 			}
 
-		case part.IndexAndRegex != nil:
+		case part.RegexObj.Regex != nil:
 			switch {
-			case part.IndexAndRegex.Regex != nil:
-				regex, err := regexp.Compile(*part.IndexAndRegex.Regex)
+			case part.RegexObj.Regex != nil:
+				regex, err := regexp.Compile(*part.RegexObj.Regex)
 				if err != nil {
 					return matchedKeys, err
 				}

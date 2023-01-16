@@ -21,15 +21,19 @@ type ResourceModWithMultiple interface {
 type Path []*PathPart
 
 type PathPart struct {
-	MapKey        *string
-	IndexAndRegex *PathPartIndexAndRegex
+	MapKey     *string
+	RegexObj   *PathPartRegex
+	ArrayIndex *PathPartArrayIndex
 }
 
 var _ json.Unmarshaler = &PathPart{}
 
-type PathPartIndexAndRegex struct {
+type PathPartArrayIndex struct {
 	Index *int
-	All   *bool   `json:"allIndexes"`
+	All   *bool `json:"allIndexes"`
+}
+
+type PathPartRegex struct {
 	Regex *string `json:"regex"`
 }
 
@@ -77,7 +81,7 @@ func (p Path) AsString() string {
 
 func (p Path) ContainsNonMapKeys() bool {
 	for _, part := range p {
-		if part.MapKey == nil && part.IndexAndRegex.Regex == nil {
+		if part.MapKey == nil {
 			return true
 		}
 	}
@@ -89,24 +93,24 @@ func NewPathPartFromString(str string) *PathPart {
 }
 
 func NewPathPartFromIndex(i int) *PathPart {
-	return &PathPart{IndexAndRegex: &PathPartIndexAndRegex{Index: &i}}
+	return &PathPart{ArrayIndex: &PathPartArrayIndex{Index: &i}}
 }
 
 func NewPathPartFromIndexAll() *PathPart {
 	trueBool := true
-	return &PathPart{IndexAndRegex: &PathPartIndexAndRegex{All: &trueBool}}
+	return &PathPart{ArrayIndex: &PathPartArrayIndex{All: &trueBool}}
 }
 
 func (p *PathPart) AsString() string {
 	switch {
 	case p.MapKey != nil:
 		return *p.MapKey
-	case p.IndexAndRegex != nil && p.IndexAndRegex.Index != nil:
-		return fmt.Sprintf("%d", *p.IndexAndRegex.Index)
-	case p.IndexAndRegex != nil && p.IndexAndRegex.All != nil:
+	case p.ArrayIndex != nil && p.ArrayIndex.Index != nil:
+		return fmt.Sprintf("%d", *p.ArrayIndex.Index)
+	case p.ArrayIndex != nil && p.ArrayIndex.All != nil:
 		return "(all)"
-	case p.IndexAndRegex != nil && p.IndexAndRegex.Regex != nil:
-		return *p.IndexAndRegex.Regex
+	case p.RegexObj != nil && p.RegexObj.Regex != nil:
+		return *p.RegexObj.Regex
 	default:
 		panic("Unknown path part")
 	}
@@ -114,13 +118,16 @@ func (p *PathPart) AsString() string {
 
 func (p *PathPart) UnmarshalJSON(data []byte) error {
 	var str string
-	var idx PathPartIndexAndRegex
+	var idx PathPartArrayIndex
+	var regx PathPartRegex
 
 	switch {
 	case json.Unmarshal(data, &str) == nil:
 		p.MapKey = &str
+	case json.Unmarshal(data, &regx) == nil && regx.Regex != nil:
+		p.RegexObj = &regx
 	case json.Unmarshal(data, &idx) == nil:
-		p.IndexAndRegex = &idx
+		p.ArrayIndex = &idx
 	default:
 		return fmt.Errorf("Unknown path part")
 	}
