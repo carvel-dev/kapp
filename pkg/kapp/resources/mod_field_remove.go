@@ -62,7 +62,7 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 			}
 
 		case part.ArrayIndex != nil:
-			if isLast && part.Regex.Regex == nil {
+			if isLast {
 				return fmt.Errorf("Expected last part of the path to be map key")
 			}
 

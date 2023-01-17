@@ -906,6 +906,18 @@ rebaseRules:
       - apiVersionKindMatcher: {apiVersion: v1, kind: ConfigMap}
 `
 
+	faultyConfigYaml := `
+---
+apiVersion: kapp.k14s.io/v1alpha1
+kind: Config
+rebaseRules:
+  - path: [metadata, annotations, {regex: }]
+    type: %s
+    sources: [new, existing]
+    resourceMatchers:
+      - apiVersionKindMatcher: {apiVersion: v1, kind: ConfigMap}
+`
+
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -919,25 +931,25 @@ rebaseRules:
 	defer cleanUp()
 
 	logger.Section("deploy configmaps with annotations", func() {
-		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml"},
+		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 	})
 
 	logger.Section("deploy configmaps without annotations", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml", "-c", "--diff-summary=true"}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2 + fmt.Sprintf(configYaml, "copy"))})
-		expectedOutput := `
-Changes
-Namespace  Name  Kind  Age  Op  Op st.  Wait to  Rs  Ri  $
-Op:      0 create, 0 delete, 0 update, 0 noop, 0 exists
-Wait to: 0 reconcile, 0 delete, 0 noop
-Succeeded
-`
-		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
-		out = clearKeys(fieldsExcludedInMatch, out)
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
+			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml2 + fmt.Sprintf(configYaml, "copy"))})
 
-		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
-		// rebase rule should copy the annotations matched with regex
-		require.Contains(t, out, expectedOutput, "output does not match")
+		require.Errorf(t, err, "Expected to receive error")
+		require.Containsf(t, err.Error(), "Exiting after diffing with no pending changes (exit status 2)", "Expected to find stderr output")
+		require.Containsf(t, err.Error(), "exit code: '2'", "Expected to find exit code")
+	})
+
+	logger.Section("passing faulty config", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
+			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml2 + fmt.Sprintf(faultyConfigYaml, "copy"))})
+
+		require.Errorf(t, err, "Expected to receive error")
+		require.Containsf(t, err.Error(), "panic: Unknown path part", "Expected to panic")
 	})
 
 	logger.Section("Remove all the annotation with remove config", func() {

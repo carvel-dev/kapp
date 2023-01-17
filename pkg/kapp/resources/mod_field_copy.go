@@ -69,7 +69,7 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 			if !found || obj == nil {
 				// create empty maps if there are no downstream array indexes;
 				// if there are, we cannot make them anyway, so just exit
-				if path.ContainsNonMapKeys() {
+				if path.ContainsNonMapKeysAndRegex() {
 					return false, nil
 				}
 				obj = map[string]interface{}{}
@@ -224,12 +224,15 @@ func (t FieldCopyMod) obtainValue(obj interface{}, path Path) (interface{}, bool
 }
 
 func (t FieldCopyMod) matchRegexWithSources(path Path, srcs map[FieldCopyModSource]Resource) ([]string, error) {
-	// always looking into existing resource
-	srcRes, found := srcs[FieldCopyModSourceExisting]
-	if !found || srcRes == nil {
-		return []string{}, fmt.Errorf("Existing resource not found")
+	for _, src := range t.Sources {
+		if srcRes, found := srcs[src]; found && srcRes != nil {
+			matchedKeys, err := t.obtainMatchingRegexKeys(srcRes.unstructured().Object, path)
+			if err == nil && len(matchedKeys) > 0 {
+				return matchedKeys, err
+			}
+		}
 	}
-	return t.obtainMatchingRegexKeys(srcRes.unstructured().Object, path)
+	return []string{}, fmt.Errorf("Field value not present in mentioned sources %s", t.Sources)
 }
 
 func (t FieldCopyMod) obtainMatchingRegexKeys(obj interface{}, path Path) ([]string, error) {
