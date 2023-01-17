@@ -77,7 +77,7 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 			}
 
 		case part.ArrayIndex != nil:
-			if isLast && part.RegexObj == nil {
+			if isLast {
 				return false, fmt.Errorf("Expected last part of the path to be map key")
 			}
 
@@ -124,26 +124,24 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 				panic(fmt.Sprintf("Unknown array index: %#v", part.ArrayIndex))
 			}
 
-		case part.RegexObj != nil:
-			if part.RegexObj.Regex != nil {
-				matchedKeys, err := t.matchRegexWithSources(path, srcs)
+		case part.Regex != nil && part.Regex.Regex != nil:
+			matchedKeys, err := t.matchRegexWithSources(path, srcs)
+			if err != nil {
+				return false, err
+			}
+			allUpdated := true
+			for _, key := range matchedKeys {
+				newPath := append(Path{&PathPart{MapKey: &key}}, path[i+1:]...)
+				newFullPath := fullPath[:len(fullPath)-1]
+				updated, err := t.apply(obj, newPath, newFullPath, srcs)
 				if err != nil {
 					return false, err
 				}
-				allUpdated := true
-				for _, key := range matchedKeys {
-					newPath := append(Path{&PathPart{MapKey: &key}}, path[i+1:]...)
-					newFullPath := fullPath[:len(fullPath)-1]
-					updated, err := t.apply(obj, newPath, newFullPath, srcs)
-					if err != nil {
-						return false, err
-					}
-					if !updated {
-						allUpdated = false
-					}
+				if !updated {
+					allUpdated = false
 				}
-				return allUpdated, nil
 			}
+			return allUpdated, nil
 		default:
 			panic(fmt.Sprintf("Unexpected path part: %#v", part))
 		}
@@ -250,21 +248,18 @@ func (t FieldCopyMod) obtainMatchingRegexKeys(obj interface{}, path Path) ([]str
 				return matchedKeys, nil
 			}
 
-		case part.RegexObj.Regex != nil:
-			switch {
-			case part.RegexObj.Regex != nil:
-				regex, err := regexp.Compile(*part.RegexObj.Regex)
-				if err != nil {
-					return matchedKeys, err
-				}
-				typedObj, ok := obj.(map[string]interface{})
-				if !ok && typedObj != nil {
-					return matchedKeys, fmt.Errorf("Unexpected non-map found: %T", obj)
-				}
-				for key := range typedObj {
-					if regex.MatchString(key) {
-						matchedKeys = append(matchedKeys, key)
-					}
+		case part.Regex != nil && part.Regex.Regex != nil:
+			regex, err := regexp.Compile(*part.Regex.Regex)
+			if err != nil {
+				return matchedKeys, err
+			}
+			typedObj, ok := obj.(map[string]interface{})
+			if !ok && typedObj != nil {
+				return matchedKeys, fmt.Errorf("Unexpected non-map found: %T", obj)
+			}
+			for key := range typedObj {
+				if regex.MatchString(key) {
+					matchedKeys = append(matchedKeys, key)
 				}
 			}
 

@@ -924,9 +924,14 @@ rebaseRules:
 	})
 
 	logger.Section("deploy configmaps without annotations", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml"}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2 + fmt.Sprintf(configYaml, "copy"))})
-		expectedOutput := ``
-
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml", "-c", "--diff-summary=true"}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2 + fmt.Sprintf(configYaml, "copy"))})
+		expectedOutput := `
+Changes
+Namespace  Name  Kind  Age  Op  Op st.  Wait to  Rs  Ri  $
+Op:      0 create, 0 delete, 0 update, 0 noop, 0 exists
+Wait to: 0 reconcile, 0 delete, 0 noop
+Succeeded
+`
 		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
 		out = clearKeys(fieldsExcludedInMatch, out)
 

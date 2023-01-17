@@ -22,7 +22,7 @@ type Path []*PathPart
 
 type PathPart struct {
 	MapKey     *string
-	RegexObj   *PathPartRegex
+	Regex      *PathPartRegex
 	ArrayIndex *PathPartArrayIndex
 }
 
@@ -81,7 +81,7 @@ func (p Path) AsString() string {
 
 func (p Path) ContainsNonMapKeys() bool {
 	for _, part := range p {
-		if part.MapKey == nil {
+		if part.MapKey == nil && part.Regex.Regex == nil {
 			return true
 		}
 	}
@@ -109,8 +109,8 @@ func (p *PathPart) AsString() string {
 		return fmt.Sprintf("%d", *p.ArrayIndex.Index)
 	case p.ArrayIndex != nil && p.ArrayIndex.All != nil:
 		return "(all)"
-	case p.RegexObj != nil && p.RegexObj.Regex != nil:
-		return *p.RegexObj.Regex
+	case p.Regex != nil && p.Regex.Regex != nil:
+		return *p.Regex.Regex
 	default:
 		panic("Unknown path part")
 	}
@@ -125,7 +125,7 @@ func (p *PathPart) UnmarshalJSON(data []byte) error {
 	case json.Unmarshal(data, &str) == nil:
 		p.MapKey = &str
 	case json.Unmarshal(data, &regx) == nil && regx.Regex != nil:
-		p.RegexObj = &regx
+		p.Regex = &regx
 	case json.Unmarshal(data, &idx) == nil:
 		p.ArrayIndex = &idx
 	default:
