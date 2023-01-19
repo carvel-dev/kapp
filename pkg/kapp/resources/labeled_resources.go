@@ -93,6 +93,7 @@ type AllAndMatchingOpts struct {
 	ExistingNonLabeledResourcesCheck            bool
 	ExistingNonLabeledResourcesCheckConcurrency int
 	SkipResourceOwnershipCheck                  bool
+	IsNewApp                                    bool
 
 	DisallowedResourcesByLabelKeys []string
 	LabelErrorResolutionFunc       func(string, string) string
@@ -107,15 +108,22 @@ type AllAndMatchingOpts struct {
 func (a *LabeledResources) AllAndMatching(newResources []Resource, opts AllAndMatchingOpts) ([]Resource, error) {
 	defer a.logger.DebugFunc("AllAndMatching").Finish()
 
-	resources, err := a.All(opts.IdentifiedResourcesListOpts)
-	if err != nil {
-		return nil, err
+	var (
+		resources []Resource
+		err       error
+	)
+
+	// avoid listing labeled resources for newly created app
+	if !opts.IsNewApp {
+		resources, err = a.All(opts.IdentifiedResourcesListOpts)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var nonLabeledResources []Resource
 
 	if opts.ExistingNonLabeledResourcesCheck {
-		var err error
 		nonLabeledResources, err = a.findNonLabeledResources(
 			resources, newResources, opts.ExistingNonLabeledResourcesCheckConcurrency)
 		if err != nil {

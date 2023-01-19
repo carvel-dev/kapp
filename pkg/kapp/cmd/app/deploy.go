@@ -92,6 +92,7 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *DeployOptions) Run() error {
+	var isNewApp bool
 	failingAPIServicesPolicy := o.ResourceTypesFlags.FailingAPIServicePolicy()
 
 	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
@@ -107,7 +108,7 @@ func (o *DeployOptions) Run() error {
 	if o.PrevAppFlags.PrevAppName != "" {
 		err = app.RenamePrevApp(o.PrevAppFlags.PrevAppName, appLabels, o.DiffFlags.Run)
 	} else {
-		err = app.CreateOrUpdate(appLabels, o.DiffFlags.Run)
+		isNewApp, err = app.CreateOrUpdate(appLabels, o.DiffFlags.Run)
 	}
 
 	if err != nil {
@@ -158,7 +159,7 @@ func (o *DeployOptions) Run() error {
 	}
 
 	existingResources, existingPodRs, err := o.existingResources(
-		newResources, labeledResources, resourceFilter, supportObjs.Apps, usedGKs, append(meta.LastChange.Namespaces, nsNames...))
+		newResources, labeledResources, resourceFilter, supportObjs.Apps, usedGKs, append(meta.LastChange.Namespaces, nsNames...), isNewApp)
 	if err != nil {
 		return err
 	}
@@ -352,7 +353,7 @@ func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
 
 func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 	labeledResources *ctlres.LabeledResources, resourceFilter ctlres.ResourceFilter,
-	apps ctlapp.Apps, usedGKs []schema.GroupKind, resourceNamespaces []string) ([]ctlres.Resource, []ctlres.Resource, error) {
+	apps ctlapp.Apps, usedGKs []schema.GroupKind, resourceNamespaces []string, isNewApp bool) ([]ctlres.Resource, []ctlres.Resource, error) {
 
 	labelErrorResolutionFunc := func(key string, val string) string {
 		items, _ := apps.List(nil)
@@ -369,6 +370,7 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 		ExistingNonLabeledResourcesCheck:            o.DeployFlags.ExistingNonLabeledResourcesCheck,
 		ExistingNonLabeledResourcesCheckConcurrency: o.DeployFlags.ExistingNonLabeledResourcesCheckConcurrency,
 		SkipResourceOwnershipCheck:                  o.DeployFlags.OverrideOwnershipOfExistingResources,
+		IsNewApp:                                    isNewApp,
 
 		// Prevent accidently overriding kapp state records
 		DisallowedResourcesByLabelKeys: []string{ctlapp.KappIsAppLabelKey},
