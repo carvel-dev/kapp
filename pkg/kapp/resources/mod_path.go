@@ -90,7 +90,7 @@ func (p Path) ContainsNonMapKeys() bool {
 
 func (p Path) ContainsNonMapKeysAndRegex() bool {
 	for _, part := range p {
-		if part.MapKey == nil && part.Regex.Regex == nil {
+		if part.MapKey == nil && (part.Regex == nil || part.Regex.Regex == nil) {
 			return true
 		}
 	}
