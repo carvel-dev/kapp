@@ -17,7 +17,7 @@ Highlights:
 - target specific Pods via DNS via per-Pod created Service (e.g. redis-0 is a Service)
 - since we deployed this via one-off kapp invocation if Pod gets deleted from the cluster, it will not be recreated
   - to address this, make sure that kapp deploy is continiously executed
-    - simplest way to do that is to use [kapp-controller](https://github.com/vmware-tanzu/carvel-kapp-controller)
+    - simplest way to do that is to use [kapp-controller](https://github.com/carvel-dev/kapp-controller)
   - (...it would be nice to create a tiny dedicated controller that can keep one named Pod alive)
 
 Note: this example uses Redis, but I actually did not bother configuring Redis replication between Pods since this was not the point of this example.
