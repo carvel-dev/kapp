@@ -1,2 +1,2 @@
 # kapp Governance
-kapp governance can be found within the main [Carvel GitHub repo](https://github.com/vmware-tanzu/carvel) within the [GOVERNANCE.md](https://github.com/vmware-tanzu/carvel/blob/develop/GOVERNANCE.md) file.
+kapp governance can be found within the main [Carvel GitHub repo](https://github.com/carvel-dev/carvel) within the [GOVERNANCE.md](https://github.com/carvel-dev/carvel/blob/develop/GOVERNANCE.md) file.
