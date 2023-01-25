@@ -7,7 +7,7 @@ jobs:
   validate-github-action:
     runs-on: ubuntu-latest
     steps:
-      - uses: vmware-tanzu/carvel-setup-action@v1
+      - uses: carvel-dev/setup-action@v1
         with:
           only: kapp
           kapp: ${{ github.event.release.tag_name }}

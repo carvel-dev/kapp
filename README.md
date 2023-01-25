@@ -5,7 +5,7 @@
 - Website: https://carvel.dev/kapp
 - Slack: [#carvel in Kubernetes slack](https://slack.kubernetes.io)
 - [Docs](docs/README.md) with topics about diff, apply, gitops, config, _blog posts and talks_ etc.
-- Install: grab prebuilt binaries from the [Releases page](https://github.com/vmware-tanzu/carvel-kapp/releases) or [Homebrew Carvel tap](https://github.com/vmware-tanzu/homebrew-carvel).
+- Install: grab prebuilt binaries from the [Releases page](https://github.com/carvel-dev/kapp/releases) or [Homebrew Carvel tap](https://github.com/carvel-dev/homebrew).
 - Backlog: [See what we're up to](https://app.zenhub.com/workspaces/carvel-backlog-6013063a24147d0011410709/board?repos=175895515). (Note: we use ZenHub which requires GitHub authorization).
 
 `kapp` (pronounced: `kap`) CLI encourages Kubernetes users to manage resources in bulk by working with "Kubernetes applications" (sets of resources with the same label). It focuses on resource diffing, labeling, deployment and deletion. Unlike tools like Helm, `kapp` considers YAML templating and management of packages outside of its scope, though it works great with tools that generate Kubernetes configuration.
@@ -40,7 +40,7 @@ Please join us during our online community meetings. Details can be found on our
 
 You can chat with us on Kubernetes Slack in the #carvel channel and follow us on Twitter at @carvel_dev.
 
-Check out which organizations are using and contributing to Carvel: [Adopter's list](https://github.com/vmware-tanzu/carvel/blob/master/ADOPTERS.md)
+Check out which organizations are using and contributing to Carvel: [Adopter's list](https://github.com/carvel-dev/carvel/blob/master/ADOPTERS.md)
 
 ## Development
 
