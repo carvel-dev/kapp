@@ -359,7 +359,12 @@ func (a *RecordedApp) Delete() error {
 		return err
 	}
 
-	err = NewRecordedAppChanges(a.nsName, a.name, a.coreClient).DeleteAll()
+	meta, err := a.meta()
+	if err != nil {
+		return err
+	}
+
+	err = NewRecordedAppChanges(a.nsName, a.name, meta.LabelValue, a.coreClient).DeleteAll()
 	if err != nil {
 		return fmt.Errorf("Deleting app changes: %w", err)
 	}
@@ -498,7 +503,11 @@ func (a *RecordedApp) meta() (Meta, error) {
 }
 
 func (a *RecordedApp) Changes() ([]Change, error) {
-	return NewRecordedAppChanges(a.nsName, a.name, a.coreClient).List()
+	meta, err := a.meta()
+	if err != nil {
+		return nil, err
+	}
+	return NewRecordedAppChanges(a.nsName, a.name, meta.LabelValue, a.coreClient).List()
 }
 
 func (a *RecordedApp) LastChange() (Change, error) {
@@ -522,7 +531,12 @@ func (a *RecordedApp) LastChange() (Change, error) {
 }
 
 func (a *RecordedApp) BeginChange(meta ChangeMeta) (Change, error) {
-	change, err := NewRecordedAppChanges(a.nsName, a.name, a.coreClient).Begin(meta)
+	appMeta, err := a.meta()
+	if err != nil {
+		return nil, err
+	}
+
+	change, err := NewRecordedAppChanges(a.nsName, a.name, appMeta.LabelValue, a.coreClient).Begin(meta)
 	if err != nil {
 		return nil, err
 	}
