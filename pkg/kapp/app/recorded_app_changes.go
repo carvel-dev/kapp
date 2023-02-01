@@ -12,24 +12,27 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/client-go/kubernetes"
 )
 
 const (
 	isChangeLabelKey   = "kapp.k14s.io/is-app-change"
 	isChangeLabelValue = ""
-	changeLabelKey     = "kapp.k14s.io/app-change-app" // holds app name
+	changeLabelKey     = "kapp.k14s.io/app-change-app" // holds app name or label
 )
 
 type RecordedAppChanges struct {
 	nsName  string
 	appName string
 
+	appLabelValue string
+
 	coreClient kubernetes.Interface
 }
 
-func NewRecordedAppChanges(nsName, appName string, coreClient kubernetes.Interface) RecordedAppChanges {
-	return RecordedAppChanges{nsName, appName, coreClient}
+func NewRecordedAppChanges(nsName, appName, appLabelValue string, coreClient kubernetes.Interface) RecordedAppChanges {
+	return RecordedAppChanges{nsName, appName, appLabelValue, coreClient}
 }
 
 func (a RecordedAppChanges) List() ([]Change, error) {
@@ -38,7 +41,7 @@ func (a RecordedAppChanges) List() ([]Change, error) {
 	listOpts := metav1.ListOptions{
 		LabelSelector: labels.Set(map[string]string{
 			isChangeLabelKey: isChangeLabelValue,
-			changeLabelKey:   a.appName,
+			changeLabelKey:   a.changeLabelValue(),
 		}).String(),
 	}
 
@@ -70,7 +73,7 @@ func (a RecordedAppChanges) DeleteAll() error {
 	listOpts := metav1.ListOptions{
 		LabelSelector: labels.Set(map[string]string{
 			isChangeLabelKey: isChangeLabelValue,
-			changeLabelKey:   a.appName,
+			changeLabelKey:   a.changeLabelValue(),
 		}).String(),
 	}
 
@@ -102,7 +105,7 @@ func (a RecordedAppChanges) Begin(meta ChangeMeta) (*ChangeImpl, error) {
 			Namespace:    a.nsName,
 			Labels: map[string]string{
 				isChangeLabelKey: isChangeLabelValue,
-				changeLabelKey:   a.appName,
+				changeLabelKey:   a.changeLabelValue(),
 			},
 		},
 		Data: newMeta.AsData(),
@@ -121,4 +124,11 @@ func (a RecordedAppChanges) Begin(meta ChangeMeta) (*ChangeImpl, error) {
 	}
 
 	return change, nil
+}
+
+func (a RecordedAppChanges) changeLabelValue() string {
+	if len(a.appName) > validation.LabelValueMaxLength {
+		return a.appLabelValue
+	}
+	return a.appName
 }
