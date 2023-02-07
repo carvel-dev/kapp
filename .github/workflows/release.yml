@@ -39,7 +39,7 @@ jobs:
           install minikube-linux-amd64 /usr/local/bin/minikube
           minikube start --driver=docker --memory 4096
           eval $(minikube docker-env --shell=bash)
-          
+
           # Ensure that there is no existing kapp installed
           rm -f /tmp/bin/kapp
 
