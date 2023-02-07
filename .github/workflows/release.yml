@@ -45,7 +45,6 @@ jobs:
 
       - name: Create kapp binary
         run: |
-          ls -la
           set -e -x
           VERSION=`echo ${{ github.ref }}  | grep -Eo '[0-9].*'`
           ./hack/build.sh
