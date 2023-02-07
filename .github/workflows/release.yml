@@ -25,6 +25,7 @@ jobs:
 
       - name: Run GoReleaser
         # GoReleaser v4.2.0
+        # https://goreleaser.com/customization/build/#define-build-tag
         uses: goreleaser/goreleaser-action@f82d6c1c344bcacabba2c841718984797f664a6b
         if: startsWith(github.ref, 'refs/tags/')
         with:
@@ -32,6 +33,7 @@ jobs:
           args: release --rm-dist --debug ${{ env.SKIP_PUBLISH }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ github.ref_name }}
 
       - name: Setup Minikube
         run: |
