@@ -9,6 +9,9 @@ jobs:
   kappreleaser:
     name: kapp release
     runs-on: ubuntu-latest
+    # Set permissions of github token. See https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#permissions
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -20,14 +23,15 @@ jobs:
         with:
           go-version: "1.19.5"
 
-      - name: Build kapp Script
-        run: |
-          ./hack/build-binaries.sh
-          shasum -a 256 ./kapp-* | tee checksums.txt
-          echo "# :open_file_folder: Files Checksum" | tee checksums-formatted.txt
-          echo \`\`\` | tee -a checksums-formatted.txt
-          cat checksums.txt | tee -a checksums-formatted.txt
-          echo \`\`\` | tee -a checksums-formatted.txt
+      - name: Run GoReleaser
+        # GoReleaser v2.5.0
+        uses: goreleaser/goreleaser-action@5e15885530fb01d81d1f24e8a6f54ebbd0fed7eb
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          version: 0.184.0
+          args: release --rm-dist --debug ${{ env.SKIP_PUBLISH }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Minikube
         run: |
@@ -39,31 +43,23 @@ jobs:
           # Ensure that there is no existing kapp installed
           rm -f /tmp/bin/kapp
 
-      - name: Add kapp binary to the Path
+      - name: Run Test cases
         run: |
+          # Build kapp binary
+          set -e -x
+          VERSION=`echo ${{ github.ref }}  | grep -Eo '[0-9].*'`
+          ./hack/build.sh
+
+          # Add binary to the path
           mkdir bin
           mv kapp bin
-          echo "$PWD/bin" >> $GITHUB_PATH
-          echo $GITHUB_PATH
+          PATH=$PATH:$PWD/bin
+          echo $PATH
 
-      - name: Run test cases
-        run: |
+          # Run test cases
           ./hack/test-external.sh
 
-      - name: Upload binaries and create draft Release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: ${{ github.ref_name }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          body_path: ./checksums-formatted.txt
-          files: |
-            kapp-*
-            checksums.txt
-          draft: true
-          prerelease: true
-
-      - name: Get uploaded release YAML checksum
-        uses: actions/github-script@v4
+      - uses: actions/github-script@v4
         id: get-checksums-from-draft-release
         if: startsWith(github.ref, 'refs/tags/')
         with:
@@ -104,6 +100,7 @@ jobs:
               }
             }
             console.log(checksums)
+
             return `${checksums['kapp-darwin-amd64']}  ./kapp-darwin-amd64
             ${checksums['kapp-darwin-arm64']}  ./kapp-darwin-arm64
             ${checksums['kapp-linux-amd64']}  ./kapp-linux-amd64
@@ -116,8 +113,11 @@ jobs:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: |
           set -e -x
-          cat ./checksums.txt
-          diff ./checksums.txt <(cat <<EOF
+          VERSION=`echo ${{ github.ref }}  | grep -Eo '[0-9].*'`
+
+          ./hack/build-binaries.sh "$VERSION" > ./go-checksums
+          cat ./go-checksums
+          diff ./go-checksums <(cat <<EOF
           ${{steps.get-checksums-from-draft-release.outputs.result}}
           EOF
           )
