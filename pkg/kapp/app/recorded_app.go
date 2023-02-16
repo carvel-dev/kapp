@@ -26,13 +26,15 @@ const (
 	KappIsConfigmapMigratedAnnotationKey   = "kapp.k14s.io/is-configmap-migrated"
 	KappIsConfigmapMigratedAnnotationValue = ""
 	AppSuffix                              = ".apps.k14s.io"
+	KappAppChangesUseAppLabelAnnotationKey = "kapp.k14s.io/app-changes-use-app-label"
 )
 
 type RecordedApp struct {
-	name              string
-	nsName            string
-	isMigrated        bool
-	creationTimestamp time.Time
+	name                  string
+	nsName                string
+	isMigrated            bool
+	creationTimestamp     time.Time
+	appChangesUseAppLabel bool
 
 	coreClient             kubernetes.Interface
 	identifiedResources    ctlres.IdentifiedResources
@@ -46,7 +48,7 @@ func NewRecordedApp(name, nsName string, creationTimestamp time.Time, coreClient
 	identifiedResources ctlres.IdentifiedResources, appInDiffNsHintMsgFunc func(string) string, logger logger.Logger) *RecordedApp {
 
 	// Always trim suffix, even if user added it manually (to avoid double migration)
-	return &RecordedApp{strings.TrimSuffix(name, AppSuffix), nsName, false, creationTimestamp, coreClient, identifiedResources, appInDiffNsHintMsgFunc,
+	return &RecordedApp{strings.TrimSuffix(name, AppSuffix), nsName, false, creationTimestamp, false, coreClient, identifiedResources, appInDiffNsHintMsgFunc,
 		nil, logger.NewPrefixed("RecordedApp")}
 }
 
@@ -196,6 +198,10 @@ func (a *RecordedApp) create(labels map[string]string, isDiffRun bool) error {
 			Labels: map[string]string{
 				KappIsAppLabelKey: kappIsAppLabelValue,
 			},
+			// Use app label as app change label for all new apps
+			Annotations: map[string]string{
+				KappAppChangesUseAppLabelAnnotationKey: "",
+			},
 		},
 		Data: Meta{
 			LabelKey:   kappAppLabelKey,
@@ -336,7 +342,7 @@ func (a *RecordedApp) Delete() error {
 		return err
 	}
 
-	err = NewRecordedAppChanges(a.nsName, a.name, meta.LabelValue, a.coreClient).DeleteAll()
+	err = NewRecordedAppChanges(a.nsName, a.name, meta.LabelValue, a.appChangesUseAppLabel, a.coreClient).DeleteAll()
 	if err != nil {
 		return fmt.Errorf("Deleting app changes: %w", err)
 	}
@@ -429,6 +435,9 @@ func (a *RecordedApp) isMigrationEnabled() bool {
 func (a *RecordedApp) Meta() (Meta, error) { return a.meta() }
 
 func (a *RecordedApp) setMeta(app corev1.ConfigMap) (Meta, error) {
+	// TODO: Should this be moved out of this function?
+	_, a.appChangesUseAppLabel = app.Annotations[KappAppChangesUseAppLabelAnnotationKey]
+
 	meta, err := NewAppMetaFromData(app.Data)
 	if err != nil {
 		errMsg := "App '%s' (namespace: %s) backed by ConfigMap '%s' did not contain parseable app metadata: %w"
@@ -479,7 +488,8 @@ func (a *RecordedApp) Changes() ([]Change, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewRecordedAppChanges(a.nsName, a.name, meta.LabelValue, a.coreClient).List()
+
+	return NewRecordedAppChanges(a.nsName, a.name, meta.LabelValue, a.appChangesUseAppLabel, a.coreClient).List()
 }
 
 func (a *RecordedApp) LastChange() (Change, error) {
@@ -508,7 +518,7 @@ func (a *RecordedApp) BeginChange(meta ChangeMeta) (Change, error) {
 		return nil, err
 	}
 
-	change, err := NewRecordedAppChanges(a.nsName, a.name, appMeta.LabelValue, a.coreClient).Begin(meta)
+	change, err := NewRecordedAppChanges(a.nsName, a.name, appMeta.LabelValue, a.appChangesUseAppLabel, a.coreClient).Begin(meta)
 	if err != nil {
 		return nil, err
 	}
