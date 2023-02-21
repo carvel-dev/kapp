@@ -22,11 +22,10 @@ type App interface {
 	UsedGKs() (*[]schema.GroupKind, error)
 	UpdateUsedGVsAndGKs([]schema.GroupVersion, []schema.GroupKind) error
 
-	CreateOrUpdate(map[string]string, bool) (bool, error)
+	CreateOrUpdate(string, map[string]string, bool) (bool, error)
 	Exists() (bool, string, error)
 	Delete() error
 	Rename(string, string) error
-	RenamePrevApp(string, map[string]string, bool) error
 
 	// Sorted as first is oldest
 	Changes() ([]Change, error)

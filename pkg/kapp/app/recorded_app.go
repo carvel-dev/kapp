@@ -127,14 +127,13 @@ func (a *RecordedApp) UpdateUsedGVsAndGKs(gvs []schema.GroupVersion, gks []schem
 	})
 }
 
-func (a *RecordedApp) CreateOrUpdate(labels map[string]string, isDiffRun bool) (bool, error) {
+func (a *RecordedApp) CreateOrUpdate(prevAppName string, labels map[string]string, isDiffRun bool) (bool, error) {
 	defer a.logger.DebugFunc("CreateOrUpdate").Finish()
 
 	app, foundMigratedApp, err := a.find(a.fqName())
 	if err != nil {
 		return false, err
 	}
-
 	if foundMigratedApp {
 		a.isMigrated = true
 		return false, a.updateApp(app, labels)
@@ -144,12 +143,35 @@ func (a *RecordedApp) CreateOrUpdate(labels map[string]string, isDiffRun bool) (
 	if err != nil {
 		return false, err
 	}
-
 	if foundNonMigratedApp {
 		if a.isMigrationEnabled() {
 			return false, a.migrate(app, labels, a.fqName())
 		}
 		return false, a.updateApp(app, labels)
+	}
+
+	if prevAppName == "" {
+		return true, a.create(labels, isDiffRun)
+	}
+
+	app, foundMigratedPrevApp, err := a.find(prevAppName + AppSuffix)
+	if err != nil {
+		return false, err
+	}
+	if foundMigratedPrevApp {
+		a.isMigrated = true
+		return false, a.renameConfigMap(app, a.fqName(), a.nsName)
+	}
+
+	app, foundNonMigratedPrevApp, err := a.find(prevAppName)
+	if err != nil {
+		return false, err
+	}
+	if foundNonMigratedPrevApp {
+		if a.isMigrationEnabled() {
+			return false, a.migrate(app, labels, a.fqName())
+		}
+		return false, a.renameConfigMap(app, a.name, a.nsName)
 	}
 
 	return true, a.create(labels, isDiffRun)
@@ -220,56 +242,6 @@ func (a *RecordedApp) updateApp(existingConfigMap *corev1.ConfigMap, labels map[
 	}
 
 	return nil
-}
-
-func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string, isDiffRun bool) error {
-	defer a.logger.DebugFunc("RenamePrevApp").Finish()
-
-	app, foundMigratedApp, err := a.find(a.fqName())
-	if err != nil {
-		return err
-	}
-
-	if foundMigratedApp {
-		a.isMigrated = true
-		return a.updateApp(app, labels)
-	}
-
-	app, foundNonMigratedApp, err := a.find(a.name)
-	if err != nil {
-		return err
-	}
-
-	if foundNonMigratedApp {
-		if a.isMigrationEnabled() {
-			return a.migrate(app, labels, a.fqName())
-		}
-		return a.updateApp(app, labels)
-	}
-
-	app, foundMigratedPrevApp, err := a.find(prevAppName + AppSuffix)
-	if err != nil {
-		return err
-	}
-
-	if foundMigratedPrevApp {
-		a.isMigrated = true
-		return a.renameConfigMap(app, a.fqName(), a.nsName)
-	}
-
-	app, foundNonMigratedPrevApp, err := a.find(prevAppName)
-	if err != nil {
-		return err
-	}
-
-	if foundNonMigratedPrevApp {
-		if a.isMigrationEnabled() {
-			return a.migrate(app, labels, a.fqName())
-		}
-		return a.renameConfigMap(app, a.name, a.nsName)
-	}
-
-	return a.create(labels, isDiffRun)
 }
 
 func (a *RecordedApp) migrate(c *corev1.ConfigMap, labels map[string]string, newName string) error {
