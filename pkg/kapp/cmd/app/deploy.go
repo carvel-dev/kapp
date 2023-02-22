@@ -92,7 +92,6 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 }
 
 func (o *DeployOptions) Run() error {
-	var isNewApp bool
 	failingAPIServicesPolicy := o.ResourceTypesFlags.FailingAPIServicePolicy()
 
 	app, supportObjs, err := Factory(o.depsFactory, o.AppFlags, o.ResourceTypesFlags, o.logger)
@@ -105,11 +104,7 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	if o.PrevAppFlags.PrevAppName != "" {
-		err = app.RenamePrevApp(o.PrevAppFlags.PrevAppName, appLabels, o.DiffFlags.Run)
-	} else {
-		isNewApp, err = app.CreateOrUpdate(appLabels, o.DiffFlags.Run)
-	}
+	isNewApp, err := app.CreateOrUpdate(o.PrevAppFlags.PrevAppName, appLabels, o.DiffFlags.Run)
 
 	if err != nil {
 		return err
