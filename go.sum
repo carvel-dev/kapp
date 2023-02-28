@@ -337,8 +337,8 @@ github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1
 github.com/urfave/cli/v2 v2.2.0/go.mod h1:SE9GqnLQmjVa0iPEY0f1w3ygNIYcIJ0OKPMoW2caLfQ=
 github.com/vito/go-interact v0.0.0-20171111012221-fa338ed9e9ec h1:Klu98tQ9Z1t23gvC7p7sCmvxkZxLhBHLNyrUPsWsYFg=
 github.com/vito/go-interact v0.0.0-20171111012221-fa338ed9e9ec/go.mod h1:wPlfmglZmRWMYv/qJy3P+fK/UnoQB5ISk4txfNd9tDo=
-github.com/vmware-tanzu/carvel-kapp-controller v0.44.1 h1:wtlopLEmsEbbsghsXrWzpjdcMt7opavcDT0bGQV4foM=
-github.com/vmware-tanzu/carvel-kapp-controller v0.44.1/go.mod h1:+drZFlRx8ppIl2LRNWb0X/ohWwrfdA9nXGmPKGzvTXs=
+github.com/vmware-tanzu/carvel-kapp-controller v0.44.6 h1:OsoZbKK+Ya7R4YKdnHVFB/INIEsmexklv2HEdeWt2Vw=
+github.com/vmware-tanzu/carvel-kapp-controller v0.44.6/go.mod h1:+drZFlRx8ppIl2LRNWb0X/ohWwrfdA9nXGmPKGzvTXs=
 github.com/vmware-tanzu/carvel-vendir v0.30.1 h1:MHcrz6xZVBu0hOW7DJ5ea7894LG5JsUlb8JbTN/65RI=
 github.com/vmware-tanzu/carvel-vendir v0.30.1/go.mod h1:bwyrhBVq7nCDQwO1tuAEKOc7OCjEZrj9hXCYlibo+u8=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
