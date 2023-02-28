@@ -30,4 +30,14 @@ spec:
         image: docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0
         env:
         - name: HELLO_MSG
-          value: stranger
+          value: stranger3
+---
+apiVersion: kapp.k14s.io/v1alpha1
+kind: Config
+
+rebaseRules:
+  - path: [spec, template, spec, containers, {allIndexes: true}, env, {allIndexes: true}, value]
+    type: copy
+    sources: [existing]
+    resourceMatchers:
+      - apiVersionKindMatcher: {apiVersion: apps/v1, kind: Deployment}

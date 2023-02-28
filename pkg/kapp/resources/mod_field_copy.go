@@ -29,27 +29,31 @@ func (t FieldCopyMod) ApplyFromMultiple(res Resource, srcs map[FieldCopyModSourc
 
 	// Make a copy of resource, to avoid modifications
 	// that may be done even in case when there is nothing to copy
-	updatedRes := res.DeepCopy()
 
-	updated, err := t.apply(updatedRes.unstructured().Object, t.Path, Path{}, srcs)
-	if err != nil {
-		return fmt.Errorf("FieldCopyMod for path '%s' on resource '%s': %s", t.Path.AsString(), res.Description(), err)
-	}
+	for _, src := range srcs {
+		updatedRes := res.DeepCopy()
+		updatedSrcRes := src.DeepCopy()
+		updated, err := t.apply(updatedRes.unstructured().Object, updatedSrcRes.unstructured().Object, t.Path, Path{}, srcs)
+		if err != nil {
+			return fmt.Errorf("FieldCopyMod for path '%s' on resource '%s': %s", t.Path.AsString(), res.Description(), err)
+		}
 
-	if updated {
-		res.setUnstructured(updatedRes.unstructured())
+		if updated {
+			res.setUnstructured(updatedRes.unstructured())
+		}
 	}
 
 	return nil
 }
 
-func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[FieldCopyModSource]Resource) (bool, error) {
+func (t FieldCopyMod) apply(obj, srcObj interface{}, path Path, fullPath Path, srcs map[FieldCopyModSource]Resource) (bool, error) {
 	for i, part := range path {
 		isLast := len(path) == i+1
 		fullPath = append(fullPath, part)
 
 		switch {
 		case part.MapKey != nil:
+			srcTypedObj, _ := srcObj.(map[string]interface{})
 			typedObj, ok := obj.(map[string]interface{})
 			if !ok {
 				return false, fmt.Errorf("Unexpected non-map found: %T", obj)
@@ -59,7 +63,8 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 				return t.copyIntoMap(typedObj, fullPath, srcs)
 			}
 
-			var found bool
+			var found, srcObjFound bool
+			srcObj, srcObjFound = srcTypedObj[*part.MapKey]
 			obj, found = typedObj[*part.MapKey]
 			// TODO check strictness?
 			if !found || obj == nil {
@@ -70,6 +75,15 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 				}
 				obj = map[string]interface{}{}
 				typedObj[*part.MapKey] = obj
+			}
+			if !srcObjFound || srcObj == nil {
+				// create empty maps if there are no downstream array indexes;
+				// if there are, we cannot make them anyway, so just exit
+				if path.ContainsNonMapKeys() {
+					return false, nil
+				}
+				srcObj = map[string]interface{}{}
+				srcTypedObj[*part.MapKey] = srcObj
 			}
 
 		case part.ArrayIndex != nil:
@@ -92,7 +106,7 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 					newFullPath := append([]*PathPart{}, fullPath...)
 					newFullPath[len(newFullPath)-1] = &PathPart{ArrayIndex: &PathPartArrayIndex{Index: &objI}}
 
-					updated, err := t.apply(obj, path[i+1:], newFullPath, srcs)
+					updated, err := t.apply(obj, srcObj, path[i+1:], newFullPath, srcs)
 					if err != nil {
 						return false, err
 					}
@@ -108,10 +122,12 @@ func (t FieldCopyMod) apply(obj interface{}, path Path, fullPath Path, srcs map[
 				if !ok {
 					return false, fmt.Errorf("Unexpected non-array found: %T", obj)
 				}
+				srcTypedObj, _ := srcObj.([]interface{})
 
 				if *part.ArrayIndex.Index < len(typedObj) {
 					obj = typedObj[*part.ArrayIndex.Index]
-					return t.apply(obj, path[i+1:], fullPath, srcs)
+					srcObj = srcTypedObj[*part.ArrayIndex.Index]
+					return t.apply(obj, srcObj, path[i+1:], fullPath, srcs)
 				}
 
 				return false, nil // index not found, nothing to append to
