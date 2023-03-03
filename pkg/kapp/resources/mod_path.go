@@ -88,9 +88,9 @@ func (p Path) ContainsNonMapKeys() bool {
 	return false
 }
 
-func (p Path) ContainsNonMapKeysAndRegex() bool {
+func (p Path) ContainsArrayIndex() bool {
 	for _, part := range p {
-		if part.MapKey == nil && (part.Regex == nil || part.Regex.Regex == nil) {
+		if part.ArrayIndex != nil {
 			return true
 		}
 	}

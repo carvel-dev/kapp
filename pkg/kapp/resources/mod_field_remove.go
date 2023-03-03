@@ -97,7 +97,7 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 				panic(fmt.Sprintf("Unknown array index: %#v", part.ArrayIndex))
 			}
 		case part.Regex != nil && part.Regex.Regex != nil:
-			matchedKeys, err := t.obtainMatchingRegexKeys(obj, part)
+			matchedKeys, err := t.obtainMatchingRegexKeys(obj, *part.Regex.Regex)
 			if err != nil {
 				return err
 			}
@@ -118,9 +118,9 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 	panic("unreachable")
 }
 
-func (t FieldRemoveMod) obtainMatchingRegexKeys(obj interface{}, part *PathPart) ([]string, error) {
+func (t FieldRemoveMod) obtainMatchingRegexKeys(obj interface{}, regexString string) ([]string, error) {
 	var matchedKeys []string
-	regex, err := regexp.Compile(*part.Regex.Regex)
+	regex, err := regexp.Compile(regexString)
 	if err != nil {
 		return matchedKeys, err
 	}
