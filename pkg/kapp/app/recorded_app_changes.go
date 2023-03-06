@@ -17,22 +17,24 @@ import (
 )
 
 const (
-	isChangeLabelKey   = "kapp.k14s.io/is-app-change"
-	isChangeLabelValue = ""
-	changeLabelKey     = "kapp.k14s.io/app-change-app" // holds app name or label
+	isChangeLabelKey     = "kapp.k14s.io/is-app-change"
+	isChangeLabelValue   = ""
+	legacyChangeLabelKey = "kapp.k14s.io/app-change-app"       // holds app name
+	changeLabelKey       = "kapp.k14s.io/app-change-app-label" // holds app label
 )
 
 type RecordedAppChanges struct {
-	nsName  string
-	appName string
+	nsName           string
+	appName          string
+	changeLabelValue string
 
-	appLabelValue string
+	appChangeUsesAppLabel bool
 
 	coreClient kubernetes.Interface
 }
 
-func NewRecordedAppChanges(nsName, appName, appLabelValue string, coreClient kubernetes.Interface) RecordedAppChanges {
-	return RecordedAppChanges{nsName, appName, appLabelValue, coreClient}
+func NewRecordedAppChanges(nsName, appName, changeLabelValue string, appChangeUsesAppLabel bool, coreClient kubernetes.Interface) RecordedAppChanges {
+	return RecordedAppChanges{nsName, appName, changeLabelValue, appChangeUsesAppLabel, coreClient}
 }
 
 func (a RecordedAppChanges) List() ([]Change, error) {
@@ -41,8 +43,17 @@ func (a RecordedAppChanges) List() ([]Change, error) {
 	listOpts := metav1.ListOptions{
 		LabelSelector: labels.Set(map[string]string{
 			isChangeLabelKey: isChangeLabelValue,
-			changeLabelKey:   a.changeLabelValue(),
+			changeLabelKey:   a.changeLabelValue,
 		}).String(),
+	}
+
+	if !a.appChangeUsesAppLabel {
+		listOpts = metav1.ListOptions{
+			LabelSelector: labels.Set(map[string]string{
+				isChangeLabelKey:     isChangeLabelValue,
+				legacyChangeLabelKey: a.appName,
+			}).String(),
+		}
 	}
 
 	changes, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).List(context.TODO(), listOpts)
@@ -73,8 +84,17 @@ func (a RecordedAppChanges) DeleteAll() error {
 	listOpts := metav1.ListOptions{
 		LabelSelector: labels.Set(map[string]string{
 			isChangeLabelKey: isChangeLabelValue,
-			changeLabelKey:   a.changeLabelValue(),
+			changeLabelKey:   a.changeLabelValue,
 		}).String(),
+	}
+
+	if !a.appChangeUsesAppLabel {
+		listOpts = metav1.ListOptions{
+			LabelSelector: labels.Set(map[string]string{
+				isChangeLabelKey:     isChangeLabelValue,
+				legacyChangeLabelKey: a.appName,
+			}).String(),
+		}
 	}
 
 	changes, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).List(context.TODO(), listOpts)
@@ -105,10 +125,16 @@ func (a RecordedAppChanges) Begin(meta ChangeMeta) (*ChangeImpl, error) {
 			Namespace:    a.nsName,
 			Labels: map[string]string{
 				isChangeLabelKey: isChangeLabelValue,
-				changeLabelKey:   a.changeLabelValue(),
+				changeLabelKey:   a.changeLabelValue,
 			},
 		},
 		Data: newMeta.AsData(),
+	}
+
+	// Keep app changes backward compatible if possible, by adding legacy
+	// change label key when app name's length is less than maximum allowed length of a label
+	if !a.appChangeUsesAppLabel || len(a.appName) <= validation.LabelValueMaxLength {
+		configMap.ObjectMeta.Labels[legacyChangeLabelKey] = a.appName
 	}
 
 	createdChange, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, metav1.CreateOptions{})
@@ -124,11 +150,4 @@ func (a RecordedAppChanges) Begin(meta ChangeMeta) (*ChangeImpl, error) {
 	}
 
 	return change, nil
-}
-
-func (a RecordedAppChanges) changeLabelValue() string {
-	if len(a.appName) > validation.LabelValueMaxLength {
-		return a.appLabelValue
-	}
-	return a.appName
 }
