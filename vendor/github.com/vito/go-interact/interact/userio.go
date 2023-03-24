@@ -1,12 +1,11 @@
 package interact
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
 
-	"github.com/vito/go-interact/interact/terminal"
+	"golang.org/x/term"
 )
 
 type userIO interface {
@@ -17,26 +16,24 @@ type userIO interface {
 }
 
 type ttyUser struct {
-	*terminal.Terminal
+	*term.Terminal
 }
 
-var ErrKeyboardInterrupt = errors.New("keyboard interrupt")
-
 func newTTYUser(input io.Reader, output *os.File) (ttyUser, error) {
-	term := terminal.NewTerminal(readWriter{input, output}, "")
+	t := term.NewTerminal(readWriter{input, output}, "")
 
-	width, height, err := terminal.GetSize(int(output.Fd()))
+	width, height, err := term.GetSize(int(output.Fd()))
 	if err != nil {
 		return ttyUser{}, err
 	}
 
-	err = term.SetSize(width, height)
+	err = t.SetSize(width, height)
 	if err != nil {
 		return ttyUser{}, err
 	}
 
 	return ttyUser{
-		Terminal: term,
+		Terminal: t,
 	}, nil
 }
 
@@ -47,12 +44,7 @@ func (u ttyUser) WriteLine(line string) error {
 
 func (u ttyUser) ReadLine(prompt string) (string, error) {
 	u.Terminal.SetPrompt(prompt)
-	input, err := u.Terminal.ReadLine()
-	if err == terminal.ErrKeyboardInterrupt {
-		return input, ErrKeyboardInterrupt
-	}
-
-	return input, err
+	return u.Terminal.ReadLine()
 }
 
 type nonTTYUser struct {

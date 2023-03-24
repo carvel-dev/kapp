@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
-	github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
+	github.com/cppforlife/go-cli-ui v0.0.0-20220425131040-94f26b16bc14
 	github.com/cppforlife/go-patch v0.2.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/go-version v1.3.0
@@ -15,7 +15,7 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.2
-	github.com/vmware-tanzu/carvel-kapp-controller v0.44.6
+	github.com/vmware-tanzu/carvel-kapp-controller v0.45.0
 	golang.org/x/net v0.8.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.26.3
@@ -41,17 +41,16 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
-	github.com/mattn/go-colorable v0.1.11 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/mattn/go-colorable v0.1.12 // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/vito/go-interact v0.0.0-20171111012221-fa338ed9e9ec // indirect
-	github.com/vmware-tanzu/carvel-vendir v0.30.1 // indirect
-	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
-	golang.org/x/oauth2 v0.0.0-20220524215830-622c5d57e401 // indirect
+	github.com/vito/go-interact v1.0.1 // indirect
+	github.com/vmware-tanzu/carvel-vendir v0.33.1 // indirect
+	golang.org/x/oauth2 v0.1.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/term v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
