@@ -22,11 +22,14 @@ type FieldCopyMod struct {
 
 var _ ResourceModWithMultiple = FieldCopyMod{}
 
-func (t FieldCopyMod) ApplyFromMultiple(res Resource, srcs map[FieldCopyModSource]Resource) error {
+func (t FieldCopyMod) IsResourceMatching(res Resource) bool {
 	if res == nil || !t.ResourceMatcher.Matches(res) {
-		return nil
+		return false
 	}
+	return true
+}
 
+func (t FieldCopyMod) ApplyFromMultiple(res Resource, srcs map[FieldCopyModSource]Resource) error {
 	// Make a copy of resource, to avoid modifications
 	// that may be done even in case when there is nothing to copy
 	updatedRes := res.DeepCopy()

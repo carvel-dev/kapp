@@ -45,6 +45,7 @@ type ChangeImpl struct {
 
 	configurableTextDiff *ConfigurableTextDiff
 	opsDiff              *OpsDiff
+	changeOpVal          ChangeOp
 }
 
 var _ Change = &ChangeImpl{}
@@ -86,6 +87,13 @@ func (d *ChangeImpl) AppliedResource() ctlres.Resource         { return d.applie
 func (d *ChangeImpl) ClusterOriginalResource() ctlres.Resource { return d.clusterOriginalRes }
 
 func (d *ChangeImpl) Op() ChangeOp {
+	if d.changeOpVal == "" {
+		d.changeOpVal = d.op()
+	}
+	return d.changeOpVal
+}
+
+func (d *ChangeImpl) op() ChangeOp {
 	if d.newRes != nil {
 		if _, hasNoopAnnotation := d.newRes.Annotations()[ctlres.NoopAnnKey]; hasNoopAnnotation {
 			return ChangeOpNoop
