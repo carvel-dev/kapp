@@ -15,14 +15,18 @@ type FieldRemoveMod struct {
 var _ ResourceMod = FieldRemoveMod{}
 var _ ResourceModWithMultiple = FieldCopyMod{}
 
+func (t FieldRemoveMod) IsResourceMatching(res Resource) bool {
+	if res == nil || !t.ResourceMatcher.Matches(res) {
+		return false
+	}
+	return true
+}
+
 func (t FieldRemoveMod) ApplyFromMultiple(res Resource, _ map[FieldCopyModSource]Resource) error {
 	return t.Apply(res)
 }
 
 func (t FieldRemoveMod) Apply(res Resource) error {
-	if !t.ResourceMatcher.Matches(res) {
-		return nil
-	}
 	err := t.apply(res.unstructured().Object, t.Path)
 	if err != nil {
 		return fmt.Errorf("FieldRemoveMod for path '%s' on resource '%s': %w", t.Path.AsString(), res.Description(), err)

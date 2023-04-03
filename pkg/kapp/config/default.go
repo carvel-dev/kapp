@@ -700,10 +700,18 @@ changeRuleBindings:
       - hasNamespaceMatcher: {}
 `
 
-var defaultConfigRes = ctlres.MustNewResourceFromBytes([]byte(defaultConfigYAML))
-
 func NewDefaultConfigString() string { return defaultConfigYAML }
 
 func NewConfFromResourcesWithDefaults(resources []ctlres.Resource) ([]ctlres.Resource, Conf, error) {
-	return NewConfFromResources(append([]ctlres.Resource{defaultConfigRes}, resources...))
+	resources, conf, err := NewConfFromResources(resources)
+	if err != nil {
+		return nil, Conf{}, err
+	}
+
+	defaultConfig, err := newConfigFromYAMLBytes([]byte(defaultConfigYAML), "config/default (kapp.k14s.io/v1alpha1)")
+	if err != nil {
+		return nil, Conf{}, err
+	}
+
+	return resources, Conf{append([]Config{defaultConfig}, conf.configs...)}, err
 }

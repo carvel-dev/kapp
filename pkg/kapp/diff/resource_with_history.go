@@ -131,12 +131,6 @@ func (r ResourceWithHistory) CalculateChange(appliedRes ctlres.Resource) (Change
 	return r.newExactHistorylessChange(existingRes, appliedRes)
 }
 
-// calculateChangePrev1 is a previous version of CalculateChange
-// that we need to calculate changes in backwards compatible way.
-func (r ResourceWithHistory) calculateChangePrev1(appliedRes ctlres.Resource) (Change, error) {
-	return r.newExactHistorylessChange(r.resource, appliedRes)
-}
-
 func (r ResourceWithHistory) recalculateLastAppliedChange() ([]Change, string, string) {
 	lastAppliedResBytes := r.resource.Annotations()[appliedResAnnKey]
 	lastAppliedDiffMD5 := r.resource.Annotations()[appliedResDiffMD5AnnKey]
@@ -150,22 +144,14 @@ func (r ResourceWithHistory) recalculateLastAppliedChange() ([]Change, string, s
 		return nil, "", ""
 	}
 
-	// Continue to calculate historyless change with excluded fields
-	// (previous kapp versions did so, and we do not want to fallback
-	// to diffing against list resources).
-	recalculatedChange1, err := r.calculateChangePrev1(lastAppliedRes)
-	if err != nil {
-		return nil, "", "" // TODO deal with error?
-	}
-
-	recalculatedChange2, err := r.CalculateChange(lastAppliedRes)
+	recalculatedChange, err := r.CalculateChange(lastAppliedRes)
 	if err != nil {
 		return nil, "", "" // TODO deal with error?
 	}
 
 	lastAppliedDiff := r.resource.Annotations()[debugAppliedResDiffAnnKey]
 
-	return []Change{recalculatedChange1, recalculatedChange2}, lastAppliedDiffMD5, lastAppliedDiff
+	return []Change{recalculatedChange}, lastAppliedDiffMD5, lastAppliedDiff
 }
 
 func (r ResourceWithHistory) newExactHistorylessChange(existingRes, newRes ctlres.Resource) (Change, error) {

@@ -157,11 +157,14 @@ func NewConfigFromResource(res ctlres.Resource) (Config, error) {
 		return Config{}, err
 	}
 
-	var config Config
+	return newConfigFromYAMLBytes(bs, res.Description())
+}
 
-	err = yaml.Unmarshal(bs, &config)
+func newConfigFromYAMLBytes(bs []byte, description string) (Config, error) {
+	var config Config
+	err := yaml.Unmarshal(bs, &config)
 	if err != nil {
-		return Config{}, fmt.Errorf("Unmarshaling %s: %w", res.Description(), err)
+		return Config{}, fmt.Errorf("Unmarshaling %s: %w", description, err)
 	}
 
 	err = config.Validate()
