@@ -1,10 +1,5 @@
 # This is an example .goreleaser.yml file with some sane defaults.
 # Make sure to check the documentation at http://goreleaser.com
-before:
-  hooks:
-    - go fmt ./cmd/... ./pkg/... ./test/...
-    - go mod vendor
-    - go mod tidy
 builds:
   - env:
       - CGO_ENABLED=0
