@@ -13,7 +13,7 @@ type AppsV1StatefulSet struct {
 	resource ctlres.Resource
 }
 
-func NewAppsV1StatefulSet(resource ctlres.Resource, associatedRs []ctlres.Resource) *AppsV1StatefulSet {
+func NewAppsV1StatefulSet(resource ctlres.Resource, _ []ctlres.Resource) *AppsV1StatefulSet {
 	matcher := ctlres.APIVersionKindMatcher{
 		APIVersion: "apps/v1",
 		Kind:       "StatefulSet",

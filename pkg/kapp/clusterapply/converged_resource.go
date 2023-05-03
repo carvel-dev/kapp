@@ -168,7 +168,7 @@ var (
 	uiWaitChildMsgPrefix = "   " + uiWaitMsgPrefix
 )
 
-func (c ConvergedResource) buildParentDescMsg(res ctlres.Resource, state ctlresm.DoneApplyState) []string {
+func (c ConvergedResource) buildParentDescMsg(_ ctlres.Resource, state ctlresm.DoneApplyState) []string {
 	if len(state.Message) > 0 {
 		return []string{uiWaitMsgPrefix + state.Message}
 	}

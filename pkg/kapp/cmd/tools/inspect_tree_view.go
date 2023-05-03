@@ -204,9 +204,9 @@ type ValueColored struct {
 	Func func(string, ...interface{}) string
 }
 
-func (t ValueColored) String() string                  { return t.S }
-func (t ValueColored) Value() uitable.Value            { return t }
-func (t ValueColored) Compare(other uitable.Value) int { panic("Never called") }
+func (t ValueColored) String() string              { return t.S }
+func (t ValueColored) Value() uitable.Value        { return t }
+func (t ValueColored) Compare(_ uitable.Value) int { panic("Never called") }
 
 func (t ValueColored) Fprintf(w io.Writer, pattern string, rest ...interface{}) (int, error) {
 	return fmt.Fprintf(w, "%s", t.Func(pattern, rest...))
