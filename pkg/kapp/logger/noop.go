@@ -10,11 +10,11 @@ var _ Logger = NoopLogger{}
 func NewNoopLogger() NoopLogger { return NoopLogger{} }
 func NewTODOLogger() NoopLogger { return NewNoopLogger() }
 
-func (l NoopLogger) Error(msg string, args ...interface{}) {}
-func (l NoopLogger) Info(msg string, args ...interface{})  {}
-func (l NoopLogger) Debug(msg string, args ...interface{}) {}
-func (l NoopLogger) DebugFunc(name string) FuncLogger      { return NoopFuncLogger{} }
-func (l NoopLogger) NewPrefixed(name string) Logger        { return l }
+func (l NoopLogger) Error(_ string, _ ...interface{}) {}
+func (l NoopLogger) Info(_ string, _ ...interface{})  {}
+func (l NoopLogger) Debug(_ string, _ ...interface{}) {}
+func (l NoopLogger) DebugFunc(_ string) FuncLogger    { return NoopFuncLogger{} }
+func (l NoopLogger) NewPrefixed(_ string) Logger      { return l }
 
 type NoopFuncLogger struct{}
 

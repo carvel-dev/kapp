@@ -59,7 +59,7 @@ type diffDataChange struct {
 	WaitingForIDs []string `json:"waitingForIDs"`
 }
 
-func (s *Server) mainHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) mainHandler(w http.ResponseWriter, _ *http.Request) {
 	changesGraph := s.opts.DiffDataFunc()
 
 	allChanges := changesGraph.All()

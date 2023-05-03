@@ -337,7 +337,7 @@ data:
 	})
 }
 
-func ScopedContext(t *testing.T, kubectl Kubectl, serviceAccountName, contextName, userName string) func() {
+func ScopedContext(t *testing.T, kubectl Kubectl, _, contextName, userName string) func() {
 	token := kubectl.Run([]string{"get", "secret", "scoped-sa", "-o", "jsonpath={.data.token}"})
 
 	tokenDecoded, err := base64.StdEncoding.DecodeString(token)

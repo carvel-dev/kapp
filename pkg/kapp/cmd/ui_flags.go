@@ -18,7 +18,7 @@ type UIFlags struct {
 	Columns        []string
 }
 
-func (f *UIFlags) Set(cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
+func (f *UIFlags) Set(cmd *cobra.Command, _ cmdcore.FlagsFactory) {
 	cmd.PersistentFlags().BoolVar(&f.Color, "color", true, "Set color output")
 	cmd.PersistentFlags().BoolVar(&f.JSON, "json", false, "Output as JSON")
 	cmd.PersistentFlags().BoolVarP(&f.NonInteractive, "yes", "y", false, "Assume yes for any prompt")

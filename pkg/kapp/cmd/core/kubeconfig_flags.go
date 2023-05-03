@@ -17,7 +17,7 @@ type KubeconfigFlags struct {
 	YAML    *KubeconfigYAMLFlag
 }
 
-func (f *KubeconfigFlags) Set(cmd *cobra.Command, flagsFactory FlagsFactory) {
+func (f *KubeconfigFlags) Set(cmd *cobra.Command, _ FlagsFactory) {
 	f.Path = NewKubeconfigPathFlag()
 	cmd.PersistentFlags().Var(f.Path, "kubeconfig", "Path to the kubeconfig file ($KAPP_KUBECONFIG)")
 
