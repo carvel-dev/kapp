@@ -44,8 +44,10 @@ func (a *LabeledApp) UsedGVs() ([]schema.GroupVersion, error)                   
 func (a *LabeledApp) UsedGKs() (*[]schema.GroupKind, error)                               { return nil, nil }
 func (a *LabeledApp) UpdateUsedGVsAndGKs([]schema.GroupVersion, []schema.GroupKind) error { return nil }
 
-func (a *LabeledApp) CreateOrUpdate(labels map[string]string, isDiffRun bool) error { return nil }
-func (a *LabeledApp) Exists() (bool, string, error)                                 { return true, "", nil }
+func (a *LabeledApp) CreateOrUpdate(_ string, _ map[string]string, _ bool) (bool, error) {
+	return false, nil
+}
+func (a *LabeledApp) Exists() (bool, string, error) { return true, "", nil }
 
 func (a *LabeledApp) Delete() error {
 	labelSelector, err := a.LabelSelector()
@@ -79,6 +81,6 @@ func (a *LabeledApp) Meta() (Meta, error) { return Meta{}, nil }
 func (a *LabeledApp) Changes() ([]Change, error)             { return nil, nil }
 func (a *LabeledApp) LastChange() (Change, error)            { return nil, nil }
 func (a *LabeledApp) BeginChange(ChangeMeta) (Change, error) { return NoopChange{}, nil }
-func (a *LabeledApp) GCChanges(max int, reviewFunc func(changesToDelete []Change) error) (int, int, error) {
+func (a *LabeledApp) GCChanges(_ int, _ func(changesToDelete []Change) error) (int, int, error) {
 	return 0, 0, nil
 }
