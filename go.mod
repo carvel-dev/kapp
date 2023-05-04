@@ -1,6 +1,6 @@
 module github.com/vmware-tanzu/carvel-kapp
 
-go 1.19
+go 1.20
 
 require (
 	github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef
