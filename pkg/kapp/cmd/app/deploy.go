@@ -245,7 +245,7 @@ func (o *DeployOptions) Run() error {
 }
 
 func (o *DeployOptions) newAndUsedGKs(newGKs []schema.GroupKind, app ctlapp.App) ([]schema.GroupKind, error) {
-	if o.ResourceTypesFlags.DisableGKScoping {
+	if o.DeployFlags.DisableGKScoping {
 		return []schema.GroupKind{}, nil
 	}
 

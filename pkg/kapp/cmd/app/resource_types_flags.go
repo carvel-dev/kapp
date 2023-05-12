@@ -13,8 +13,6 @@ type ResourceTypesFlags struct {
 	CanIgnoreFailingAPIService func(schema.GroupVersion) bool
 
 	ScopeToFallbackAllowedNamespaces bool
-
-	DisableGKScoping bool
 }
 
 func (s *ResourceTypesFlags) Set(cmd *cobra.Command) {
@@ -23,9 +21,6 @@ func (s *ResourceTypesFlags) Set(cmd *cobra.Command) {
 
 	cmd.Flags().BoolVar(&s.ScopeToFallbackAllowedNamespaces, "dangerous-scope-to-fallback-allowed-namespaces",
 		false, "Scope resource searching to fallback allowed namespaces")
-
-	cmd.Flags().BoolVar(&s.DisableGKScoping, "dangerous-disable-gk-scoping",
-		false, "Disable scoping of resource searching to used GroupKinds")
 }
 
 func (s *ResourceTypesFlags) FailingAPIServicePolicy() *FailingAPIServicesPolicy {
