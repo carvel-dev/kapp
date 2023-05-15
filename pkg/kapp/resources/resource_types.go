@@ -270,6 +270,16 @@ func NonMatching(in []ResourceType, ref ResourceRef) []ResourceType {
 	return out
 }
 
+func NonMatchingGK(in []ResourceType, gk schema.GroupKind) []ResourceType {
+	var out []ResourceType
+	for _, item := range in {
+		if !(GKResourceRef{gk}).Matches(item) {
+			out = append(out, item)
+		}
+	}
+	return out
+}
+
 // TODO: Extend ResourceRef and PartialResourceRefd to allow GVK matching
 func MatchingAnyGK(in []ResourceType, gks []schema.GroupKind) []ResourceType {
 	var out []ResourceType
