@@ -4,7 +4,7 @@ github.com/cppforlife/cobrautil
 # github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
 ## explicit; go 1.13
 github.com/cppforlife/color
-# github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
+# github.com/cppforlife/go-cli-ui v0.0.0-20220425131040-94f26b16bc14
 ## explicit; go 1.13
 github.com/cppforlife/go-cli-ui/errors
 github.com/cppforlife/go-cli-ui/ui
@@ -118,11 +118,11 @@ github.com/k14s/ytt/pkg/yttlibrary/overlay
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
-# github.com/mattn/go-colorable v0.1.11
+# github.com/mattn/go-colorable v0.1.12
 ## explicit; go 1.13
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.14
-## explicit; go 1.12
+# github.com/mattn/go-isatty v0.0.17
+## explicit; go 1.15
 github.com/mattn/go-isatty
 # github.com/mitchellh/go-wordwrap v1.0.1
 ## explicit; go 1.14
@@ -151,20 +151,16 @@ github.com/spf13/pflag
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# github.com/vito/go-interact v0.0.0-20171111012221-fa338ed9e9ec
-## explicit
+# github.com/vito/go-interact v1.0.1
+## explicit; go 1.12
 github.com/vito/go-interact/interact
-github.com/vito/go-interact/interact/terminal
-# github.com/vmware-tanzu/carvel-kapp-controller v0.44.6
-## explicit; go 1.19
+# github.com/vmware-tanzu/carvel-kapp-controller v0.45.1
+## explicit; go 1.20
 github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1
 github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1
-# github.com/vmware-tanzu/carvel-vendir v0.30.1
+# github.com/vmware-tanzu/carvel-vendir v0.33.1
 ## explicit; go 1.19
 github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1
-# golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
-## explicit; go 1.17
-golang.org/x/crypto/ssh/terminal
 # golang.org/x/net v0.10.0
 ## explicit; go 1.17
 golang.org/x/net/context
@@ -173,8 +169,8 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/oauth2 v0.0.0-20220524215830-622c5d57e401
-## explicit; go 1.11
+# golang.org/x/oauth2 v0.1.0
+## explicit; go 1.17
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
 # golang.org/x/sys v0.8.0
