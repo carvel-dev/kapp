@@ -315,7 +315,7 @@ metadata:
 				break
 			}
 		}
-		patch := `[{ "op": "add", "path": "/status/conditions/-", "value": {type: "Available", status: "True"}}]`
+		patch := `[{ "op": "add", "path": "/status", "value": {"conditions": [{"type": "Available", "status": "True"}]}}]`
 		PatchClusterResource("CronTab", "my-new-cron-object-1", env.Namespace, patch, kubectl)
 	}()
 
