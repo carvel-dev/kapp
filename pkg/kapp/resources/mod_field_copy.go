@@ -32,13 +32,13 @@ func (t FieldCopyMod) IsResourceMatching(res Resource) bool {
 
 func (t FieldCopyMod) ApplyFromMultiple(res Resource, srcs map[FieldCopyModSource]Resource) error {
 	for _, src := range t.Sources {
-		// Make a copy of resource, to avoid modifications
-		// that may be done even in case when there is nothing to copy
-		updatedRes := res.DeepCopy()
 		source, found := srcs[src]
 		if !found {
 			continue
 		}
+		// Make a copy of resource, to avoid modifications
+		// that may be done even in case when there is nothing to copy
+		updatedRes := res.DeepCopy()
 		updated, err := t.apply(updatedRes.unstructured().Object, source.unstructured().Object, t.Path, Path{}, srcs)
 		if err != nil {
 			return fmt.Errorf("FieldCopyMod for path '%s' on resource '%s': %s", t.Path.AsString(), res.Description(), err)
@@ -47,6 +47,7 @@ func (t FieldCopyMod) ApplyFromMultiple(res Resource, srcs map[FieldCopyModSourc
 			res.setUnstructured(updatedRes.unstructured())
 		}
 	}
+
 	return nil
 }
 
@@ -154,12 +155,15 @@ func (t FieldCopyMod) apply(obj interface{}, srcObj interface{}, path Path, full
 				panic(fmt.Sprintf("Unknown array index: %#v", part.ArrayIndex))
 			}
 
-		case part.Regex != nil && part.Regex.Regex != nil:
-			matchedKeys, err := t.matchRegexWithSrcObj(*part.Regex.Regex, srcObj)
+		case part.Regex != nil:
+			if part.Regex.Regex == nil {
+				panic("Regex should be non nil")
+			}
+			matchedKeys, err := matchRegexWithSrcObj(*part.Regex.Regex, srcObj)
 			if err != nil {
 				return false, err
 			}
-			allUpdated := true
+			var anyUpdated bool
 			for _, key := range matchedKeys {
 				newPath := append(Path{&PathPart{MapKey: &key}}, path[i+1:]...)
 				newFullPath := fullPath[:len(fullPath)-1]
@@ -167,11 +171,13 @@ func (t FieldCopyMod) apply(obj interface{}, srcObj interface{}, path Path, full
 				if err != nil {
 					return false, err
 				}
-				if !updated {
-					allUpdated = false
+				if updated {
+					anyUpdated = true
 				}
 			}
-			return allUpdated, nil
+
+			return anyUpdated, nil
+
 		default:
 			panic(fmt.Sprintf("Unexpected path part: %#v", part))
 		}
@@ -253,7 +259,7 @@ func (t FieldCopyMod) obtainValue(obj interface{}, path Path) (interface{}, bool
 	return obj, true, nil
 }
 
-func (t FieldCopyMod) matchRegexWithSrcObj(regexString string, srcObj interface{}) ([]string, error) {
+func matchRegexWithSrcObj(regexString string, srcObj interface{}) ([]string, error) {
 	var matchedKeys []string
 	regex, err := regexp.Compile(regexString)
 	if err != nil {

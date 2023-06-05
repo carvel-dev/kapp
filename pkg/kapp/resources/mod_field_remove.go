@@ -5,7 +5,6 @@ package resources
 
 import (
 	"fmt"
-	"regexp"
 )
 
 type FieldRemoveMod struct {
@@ -79,6 +78,7 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 						return err
 					}
 				}
+
 				return nil // dealt with children, get out
 
 			case part.ArrayIndex.Index != nil:
@@ -96,8 +96,11 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 			default:
 				panic(fmt.Sprintf("Unknown array index: %#v", part.ArrayIndex))
 			}
-		case part.Regex != nil && part.Regex.Regex != nil:
-			matchedKeys, err := t.obtainMatchingRegexKeys(obj, *part.Regex.Regex)
+		case part.Regex != nil:
+			if part.Regex.Regex == nil {
+				panic("Regex should be non nil")
+			}
+			matchedKeys, err := matchRegexWithSrcObj(*part.Regex.Regex, obj)
 			if err != nil {
 				return err
 			}
@@ -108,6 +111,7 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 					return err
 				}
 			}
+
 			return nil
 
 		default:
@@ -116,22 +120,4 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 	}
 
 	panic("unreachable")
-}
-
-func (t FieldRemoveMod) obtainMatchingRegexKeys(obj interface{}, regexString string) ([]string, error) {
-	var matchedKeys []string
-	regex, err := regexp.Compile(regexString)
-	if err != nil {
-		return matchedKeys, err
-	}
-	typedObj, ok := obj.(map[string]interface{})
-	if !ok && typedObj != nil {
-		return matchedKeys, fmt.Errorf("Unexpected non-map found: %T", obj)
-	}
-	for key := range typedObj {
-		if regex.MatchString(key) {
-			matchedKeys = append(matchedKeys, key)
-		}
-	}
-	return matchedKeys, nil
 }

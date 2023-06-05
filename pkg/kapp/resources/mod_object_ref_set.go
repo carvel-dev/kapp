@@ -77,8 +77,8 @@ func (t ObjectRefSetMod) apply(obj interface{}, path Path) error {
 				panic(fmt.Sprintf("Unknown array index: %#v", part.ArrayIndex))
 			}
 
-		case part.Regex != nil && part.Regex.Regex != nil:
-			panic(fmt.Sprintf("Regex in path part: %#v is only supported for rebase rules.", part))
+		case part.Regex != nil:
+			panic("Regex in path part is only supported for rebaseRules.")
 
 		default:
 			panic(fmt.Sprintf("Unexpected path part: %#v", part))
