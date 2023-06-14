@@ -44,8 +44,8 @@ func (a *LabeledApp) UsedGVs() ([]schema.GroupVersion, error)                   
 func (a *LabeledApp) UsedGKs() (*[]schema.GroupKind, error)                               { return nil, nil }
 func (a *LabeledApp) UpdateUsedGVsAndGKs([]schema.GroupVersion, []schema.GroupKind) error { return nil }
 
-func (a *LabeledApp) CreateOrUpdate(_ string, _ map[string]string, _ bool) (bool, error) {
-	return false, nil
+func (a *LabeledApp) CreateOrUpdate(_ map[string]string, _ bool) error {
+	return nil
 }
 func (a *LabeledApp) Exists() (bool, string, error) { return true, "", nil }
 
