@@ -98,7 +98,7 @@ func ShowHelp(cmd *cobra.Command, args []string) error {
 	return fmt.Errorf("Invalid command - see available commands/subcommands above")
 }
 
-func IsCobraManagedCommand(args []string) bool {
+func IsCobraInternalCommand(args []string) bool {
 	if len(args) > 1 {
 		cmdPathPieces := args[1:]
 

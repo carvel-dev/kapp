@@ -1,5 +1,8 @@
 # This is an example .goreleaser.yml file with some sane defaults.
 # Make sure to check the documentation at http://goreleaser.com
+before:
+  hooks:
+    - go mod tidy
 builds:
   - env:
       - CGO_ENABLED=0
@@ -10,9 +13,6 @@ builds:
     goarch:
       - amd64
       - arm64
-    ignore:
-      - goos: windows
-        goarch: arm64
     main: ./cmd/kapp
     binary: kapp-{{ .Os }}-{{ .Arch }}
 
@@ -40,8 +40,8 @@ snapshot:
 release:
   # Repo in which the release will be created.
   github:
-    owner: carvel-dev
-    name: kapp
+    owner: vmware-tanzu
+    name: carvel-kapp
 
   # If set to true, will not auto-publish the release.
   draft: true
