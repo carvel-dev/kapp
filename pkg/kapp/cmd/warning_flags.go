@@ -12,7 +12,7 @@ type WarningFlags struct {
 	Warnings bool
 }
 
-func (f *WarningFlags) Set(cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
+func (f *WarningFlags) Set(cmd *cobra.Command, _ cmdcore.FlagsFactory) {
 	cmd.PersistentFlags().BoolVar(&f.Warnings, "warnings", true, "Show warnings")
 }
 

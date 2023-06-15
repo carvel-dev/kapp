@@ -19,7 +19,7 @@ func NewDeployConfigOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *DeployCo
 	return &DeployConfigOptions{ui: ui, depsFactory: depsFactory}
 }
 
-func NewDeployConfigCmd(o *DeployConfigOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
+func NewDeployConfigCmd(o *DeployConfigOptions, _ cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "deploy-config",
 		Short: "Show default deploy config",

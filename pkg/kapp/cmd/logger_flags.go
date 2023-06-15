@@ -13,7 +13,7 @@ type LoggerFlags struct {
 	Debug bool
 }
 
-func (f *LoggerFlags) Set(cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
+func (f *LoggerFlags) Set(cmd *cobra.Command, _ cmdcore.FlagsFactory) {
 	cmd.PersistentFlags().BoolVar(&f.Debug, "debug", false, "Include debug output")
 }
 

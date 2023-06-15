@@ -24,5 +24,5 @@ func (t ValueUnknownBool) String() string {
 	return ""
 }
 
-func (t ValueUnknownBool) Value() uitable.Value            { return t }
-func (t ValueUnknownBool) Compare(other uitable.Value) int { panic("Never called") }
+func (t ValueUnknownBool) Value() uitable.Value        { return t }
+func (t ValueUnknownBool) Compare(_ uitable.Value) int { panic("Never called") }

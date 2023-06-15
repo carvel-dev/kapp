@@ -29,7 +29,7 @@ func NewListLabelsOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logg
 	return &ListLabelsOptions{ui: ui, depsFactory: depsFactory, logger: logger}
 }
 
-func NewListLabelsCmd(o *ListLabelsOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
+func NewListLabelsCmd(o *ListLabelsOptions, _ cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list-labels",
 		Aliases: []string{"ls-labels"},

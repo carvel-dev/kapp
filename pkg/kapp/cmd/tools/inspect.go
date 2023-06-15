@@ -23,7 +23,7 @@ func NewInspectOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *InspectOption
 	return &InspectOptions{ui: ui, depsFactory: depsFactory}
 }
 
-func NewInspectCmd(o *InspectOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
+func NewInspectCmd(o *InspectOptions, _ cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "inspect",
 		Aliases: []string{"i"},
