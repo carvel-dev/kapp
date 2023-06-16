@@ -11,7 +11,7 @@ import "k8s.io/apimachinery/pkg/runtime/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 
 // Package-wide variables from generator "generated".
-option go_package = "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1";
+option go_package = "v1alpha1";
 
 // +k8s:openapi-gen=true
 message AppCluster {
@@ -331,13 +331,6 @@ message AppTemplateHelmTemplate {
 
   // One or more secrets, config maps, paths that provide values (optional)
   repeated AppTemplateValuesSource valuesFrom = 4;
-
-  // Optional: Get Kubernetes version, defaults (empty) to retrieving the version from the cluster.
-  // Can be manually overridden to a value instead.
-  optional Version kubernetesVersion = 5;
-
-  // Optional: Use kubernetes group/versions resources available in the live cluster
-  optional KubernetesAPIs kubernetesAPIs = 6;
 }
 
 // TODO implement jsonnet
@@ -394,18 +387,6 @@ message AppTemplateValuesDownwardAPIItem {
 
   // Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.
   optional string fieldPath = 2;
-
-  // Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster.
-  // Can be manually supplied instead.
-  optional Version kubernetesVersion = 3;
-
-  // Optional: Get running KappController version, defaults (empty) to retrieving the current running version..
-  // Can be manually supplied instead.
-  optional Version kappControllerVersion = 4;
-
-  // Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster.
-  // Can be manually supplied instead, e.g ["group/version", "group2/version2"]
-  optional KubernetesAPIs kubernetesAPIs = 5;
 }
 
 // +k8s:openapi-gen=true
@@ -480,15 +461,5 @@ message GenericStatus {
 
   // +optional
   optional string usefulErrorMessage = 4;
-}
-
-// +k8s:openapi-gen=true
-message KubernetesAPIs {
-  repeated string groupVersions = 1;
-}
-
-// +k8s:openapi-gen=true
-message Version {
-  optional string version = 1;
 }
 

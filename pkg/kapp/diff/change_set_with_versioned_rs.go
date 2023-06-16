@@ -33,7 +33,7 @@ func NewChangeSetWithVersionedRs(existingRs, newRs []ctlres.Resource,
 
 func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 	existingRs := existingVersionedResources(d.existingRs)
-	existingRsGrouped := newGroupedVersionedResources(existingRs.Versioned)
+	existingRsGrouped := d.groupResources(existingRs.Versioned)
 
 	newRs := newVersionedResources(d.newRs)
 	allChanges := []Change{}
@@ -74,6 +74,26 @@ func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 	allChanges = append(allChanges, nonVersionedChanges...)
 
 	return allChanges, nil
+}
+
+func (d ChangeSetWithVersionedRs) groupResources(rs []ctlres.Resource) map[string][]ctlres.Resource {
+	result := map[string][]ctlres.Resource{}
+
+	groupByFunc := func(res ctlres.Resource) string {
+		if _, found := res.Annotations()[versionedResAnnKey]; found {
+			return VersionedResource{res, nil}.UniqVersionedKey().String()
+		}
+		panic("Expected to find versioned annotation on resource")
+	}
+
+	for resKey, subRs := range (GroupResources{rs, groupByFunc}).Resources() {
+		sort.Slice(subRs, func(i, j int) bool {
+			return VersionedResource{subRs[i], nil}.Version() < VersionedResource{subRs[j], nil}.Version()
+		})
+		result[resKey] = subRs
+	}
+
+	return result
 }
 
 func (d ChangeSetWithVersionedRs) assignNewNames(
@@ -272,43 +292,6 @@ func existingVersionedResources(rs []ctlres.Resource) versionedResources {
 		} else {
 			result.NonVersioned = append(result.NonVersioned, res)
 		}
-	}
-	return result
-}
-
-func newGroupedVersionedResources(rs []ctlres.Resource) map[string][]ctlres.Resource {
-	result := map[string][]ctlres.Resource{}
-
-	groupByFunc := func(res ctlres.Resource) string {
-		_, found := res.Annotations()[versionedResAnnKey]
-		if found {
-			return VersionedResource{res, nil}.UniqVersionedKey().String()
-		}
-		panic("Expected to find versioned annotation on resource")
-	}
-
-	for resKey, subRs := range (GroupResources{rs, groupByFunc}).Resources() {
-		sort.Slice(subRs, func(i, j int) bool {
-			return VersionedResource{subRs[i], nil}.Version() < VersionedResource{subRs[j], nil}.Version()
-		})
-		result[resKey] = subRs
-	}
-	return result
-}
-
-func existingResourcesMap(res []ctlres.Resource) map[string]ctlres.Resource {
-	result := map[string]ctlres.Resource{}
-
-	existingRs := existingVersionedResources(res)
-	existingVersionRsGrouped := newGroupedVersionedResources(existingRs.Versioned)
-
-	for _, res := range existingRs.NonVersioned {
-		resKey := ctlres.NewUniqueResourceKey(res).String()
-		result[resKey] = res
-	}
-
-	for resKey, res := range existingVersionRsGrouped {
-		result[resKey] = res[len(res)-1]
 	}
 	return result
 }

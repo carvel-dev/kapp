@@ -21,12 +21,12 @@ func TestIgnoreFailingAPIServices(t *testing.T) {
 apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
-  name: v1.samplekapptest.com
+  name: v1.dummykapptest.com
   annotations:
     kapp.k14s.io/disable-default-change-group-and-rules: ""
     kapp.k14s.io/change-group: "apiservice"
 spec:
-  group: samplekapptest.com
+  group: dummykapptest.com
   groupPriorityMinimum: 100
   insecureSkipTLSVerify: true
   service:
@@ -38,12 +38,12 @@ spec:
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: foo.samplekapptest.com
+  name: foo.dummykapptest.com
   annotations:
     kapp.k14s.io/disable-default-change-group-and-rules: ""
     kapp.k14s.io/change-rule: "upsert after upserting apiservice"
 spec:
-  group: samplekapptest.com
+  group: dummykapptest.com
   versions:
   - name: v1
     served: true
@@ -77,7 +77,7 @@ metadata:
 
 	yaml3 := `
 ---
-apiVersion: samplekapptest.com/v1
+apiVersion: dummykapptest.com/v1
 kind: Foo
 metadata:
   name: test-uses-failing-api-service
@@ -129,7 +129,7 @@ metadata:
 			AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml3)})
 		require.Errorf(t, err, "Expected error when deploying with failing api service")
 
-		require.Contains(t, err.Error(), "unable to retrieve the complete list of server APIs: samplekapptest.com/v1: the server is currently unable to handle the request",
+		require.Contains(t, err.Error(), "unable to retrieve the complete list of server APIs: dummykapptest.com/v1: the server is currently unable to handle the request",
 			"Expected api retrieval error")
 	})
 
@@ -140,7 +140,7 @@ metadata:
 			AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml3)})
 		require.Errorf(t, err, "Expected error when deploying with failing api service")
 
-		require.Contains(t, err.Error(), "Expected to find kind 'samplekapptest.com/v1/Foo', but did not", "Expected CRD retrieval error")
+		require.Contains(t, err.Error(), "Expected to find kind 'dummykapptest.com/v1/Foo', but did not", "Expected CRD retrieval error")
 	})
 
 	logger.Section("delete app that does not use api service", func() {
@@ -162,9 +162,9 @@ func TestIgnoreFailingGroupVersion(t *testing.T) {
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: foo.samplekapptest.com
+  name: foo.dummykapptest.com
 spec:
-  group: samplekapptest.com
+  group: dummykapptest.com
   versions:
   # v1 is available and used for internal storage
   - name: v1
@@ -225,7 +225,7 @@ metadata:
 
 	yaml3 := `
 ---
-apiVersion: samplekapptest.com/v2
+apiVersion: dummykapptest.com/v2
 kind: Foo
 metadata:
   name: test-uses-failing-group-version

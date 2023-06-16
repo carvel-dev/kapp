@@ -207,7 +207,8 @@ data:
 -linesss-         secret:
 -linesss-           secretName: secret-ver-1
 -linesss-           secretName: secret-ver-2
--linesss-
+-linesss- status:
+-linesss-   availableReplicas: 1
 `
 
 	name := "test-template"
@@ -274,8 +275,6 @@ func checkChangesOutput(t *testing.T, actualOutput, expectedOutput string) {
 	// Line numbers may change depending on what's being added to metadata section for example
 	// (metadata.managedFields was added and threw off all lines numbers)
 	diffLinesRegexp := regexp.MustCompile(`(?m:^\s*(\d{1,3}\s*|\d{1,3},\s*\d{1,3}|\d{1,3}) [\-+ ])`)
-	actualOutput = diffLinesRegexp.ReplaceAllString(actualOutput, "-linesss-")
-	diffLinesRegexp = regexp.MustCompile(` *\d{1,3}, *\d{1,3}`)
 	actualOutput = diffLinesRegexp.ReplaceAllString(actualOutput, "-linesss-")
 
 	// Useful for debugging:

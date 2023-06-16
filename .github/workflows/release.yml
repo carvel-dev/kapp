@@ -21,7 +21,11 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.19.5
+          go-version: 1.20.5
+      - name: Retrieve version
+        run: |
+          echo "TAG_NAME=$(echo ${{ github.ref }}  | grep -Eo 'v[0-9].*')" >> $GITHUB_OUTPUT
+        id: version
 
       - name: Run GoReleaser
         # GoReleaser v2.5.0
@@ -32,6 +36,32 @@ jobs:
           args: release --rm-dist --debug ${{ env.SKIP_PUBLISH }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Minikube
+        run: |
+          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          install minikube-linux-amd64 /usr/local/bin/minikube
+          minikube start --driver=docker --memory 4096
+          eval $(minikube docker-env --shell=bash)
+
+          # Ensure that there is no existing kapp installed
+          rm -f /tmp/bin/kapp
+
+      - name: Run Test cases
+        run: |
+          # Build kapp binary
+          set -e -x
+          VERSION=`echo ${{ github.ref }}  | grep -Eo '[0-9].*'`
+          ./hack/build.sh
+
+          # Add binary to the path
+          mkdir bin
+          mv kapp bin
+          PATH=$PATH:$PWD/bin
+          echo $PATH
+
+          # Run test cases
+          ./hack/test-external.sh
 
       - uses: actions/github-script@v4
         id: get-checksums-from-draft-release
@@ -96,27 +126,3 @@ jobs:
           EOF
           )
           
-      - name: Run Test cases
-        run: |
-          # Setup minikube
-          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-          install minikube-linux-amd64 /usr/local/bin/minikube
-          minikube start --driver=docker --memory 4096
-          eval $(minikube docker-env --shell=bash)
-
-          # Ensure that there is no existing kapp installed
-          rm -f /tmp/bin/kapp
-
-          # Build kapp binary
-          set -e -x
-          VERSION=`echo ${{ github.ref }}  | grep -Eo '[0-9].*'`
-          ./hack/build.sh
-
-          # Add binary to the path
-          mkdir bin
-          mv kapp bin
-          PATH=$PATH:$PWD/bin
-          echo $PATH
-
-          # Run test cases
-          ./hack/test-external.sh

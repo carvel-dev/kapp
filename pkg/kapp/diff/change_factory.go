@@ -58,7 +58,7 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Re
 		return nil, err
 	}
 
-	return NewChange(existingRes, rebasedNewRes, newRes, existingResForRebasing), nil
+	return NewChange(existingRes, rebasedNewRes, newRes), nil
 }
 
 func (f ChangeFactory) NewExactChange(existingRes, newRes ctlres.Resource) (Change, error) {
@@ -85,7 +85,7 @@ func (f ChangeFactory) NewExactChange(existingRes, newRes ctlres.Resource) (Chan
 		return nil, err
 	}
 
-	return NewChange(existingRes, rebasedNewRes, newRes, existingRes), nil
+	return NewChange(existingRes, rebasedNewRes, newRes), nil
 }
 
 func (f ChangeFactory) NewResourceWithHistory(resource ctlres.Resource) ResourceWithHistory {

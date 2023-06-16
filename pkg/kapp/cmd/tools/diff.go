@@ -25,7 +25,7 @@ func NewDiffOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *DiffOptions {
 	return &DiffOptions{ui: ui, depsFactory: depsFactory}
 }
 
-func NewDiffCmd(o *DiffOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
+func NewDiffCmd(o *DiffOptions, _ cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "diff",
 		Short: "Diff files against files2",
@@ -95,11 +95,8 @@ type DiffChangeView struct {
 
 var _ ctlcap.ChangeView = DiffChangeView{}
 
-func (v DiffChangeView) Resource() ctlres.Resource { return v.change.NewOrExistingResource() }
-
-func (v DiffChangeView) ClusterOriginalResource() ctlres.Resource {
-	return v.change.ClusterOriginalResource()
-}
+func (v DiffChangeView) Resource() ctlres.Resource         { return v.change.NewOrExistingResource() }
+func (v DiffChangeView) ExistingResource() ctlres.Resource { return v.change.ExistingResource() }
 
 func (v DiffChangeView) ApplyOp() ctlcap.ClusterChangeApplyOp {
 	switch v.change.Op() {
