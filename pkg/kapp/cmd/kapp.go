@@ -31,6 +31,7 @@ type KappOptions struct {
 	KubeAPIFlags    cmdcore.KubeAPIFlags
 	KubeconfigFlags cmdcore.KubeconfigFlags
 	WarningFlags    WarningFlags
+	ProfilingFlags  ProfilingFlags
 }
 
 func NewKappOptions(ui *ui.ConfUI, configFactory cmdcore.ConfigFactory,
@@ -63,6 +64,10 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		DisableAutoGenTag: true,
 		Version:           version.Version,
 
+		PersistentPostRunE: func(*cobra.Command, []string) error {
+			return o.ProfilingFlags.flushProfiling()
+		},
+
 		// TODO bash completion
 	}
 
@@ -80,6 +85,7 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	o.KubeAPIFlags.Set(cmd, flagsFactory)
 	o.KubeconfigFlags.Set(cmd, flagsFactory)
 	o.WarningFlags.Set(cmd, flagsFactory)
+	o.ProfilingFlags.Set(cmd, flagsFactory)
 
 	o.configFactory.ConfigurePathResolver(o.KubeconfigFlags.Path.Value)
 	o.configFactory.ConfigureContextResolver(o.KubeconfigFlags.Context.Value)
@@ -135,6 +141,7 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 		o.LoggerFlags.Configure(o.logger)
 		o.KubeAPIFlags.Configure(o.configFactory)
 		o.WarningFlags.Configure(o.depsFactory)
+		o.ProfilingFlags.initProfiling()
 		return nil
 	})
 
