@@ -9,6 +9,9 @@ jobs:
   kappreleaser:
     name: kapp release
     runs-on: ubuntu-latest
+    # Set permissions of github token. See https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#permissions
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -18,52 +21,24 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.19.5
-
-      - name: Build kapp Script
+          go-version: 1.20.5
+      - name: Retrieve version
         run: |
-          ./hack/build-binaries.sh
-          shasum -a 256 ./kapp-* | tee checksums.txt
-          echo "# :open_file_folder: Files Checksum" | tee checksums-formatted.txt
-          echo \`\`\` | tee -a checksums-formatted.txt
-          cat checksums.txt | tee -a checksums-formatted.txt
-          echo \`\`\` | tee -a checksums-formatted.txt
+          echo "TAG_NAME=$(echo ${{ github.ref }}  | grep -Eo 'v[0-9].*')" >> $GITHUB_OUTPUT
+        id: version
 
-      - name: Setup Minikube
-        run: |
-          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-          install minikube-linux-amd64 /usr/local/bin/minikube
-          minikube start --driver=docker --memory 4096
-          eval $(minikube docker-env --shell=bash)
-
-          # Ensure that there is no existing kapp installed
-          rm -f /tmp/bin/kapp
-
-      - name: Add kapp binary to the Path
-        run: |
-          mkdir bin
-          mv kapp bin
-          echo "$PWD/bin" >> $GITHUB_PATH
-          echo $GITHUB_PATH
-
-      - name: Run test cases
-        run: |
-          ./hack/test-external.sh
-
-      - name: Upload binaries and create draft Release
-        uses: softprops/action-gh-release@v1
+      - name: Run GoReleaser
+        # GoReleaser v4.2.0
+        uses: goreleaser/goreleaser-action@f82d6c1c344bcacabba2c841718984797f664a6b
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: ${{ github.ref_name }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          body_path: ./checksums-formatted.txt
-          files: |
-            kapp-*
-            checksums.txt
-          draft: true
-          prerelease: true
+          version: 1.16.2
+          args: release --rm-dist --debug ${{ env.SKIP_PUBLISH }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ steps.version.outputs.TAG_NAME }}
 
-      - name: Get uploaded release YAML checksum
-        uses: actions/github-script@v4
+      - uses: actions/github-script@v4
         id: get-checksums-from-draft-release
         if: startsWith(github.ref, 'refs/tags/')
         with:
@@ -104,6 +79,7 @@ jobs:
               }
             }
             console.log(checksums)
+
             return `${checksums['kapp-darwin-amd64']}  ./kapp-darwin-amd64
             ${checksums['kapp-darwin-arm64']}  ./kapp-darwin-arm64
             ${checksums['kapp-linux-amd64']}  ./kapp-linux-amd64
@@ -114,11 +90,39 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
+          CURRENT_TAG: ${{ steps.version.outputs.TAG_NAME }}
         run: |
           set -e -x
-          cat ./checksums.txt
-          diff ./checksums.txt <(cat <<EOF
+          VERSION=`echo "$CURRENT_TAG"  | grep -Eo '[0-9].*'`
+
+          ./hack/build-binaries.sh "$VERSION" > ./go-checksums
+          cat ./go-checksums
+          diff ./go-checksums <(cat <<EOF
           ${{steps.get-checksums-from-draft-release.outputs.result}}
           EOF
           )
-          
+
+      - name: Run Test cases
+        run: |
+          # Setup minikube
+          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          install minikube-linux-amd64 /usr/local/bin/minikube
+          minikube start --driver=docker --memory 4096
+          eval $(minikube docker-env --shell=bash)
+
+          # Ensure that there is no existing kapp installed
+          rm -f /tmp/bin/kapp
+
+          # Build kapp binary
+          set -e -x
+          VERSION=`echo ${{ github.ref }}  | grep -Eo '[0-9].*'`
+          ./hack/build.sh
+
+          # Add binary to the path
+          mkdir bin
+          mv kapp bin
+          PATH=$PATH:$PWD/bin
+          echo $PATH
+
+          # Run test cases
+          ./hack/test-external.sh

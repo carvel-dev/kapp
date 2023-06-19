@@ -127,32 +127,32 @@ func (a *RecordedApp) UpdateUsedGVsAndGKs(gvs []schema.GroupVersion, gks []schem
 	})
 }
 
-func (a *RecordedApp) CreateOrUpdate(labels map[string]string, isDiffRun bool) (bool, error) {
+func (a *RecordedApp) CreateOrUpdate(labels map[string]string, isDiffRun bool) error {
 	defer a.logger.DebugFunc("CreateOrUpdate").Finish()
 
 	app, foundMigratedApp, err := a.find(a.fqName())
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	if foundMigratedApp {
 		a.isMigrated = true
-		return false, a.updateApp(app, labels)
+		return a.updateApp(app, labels)
 	}
 
 	app, foundNonMigratedApp, err := a.find(a.name)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	if foundNonMigratedApp {
 		if a.isMigrationEnabled() {
-			return false, a.migrate(app, labels, a.fqName())
+			return a.migrate(app, labels, a.fqName())
 		}
-		return false, a.updateApp(app, labels)
+		return a.updateApp(app, labels)
 	}
 
-	return true, a.create(labels, isDiffRun)
+	return a.create(labels, isDiffRun)
 }
 
 func (a *RecordedApp) find(name string) (*corev1.ConfigMap, bool, error) {
@@ -359,12 +359,7 @@ func (a *RecordedApp) Delete() error {
 		return err
 	}
 
-	meta, err := a.meta()
-	if err != nil {
-		return err
-	}
-
-	err = NewRecordedAppChanges(a.nsName, a.name, meta.LabelValue, a.coreClient).DeleteAll()
+	err = NewRecordedAppChanges(a.nsName, a.name, a.coreClient).DeleteAll()
 	if err != nil {
 		return fmt.Errorf("Deleting app changes: %w", err)
 	}
@@ -503,11 +498,7 @@ func (a *RecordedApp) meta() (Meta, error) {
 }
 
 func (a *RecordedApp) Changes() ([]Change, error) {
-	meta, err := a.meta()
-	if err != nil {
-		return nil, err
-	}
-	return NewRecordedAppChanges(a.nsName, a.name, meta.LabelValue, a.coreClient).List()
+	return NewRecordedAppChanges(a.nsName, a.name, a.coreClient).List()
 }
 
 func (a *RecordedApp) LastChange() (Change, error) {
@@ -531,12 +522,7 @@ func (a *RecordedApp) LastChange() (Change, error) {
 }
 
 func (a *RecordedApp) BeginChange(meta ChangeMeta) (Change, error) {
-	appMeta, err := a.meta()
-	if err != nil {
-		return nil, err
-	}
-
-	change, err := NewRecordedAppChanges(a.nsName, a.name, appMeta.LabelValue, a.coreClient).Begin(meta)
+	change, err := NewRecordedAppChanges(a.nsName, a.name, a.coreClient).Begin(meta)
 	if err != nil {
 		return nil, err
 	}

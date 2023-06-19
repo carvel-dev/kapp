@@ -185,15 +185,15 @@ func (c *Change) AllRules() ([]ChangeRule, error) {
 }
 
 func (c *Change) ApplicableRules() ([]ChangeRule, error) {
-	var upsert, delete bool
+	var isUpsert, isDelete bool
 
 	op := c.Change.Op()
 
 	switch op {
 	case ActualChangeOpUpsert:
-		upsert = true
+		isUpsert = true
 	case ActualChangeOpDelete:
-		delete = true
+		isDelete = true
 	case ActualChangeOpNoop:
 	default:
 		return nil, fmt.Errorf("Unknown change operation: %s", op)
@@ -206,15 +206,15 @@ func (c *Change) ApplicableRules() ([]ChangeRule, error) {
 
 	var applicableRules []ChangeRule
 	for _, rule := range rules {
-		if (upsert && rule.Action == ChangeRuleActionUpsert) ||
-			(delete && rule.Action == ChangeRuleActionDelete) {
+		if (isUpsert && rule.Action == ChangeRuleActionUpsert) ||
+			(isDelete && rule.Action == ChangeRuleActionDelete) {
 			applicableRules = append(applicableRules, rule)
 		}
 	}
 	return applicableRules, nil
 }
 
-func (cs Changes) MatchesRule(rule ChangeRule, exceptChange *Change) ([]*Change, error) {
+func (cs Changes) MatchesRule(rule ChangeRule, _ *Change) ([]*Change, error) {
 	var result []*Change
 
 	for _, change := range cs {

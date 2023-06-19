@@ -25,7 +25,7 @@ func NewDiffOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *DiffOptions {
 	return &DiffOptions{ui: ui, depsFactory: depsFactory}
 }
 
-func NewDiffCmd(o *DiffOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
+func NewDiffCmd(o *DiffOptions, _ cmdcore.FlagsFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "diff",
 		Short: "Diff files against files2",
