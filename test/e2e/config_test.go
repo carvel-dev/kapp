@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
-	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/require"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	"sigs.k8s.io/yaml"
 )
 
 func TestConfig(t *testing.T) {
@@ -856,7 +856,7 @@ rules:
 }
 
 func RandomString(n int) string {
-	var letters = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+	letters := []rune("abcdefghijklmnopqrstuvwxyz0123456789")
 
 	s := make([]rune, n)
 	for i := range s {

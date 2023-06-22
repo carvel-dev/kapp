@@ -6,11 +6,11 @@ package config
 import (
 	"fmt"
 
-	"github.com/ghodss/yaml"
 	semver "github.com/hashicorp/go-version"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/version"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/yttresmod"
+	"sigs.k8s.io/yaml"
 )
 
 const (
