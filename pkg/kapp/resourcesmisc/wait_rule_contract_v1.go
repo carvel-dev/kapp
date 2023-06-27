@@ -6,11 +6,11 @@ package resourcesmisc
 import (
 	"fmt"
 
-	"github.com/ghodss/yaml"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	"sigs.k8s.io/yaml"
 )
 
 type WaitRuleContractV1 struct {

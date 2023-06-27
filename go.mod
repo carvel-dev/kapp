@@ -7,7 +7,6 @@ require (
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
 	github.com/cppforlife/go-cli-ui v0.0.0-20220425131040-94f26b16bc14
 	github.com/cppforlife/go-patch v0.2.0
-	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/go-version v1.3.0
 	github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57
 	github.com/k14s/ytt v0.36.0
@@ -21,6 +20,7 @@ require (
 	k8s.io/api v0.27.2
 	k8s.io/apimachinery v0.27.2
 	k8s.io/client-go v0.27.2
+	sigs.k8s.io/yaml v1.3.0
 )
 
 require (
@@ -65,5 +65,4 @@ require (
 	k8s.io/utils v0.0.0-20230209194617-a36077c30491 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
-	sigs.k8s.io/yaml v1.3.0 // indirect
 )

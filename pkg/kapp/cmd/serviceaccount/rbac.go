@@ -4,8 +4,8 @@
 package serviceaccount
 
 import (
-	"github.com/ghodss/yaml"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	"sigs.k8s.io/yaml"
 )
 
 type ServiceAccount struct {
