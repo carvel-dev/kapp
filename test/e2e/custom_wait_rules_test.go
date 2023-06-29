@@ -66,9 +66,11 @@ spec:
                   type: integer
             status:
               type: object
+              default: {}
               properties:
                 currentState:
                   type: string
+                  default: %s
   scope: Namespaced
   names:
     plural: crontabs
@@ -84,8 +86,6 @@ metadata:
 spec:
   cronSpec: "* * * * */5"
   image: my-awesome-cron-image
-status:
-  currentState: %s
 ---
 `
 
@@ -99,7 +99,7 @@ status:
 
 	logger.Section("deploy resource with current state as running", func() {
 		res, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{
-			StdinReader: strings.NewReader(crdYaml + fmt.Sprintf(crYaml, "Running") + config)})
+			StdinReader: strings.NewReader(fmt.Sprintf(crdYaml, "Running") + crYaml + config)})
 		if err != nil {
 			require.Errorf(t, err, "Expected CronTab to be deployed")
 		}
@@ -111,7 +111,7 @@ status:
 
 	logger.Section("deploy resource with current state as failed", func() {
 		res, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{
-			StdinReader: strings.NewReader(crdYaml + fmt.Sprintf(crYaml, "Failed") + config),
+			StdinReader: strings.NewReader(fmt.Sprintf(crdYaml, "Failed") + crYaml + config),
 			AllowError:  true,
 		})
 
@@ -152,9 +152,11 @@ spec:
                   type: integer
             status:
               type: object
+              default: {}
               properties:
                 currentState:
                   type: string
+                  default: Progressing
   scope: Namespaced
   names:
     plural: crontabs
@@ -191,8 +193,6 @@ metadata:
 spec:
   cronSpec: "* * * * */5"
   image: my-awesome-cron-image
-status:
-  currentState: Progressing
 ---
 apiVersion: v1
 kind: ConfigMap
