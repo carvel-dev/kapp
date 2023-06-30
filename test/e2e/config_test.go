@@ -559,7 +559,7 @@ func asYAML(t *testing.T, val interface{}) string {
 	return string(bs)
 }
 
-func TestDefaultConfig_ExcludeDiffAgainstLastAppliedStatus(t *testing.T) {
+func TestDefaultConfig_ExcludeDiffAgainstExistingStatus(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -591,38 +591,6 @@ status:
   conditions: []
   storedVersions: []
 `
-
-	updatedStatusYaml := `
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: tests.kapp.example
-spec:
-  group: kapp.example
-  names:
-    kind: Test
-    plural: tests
-  scope: Namespaced
-  versions:
-  - name: v1alpha1
-    schema:
-      openAPIV3Schema:
-        type: object
-    served: true
-    storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions:
-  - message: some conflicts found
-    reason: NoConflicts
-    status: "True"
-    type: NamesAccepted
-  storedVersions: []
-`
-
 	updatedYaml := `
 ---
 apiVersion: apiextensions.k8s.io/v1
@@ -668,20 +636,6 @@ status:
 -linesss-     schema:
 -linesss-       openAPIV3Schema:
 -linesss-         type: object
--linesss- status:
--linesss-   acceptedNames:`
-
-	expectedChangesForStatusUpdate := `
-@@ update customresourcedefinition/tests.kapp.example (apiextensions.k8s.io/v1) cluster @@
-  ...
--linesss-     plural: ""
--linesss-   conditions: []
--linesss-   conditions:
--linesss-   - message: some conflicts found
--linesss-     reason: NoConflicts
--linesss-     status: "True"
--linesss-     type: NamesAccepted
--linesss-   storedVersions: []
 -linesss- `
 
 	expectedChangesForExternalUpdate := `
@@ -703,31 +657,7 @@ status:
 -linesss-     plural: tests
 -linesss-     singular: test
 -linesss-   scope: Namespaced
--linesss-   versions:
-  ...
--linesss-   acceptedNames:
--linesss-     kind: Test
--linesss-     listKind: TestList
--linesss-     plural: tests
--linesss-     singular: test
--linesss-   conditions:
--linesss-   - lastTransitionTime: "2006-01-02T15:04:05Z07:00"
--linesss-     message: no conflicts found
--linesss-     reason: NoConflicts
--linesss-     status: "True"
--linesss-     type: NamesAccepted
--linesss-   - lastTransitionTime: "2006-01-02T15:04:05Z07:00"
--linesss-     message: the initial names have been accepted
--linesss-     reason: InitialNamesAccepted
--linesss-     status: "True"
--linesss-     type: Established
--linesss-   storedVersions:
--linesss-   - v1alpha1
--linesss-     kind: ""
--linesss-     plural: ""
--linesss-   conditions: []
--linesss-   storedVersions: []
--linesss- `
+-linesss-   versions:`
 
 	name := "test-default-config-exclude-diff-against-last-applied-status"
 	cleanUp := func() {
@@ -763,16 +693,8 @@ status:
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "-c"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedYaml)})
 
-		// last applied status is used for diffing, hence no changes to status are detected
+		// status is ignored in diff
 		checkChangesOutput(t, replaceTimestampWithDfaultValue(out), expectedChangesForUpdate)
-	})
-
-	logger.Section("deploy with some changes to status field", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "-c"},
-			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedStatusYaml)})
-
-		// if status is updated, diffing is done against last applied status
-		checkChangesOutput(t, replaceTimestampWithDfaultValue(out), expectedChangesForStatusUpdate)
 	})
 
 	logger.Section("deploy after some changes are made by external controller", func() {
@@ -784,7 +706,7 @@ status:
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "-c"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml)})
 
-		// status is not ignored when smart diff is not used
+		// status is ignored when smart diff is not used
 		checkChangesOutput(t, replaceTimestampWithDfaultValue(out), expectedChangesForExternalUpdate)
 	})
 }

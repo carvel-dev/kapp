@@ -36,9 +36,8 @@ func NewResourceWithHistory(resource ctlres.Resource,
 
 	return ResourceWithHistory{resource.DeepCopy(), changeFactory, diffAgainstLastAppliedFieldExclusionMods}
 }
-
-func (r ResourceWithHistory) HistorylessResource() (ctlres.Resource, error) {
-	return resourceWithoutHistory{r.resource}.Resource()
+func NewResourceWithoutHistory(resource ctlres.Resource, fieldExclusionMods []ctlres.FieldRemoveMod) ResourceWithoutHistory {
+	return ResourceWithoutHistory{res: resource, fieldExclusionMods: fieldExclusionMods}
 }
 
 // LastAppliedResource will return "last applied" resource that was saved
@@ -156,12 +155,12 @@ func (r ResourceWithHistory) recalculateLastAppliedChange() ([]Change, string, s
 
 func (r ResourceWithHistory) newExactHistorylessChange(existingRes, newRes ctlres.Resource) (Change, error) {
 	// If annotations are not removed line numbers will be mismatched
-	existingRes, err := resourceWithoutHistory{existingRes}.Resource()
+	existingRes, err := ResourceWithoutHistory{existingRes, nil}.Resource()
 	if err != nil {
 		return nil, err
 	}
 
-	newRes, err = resourceWithoutHistory{newRes}.Resource()
+	newRes, err = ResourceWithoutHistory{newRes, nil}.Resource()
 	if err != nil {
 		return nil, err
 	}
@@ -169,11 +168,12 @@ func (r ResourceWithHistory) newExactHistorylessChange(existingRes, newRes ctlre
 	return r.changeFactory.NewExactChange(existingRes, newRes)
 }
 
-type resourceWithoutHistory struct {
-	res ctlres.Resource
+type ResourceWithoutHistory struct {
+	res                ctlres.Resource
+	fieldExclusionMods []ctlres.FieldRemoveMod
 }
 
-func (r resourceWithoutHistory) Resource() (ctlres.Resource, error) {
+func (r ResourceWithoutHistory) Resource() (ctlres.Resource, error) {
 	res := r.res.DeepCopy()
 
 	for _, t := range r.removeAppliedResAnnKeysMods() {
@@ -183,10 +183,17 @@ func (r resourceWithoutHistory) Resource() (ctlres.Resource, error) {
 		}
 	}
 
+	for _, t := range r.fieldExclusionMods {
+		err := t.Apply(res)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return res, nil
 }
 
-func (resourceWithoutHistory) removeAppliedResAnnKeysMods() []ctlres.ResourceMod {
+func (ResourceWithoutHistory) removeAppliedResAnnKeysMods() []ctlres.ResourceMod {
 	return []ctlres.ResourceMod{
 		ctlres.FieldRemoveMod{
 			ResourceMatcher: ctlres.AllMatcher{},

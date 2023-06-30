@@ -33,6 +33,7 @@ type Config struct {
 
 	AdditionalLabels                          map[string]string
 	DiffAgainstLastAppliedFieldExclusionRules []DiffAgainstLastAppliedFieldExclusionRule
+	DiffAgainstExistingFieldExclusionRules    []DiffAgainstExistingFieldExclusionRule
 
 	// TODO additional?
 	// TODO validations
@@ -92,6 +93,11 @@ type RebaseRuleYttOverlayContractV1 struct {
 }
 
 type DiffAgainstLastAppliedFieldExclusionRule struct {
+	ResourceMatchers []ResourceMatcher
+	Path             ctlres.Path
+}
+
+type DiffAgainstExistingFieldExclusionRule struct {
 	ResourceMatchers []ResourceMatcher
 	Path             ctlres.Path
 }
@@ -283,6 +289,14 @@ func (r RebaseRule) AsMods() []ctlres.ResourceModWithMultiple {
 }
 
 func (r DiffAgainstLastAppliedFieldExclusionRule) AsMod() ctlres.FieldRemoveMod {
+	return ctlres.FieldRemoveMod{
+		ResourceMatcher: ctlres.AnyMatcher{
+			Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
+		},
+		Path: r.Path,
+	}
+}
+func (r DiffAgainstExistingFieldExclusionRule) AsMod() ctlres.FieldRemoveMod {
 	return ctlres.FieldRemoveMod{
 		ResourceMatcher: ctlres.AnyMatcher{
 			Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
