@@ -13,9 +13,6 @@ type ResourceWithRemovedFields struct {
 }
 
 func NewResourceWithRemovedFields(res ctlres.Resource, mods []ctlres.FieldRemoveMod) ResourceWithRemovedFields {
-	if res != nil {
-		res = res.DeepCopy()
-	}
 	return ResourceWithRemovedFields{res: res, mods: mods}
 }
 
