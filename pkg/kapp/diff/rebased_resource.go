@@ -43,12 +43,11 @@ func (r RebasedResource) Resource() (ctlres.Resource, error) {
 
 	for _, t := range r.mods {
 		if t.IsResourceMatching(result) {
-			// copy newRes and existingRes as they may be modified in place
 			resSources := map[ctlres.FieldCopyModSource]ctlres.Resource{
-				ctlres.FieldCopyModSourceNew:      r.newRes.DeepCopy(),
-				ctlres.FieldCopyModSourceExisting: r.existingRes.DeepCopy(),
+				ctlres.FieldCopyModSourceNew:      r.newRes,
+				ctlres.FieldCopyModSourceExisting: r.existingRes,
 				// Might be useful for more advanced rebase rules like ytt-based
-				ctlres.FieldCopyModSource("_current"): result.DeepCopy(),
+				ctlres.FieldCopyModSource("_current"): result,
 			}
 
 			err := t.ApplyFromMultiple(result, resSources)

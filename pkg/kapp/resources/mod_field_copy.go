@@ -143,7 +143,7 @@ func (t FieldCopyMod) copyIntoMap(obj map[string]interface{}, fullPath Path, src
 			continue
 		}
 
-		val, found, err := t.obtainValue(srcRes.unstructured().Object, fullPath)
+		val, found, err := t.obtainValue(srcRes.DeepCopy().unstructured().Object, fullPath)
 		if err != nil {
 			return false, err
 		} else if !found {
