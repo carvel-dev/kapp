@@ -17,9 +17,9 @@ require (
 	github.com/vmware-tanzu/carvel-kapp-controller v0.46.1
 	golang.org/x/net v0.12.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.27.3
-	k8s.io/apimachinery v0.27.3
-	k8s.io/client-go v0.27.3
+	k8s.io/api v0.27.4
+	k8s.io/apimachinery v0.27.4
+	k8s.io/client-go v0.27.4
 	sigs.k8s.io/yaml v1.3.0
 )
 
