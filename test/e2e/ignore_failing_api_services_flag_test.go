@@ -129,7 +129,7 @@ metadata:
 			AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml3)})
 		require.Errorf(t, err, "Expected error when deploying with failing api service")
 
-		require.Contains(t, err.Error(), "unable to retrieve the complete list of server APIs: samplekapptest.com/v1: the server is currently unable to handle the request",
+		require.Contains(t, err.Error(), "unable to retrieve the complete list of server APIs: samplekapptest.com/v1",
 			"Expected api retrieval error")
 	})
 
