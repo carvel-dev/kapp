@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -401,4 +402,87 @@ metadata:
 		RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
 	NewMissingClusterResource(t, "configmap", name, env.Namespace, kubectl)
+}
+
+func TestDiffRun_WithReadOnlyPermissions(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, Logger{}}
+	kubectl := Kubectl{t, env.Namespace, Logger{}}
+
+	rbac := `
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: scoped-sa
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: scoped-sa
+  annotations:
+    kubernetes.io/service-account.name: scoped-sa
+type: kubernetes.io/service-account-token
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: scoped-role
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: scoped-role-binding
+subjects:
+- kind: ServiceAccount
+  name: scoped-sa
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: scoped-role
+`
+
+	rbacName := "test-e2e-rbac-app"
+	scopedContext := "scoped-context"
+	scopedUser := "scoped-user"
+	appName := "diff-run-read-only"
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", rbacName})
+		kapp.Run([]string{"delete", "-a", appName})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	kapp.RunWithOpts([]string{"deploy", "-a", rbacName, "-f", "-"}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(rbac)})
+	cleanUpContext := ScopedContext(t, kubectl, "scoped-sa", scopedContext, scopedUser)
+	defer cleanUpContext()
+
+	yaml1 := `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config
+`
+
+	logger.Section("diff-run app create using read-only role", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--diff-run", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		NewMissingClusterResource(t, "configmap", appName, env.Namespace, kubectl)
+	})
+
+	logger.Section("diff-run app update using read-only role", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		NewPresentClusterResource("configmap", appName, env.Namespace, kubectl)
+
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", appName, "--diff-run", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+	})
 }

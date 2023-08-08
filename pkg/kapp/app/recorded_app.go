@@ -138,6 +138,9 @@ func (a *RecordedApp) CreateOrUpdate(prevAppName string, labels map[string]strin
 	}
 	if foundMigratedApp {
 		a.isMigrated = true
+		if isDiffRun {
+			return false, nil
+		}
 		return false, a.updateApp(app, labels)
 	}
 
@@ -146,6 +149,9 @@ func (a *RecordedApp) CreateOrUpdate(prevAppName string, labels map[string]strin
 		return false, err
 	}
 	if foundNonMigratedApp {
+		if isDiffRun {
+			return false, nil
+		}
 		if a.isMigrationEnabled() {
 			return false, a.migrate(app, labels, a.fqName())
 		}
@@ -162,6 +168,9 @@ func (a *RecordedApp) CreateOrUpdate(prevAppName string, labels map[string]strin
 	}
 	if foundMigratedPrevApp {
 		a.isMigrated = true
+		if isDiffRun {
+			return false, nil
+		}
 		return false, a.renameConfigMap(app, a.fqName(), a.nsName)
 	}
 
@@ -170,6 +179,9 @@ func (a *RecordedApp) CreateOrUpdate(prevAppName string, labels map[string]strin
 		return false, err
 	}
 	if foundNonMigratedPrevApp {
+		if isDiffRun {
+			return false, nil
+		}
 		if a.isMigrationEnabled() {
 			return false, a.migrate(app, labels, a.fqName())
 		}
@@ -225,12 +237,12 @@ func (a *RecordedApp) create(labels map[string]string, isDiffRun bool) error {
 		return err
 	}
 
-	createOpts := metav1.CreateOptions{}
 	if isDiffRun {
-		createOpts.DryRun = []string{metav1.DryRunAll}
+		a.setMeta(*configMap)
+		return nil
 	}
-	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, createOpts)
 
+	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, metav1.CreateOptions{})
 	a.setMeta(*app)
 
 	return err
