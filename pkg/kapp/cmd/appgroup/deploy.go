@@ -5,8 +5,8 @@ package appgroup
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math"
+	"os"
 	"path/filepath"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -121,7 +121,7 @@ func (o *DeployOptions) appsToUpdate() (map[string]appGroupApp, error) {
 	result := map[string]appGroupApp{}
 	dir := o.DeployFlags.Directory
 
-	fileInfos, err := ioutil.ReadDir(dir)
+	fileInfos, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("Reading directory '%s': %w", dir, err)
 	}

@@ -4,7 +4,7 @@
 package diffgraph_test
 
 import (
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -16,7 +16,7 @@ import (
 )
 
 func TestChangeGraphCFForK8sUpsert(t *testing.T) {
-	configYAML, err := ioutil.ReadFile("assets/cf-for-k8s.yml")
+	configYAML, err := os.ReadFile("assets/cf-for-k8s.yml")
 	require.NoErrorf(t, err, "Reading cf-for-k8s asset")
 
 	configRs, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(configYAML))).Resources()
@@ -46,7 +46,7 @@ func TestChangeGraphCFForK8sUpsert(t *testing.T) {
 }
 
 func TestChangeGraphCFForK8sDelete(t *testing.T) {
-	configYAML, err := ioutil.ReadFile("assets/cf-for-k8s.yml")
+	configYAML, err := os.ReadFile("assets/cf-for-k8s.yml")
 	require.NoErrorf(t, err, "Reading cf-for-k8s asset")
 
 	configRs, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(configYAML))).Resources()
