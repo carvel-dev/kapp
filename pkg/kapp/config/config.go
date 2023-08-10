@@ -6,11 +6,11 @@ package config
 import (
 	"fmt"
 
+	"github.com/ghodss/yaml"
 	semver "github.com/hashicorp/go-version"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/version"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/yttresmod"
-	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -33,7 +33,6 @@ type Config struct {
 
 	AdditionalLabels                          map[string]string
 	DiffAgainstLastAppliedFieldExclusionRules []DiffAgainstLastAppliedFieldExclusionRule
-	DiffAgainstExistingFieldExclusionRules    []DiffAgainstExistingFieldExclusionRule
 
 	// TODO additional?
 	// TODO validations
@@ -93,11 +92,6 @@ type RebaseRuleYttOverlayContractV1 struct {
 }
 
 type DiffAgainstLastAppliedFieldExclusionRule struct {
-	ResourceMatchers []ResourceMatcher
-	Path             ctlres.Path
-}
-
-type DiffAgainstExistingFieldExclusionRule struct {
 	ResourceMatchers []ResourceMatcher
 	Path             ctlres.Path
 }
@@ -163,14 +157,11 @@ func NewConfigFromResource(res ctlres.Resource) (Config, error) {
 		return Config{}, err
 	}
 
-	return newConfigFromYAMLBytes(bs, res.Description())
-}
-
-func newConfigFromYAMLBytes(bs []byte, description string) (Config, error) {
 	var config Config
-	err := yaml.Unmarshal(bs, &config)
+
+	err = yaml.Unmarshal(bs, &config)
 	if err != nil {
-		return Config{}, fmt.Errorf("Unmarshaling %s: %w", description, err)
+		return Config{}, fmt.Errorf("Unmarshaling %s: %w", res.Description(), err)
 	}
 
 	err = config.Validate()
@@ -289,14 +280,6 @@ func (r RebaseRule) AsMods() []ctlres.ResourceModWithMultiple {
 }
 
 func (r DiffAgainstLastAppliedFieldExclusionRule) AsMod() ctlres.FieldRemoveMod {
-	return ctlres.FieldRemoveMod{
-		ResourceMatcher: ctlres.AnyMatcher{
-			Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),
-		},
-		Path: r.Path,
-	}
-}
-func (r DiffAgainstExistingFieldExclusionRule) AsMod() ctlres.FieldRemoveMod {
 	return ctlres.FieldRemoveMod{
 		ResourceMatcher: ctlres.AnyMatcher{
 			Matchers: ResourceMatchers(r.ResourceMatchers).AsResourceMatchers(),

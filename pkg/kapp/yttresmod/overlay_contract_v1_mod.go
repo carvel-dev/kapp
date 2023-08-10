@@ -6,11 +6,11 @@ package yttresmod
 import (
 	"fmt"
 
+	"github.com/ghodss/yaml"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
-	"sigs.k8s.io/yaml"
 )
 
 type OverlayContractV1Mod struct {
@@ -23,14 +23,11 @@ type OverlayContractV1Mod struct {
 
 var _ ctlres.ResourceModWithMultiple = OverlayContractV1Mod{}
 
-func (t OverlayContractV1Mod) IsResourceMatching(res ctlres.Resource) bool {
-	if res == nil || !t.ResourceMatcher.Matches(res) {
-		return false
-	}
-	return true
-}
-
 func (t OverlayContractV1Mod) ApplyFromMultiple(res ctlres.Resource, srcs map[ctlres.FieldCopyModSource]ctlres.Resource) error {
+	if !t.ResourceMatcher.Matches(res) {
+		return nil
+	}
+
 	result, err := t.evalYtt(res, srcs)
 	if err != nil {
 		return fmt.Errorf("Applying ytt (overlayContractV1): %w", err)

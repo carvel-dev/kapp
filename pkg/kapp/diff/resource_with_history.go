@@ -36,8 +36,9 @@ func NewResourceWithHistory(resource ctlres.Resource,
 
 	return ResourceWithHistory{resource.DeepCopy(), changeFactory, diffAgainstLastAppliedFieldExclusionMods}
 }
-func NewResourceWithoutHistory(resource ctlres.Resource, fieldExclusionMods []ctlres.FieldRemoveMod) ResourceWithoutHistory {
-	return ResourceWithoutHistory{res: resource, fieldExclusionMods: fieldExclusionMods}
+
+func (r ResourceWithHistory) HistorylessResource() (ctlres.Resource, error) {
+	return resourceWithoutHistory{r.resource}.Resource()
 }
 
 // LastAppliedResource will return "last applied" resource that was saved
@@ -130,6 +131,12 @@ func (r ResourceWithHistory) CalculateChange(appliedRes ctlres.Resource) (Change
 	return r.newExactHistorylessChange(existingRes, appliedRes)
 }
 
+// calculateChangePrev1 is a previous version of CalculateChange
+// that we need to calculate changes in backwards compatible way.
+func (r ResourceWithHistory) calculateChangePrev1(appliedRes ctlres.Resource) (Change, error) {
+	return r.newExactHistorylessChange(r.resource, appliedRes)
+}
+
 func (r ResourceWithHistory) recalculateLastAppliedChange() ([]Change, string, string) {
 	lastAppliedResBytes := r.resource.Annotations()[appliedResAnnKey]
 	lastAppliedDiffMD5 := r.resource.Annotations()[appliedResDiffMD5AnnKey]
@@ -143,24 +150,32 @@ func (r ResourceWithHistory) recalculateLastAppliedChange() ([]Change, string, s
 		return nil, "", ""
 	}
 
-	recalculatedChange, err := r.CalculateChange(lastAppliedRes)
+	// Continue to calculate historyless change with excluded fields
+	// (previous kapp versions did so, and we do not want to fallback
+	// to diffing against list resources).
+	recalculatedChange1, err := r.calculateChangePrev1(lastAppliedRes)
+	if err != nil {
+		return nil, "", "" // TODO deal with error?
+	}
+
+	recalculatedChange2, err := r.CalculateChange(lastAppliedRes)
 	if err != nil {
 		return nil, "", "" // TODO deal with error?
 	}
 
 	lastAppliedDiff := r.resource.Annotations()[debugAppliedResDiffAnnKey]
 
-	return []Change{recalculatedChange}, lastAppliedDiffMD5, lastAppliedDiff
+	return []Change{recalculatedChange1, recalculatedChange2}, lastAppliedDiffMD5, lastAppliedDiff
 }
 
 func (r ResourceWithHistory) newExactHistorylessChange(existingRes, newRes ctlres.Resource) (Change, error) {
 	// If annotations are not removed line numbers will be mismatched
-	existingRes, err := ResourceWithoutHistory{existingRes, nil}.Resource()
+	existingRes, err := resourceWithoutHistory{existingRes}.Resource()
 	if err != nil {
 		return nil, err
 	}
 
-	newRes, err = ResourceWithoutHistory{newRes, nil}.Resource()
+	newRes, err = resourceWithoutHistory{newRes}.Resource()
 	if err != nil {
 		return nil, err
 	}
@@ -168,12 +183,11 @@ func (r ResourceWithHistory) newExactHistorylessChange(existingRes, newRes ctlre
 	return r.changeFactory.NewExactChange(existingRes, newRes)
 }
 
-type ResourceWithoutHistory struct {
-	res                ctlres.Resource
-	fieldExclusionMods []ctlres.FieldRemoveMod
+type resourceWithoutHistory struct {
+	res ctlres.Resource
 }
 
-func (r ResourceWithoutHistory) Resource() (ctlres.Resource, error) {
+func (r resourceWithoutHistory) Resource() (ctlres.Resource, error) {
 	res := r.res.DeepCopy()
 
 	for _, t := range r.removeAppliedResAnnKeysMods() {
@@ -183,17 +197,10 @@ func (r ResourceWithoutHistory) Resource() (ctlres.Resource, error) {
 		}
 	}
 
-	for _, t := range r.fieldExclusionMods {
-		err := t.Apply(res)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return res, nil
 }
 
-func (ResourceWithoutHistory) removeAppliedResAnnKeysMods() []ctlres.ResourceMod {
+func (resourceWithoutHistory) removeAppliedResAnnKeysMods() []ctlres.ResourceMod {
 	return []ctlres.ResourceMod{
 		ctlres.FieldRemoveMod{
 			ResourceMatcher: ctlres.AllMatcher{},

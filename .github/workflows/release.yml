@@ -101,7 +101,7 @@ jobs:
           ${{steps.get-checksums-from-draft-release.outputs.result}}
           EOF
           )
-          
+
       - name: Run Test cases
         run: |
           # Setup minikube

@@ -42,6 +42,7 @@ loop:
 			continue
 		}
 
+		var buf bytes.Buffer
 		for {
 			c, err := er.ReadByte()
 			if err != nil {
@@ -50,6 +51,7 @@ loop:
 			if ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '@' {
 				break
 			}
+			buf.Write([]byte(string(c)))
 		}
 	}
 

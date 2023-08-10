@@ -104,7 +104,11 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	isNewApp, err := app.CreateOrUpdate(o.PrevAppFlags.PrevAppName, appLabels, o.DiffFlags.Run)
+	if o.PrevAppFlags.PrevAppName != "" {
+		err = app.RenamePrevApp(o.PrevAppFlags.PrevAppName, appLabels, o.DiffFlags.Run)
+	} else {
+		err = app.CreateOrUpdate(appLabels, o.DiffFlags.Run)
+	}
 
 	if err != nil {
 		return err
@@ -154,7 +158,7 @@ func (o *DeployOptions) Run() error {
 	}
 
 	existingResources, existingPodRs, err := o.existingResources(
-		newResources, labeledResources, resourceFilter, supportObjs.Apps, usedGKs, append(meta.LastChange.Namespaces, nsNames...), isNewApp)
+		newResources, labeledResources, resourceFilter, supportObjs.Apps, usedGKs, append(meta.LastChange.Namespaces, nsNames...))
 	if err != nil {
 		return err
 	}
@@ -245,7 +249,7 @@ func (o *DeployOptions) Run() error {
 }
 
 func (o *DeployOptions) newAndUsedGKs(newGKs []schema.GroupKind, app ctlapp.App) ([]schema.GroupKind, error) {
-	if o.DeployFlags.DisableGKScoping {
+	if o.ResourceTypesFlags.DisableGKScoping {
 		return []schema.GroupKind{}, nil
 	}
 
@@ -348,7 +352,7 @@ func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
 
 func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 	labeledResources *ctlres.LabeledResources, resourceFilter ctlres.ResourceFilter,
-	apps ctlapp.Apps, usedGKs []schema.GroupKind, resourceNamespaces []string, isNewApp bool) ([]ctlres.Resource, []ctlres.Resource, error) {
+	apps ctlapp.Apps, usedGKs []schema.GroupKind, resourceNamespaces []string) ([]ctlres.Resource, []ctlres.Resource, error) {
 
 	labelErrorResolutionFunc := func(key string, val string) string {
 		items, _ := apps.List(nil)
@@ -365,7 +369,6 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 		ExistingNonLabeledResourcesCheck:            o.DeployFlags.ExistingNonLabeledResourcesCheck,
 		ExistingNonLabeledResourcesCheckConcurrency: o.DeployFlags.ExistingNonLabeledResourcesCheckConcurrency,
 		SkipResourceOwnershipCheck:                  o.DeployFlags.OverrideOwnershipOfExistingResources,
-		IsNewApp:                                    isNewApp,
 
 		// Prevent accidently overriding kapp state records
 		DisallowedResourcesByLabelKeys: []string{ctlapp.KappIsAppLabelKey},
@@ -405,7 +408,7 @@ func (o *DeployOptions) calculateAndPresentChanges(existingResources,
 	var clusterChangeSet ctlcap.ClusterChangeSet
 
 	{ // Figure out changes for X existing resources -> X new resources
-		changeFactory := ctldiff.NewChangeFactory(conf.RebaseMods(), conf.DiffAgainstLastAppliedFieldExclusionMods(), conf.DiffAgainstExistingFieldExclusionMods())
+		changeFactory := ctldiff.NewChangeFactory(conf.RebaseMods(), conf.DiffAgainstLastAppliedFieldExclusionMods())
 		changeSetFactory := ctldiff.NewChangeSetFactory(o.DiffFlags.ChangeSetOpts, changeFactory)
 
 		err := ctldiff.NewRenewableResources(existingResources, newResources).Prepare()

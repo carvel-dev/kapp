@@ -62,25 +62,7 @@ kapp: Error: create job/successful-job (batch/v1) namespace: default:
  (reason: Invalid)
 `)
 
-		minorVersion, err := getServerMinorVersion()
-		require.NoErrorf(t, err, "Error getting k8s server minor version")
-		// batch.kubernetes.io/controller-uid and batch.kubernetes.io/job-name annotaions are added
-		if minorVersion >= 27 {
-			expectedErr = strings.TrimSpace(`
-kapp: Error: create job/successful-job (batch/v1) namespace: default:
-  Creating resource job/successful-job (batch/v1) namespace: default:
-    API server says:
-      Job.batch "successful-job" is invalid: 
-
-  - spec.selector: Invalid value: v1.LabelSelector{MatchLabels:map[string]string{-replaced-, "blah":"balh", -replaced-}, MatchExpressions:[]v1.LabelSelectorRequirement(nil)}: 'selector' not auto-generated
-
-  - spec.template.metadata.labels: Invalid value: map[string]string{-replaced-, -replaced-, -replaced-, "foo":"foo", "job-name":"successful-job", -replaced-, -replaced-}: 'selector' does not match template 'labels'
-
- (reason: Invalid)
-`)
-		}
-
-		_, err = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
 			RunOpts{StdinReader: strings.NewReader(yaml1), AllowError: true})
 
 		out := strings.ReplaceAll(err.Error(), "`", "'")
@@ -89,12 +71,6 @@ kapp: Error: create job/successful-job (batch/v1) namespace: default:
 		out = replaceAnns.ReplaceAllString(out, "-replaced-")
 
 		replaceUIDs := regexp.MustCompile(`"controller-uid":"[^"]+"`)
-		out = replaceUIDs.ReplaceAllString(out, "-replaced-")
-
-		replaceUIDs = regexp.MustCompile(`"batch\.kubernetes\.io\/controller-uid":"[^"]+"`)
-		out = replaceUIDs.ReplaceAllString(out, "-replaced-")
-
-		replaceUIDs = regexp.MustCompile(`"batch\.kubernetes\.io\/job-name":"[^"]+"`)
 		out = replaceUIDs.ReplaceAllString(out, "-replaced-")
 
 		require.Containsf(t, out, expectedErr, "Expected to see expected err in output, but did not")

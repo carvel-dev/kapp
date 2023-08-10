@@ -41,6 +41,13 @@ rebaseRules:
   resourceMatchers:
   - allMatcher: {}
 
+# Copy over all status, since cluster owns that
+- path: [status]
+  type: copy
+  sources: [existing]
+  resourceMatchers:
+  - allMatcher: {}
+
 # Prefer user provided, but allow cluster set
 - paths:
   - [spec, clusterIP]
@@ -230,11 +237,6 @@ rebaseRules:
 diffAgainstLastAppliedFieldExclusionRules:
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
   resourceMatchers: *appsV1DeploymentWithRevAnnKey
-
-diffAgainstExistingFieldExclusionRules:
-- path: [status]
-  resourceMatchers:
-  - allMatcher: {}
 
 diffMaskRules:
 - path: [data]
@@ -701,18 +703,10 @@ changeRuleBindings:
       - hasNamespaceMatcher: {}
 `
 
+var defaultConfigRes = ctlres.MustNewResourceFromBytes([]byte(defaultConfigYAML))
+
 func NewDefaultConfigString() string { return defaultConfigYAML }
 
 func NewConfFromResourcesWithDefaults(resources []ctlres.Resource) ([]ctlres.Resource, Conf, error) {
-	resources, conf, err := NewConfFromResources(resources)
-	if err != nil {
-		return nil, Conf{}, err
-	}
-
-	defaultConfig, err := newConfigFromYAMLBytes([]byte(defaultConfigYAML), "config/default (kapp.k14s.io/v1alpha1)")
-	if err != nil {
-		return nil, Conf{}, err
-	}
-
-	return resources, Conf{append([]Config{defaultConfig}, conf.configs...)}, err
+	return NewConfFromResources(append([]ctlres.Resource{defaultConfigRes}, resources...))
 }

@@ -6,6 +6,7 @@ package e2e
 import (
 	"bufio"
 	"io"
+	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -324,7 +325,7 @@ func (p promptOutput) WaitPresented() {
 }
 
 func newTmpFile(content string, t *testing.T) *os.File {
-	file, err := os.CreateTemp("", "kapp-test-update-retry-on-conflict")
+	file, err := ioutil.TempFile("", "kapp-test-update-retry-on-conflict")
 	require.NoError(t, err)
 
 	_, err = file.Write([]byte(content))
