@@ -39,38 +39,39 @@
 // This package provides several flags that modify this behavior.
 // As a result, flag.Parse must be called before any logging is done.
 //
-//		-logtostderr=true
-//			Logs are written to standard error instead of to files.
-//	             This shortcuts most of the usual output routing:
-//	             -alsologtostderr, -stderrthreshold and -log_dir have no
-//	             effect and output redirection at runtime with SetOutput is
-//	             ignored.
-//		-alsologtostderr=false
-//			Logs are written to standard error as well as to files.
-//		-stderrthreshold=ERROR
-//			Log events at or above this severity are logged to standard
-//			error as well as to files.
-//		-log_dir=""
-//			Log files will be written to this directory instead of the
-//			default temporary directory.
+//	-logtostderr=true
+//		Logs are written to standard error instead of to files.
+//              This shortcuts most of the usual output routing:
+//              -alsologtostderr, -stderrthreshold and -log_dir have no
+//              effect and output redirection at runtime with SetOutput is
+//              ignored.
+//	-alsologtostderr=false
+//		Logs are written to standard error as well as to files.
+//	-stderrthreshold=ERROR
+//		Log events at or above this severity are logged to standard
+//		error as well as to files.
+//	-log_dir=""
+//		Log files will be written to this directory instead of the
+//		default temporary directory.
 //
-//		Other flags provide aids to debugging.
+//	Other flags provide aids to debugging.
 //
-//		-log_backtrace_at=""
-//			When set to a file and line number holding a logging statement,
-//			such as
-//				-log_backtrace_at=gopherflakes.go:234
-//			a stack trace will be written to the Info log whenever execution
-//			hits that statement. (Unlike with -vmodule, the ".go" must be
-//			present.)
-//		-v=0
-//			Enable V-leveled logging at the specified level.
-//		-vmodule=""
-//			The syntax of the argument is a comma-separated list of pattern=N,
-//			where pattern is a literal file name (minus the ".go" suffix) or
-//			"glob" pattern and N is a V level. For instance,
-//				-vmodule=gopher*=3
-//			sets the V level to 3 in all Go files whose names begin "gopher".
+//	-log_backtrace_at=""
+//		When set to a file and line number holding a logging statement,
+//		such as
+//			-log_backtrace_at=gopherflakes.go:234
+//		a stack trace will be written to the Info log whenever execution
+//		hits that statement. (Unlike with -vmodule, the ".go" must be
+//		present.)
+//	-v=0
+//		Enable V-leveled logging at the specified level.
+//	-vmodule=""
+//		The syntax of the argument is a comma-separated list of pattern=N,
+//		where pattern is a literal file name (minus the ".go" suffix) or
+//		"glob" pattern and N is a V level. For instance,
+//			-vmodule=gopher*=3
+//		sets the V level to 3 in all Go files whose names begin "gopher".
+//
 package klog
 
 import (
@@ -90,6 +91,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/go-logr/logr"
 
 	"k8s.io/klog/v2/internal/buffer"
 	"k8s.io/klog/v2/internal/clock"
@@ -394,48 +397,45 @@ type flushSyncWriter interface {
 	io.Writer
 }
 
-var logging loggingT
-var commandLine flag.FlagSet
-
-// init sets up the defaults and creates command line flags.
+// init sets up the defaults.
 func init() {
-	commandLine.StringVar(&logging.logDir, "log_dir", "", "If non-empty, write log files in this directory (no effect when -logtostderr=true)")
-	commandLine.StringVar(&logging.logFile, "log_file", "", "If non-empty, use this log file (no effect when -logtostderr=true)")
-	commandLine.Uint64Var(&logging.logFileMaxSizeMB, "log_file_max_size", 1800,
-		"Defines the maximum size a log file can grow to (no effect when -logtostderr=true). Unit is megabytes. "+
-			"If the value is 0, the maximum file size is unlimited.")
-	commandLine.BoolVar(&logging.toStderr, "logtostderr", true, "log to standard error instead of files")
-	commandLine.BoolVar(&logging.alsoToStderr, "alsologtostderr", false, "log to standard error as well as files (no effect when -logtostderr=true)")
-	logging.setVState(0, nil, false)
-	commandLine.Var(&logging.verbosity, "v", "number for the log level verbosity")
-	commandLine.BoolVar(&logging.addDirHeader, "add_dir_header", false, "If true, adds the file directory to the header of the log messages")
-	commandLine.BoolVar(&logging.skipHeaders, "skip_headers", false, "If true, avoid header prefixes in the log messages")
-	commandLine.BoolVar(&logging.oneOutput, "one_output", false, "If true, only write logs to their native severity level (vs also writing to each lower severity level; no effect when -logtostderr=true)")
-	commandLine.BoolVar(&logging.skipLogHeaders, "skip_log_headers", false, "If true, avoid headers when opening log files (no effect when -logtostderr=true)")
 	logging.stderrThreshold = severityValue{
 		Severity: severity.ErrorLog, // Default stderrThreshold is ERROR.
 	}
-	commandLine.Var(&logging.stderrThreshold, "stderrthreshold", "logs at or above this threshold go to stderr when writing to files and stderr (no effect when -logtostderr=true or -alsologtostderr=false)")
-	commandLine.Var(&logging.vmodule, "vmodule", "comma-separated list of pattern=N settings for file-filtered logging")
-	commandLine.Var(&logging.traceLocation, "log_backtrace_at", "when logging hits line file:N, emit a stack trace")
-
-	logging.settings.contextualLoggingEnabled = true
+	logging.setVState(0, nil, false)
+	logging.logDir = ""
+	logging.logFile = ""
+	logging.logFileMaxSizeMB = 1800
+	logging.toStderr = true
+	logging.alsoToStderr = false
+	logging.skipHeaders = false
+	logging.addDirHeader = false
+	logging.skipLogHeaders = false
+	logging.oneOutput = false
 	logging.flushD = newFlushDaemon(logging.lockAndFlushAll, nil)
 }
 
 // InitFlags is for explicitly initializing the flags.
-// It may get called repeatedly for different flagsets, but not
-// twice for the same one. May get called concurrently
-// to other goroutines using klog. However, only some flags
-// may get set concurrently (see implementation).
 func InitFlags(flagset *flag.FlagSet) {
 	if flagset == nil {
 		flagset = flag.CommandLine
 	}
 
-	commandLine.VisitAll(func(f *flag.Flag) {
-		flagset.Var(f.Value, f.Name, f.Usage)
-	})
+	flagset.StringVar(&logging.logDir, "log_dir", logging.logDir, "If non-empty, write log files in this directory (no effect when -logtostderr=true)")
+	flagset.StringVar(&logging.logFile, "log_file", logging.logFile, "If non-empty, use this log file (no effect when -logtostderr=true)")
+	flagset.Uint64Var(&logging.logFileMaxSizeMB, "log_file_max_size", logging.logFileMaxSizeMB,
+		"Defines the maximum size a log file can grow to (no effect when -logtostderr=true). Unit is megabytes. "+
+			"If the value is 0, the maximum file size is unlimited.")
+	flagset.BoolVar(&logging.toStderr, "logtostderr", logging.toStderr, "log to standard error instead of files")
+	flagset.BoolVar(&logging.alsoToStderr, "alsologtostderr", logging.alsoToStderr, "log to standard error as well as files (no effect when -logtostderr=true)")
+	flagset.Var(&logging.verbosity, "v", "number for the log level verbosity")
+	flagset.BoolVar(&logging.addDirHeader, "add_dir_header", logging.addDirHeader, "If true, adds the file directory to the header of the log messages")
+	flagset.BoolVar(&logging.skipHeaders, "skip_headers", logging.skipHeaders, "If true, avoid header prefixes in the log messages")
+	flagset.BoolVar(&logging.oneOutput, "one_output", logging.oneOutput, "If true, only write logs to their native severity level (vs also writing to each lower severity level; no effect when -logtostderr=true)")
+	flagset.BoolVar(&logging.skipLogHeaders, "skip_log_headers", logging.skipLogHeaders, "If true, avoid headers when opening log files (no effect when -logtostderr=true)")
+	flagset.Var(&logging.stderrThreshold, "stderrthreshold", "logs at or above this threshold go to stderr when writing to files and stderr (no effect when -logtostderr=true or -alsologtostderr=false)")
+	flagset.Var(&logging.vmodule, "vmodule", "comma-separated list of pattern=N settings for file-filtered logging")
+	flagset.Var(&logging.traceLocation, "log_backtrace_at", "when logging hits line file:N, emit a stack trace")
 }
 
 // Flush flushes all pending log I/O.
@@ -451,7 +451,7 @@ type settings struct {
 
 	// logger is the global Logger chosen by users of klog, nil if
 	// none is available.
-	logger *logWriter
+	logger *Logger
 
 	// loggerOptions contains the options that were supplied for
 	// globalLogger.
@@ -523,17 +523,17 @@ func (s settings) deepCopy() settings {
 	}
 	s.vmodule.filter = filter
 
-	if s.logger != nil {
-		logger := *s.logger
-		s.logger = &logger
-	}
-
 	return s
 }
 
 // loggingT collects all the global state of the logging setup.
 type loggingT struct {
 	settings
+
+	// bufferCache maintains the free list. It uses its own mutex
+	// so buffers can be grabbed and printed to without holding the main lock,
+	// for better parallelization.
+	bufferCache buffer.Buffers
 
 	// flushD holds a flushDaemon that frequently flushes log file buffers.
 	// Uses its own mutex.
@@ -548,6 +548,12 @@ type loggingT struct {
 	// vmap is a cache of the V Level for each V() call site, identified by PC.
 	// It is wiped whenever the vmodule flag changes state.
 	vmap map[uintptr]Level
+}
+
+var logging = loggingT{
+	settings: settings{
+		contextualLoggingEnabled: true,
+	},
 }
 
 // setVState sets a consistent state for V logging.
@@ -627,11 +633,8 @@ It returns a buffer containing the formatted header and the user's file and line
 The depth specifies how many stack frames above lives the source line to be identified in the log message.
 
 Log lines have this form:
-
 	Lmmdd hh:mm:ss.uuuuuu threadid file:line] msg...
-
 where the fields are defined as follows:
-
 	L                A single character, representing the log level (eg 'I' for INFO)
 	mm               The month (zero padded; ie May is '05')
 	dd               The day (zero padded)
@@ -662,7 +665,7 @@ func (l *loggingT) header(s severity.Severity, depth int) (*buffer.Buffer, strin
 
 // formatHeader formats a log header using the provided file name and line number.
 func (l *loggingT) formatHeader(s severity.Severity, file string, line int) *buffer.Buffer {
-	buf := buffer.GetBuffer()
+	buf := l.bufferCache.GetBuffer()
 	if l.skipHeaders {
 		return buf
 	}
@@ -671,18 +674,17 @@ func (l *loggingT) formatHeader(s severity.Severity, file string, line int) *buf
 	return buf
 }
 
-func (l *loggingT) println(s severity.Severity, logger *logWriter, filter LogFilter, args ...interface{}) {
+func (l *loggingT) println(s severity.Severity, logger *logr.Logger, filter LogFilter, args ...interface{}) {
 	l.printlnDepth(s, logger, filter, 1, args...)
 }
 
-func (l *loggingT) printlnDepth(s severity.Severity, logger *logWriter, filter LogFilter, depth int, args ...interface{}) {
+func (l *loggingT) printlnDepth(s severity.Severity, logger *logr.Logger, filter LogFilter, depth int, args ...interface{}) {
 	buf, file, line := l.header(s, depth)
-	// If a logger is set and doesn't support writing a formatted buffer,
-	// we clear the generated header as we rely on the backing
-	// logger implementation to print headers.
-	if logger != nil && logger.writeKlogBuffer == nil {
-		buffer.PutBuffer(buf)
-		buf = buffer.GetBuffer()
+	// if logger is set, we clear the generated header as we rely on the backing
+	// logger implementation to print headers
+	if logger != nil {
+		l.bufferCache.PutBuffer(buf)
+		buf = l.bufferCache.GetBuffer()
 	}
 	if filter != nil {
 		args = filter.Filter(args)
@@ -691,18 +693,17 @@ func (l *loggingT) printlnDepth(s severity.Severity, logger *logWriter, filter L
 	l.output(s, logger, buf, depth, file, line, false)
 }
 
-func (l *loggingT) print(s severity.Severity, logger *logWriter, filter LogFilter, args ...interface{}) {
+func (l *loggingT) print(s severity.Severity, logger *logr.Logger, filter LogFilter, args ...interface{}) {
 	l.printDepth(s, logger, filter, 1, args...)
 }
 
-func (l *loggingT) printDepth(s severity.Severity, logger *logWriter, filter LogFilter, depth int, args ...interface{}) {
+func (l *loggingT) printDepth(s severity.Severity, logger *logr.Logger, filter LogFilter, depth int, args ...interface{}) {
 	buf, file, line := l.header(s, depth)
-	// If a logger is set and doesn't support writing a formatted buffer,
-	// we clear the generated header as we rely on the backing
-	// logger implementation to print headers.
-	if logger != nil && logger.writeKlogBuffer == nil {
-		buffer.PutBuffer(buf)
-		buf = buffer.GetBuffer()
+	// if logr is set, we clear the generated header as we rely on the backing
+	// logr implementation to print headers
+	if logger != nil {
+		l.bufferCache.PutBuffer(buf)
+		buf = l.bufferCache.GetBuffer()
 	}
 	if filter != nil {
 		args = filter.Filter(args)
@@ -714,18 +715,17 @@ func (l *loggingT) printDepth(s severity.Severity, logger *logWriter, filter Log
 	l.output(s, logger, buf, depth, file, line, false)
 }
 
-func (l *loggingT) printf(s severity.Severity, logger *logWriter, filter LogFilter, format string, args ...interface{}) {
+func (l *loggingT) printf(s severity.Severity, logger *logr.Logger, filter LogFilter, format string, args ...interface{}) {
 	l.printfDepth(s, logger, filter, 1, format, args...)
 }
 
-func (l *loggingT) printfDepth(s severity.Severity, logger *logWriter, filter LogFilter, depth int, format string, args ...interface{}) {
+func (l *loggingT) printfDepth(s severity.Severity, logger *logr.Logger, filter LogFilter, depth int, format string, args ...interface{}) {
 	buf, file, line := l.header(s, depth)
-	// If a logger is set and doesn't support writing a formatted buffer,
-	// we clear the generated header as we rely on the backing
-	// logger implementation to print headers.
-	if logger != nil && logger.writeKlogBuffer == nil {
-		buffer.PutBuffer(buf)
-		buf = buffer.GetBuffer()
+	// if logr is set, we clear the generated header as we rely on the backing
+	// logr implementation to print headers
+	if logger != nil {
+		l.bufferCache.PutBuffer(buf)
+		buf = l.bufferCache.GetBuffer()
 	}
 	if filter != nil {
 		format, args = filter.FilterF(format, args)
@@ -740,14 +740,13 @@ func (l *loggingT) printfDepth(s severity.Severity, logger *logWriter, filter Lo
 // printWithFileLine behaves like print but uses the provided file and line number.  If
 // alsoLogToStderr is true, the log message always appears on standard error; it
 // will also appear in the log file unless --logtostderr is set.
-func (l *loggingT) printWithFileLine(s severity.Severity, logger *logWriter, filter LogFilter, file string, line int, alsoToStderr bool, args ...interface{}) {
+func (l *loggingT) printWithFileLine(s severity.Severity, logger *logr.Logger, filter LogFilter, file string, line int, alsoToStderr bool, args ...interface{}) {
 	buf := l.formatHeader(s, file, line)
-	// If a logger is set and doesn't support writing a formatted buffer,
-	// we clear the generated header as we rely on the backing
-	// logger implementation to print headers.
-	if logger != nil && logger.writeKlogBuffer == nil {
-		buffer.PutBuffer(buf)
-		buf = buffer.GetBuffer()
+	// if logr is set, we clear the generated header as we rely on the backing
+	// logr implementation to print headers
+	if logger != nil {
+		l.bufferCache.PutBuffer(buf)
+		buf = l.bufferCache.GetBuffer()
 	}
 	if filter != nil {
 		args = filter.Filter(args)
@@ -760,7 +759,7 @@ func (l *loggingT) printWithFileLine(s severity.Severity, logger *logWriter, fil
 }
 
 // if loggr is specified, will call loggr.Error, otherwise output with logging module.
-func (l *loggingT) errorS(err error, logger *logWriter, filter LogFilter, depth int, msg string, keysAndValues ...interface{}) {
+func (l *loggingT) errorS(err error, logger *logr.Logger, filter LogFilter, depth int, msg string, keysAndValues ...interface{}) {
 	if filter != nil {
 		msg, keysAndValues = filter.FilterS(msg, keysAndValues)
 	}
@@ -772,7 +771,7 @@ func (l *loggingT) errorS(err error, logger *logWriter, filter LogFilter, depth 
 }
 
 // if loggr is specified, will call loggr.Info, otherwise output with logging module.
-func (l *loggingT) infoS(logger *logWriter, filter LogFilter, depth int, msg string, keysAndValues ...interface{}) {
+func (l *loggingT) infoS(logger *logr.Logger, filter LogFilter, depth int, msg string, keysAndValues ...interface{}) {
 	if filter != nil {
 		msg, keysAndValues = filter.FilterS(msg, keysAndValues)
 	}
@@ -787,7 +786,7 @@ func (l *loggingT) infoS(logger *logWriter, filter LogFilter, depth int, msg str
 // set log severity by s
 func (l *loggingT) printS(err error, s severity.Severity, depth int, msg string, keysAndValues ...interface{}) {
 	// Only create a new buffer if we don't have one cached.
-	b := buffer.GetBuffer()
+	b := l.bufferCache.GetBuffer()
 	// The message is always quoted, even if it contains line breaks.
 	// If developers want multi-line output, they should use a small, fixed
 	// message and put the multi-line output into a value.
@@ -798,7 +797,7 @@ func (l *loggingT) printS(err error, s severity.Severity, depth int, msg string,
 	serialize.KVListFormat(&b.Buffer, keysAndValues...)
 	l.printDepth(s, logging.logger, nil, depth+1, &b.Buffer)
 	// Make the buffer available for reuse.
-	buffer.PutBuffer(b)
+	l.bufferCache.PutBuffer(b)
 }
 
 // redirectBuffer is used to set an alternate destination for the logs
@@ -853,7 +852,7 @@ func LogToStderr(stderr bool) {
 }
 
 // output writes the data to the log files and releases the buffer.
-func (l *loggingT) output(s severity.Severity, logger *logWriter, buf *buffer.Buffer, depth int, file string, line int, alsoToStderr bool) {
+func (l *loggingT) output(s severity.Severity, log *logr.Logger, buf *buffer.Buffer, depth int, file string, line int, alsoToStderr bool) {
 	var isLocked = true
 	l.mu.Lock()
 	defer func() {
@@ -869,17 +868,13 @@ func (l *loggingT) output(s severity.Severity, logger *logWriter, buf *buffer.Bu
 		}
 	}
 	data := buf.Bytes()
-	if logger != nil {
-		if logger.writeKlogBuffer != nil {
-			logger.writeKlogBuffer(data)
+	if log != nil {
+		// TODO: set 'severity' and caller information as structured log info
+		// keysAndValues := []interface{}{"severity", severityName[s], "file", file, "line", line}
+		if s == severity.ErrorLog {
+			logging.logger.WithCallDepth(depth+3).Error(nil, string(data))
 		} else {
-			// TODO: set 'severity' and caller information as structured log info
-			// keysAndValues := []interface{}{"severity", severityName[s], "file", file, "line", line}
-			if s == severity.ErrorLog {
-				logger.WithCallDepth(depth+3).Error(nil, string(data))
-			} else {
-				logger.WithCallDepth(depth + 3).Info(string(data))
-			}
+			log.WithCallDepth(depth + 3).Info(string(data))
 		}
 	} else if l.toStderr {
 		os.Stderr.Write(data)
@@ -954,7 +949,7 @@ func (l *loggingT) output(s severity.Severity, logger *logWriter, buf *buffer.Bu
 		timeoutFlush(ExitFlushTimeout)
 		OsExit(255) // C++ uses -1, which is silly because it's anded with 255 anyway.
 	}
-	buffer.PutBuffer(buf)
+	l.bufferCache.PutBuffer(buf)
 
 	if stats := severityStats[s]; stats != nil {
 		atomic.AddInt64(&stats.lines, 1)
@@ -1288,7 +1283,7 @@ func (l *loggingT) setV(pc uintptr) Level {
 // See the documentation of V for more information.
 type Verbose struct {
 	enabled bool
-	logger  *logWriter
+	logr    *logr.Logger
 }
 
 func newVerbose(level Level, b bool) Verbose {
@@ -1296,20 +1291,16 @@ func newVerbose(level Level, b bool) Verbose {
 		return Verbose{b, nil}
 	}
 	v := logging.logger.V(int(level))
-	return Verbose{b, &logWriter{Logger: v, writeKlogBuffer: logging.loggerOptions.writeKlogBuffer}}
+	return Verbose{b, &v}
 }
 
 // V reports whether verbosity at the call site is at least the requested level.
 // The returned value is a struct of type Verbose, which implements Info, Infoln
 // and Infof. These methods will write to the Info log if called.
 // Thus, one may write either
-//
 //	if klog.V(2).Enabled() { klog.Info("log this") }
-//
 // or
-//
 //	klog.V(2).Info("log this")
-//
 // The second form is shorter but the first is cheaper if logging is off because it does
 // not evaluate its arguments.
 //
@@ -1319,13 +1310,6 @@ func newVerbose(level Level, b bool) Verbose {
 // less than or equal to the value of the -vmodule pattern matching the source file
 // containing the call.
 func V(level Level) Verbose {
-	return VDepth(1, level)
-}
-
-// VDepth is a variant of V that accepts a number of stack frames that will be
-// skipped when checking the -vmodule patterns. VDepth(0) is equivalent to
-// V().
-func VDepth(depth int, level Level) Verbose {
 	// This function tries hard to be cheap unless there's work to do.
 	// The fast path is two atomic loads and compares.
 
@@ -1342,7 +1326,7 @@ func VDepth(depth int, level Level) Verbose {
 		// but if V logging is enabled we're slow anyway.
 		logging.mu.Lock()
 		defer logging.mu.Unlock()
-		if runtime.Callers(2+depth, logging.pcs[:]) == 0 {
+		if runtime.Callers(2, logging.pcs[:]) == 0 {
 			return newVerbose(level, false)
 		}
 		// runtime.Callers returns "return PCs", but we want
@@ -1370,7 +1354,7 @@ func (v Verbose) Enabled() bool {
 // See the documentation of V for usage.
 func (v Verbose) Info(args ...interface{}) {
 	if v.enabled {
-		logging.print(severity.InfoLog, v.logger, logging.filter, args...)
+		logging.print(severity.InfoLog, v.logr, logging.filter, args...)
 	}
 }
 
@@ -1378,7 +1362,7 @@ func (v Verbose) Info(args ...interface{}) {
 // See the documentation of V for usage.
 func (v Verbose) InfoDepth(depth int, args ...interface{}) {
 	if v.enabled {
-		logging.printDepth(severity.InfoLog, v.logger, logging.filter, depth, args...)
+		logging.printDepth(severity.InfoLog, v.logr, logging.filter, depth, args...)
 	}
 }
 
@@ -1386,7 +1370,7 @@ func (v Verbose) InfoDepth(depth int, args ...interface{}) {
 // See the documentation of V for usage.
 func (v Verbose) Infoln(args ...interface{}) {
 	if v.enabled {
-		logging.println(severity.InfoLog, v.logger, logging.filter, args...)
+		logging.println(severity.InfoLog, v.logr, logging.filter, args...)
 	}
 }
 
@@ -1394,7 +1378,7 @@ func (v Verbose) Infoln(args ...interface{}) {
 // See the documentation of V for usage.
 func (v Verbose) InfolnDepth(depth int, args ...interface{}) {
 	if v.enabled {
-		logging.printlnDepth(severity.InfoLog, v.logger, logging.filter, depth, args...)
+		logging.printlnDepth(severity.InfoLog, v.logr, logging.filter, depth, args...)
 	}
 }
 
@@ -1402,7 +1386,7 @@ func (v Verbose) InfolnDepth(depth int, args ...interface{}) {
 // See the documentation of V for usage.
 func (v Verbose) Infof(format string, args ...interface{}) {
 	if v.enabled {
-		logging.printf(severity.InfoLog, v.logger, logging.filter, format, args...)
+		logging.printf(severity.InfoLog, v.logr, logging.filter, format, args...)
 	}
 }
 
@@ -1410,7 +1394,7 @@ func (v Verbose) Infof(format string, args ...interface{}) {
 // See the documentation of V for usage.
 func (v Verbose) InfofDepth(depth int, format string, args ...interface{}) {
 	if v.enabled {
-		logging.printfDepth(severity.InfoLog, v.logger, logging.filter, depth, format, args...)
+		logging.printfDepth(severity.InfoLog, v.logr, logging.filter, depth, format, args...)
 	}
 }
 
@@ -1418,7 +1402,7 @@ func (v Verbose) InfofDepth(depth int, format string, args ...interface{}) {
 // See the documentation of V for usage.
 func (v Verbose) InfoS(msg string, keysAndValues ...interface{}) {
 	if v.enabled {
-		logging.infoS(v.logger, logging.filter, 0, msg, keysAndValues...)
+		logging.infoS(v.logr, logging.filter, 0, msg, keysAndValues...)
 	}
 }
 
@@ -1432,14 +1416,14 @@ func InfoSDepth(depth int, msg string, keysAndValues ...interface{}) {
 // See the documentation of V for usage.
 func (v Verbose) InfoSDepth(depth int, msg string, keysAndValues ...interface{}) {
 	if v.enabled {
-		logging.infoS(v.logger, logging.filter, depth, msg, keysAndValues...)
+		logging.infoS(v.logr, logging.filter, depth, msg, keysAndValues...)
 	}
 }
 
 // Deprecated: Use ErrorS instead.
 func (v Verbose) Error(err error, msg string, args ...interface{}) {
 	if v.enabled {
-		logging.errorS(err, v.logger, logging.filter, 0, msg, args...)
+		logging.errorS(err, v.logr, logging.filter, 0, msg, args...)
 	}
 }
 
@@ -1447,7 +1431,7 @@ func (v Verbose) Error(err error, msg string, args ...interface{}) {
 // See the documentation of V for usage.
 func (v Verbose) ErrorS(err error, msg string, keysAndValues ...interface{}) {
 	if v.enabled {
-		logging.errorS(err, v.logger, logging.filter, 0, msg, keysAndValues...)
+		logging.errorS(err, v.logr, logging.filter, 0, msg, keysAndValues...)
 	}
 }
 
@@ -1598,10 +1582,10 @@ func ErrorSDepth(depth int, err error, msg string, keysAndValues ...interface{})
 //
 // Callers who want more control over handling of fatal events may instead use a
 // combination of different functions:
-//   - some info or error logging function, optionally with a stack trace
-//     value generated by github.com/go-logr/lib/dbg.Backtrace
-//   - Flush to flush pending log data
-//   - panic, os.Exit or returning to the caller with an error
+// - some info or error logging function, optionally with a stack trace
+//   value generated by github.com/go-logr/lib/dbg.Backtrace
+// - Flush to flush pending log data
+// - panic, os.Exit or returning to the caller with an error
 //
 // Arguments are handled in the manner of fmt.Print; a newline is appended if missing.
 func Fatal(args ...interface{}) {

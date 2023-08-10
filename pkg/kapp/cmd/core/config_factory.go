@@ -113,13 +113,7 @@ func (f *ConfigFactoryImpl) clientConfig() (bool, clientcmd.ClientConfig, error)
 	}
 
 	if len(configYAML) > 0 {
-		kubernetesHost := os.Getenv("KUBERNETES_SERVICE_HOST")
-		kubernetesServicePort := os.Getenv("KUBERNETES_SERVICE_PORT")
-		envHostPort := net.JoinHostPort(kubernetesHost, kubernetesServicePort)
-		if kubernetesServicePort == "" {
-			// client-go will manually add the port based on http/https
-			envHostPort = kubernetesHost
-		}
+		envHostPort := net.JoinHostPort(os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT"))
 		configYAML = strings.ReplaceAll(configYAML, "${KAPP_KUBERNETES_SERVICE_HOST_PORT}", envHostPort)
 		config, err := clientcmd.NewClientConfigFromBytes([]byte(configYAML))
 		return true, config, err

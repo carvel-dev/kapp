@@ -38,10 +38,6 @@ func (r IdentifiedResources) List(labelSelector labels.Selector, resRefs []Resou
 		schema.GroupVersionResource{Version: "v1", Resource: "componentstatuses"},
 	})
 
-	// https://github.com/carvel-dev/kapp/issues/748
-	// TODO provide a way to exclude resource via configuration
-	resTypes = NonMatchingGK(resTypes, schema.GroupKind{Group: "cilium.io", Kind: "CiliumIdentity"})
-
 	if len(opts.GKsScope) > 0 {
 		resTypes = MatchingAnyGK(resTypes, opts.GKsScope)
 	}

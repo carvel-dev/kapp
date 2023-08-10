@@ -17,7 +17,7 @@ import (
 
 type ChangeView interface {
 	Resource() ctlres.Resource
-	ClusterOriginalResource() ctlres.Resource
+	ExistingResource() ctlres.Resource
 
 	ApplyOp() ClusterChangeApplyOp
 	ApplyStrategyOp() (ClusterChangeApplyStrategyOp, error)
@@ -105,8 +105,8 @@ func (v *ChangesView) Print(ui ui.UI) {
 			v.waitOpCode(view.WaitOp()),
 		)
 
-		if view.ClusterOriginalResource() != nil {
-			syncVal := NewValueResourceConverged(view.ClusterOriginalResource())
+		if view.ExistingResource() != nil {
+			syncVal := NewValueResourceConverged(view.ExistingResource())
 			row = append(row, syncVal.StateVal, syncVal.ReasonVal)
 		} else {
 			row = append(row,
@@ -136,9 +136,8 @@ var (
 
 	applyStrategyCodeUI = map[ClusterChangeApplyOp]map[ClusterChangeApplyStrategyOp]string{
 		ClusterChangeApplyOpAdd: {
-			createStrategyPlainAnnValue:                  "",
-			createStrategyFallbackOnUpdateAnnValue:       "fallback on update",
-			createStrategyFallbackOnUpdateOrNoopAnnValue: "fallback on update or noop",
+			createStrategyPlainAnnValue:            "",
+			createStrategyFallbackOnUpdateAnnValue: "fallback on update",
 		},
 
 		ClusterChangeApplyOpUpdate: {

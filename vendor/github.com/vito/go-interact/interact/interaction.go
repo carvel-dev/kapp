@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"golang.org/x/term"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 // Interaction represents a single question to ask, optionally with a set of
@@ -59,13 +59,13 @@ func (interaction Interaction) Resolve(dst interface{}) error {
 	prompt := interaction.prompt(dst)
 
 	var user userIO
-	if input, output, ok := interaction.getStreams(); ok && term.IsTerminal(int(input.Fd())) {
-		state, err := term.MakeRaw(int(input.Fd()))
+	if input, output, ok := interaction.getStreams(); ok && terminal.IsTerminal(int(input.Fd())) {
+		state, err := terminal.MakeRaw(int(input.Fd()))
 		if err != nil {
 			return err
 		}
 
-		defer term.Restore(int(input.Fd()), state)
+		defer terminal.Restore(int(input.Fd()), state)
 
 		term, err := newTTYUser(input, output)
 		if err != nil {

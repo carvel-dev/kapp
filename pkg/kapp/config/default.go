@@ -41,6 +41,13 @@ rebaseRules:
   resourceMatchers:
   - allMatcher: {}
 
+# Copy over all status, since cluster owns that
+- path: [status]
+  type: copy
+  sources: [existing]
+  resourceMatchers:
+  - allMatcher: {}
+
 # Prefer user provided, but allow cluster set
 - paths:
   - [spec, clusterIP]
@@ -231,11 +238,6 @@ diffAgainstLastAppliedFieldExclusionRules:
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
   resourceMatchers: *appsV1DeploymentWithRevAnnKey
 
-diffAgainstExistingFieldExclusionRules:
-- path: [status]
-  resourceMatchers:
-  - allMatcher: {}
-
 diffMaskRules:
 - path: [data]
   resourceMatchers:
@@ -396,22 +398,6 @@ templateRules:
       resourceMatchers:
       - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
 
-    - path: [spec, fetch, {allIndexes: true}, inline, pathsFrom, {allIndexes: true}, configMapRef]
-      resourceMatchers: &appMatchers
-      - apiVersionKindMatcher: {apiVersion: kappctrl.k14s.io/v1alpha1, kind: App}
-    - path: [spec, template, {allIndexes: true}, ytt, inline, pathsFrom, {allIndexes: true}, configMapRef]
-      resourceMatchers: *appMatchers
-    - path: [spec, template, {allIndexes: true}, ytt, valuesFrom, {allIndexes: true}, configMapRef]
-      resourceMatchers: *appMatchers
-    - path: [spec, template, {allIndexes: true}, helmTemplate, valuesFrom, {allIndexes: true}, configMapRef]
-      resourceMatchers: *appMatchers
-    - path: [spec, template, {allIndexes: true}, cue, valuesFrom, {allIndexes: true}, configMapRef]
-      resourceMatchers: *appMatchers
-
-    - path: [spec, fetch, inline, pathsFrom, {allIndexes: true}, configMapRef]
-      resourceMatchers: &packageRepositoryMatchers
-      - apiVersionKindMatcher: {apiVersion: packaging.carvel.dev/v1alpha1, kind: PackageRepository}
-
 - resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: v1, kind: Secret}
   affectedResources:
@@ -461,38 +447,6 @@ templateRules:
     - path: [secrets, {allIndexes: true}]
       resourceMatchers:
       - apiVersionKindMatcher: {apiVersion: v1, kind: ServiceAccount}
-
-    - path: [spec, cluster, kubeconfigSecretRef]
-      resourceMatchers: *appMatchers
-    - path: [spec, fetch, {allIndexes: true}, inline, pathsFrom, {allIndexes: true}, secretRef]
-      resourceMatchers: *appMatchers
-    - path: [spec, fetch, {allIndexes: true}, imgpkgBundle, secretRef]
-      resourceMatchers: *appMatchers
-    - path: [spec, fetch, {allIndexes: true}, http, secretRef]
-      resourceMatchers: *appMatchers
-    - path: [spec, fetch, {allIndexes: true}, git, secretRef]
-      resourceMatchers: *appMatchers
-    - path: [spec, fetch, {allIndexes: true}, helmChart, repository, secretRef]
-      resourceMatchers: *appMatchers
-    - path: [spec, template, {allIndexes: true}, ytt, inline, pathsFrom, {allIndexes: true}, secretRef]
-      resourceMatchers: *appMatchers
-    - path: [spec, template, {allIndexes: true}, ytt, valuesFrom, {allIndexes: true}, secretRef]
-      resourceMatchers: *appMatchers
-    - path: [spec, template, {allIndexes: true}, helmTemplate, valuesFrom, {allIndexes: true}, secretRef]
-      resourceMatchers: *appMatchers
-    - path: [spec, template, {allIndexes: true}, cue, valuesFrom, {allIndexes: true}, secretRef]
-      resourceMatchers: *appMatchers
-    - path: [spec, template, {allIndexes: true}, sops, pgp, privateKeySecretRef]
-      resourceMatchers: *appMatchers
-
-    - path: [spec, values, {allIndexes: true}, secretRef]
-      resourceMatchers: &packageInstallMatchers
-      - apiVersionKindMatcher: {apiVersion: packaging.carvel.dev/v1alpha1, kind: PackageInstall}
-    - path: [spec, cluster, kubeconfigSecretRef]
-      resourceMatchers: *packageInstallMatchers
-
-    - path: [spec, fetch, inline, pathsFrom, {allIndexes: true}, secretRef]
-      resourceMatchers: *packageRepositoryMatchers
 
 changeGroupBindings:
 - name: change-groups.kapp.k14s.io/crds
@@ -570,10 +524,12 @@ changeGroupBindings:
   - apiVersionKindMatcher: {kind: ServiceAccount, apiVersion: v1}
 
 - name: change-groups.kapp.k14s.io/kapp-controller-app
-  resourceMatchers: *appMatchers
+  resourceMatchers:
+  - apiVersionKindMatcher: {kind: App, apiVersion: kappctrl.k14s.io/v1alpha1}
 
 - name: change-groups.kapp.k14s.io/kapp-controller-packageinstall
-  resourceMatchers: *packageInstallMatchers
+  resourceMatchers:
+  - apiVersionKindMatcher: {kind: PackageInstall, apiVersion: packaging.carvel.dev/v1alpha1}
 
 changeRuleBindings:
 # Insert CRDs before all CRs
@@ -701,18 +657,10 @@ changeRuleBindings:
       - hasNamespaceMatcher: {}
 `
 
+var defaultConfigRes = ctlres.MustNewResourceFromBytes([]byte(defaultConfigYAML))
+
 func NewDefaultConfigString() string { return defaultConfigYAML }
 
 func NewConfFromResourcesWithDefaults(resources []ctlres.Resource) ([]ctlres.Resource, Conf, error) {
-	resources, conf, err := NewConfFromResources(resources)
-	if err != nil {
-		return nil, Conf{}, err
-	}
-
-	defaultConfig, err := newConfigFromYAMLBytes([]byte(defaultConfigYAML), "config/default (kapp.k14s.io/v1alpha1)")
-	if err != nil {
-		return nil, Conf{}, err
-	}
-
-	return resources, Conf{append([]Config{defaultConfig}, conf.configs...)}, err
+	return NewConfFromResources(append([]ctlres.Resource{defaultConfigRes}, resources...))
 }

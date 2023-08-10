@@ -26,15 +26,13 @@ const (
 	KappIsConfigmapMigratedAnnotationKey   = "kapp.k14s.io/is-configmap-migrated"
 	KappIsConfigmapMigratedAnnotationValue = ""
 	AppSuffix                              = ".apps.k14s.io"
-	KappAppChangesUseAppLabelAnnotationKey = "kapp.k14s.io/app-changes-use-app-label"
 )
 
 type RecordedApp struct {
-	name                  string
-	nsName                string
-	isMigrated            bool
-	creationTimestamp     time.Time
-	appChangesUseAppLabel bool
+	name              string
+	nsName            string
+	isMigrated        bool
+	creationTimestamp time.Time
 
 	coreClient             kubernetes.Interface
 	identifiedResources    ctlres.IdentifiedResources
@@ -48,7 +46,7 @@ func NewRecordedApp(name, nsName string, creationTimestamp time.Time, coreClient
 	identifiedResources ctlres.IdentifiedResources, appInDiffNsHintMsgFunc func(string) string, logger logger.Logger) *RecordedApp {
 
 	// Always trim suffix, even if user added it manually (to avoid double migration)
-	return &RecordedApp{strings.TrimSuffix(name, AppSuffix), nsName, false, creationTimestamp, false, coreClient, identifiedResources, appInDiffNsHintMsgFunc,
+	return &RecordedApp{strings.TrimSuffix(name, AppSuffix), nsName, false, creationTimestamp, coreClient, identifiedResources, appInDiffNsHintMsgFunc,
 		nil, logger.NewPrefixed("RecordedApp")}
 }
 
@@ -129,66 +127,32 @@ func (a *RecordedApp) UpdateUsedGVsAndGKs(gvs []schema.GroupVersion, gks []schem
 	})
 }
 
-func (a *RecordedApp) CreateOrUpdate(prevAppName string, labels map[string]string, isDiffRun bool) (bool, error) {
+func (a *RecordedApp) CreateOrUpdate(labels map[string]string, isDiffRun bool) error {
 	defer a.logger.DebugFunc("CreateOrUpdate").Finish()
 
 	app, foundMigratedApp, err := a.find(a.fqName())
 	if err != nil {
-		return false, err
+		return err
 	}
+
 	if foundMigratedApp {
 		a.isMigrated = true
-		if isDiffRun {
-			return false, nil
-		}
-		return false, a.updateApp(app, labels)
+		return a.updateApp(app, labels)
 	}
 
 	app, foundNonMigratedApp, err := a.find(a.name)
 	if err != nil {
-		return false, err
+		return err
 	}
+
 	if foundNonMigratedApp {
-		if isDiffRun {
-			return false, nil
-		}
 		if a.isMigrationEnabled() {
-			return false, a.migrate(app, labels, a.fqName())
+			return a.migrate(app, labels, a.fqName())
 		}
-		return false, a.updateApp(app, labels)
+		return a.updateApp(app, labels)
 	}
 
-	if prevAppName == "" {
-		return true, a.create(labels, isDiffRun)
-	}
-
-	app, foundMigratedPrevApp, err := a.find(prevAppName + AppSuffix)
-	if err != nil {
-		return false, err
-	}
-	if foundMigratedPrevApp {
-		a.isMigrated = true
-		if isDiffRun {
-			return false, nil
-		}
-		return false, a.renameConfigMap(app, a.fqName(), a.nsName)
-	}
-
-	app, foundNonMigratedPrevApp, err := a.find(prevAppName)
-	if err != nil {
-		return false, err
-	}
-	if foundNonMigratedPrevApp {
-		if isDiffRun {
-			return false, nil
-		}
-		if a.isMigrationEnabled() {
-			return false, a.migrate(app, labels, a.fqName())
-		}
-		return false, a.renameConfigMap(app, a.name, a.nsName)
-	}
-
-	return true, a.create(labels, isDiffRun)
+	return a.create(labels, isDiffRun)
 }
 
 func (a *RecordedApp) find(name string) (*corev1.ConfigMap, bool, error) {
@@ -209,10 +173,6 @@ func (a *RecordedApp) create(labels map[string]string, isDiffRun bool) error {
 			Namespace: a.nsName,
 			Labels: map[string]string{
 				KappIsAppLabelKey: kappIsAppLabelValue,
-			},
-			// Use app label as app change label for all new apps
-			Annotations: map[string]string{
-				KappAppChangesUseAppLabelAnnotationKey: "",
 			},
 		},
 		Data: Meta{
@@ -237,12 +197,12 @@ func (a *RecordedApp) create(labels map[string]string, isDiffRun bool) error {
 		return err
 	}
 
+	createOpts := metav1.CreateOptions{}
 	if isDiffRun {
-		a.setMeta(*configMap)
-		return nil
+		createOpts.DryRun = []string{metav1.DryRunAll}
 	}
+	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, createOpts)
 
-	app, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, metav1.CreateOptions{})
 	a.setMeta(*app)
 
 	return err
@@ -260,6 +220,56 @@ func (a *RecordedApp) updateApp(existingConfigMap *corev1.ConfigMap, labels map[
 	}
 
 	return nil
+}
+
+func (a *RecordedApp) RenamePrevApp(prevAppName string, labels map[string]string, isDiffRun bool) error {
+	defer a.logger.DebugFunc("RenamePrevApp").Finish()
+
+	app, foundMigratedApp, err := a.find(a.fqName())
+	if err != nil {
+		return err
+	}
+
+	if foundMigratedApp {
+		a.isMigrated = true
+		return a.updateApp(app, labels)
+	}
+
+	app, foundNonMigratedApp, err := a.find(a.name)
+	if err != nil {
+		return err
+	}
+
+	if foundNonMigratedApp {
+		if a.isMigrationEnabled() {
+			return a.migrate(app, labels, a.fqName())
+		}
+		return a.updateApp(app, labels)
+	}
+
+	app, foundMigratedPrevApp, err := a.find(prevAppName + AppSuffix)
+	if err != nil {
+		return err
+	}
+
+	if foundMigratedPrevApp {
+		a.isMigrated = true
+		return a.renameConfigMap(app, a.fqName(), a.nsName)
+	}
+
+	app, foundNonMigratedPrevApp, err := a.find(prevAppName)
+	if err != nil {
+		return err
+	}
+
+	if foundNonMigratedPrevApp {
+		if a.isMigrationEnabled() {
+			return a.migrate(app, labels, a.fqName())
+		}
+		return a.renameConfigMap(app, a.name, a.nsName)
+	}
+
+	return a.create(labels, isDiffRun)
 }
 
 func (a *RecordedApp) migrate(c *corev1.ConfigMap, labels map[string]string, newName string) error {
@@ -349,12 +359,7 @@ func (a *RecordedApp) Delete() error {
 		return err
 	}
 
-	meta, err := a.meta()
-	if err != nil {
-		return err
-	}
-
-	err = NewRecordedAppChanges(a.nsName, a.name, meta.LabelValue, a.appChangesUseAppLabel, a.coreClient).DeleteAll()
+	err = NewRecordedAppChanges(a.nsName, a.name, a.coreClient).DeleteAll()
 	if err != nil {
 		return fmt.Errorf("Deleting app changes: %w", err)
 	}
@@ -447,9 +452,6 @@ func (a *RecordedApp) isMigrationEnabled() bool {
 func (a *RecordedApp) Meta() (Meta, error) { return a.meta() }
 
 func (a *RecordedApp) setMeta(app corev1.ConfigMap) (Meta, error) {
-	// TODO: Should this be moved out of this function?
-	_, a.appChangesUseAppLabel = app.Annotations[KappAppChangesUseAppLabelAnnotationKey]
-
 	meta, err := NewAppMetaFromData(app.Data)
 	if err != nil {
 		errMsg := "App '%s' (namespace: %s) backed by ConfigMap '%s' did not contain parseable app metadata: %w"
@@ -496,12 +498,7 @@ func (a *RecordedApp) meta() (Meta, error) {
 }
 
 func (a *RecordedApp) Changes() ([]Change, error) {
-	meta, err := a.meta()
-	if err != nil {
-		return nil, err
-	}
-
-	return NewRecordedAppChanges(a.nsName, a.name, meta.LabelValue, a.appChangesUseAppLabel, a.coreClient).List()
+	return NewRecordedAppChanges(a.nsName, a.name, a.coreClient).List()
 }
 
 func (a *RecordedApp) LastChange() (Change, error) {
@@ -525,12 +522,7 @@ func (a *RecordedApp) LastChange() (Change, error) {
 }
 
 func (a *RecordedApp) BeginChange(meta ChangeMeta) (Change, error) {
-	appMeta, err := a.meta()
-	if err != nil {
-		return nil, err
-	}
-
-	change, err := NewRecordedAppChanges(a.nsName, a.name, appMeta.LabelValue, a.appChangesUseAppLabel, a.coreClient).Begin(meta)
+	change, err := NewRecordedAppChanges(a.nsName, a.name, a.coreClient).Begin(meta)
 	if err != nil {
 		return nil, err
 	}

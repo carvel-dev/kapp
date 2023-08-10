@@ -15,7 +15,6 @@ type ResourceMod interface {
 
 type ResourceModWithMultiple interface {
 	ApplyFromMultiple(Resource, map[FieldCopyModSource]Resource) error
-	IsResourceMatching(resource Resource) bool
 }
 
 type Path []*PathPart

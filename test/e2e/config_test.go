@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
+	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/require"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
-	"sigs.k8s.io/yaml"
 )
 
 func TestConfig(t *testing.T) {
@@ -559,7 +559,7 @@ func asYAML(t *testing.T, val interface{}) string {
 	return string(bs)
 }
 
-func TestDefaultConfig_ExcludeDiffAgainstExistingStatus(t *testing.T) {
+func TestDefaultConfig_PreserveExistingStatus(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -591,75 +591,8 @@ status:
   conditions: []
   storedVersions: []
 `
-	updatedYaml := `
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: tests.kapp.example
-spec:
-  group: kapp.example
-  names:
-    kind: Test
-    plural: tests
-  scope: Namespaced
-  versions:
-  - name: v1beta1
-    schema:
-      openAPIV3Schema:
-        type: object
-    served: true
-    storage: true
-  - name: v1alpha1
-    schema:
-      openAPIV3Schema:
-        type: object
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
-`
 
-	expectedChangesForUpdate := `
-@@ update customresourcedefinition/tests.kapp.example (apiextensions.k8s.io/v1) cluster @@
-  ...
--linesss-   versions:
--linesss-   - name: v1alpha1
--linesss-   - name: v1beta1
--linesss-     schema:
--linesss-       openAPIV3Schema:
-  ...
--linesss-     storage: true
--linesss-   - name: v1alpha1
--linesss-     schema:
--linesss-       openAPIV3Schema:
--linesss-         type: object
--linesss- `
-
-	expectedChangesForExternalUpdate := `
-@@ update customresourcedefinition/tests.kapp.example (apiextensions.k8s.io/v1) cluster @@
-  ...
--linesss- metadata:
--linesss-   annotations:
--linesss-     test: test-ann-val
--linesss-   creationTimestamp: "2006-01-02T15:04:05Z07:00"
--linesss-   generation: 1
-  ...
--linesss- spec:
--linesss-   conversion:
--linesss-     strategy: None
--linesss-   group: kapp.example
--linesss-   names:
--linesss-     kind: Test
--linesss-     listKind: TestList
--linesss-     plural: tests
--linesss-     singular: test
--linesss-   scope: Namespaced
--linesss-   versions:`
-
-	name := "test-default-config-exclude-diff-against-last-applied-status"
+	name := "test-default-config-preserve-existing-status"
 	cleanUp := func() {
 		kapp.Run([]string{"delete", "-a", name})
 	}
@@ -679,7 +612,7 @@ status:
 		require.Equal(t, "Test", kind)
 	})
 
-	logger.Section("second deploy (status field is ignored in diff)", func() {
+	logger.Section("second deploy (rebase runs)", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml)})
 
@@ -687,27 +620,6 @@ status:
 
 		require.Containsf(t, err.Error(), "Exiting after diffing with no pending changes (exit status 2)", "Expected to find stderr output")
 		require.Containsf(t, err.Error(), "exit code: '2'", "Expected to find exit code")
-	})
-
-	logger.Section("deploy with some changes to a field", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "-c"},
-			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedYaml)})
-
-		// status is ignored in diff
-		checkChangesOutput(t, replaceTimestampWithDfaultValue(out), expectedChangesForUpdate)
-	})
-
-	logger.Section("deploy after some changes are made by external controller", func() {
-		patchCRD := `[{ "op": "add", "path": "/metadata/annotations/test", "value": "test-ann-val"}]`
-
-		// Patch CRD using kubectl so that smart diff is not used
-		PatchClusterResource("crd", "tests.kapp.example", env.Namespace, patchCRD, kubectl)
-
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "-c"},
-			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml)})
-
-		// status is ignored when smart diff is not used
-		checkChangesOutput(t, replaceTimestampWithDfaultValue(out), expectedChangesForExternalUpdate)
 	})
 }
 
@@ -778,7 +690,7 @@ rules:
 }
 
 func RandomString(n int) string {
-	letters := []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+	var letters = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
 
 	s := make([]rune, n)
 	for i := range s {

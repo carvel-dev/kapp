@@ -146,8 +146,8 @@ func (c *ClusterChange) WaitOp() ClusterChangeWaitOp {
 		// TODO associated resources
 		// If existing resource is not in a "done successful" state,
 		// indicate that this will be something we need to wait for
-		resState, _, err := c.convergedResFactory.New(c.change.ClusterOriginalResource(), nil).IsDoneApplying()
-		if err != nil || !(resState.Done && resState.Successful) {
+		existingResState, _, existingErr := c.convergedResFactory.New(c.change.ExistingResource(), nil).IsDoneApplying()
+		if existingErr != nil || !(existingResState.Done && existingResState.Successful) {
 			return ClusterChangeWaitOpOK
 		}
 		return ClusterChangeWaitOpNoop
@@ -254,11 +254,8 @@ func (c *ClusterChange) WaitDescription() string {
 	return fmt.Sprintf("%s %s", waitOpCodeUI[c.WaitOp()], c.change.NewOrExistingResource().Description())
 }
 
-func (c *ClusterChange) Resource() ctlres.Resource { return c.change.NewOrExistingResource() }
-
-func (c *ClusterChange) ClusterOriginalResource() ctlres.Resource {
-	return c.change.ClusterOriginalResource()
-}
+func (c *ClusterChange) Resource() ctlres.Resource         { return c.change.NewOrExistingResource() }
+func (c *ClusterChange) ExistingResource() ctlres.Resource { return c.change.ExistingResource() }
 
 func (c *ClusterChange) ConfigurableTextDiff() *ctldiff.ConfigurableTextDiff {
 	return c.change.ConfigurableTextDiff()
