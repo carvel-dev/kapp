@@ -4,8 +4,11 @@
 package tools
 
 import (
+	"io/fs"
+
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
+
 	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
@@ -17,6 +20,8 @@ type InspectOptions struct {
 	FileFlags           FileFlags
 	ResourceFilterFlags ResourceFilterFlags
 	Raw                 bool
+
+	FileSystem fs.FS
 }
 
 func NewInspectOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *InspectOptions {
@@ -49,7 +54,7 @@ func (o *InspectOptions) inspectFiles() error {
 	}
 
 	for _, file := range o.FileFlags.Files {
-		fileRs, err := ctlres.NewFileResources(file)
+		fileRs, err := ctlres.NewFileResources(o.FileSystem, file)
 		if err != nil {
 			return err
 		}

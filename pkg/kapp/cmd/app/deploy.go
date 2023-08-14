@@ -5,12 +5,18 @@ package app
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"sort"
 	"strings"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes"
+
 	ctlapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/app"
 	ctlcap "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/clusterapply"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
@@ -23,10 +29,6 @@ import (
 	ctllogs "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logs"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	ctlresm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -47,6 +49,8 @@ type DeployOptions struct {
 	DeployFlags         DeployFlags
 	ResourceTypesFlags  ResourceTypesFlags
 	LabelFlags          LabelFlags
+
+	FileSystem fs.FS
 }
 
 func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeployOptions {
@@ -329,7 +333,7 @@ func (o *DeployOptions) newResourcesFromFiles() ([]ctlres.Resource, error) {
 		return nil, fmt.Errorf("Expected at least one --file (-f) specified with a file or directory path")
 	}
 	for _, file := range o.FileFlags.Files {
-		fileRs, err := ctlres.NewFileResources(file)
+		fileRs, err := ctlres.NewFileResources(o.FileSystem, file)
 		if err != nil {
 			return nil, err
 		}
