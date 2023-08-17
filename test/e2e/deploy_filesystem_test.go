@@ -96,14 +96,11 @@ func TestDeployFilesystem(t *testing.T) {
 		file(
 			"dir3/cm6.yaml",
 			testConfigMap(env.Namespace, "cm6", now),
-		).
-		toFS()
+		)
 
-	deployOptions.FileSystem = inMemFS
+	deployOptions.FileSystem = inMemFS.toFS()
 
-	err := deployCmd.Execute()
-	require.NoError(t, err)
-
+	// Set up kubeClient
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	configOverrides := &clientcmd.ConfigOverrides{}
 	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
@@ -115,16 +112,41 @@ func TestDeployFilesystem(t *testing.T) {
 	require.NoError(t, err, "error creating k8s clientset")
 
 	ctx := context.Background()
-	const allNamespaces = ""
-	configMaps, err := kubeClient.CoreV1().ConfigMaps(allNamespaces).List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
-	require.NoError(t, err, "error listing ConfigMaps")
-	require.Len(t, configMaps.Items, 6)
 	expectedNames := sets.New[string]("cm1", "cm2", "cm3", "cm4", "cm5", "cm6")
-	actualNames := sets.New[string]()
-	for _, cm := range configMaps.Items {
-		actualNames.Insert(cm.Name)
-	}
-	require.Empty(t, cmp.Diff(expectedNames, actualNames))
+
+	// Test part 1
+	testLogger.Section("Deploy(create)", func() {
+		err := deployCmd.Execute()
+		require.NoError(t, err)
+
+		configMaps, err := kubeClient.CoreV1().ConfigMaps(env.Namespace).List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+		require.NoError(t, err, "error listing ConfigMaps")
+
+		actualNames := sets.New[string]()
+		for _, cm := range configMaps.Items {
+			actualNames.Insert(cm.Name)
+		}
+		require.Empty(t, cmp.Diff(expectedNames, actualNames))
+	})
+
+	// Test part 2
+	testLogger.Section("Deploy(update)", func() {
+		inMemFS.file("dir1/cm7.yaml", testConfigMap(env.Namespace, "cm7", now))
+		expectedNames.Insert("cm7")
+
+		err := deployCmd.Execute()
+		require.NoError(t, err)
+
+		configMaps, err := kubeClient.CoreV1().ConfigMaps(env.Namespace).List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+		require.NoError(t, err, "error listing ConfigMaps")
+
+		actualNames := sets.New[string]()
+		for _, cm := range configMaps.Items {
+			actualNames.Insert(cm.Name)
+		}
+		require.Empty(t, cmp.Diff(expectedNames, actualNames))
+	})
+
 }
 
 type fsBuilder struct {
