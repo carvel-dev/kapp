@@ -113,7 +113,7 @@ func isDir(fsys fs.FS, path string) (bool, error) {
 	if fsys == nil {
 		fileInfo, err := os.Stat(path)
 		if err != nil {
-			return false, fmt.Errorf("error stat'ing file %q: %v", path, err)
+			return false, err
 		}
 		return fileInfo.IsDir(), nil
 	}
@@ -122,7 +122,7 @@ func isDir(fsys fs.FS, path string) (bool, error) {
 	case fs.StatFS:
 		fileInfo, err := t.Stat(path)
 		if err != nil {
-			return false, fmt.Errorf("error stat'ing file %q: %v", path, err)
+			return false, err
 		}
 		return fileInfo.IsDir(), nil
 	case fs.FS:
@@ -134,7 +134,7 @@ func isDir(fsys fs.FS, path string) (bool, error) {
 
 		fileInfo, err := f.Stat()
 		if err != nil {
-			return false, fmt.Errorf("error stat'ing file %q: %v", path, err)
+			return false, err
 		}
 		return fileInfo.IsDir(), nil
 	default:
