@@ -5,6 +5,7 @@ package resources
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -19,7 +20,12 @@ type FileResource struct {
 	fileSrc FileSource
 }
 
-func NewFileResources(file string) ([]FileResource, error) {
+// NewFileResources inspects file and returns a slice of FileResource objects. If file is "-", a FileResource for STDIN
+// is returned. If it is prefixed with either http:// or https://, a FileResource that supports an HTTP transport is
+// returned. If file is a directory, one FileResource object is returned for each file in the directory with an allowed
+// extension (.json, .yml, .yaml). If file is not a directory, a FileResource object is returned for that one file. If
+// fsys is nil, NewFileResources uses the OS's file system. Otherwise, it uses the passed in file system.
+func NewFileResources(fsys fs.FS, file string) ([]FileResource, error) {
 	var fileRs []FileResource
 
 	switch {
@@ -30,16 +36,22 @@ func NewFileResources(file string) ([]FileResource, error) {
 		fileRs = append(fileRs, NewFileResource(NewHTTPFileSource(file)))
 
 	default:
-		fileInfo, err := os.Stat(file)
+		dir, err := isDir(fsys, file)
 		if err != nil {
-			return nil, fmt.Errorf("Checking file: %v", err)
+			return nil, err
 		}
 
-		if fileInfo.IsDir() {
-			var paths []string
+		if dir {
+			// The typical command line invocation won't set fsys. If it comes in nil, create a new DirFS rooted at
+			// file, then set file to '.' (current working directory) so the fs.WalkDir call below works correctly.
+			if fsys == nil {
+				fsys = os.DirFS(file)
+				file = "."
+			}
 
-			err := filepath.Walk(file, func(path string, fi os.FileInfo, err error) error {
-				if err != nil || fi.IsDir() {
+			var paths []string
+			err := fs.WalkDir(fsys, file, func(path string, d fs.DirEntry, err error) error {
+				if err != nil || d.IsDir() {
 					return err
 				}
 				ext := filepath.Ext(path)
@@ -51,16 +63,16 @@ func NewFileResources(file string) ([]FileResource, error) {
 				return nil
 			})
 			if err != nil {
-				return nil, fmt.Errorf("Listing files '%s'", file)
+				return nil, fmt.Errorf("error listing file %q", file)
 			}
 
 			sort.Strings(paths)
 
 			for _, path := range paths {
-				fileRs = append(fileRs, NewFileResource(NewLocalFileSource(path)))
+				fileRs = append(fileRs, NewFileResource(NewLocalFileSource(fsys, path)))
 			}
 		} else {
-			fileRs = append(fileRs, NewFileResource(NewLocalFileSource(file)))
+			fileRs = append(fileRs, NewFileResource(NewLocalFileSource(fsys, file)))
 		}
 	}
 
@@ -93,4 +105,39 @@ func (r FileResource) Resources() ([]Resource, error) {
 	}
 
 	return resources, nil
+}
+
+// isDir returns if path is a directory. If fsys is nil, isDir calls os.Stat(path); otherwise, it checks path inside
+// fsys.
+func isDir(fsys fs.FS, path string) (bool, error) {
+	if fsys == nil {
+		fileInfo, err := os.Stat(path)
+		if err != nil {
+			return false, err
+		}
+		return fileInfo.IsDir(), nil
+	}
+
+	switch t := fsys.(type) {
+	case fs.StatFS:
+		fileInfo, err := t.Stat(path)
+		if err != nil {
+			return false, err
+		}
+		return fileInfo.IsDir(), nil
+	case fs.FS:
+		f, err := t.Open(path)
+		if err != nil {
+			return false, fmt.Errorf("error opening file %q: %v", path, err)
+		}
+		defer f.Close()
+
+		fileInfo, err := f.Stat()
+		if err != nil {
+			return false, err
+		}
+		return fileInfo.IsDir(), nil
+	default:
+		return false, fmt.Errorf("error determining if %q is a directory: unexpected FS type %T", path, fsys)
+	}
 }

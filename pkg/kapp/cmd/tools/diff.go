@@ -4,8 +4,11 @@
 package tools
 
 import (
+	"io/fs"
+
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
+
 	ctlcap "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/clusterapply"
 	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
 	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
@@ -19,6 +22,8 @@ type DiffOptions struct {
 	FileFlags  FileFlags
 	FileFlags2 FileFlags2
 	DiffFlags  DiffFlags
+
+	FileSystem fs.FS
 }
 
 func NewDiffOptions(ui ui.UI, depsFactory cmdcore.DepsFactory) *DiffOptions {
@@ -71,7 +76,7 @@ func (o *DiffOptions) fileResources(files []string) ([]ctlres.Resource, error) {
 	var newResources []ctlres.Resource
 
 	for _, file := range files {
-		fileRs, err := ctlres.NewFileResources(file)
+		fileRs, err := ctlres.NewFileResources(o.FileSystem, file)
 		if err != nil {
 			return nil, err
 		}
