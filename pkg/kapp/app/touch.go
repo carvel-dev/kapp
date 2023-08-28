@@ -8,6 +8,8 @@ type Touch struct {
 	Description      string
 	Namespaces       []string
 	IgnoreSuccessErr bool
+
+	AppChangesMaxToKeep int
 }
 
 func (t Touch) Do(doFunc func() error) error {
@@ -16,7 +18,7 @@ func (t Touch) Do(doFunc func() error) error {
 		Namespaces:  t.Namespaces,
 	}
 
-	change, err := t.App.BeginChange(meta)
+	change, err := t.App.BeginChange(meta, t.AppChangesMaxToKeep)
 	if err != nil {
 		return err
 	}

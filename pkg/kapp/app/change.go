@@ -20,6 +20,8 @@ type ChangeImpl struct {
 	meta       ChangeMeta
 
 	createdAt time.Time
+
+	appChangesMaxToKeep int
 }
 
 var _ Change = &ChangeImpl{}
@@ -55,6 +57,11 @@ func (c *ChangeImpl) Delete() error {
 }
 
 func (c *ChangeImpl) update(doFunc func(*ChangeMeta)) error {
+	if c.appChangesMaxToKeep == 0 {
+		doFunc(&c.meta)
+		return nil
+	}
+
 	change, err := c.coreClient.CoreV1().ConfigMaps(c.nsName).Get(context.TODO(), c.name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("Getting app change: %w", err)
