@@ -84,7 +84,7 @@ func (o *DeployOptions) Run() error {
 		}
 	}
 
-	supportObjs, err := cmdapp.FactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger)
+	supportObjs, err := cmdapp.FactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, o.AppGroupFlags.AppNamespace, cmdapp.ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}
@@ -142,12 +142,13 @@ func (o *DeployOptions) appsToUpdate() (map[string]appGroupApp, error) {
 
 func (o *DeployOptions) deployApp(app appGroupApp) error {
 	o.ui.PrintLinef("--- deploying app '%s' (namespace: %s) from %s",
-		app.Name, o.AppGroupFlags.NamespaceFlags.Name, app.Path)
+		app.Name, o.appNamespace(), app.Path)
 
 	deployOpts := cmdapp.NewDeployOptions(o.ui, o.depsFactory, o.logger)
 	deployOpts.AppFlags = cmdapp.Flags{
 		Name:           app.Name,
 		NamespaceFlags: o.AppGroupFlags.NamespaceFlags,
+		AppNamespace:   o.AppGroupFlags.AppNamespace,
 	}
 	deployOpts.FileFlags = cmdtools.FileFlags{
 		Files: []string{app.Path},
@@ -167,15 +168,23 @@ func (o *DeployOptions) deployApp(app appGroupApp) error {
 
 func (o *DeployOptions) deleteApp(name string) error {
 	o.ui.PrintLinef("--- deleting app '%s' (namespace: %s)",
-		name, o.AppGroupFlags.NamespaceFlags.Name)
+		name, o.appNamespace())
 
 	deleteOpts := cmdapp.NewDeleteOptions(o.ui, o.depsFactory, o.logger)
 	deleteOpts.AppFlags = cmdapp.Flags{
 		Name:           name,
 		NamespaceFlags: o.AppGroupFlags.NamespaceFlags,
+		AppNamespace:   o.AppGroupFlags.AppNamespace,
 	}
 	deleteOpts.DiffFlags = o.AppFlags.DiffFlags
 	deleteOpts.ApplyFlags = o.AppFlags.DeleteApplyFlags
 
 	return deleteOpts.Run()
+}
+
+func (o *DeployOptions) appNamespace() string {
+	if o.AppGroupFlags.AppNamespace != "" {
+		return o.AppGroupFlags.AppNamespace
+	}
+	return o.AppGroupFlags.NamespaceFlags.Name
 }

@@ -55,7 +55,7 @@ func (o *DeleteOptions) Run() error {
 		return fmt.Errorf("Expected group name to be non-empty")
 	}
 
-	supportObjs, err := cmdapp.FactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger)
+	supportObjs, err := cmdapp.FactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, o.AppGroupFlags.AppNamespace, cmdapp.ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}
@@ -77,15 +77,23 @@ func (o *DeleteOptions) Run() error {
 
 func (o *DeleteOptions) deleteApp(name string) error {
 	o.ui.PrintLinef("--- deleting app '%s' (namespace: %s)",
-		name, o.AppGroupFlags.NamespaceFlags.Name)
+		name, o.appNamespace())
 
 	deleteOpts := cmdapp.NewDeleteOptions(o.ui, o.depsFactory, o.logger)
 	deleteOpts.AppFlags = cmdapp.Flags{
 		Name:           name,
 		NamespaceFlags: o.AppGroupFlags.NamespaceFlags,
+		AppNamespace:   o.AppGroupFlags.AppNamespace,
 	}
 	deleteOpts.DiffFlags = o.AppFlags.DiffFlags
 	deleteOpts.ApplyFlags = o.AppFlags.ApplyFlags
 
 	return deleteOpts.Run()
+}
+
+func (o *DeleteOptions) appNamespace() string {
+	if o.AppGroupFlags.AppNamespace != "" {
+		return o.AppGroupFlags.AppNamespace
+	}
+	return o.AppGroupFlags.NamespaceFlags.Name
 }
