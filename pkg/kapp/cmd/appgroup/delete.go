@@ -55,7 +55,7 @@ func (o *DeleteOptions) Run() error {
 		return fmt.Errorf("Expected group name to be non-empty")
 	}
 
-	supportObjs, err := cmdapp.FactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags, cmdapp.ResourceTypesFlags{}, o.logger)
+	supportObjs, err := cmdapp.FactoryClients(o.depsFactory, o.AppGroupFlags.NamespaceFlags.Name, cmdapp.ResourceTypesFlags{}, o.logger)
 	if err != nil {
 		return err
 	}
