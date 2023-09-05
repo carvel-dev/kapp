@@ -1074,6 +1074,8 @@ metadata:
 	logger.Section("Deployment resource with remove value field and copying with rebase rule", func() {
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedDeploymentResYaml + fmt.Sprintf(deploymentConfig, "{allIndexes: true}, value", "copy"))})
+
+		// no change as value field is copied again for all indexes in the updatedDeployment using config resource
 		require.Errorf(t, err, "Expected to receive error")
 		require.Containsf(t, err.Error(), "Exiting after diffing with no pending changes (exit status 2)", "Expected to find stderr output")
 		require.Containsf(t, err.Error(), "exit code: '2'", "Expected to find exit code")
@@ -1083,6 +1085,7 @@ metadata:
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedDeploymentResYaml + fmt.Sprintf(deploymentConfig, "{allIndexes: true}, {regex: \"^val\"}", "copy"))})
 
+		// no change as value field is copied again using regex for all indexes in the updatedDeployment using config resource
 		require.Errorf(t, err, "Expected to receive error")
 		require.Containsf(t, err.Error(), "Exiting after diffing with no pending changes (exit status 2)", "Expected to find stderr output")
 		require.Containsf(t, err.Error(), "exit code: '2'", "Expected to find exit code")
@@ -1092,6 +1095,7 @@ metadata:
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedDeploymentResYaml + fmt.Sprintf(deploymentConfigIndex, "value", "value"))})
 
+		// no change as value field is copied again for both index of env 0 and 1 in the updatedDeployment using config resource
 		require.Errorf(t, err, "Expected to receive error")
 		require.Containsf(t, err.Error(), "Exiting after diffing with no pending changes (exit status 2)", "Expected to find stderr output")
 		require.Containsf(t, err.Error(), "exit code: '2'", "Expected to find exit code")
@@ -1101,6 +1105,7 @@ metadata:
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedDeploymentResYaml + fmt.Sprintf(deploymentConfigIndex, "{regex: \"^val\"}", "{regex: \"^val\"}"))})
 
+		// no change as value field is copied again using regex for both index of env 0 and 1 in the updatedDeployment using config resource
 		require.Errorf(t, err, "Expected to receive error")
 		require.Containsf(t, err.Error(), "Exiting after diffing with no pending changes (exit status 2)", "Expected to find stderr output")
 		require.Containsf(t, err.Error(), "exit code: '2'", "Expected to find exit code")
@@ -1110,6 +1115,7 @@ metadata:
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedDeploymentResYaml + fmt.Sprintf(deploymentConfigIndex, "{regex: \"^tal\"}", "{regex: \"^tal\"}"))})
 
+		// change exists as no field is present as per given regex and hence it was unable to copy the field
 		require.Errorf(t, err, "Expected to receive error")
 		require.Containsf(t, err.Error(), "Exiting after diffing with pending changes (exit status 3)", "Expected to find stderr output")
 	})
@@ -1118,6 +1124,7 @@ metadata:
 		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedDeploymentResYaml + fmt.Sprintf(deploymentConfig, "{allIndexes: true}, {regex: \"^tal\"}", "copy"))})
 
+		// change exists as no field is present as per given regex on all the indexes and hence it was unable to copy the field
 		require.Errorf(t, err, "Expected to receive error")
 		require.Containsf(t, err.Error(), "Exiting after diffing with pending changes (exit status 3)", "Expected to find stderr output")
 	})
