@@ -22,6 +22,7 @@ type Path []*PathPart
 
 type PathPart struct {
 	MapKey     *string
+	Regex      *PathPartRegex
 	ArrayIndex *PathPartArrayIndex
 }
 
@@ -30,6 +31,10 @@ var _ json.Unmarshaler = &PathPart{}
 type PathPartArrayIndex struct {
 	Index *int
 	All   *bool `json:"allIndexes"`
+}
+
+type PathPartRegex struct {
+	Regex *string `json:"regex"`
 }
 
 func NewPathFromStrings(strs []string) Path {
@@ -83,6 +88,15 @@ func (p Path) ContainsNonMapKeys() bool {
 	return false
 }
 
+func (p Path) ContainsArrayIndex() bool {
+	for _, part := range p {
+		if part.ArrayIndex != nil {
+			return true
+		}
+	}
+	return false
+}
+
 func NewPathPartFromString(str string) *PathPart {
 	return &PathPart{MapKey: &str}
 }
@@ -104,6 +118,8 @@ func (p *PathPart) AsString() string {
 		return fmt.Sprintf("%d", *p.ArrayIndex.Index)
 	case p.ArrayIndex != nil && p.ArrayIndex.All != nil:
 		return "(all)"
+	case p.Regex != nil && p.Regex.Regex != nil:
+		return *p.Regex.Regex
 	default:
 		panic("Unknown path part")
 	}
@@ -112,10 +128,13 @@ func (p *PathPart) AsString() string {
 func (p *PathPart) UnmarshalJSON(data []byte) error {
 	var str string
 	var idx PathPartArrayIndex
+	var regx PathPartRegex
 
 	switch {
 	case json.Unmarshal(data, &str) == nil:
 		p.MapKey = &str
+	case json.Unmarshal(data, &regx) == nil && regx.Regex != nil:
+		p.Regex = &regx
 	case json.Unmarshal(data, &idx) == nil:
 		p.ArrayIndex = &idx
 	default:
