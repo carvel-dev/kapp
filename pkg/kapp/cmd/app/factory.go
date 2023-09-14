@@ -18,8 +18,12 @@ type FactorySupportObjs struct {
 	Apps                ctlapp.Apps
 }
 
-func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFlags,
+func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFlags, appNamespace string,
 	resTypesFlags ResourceTypesFlags, logger logger.Logger) (FactorySupportObjs, error) {
+
+	if appNamespace == "" {
+		appNamespace = nsFlags.Name
+	}
 
 	coreClient, err := depsFactory.CoreClient()
 	if err != nil {
@@ -56,7 +60,7 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 		CoreClient:          coreClient,
 		ResourceTypes:       resTypes,
 		IdentifiedResources: identifiedResources,
-		Apps:                ctlapp.NewApps(nsFlags.Name, coreClient, identifiedResources, logger),
+		Apps:                ctlapp.NewApps(appNamespace, coreClient, identifiedResources, logger),
 	}
 
 	return result, nil
@@ -65,7 +69,7 @@ func FactoryClients(depsFactory cmdcore.DepsFactory, nsFlags cmdcore.NamespaceFl
 func Factory(depsFactory cmdcore.DepsFactory, appFlags Flags,
 	resTypesFlags ResourceTypesFlags, logger logger.Logger) (ctlapp.App, FactorySupportObjs, error) {
 
-	supportingObjs, err := FactoryClients(depsFactory, appFlags.NamespaceFlags, resTypesFlags, logger)
+	supportingObjs, err := FactoryClients(depsFactory, appFlags.NamespaceFlags, appFlags.AppNamespace, resTypesFlags, logger)
 	if err != nil {
 		return nil, FactorySupportObjs{}, err
 	}
