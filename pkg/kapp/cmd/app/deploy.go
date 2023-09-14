@@ -220,10 +220,11 @@ func (o *DeployOptions) Run() error {
 	}()
 
 	touch := ctlapp.Touch{
-		App:              app,
-		Description:      "update: " + changeSummary,
-		Namespaces:       nsNames,
-		IgnoreSuccessErr: true,
+		App:                 app,
+		Description:         "update: " + changeSummary,
+		Namespaces:          nsNames,
+		IgnoreSuccessErr:    true,
+		AppChangesMaxToKeep: o.DeployFlags.AppChangesMaxToKeep,
 	}
 
 	err = touch.Do(func() error {

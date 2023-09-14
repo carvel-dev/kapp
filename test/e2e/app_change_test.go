@@ -13,6 +13,7 @@ import (
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/app"
 	"gopkg.in/yaml.v2"
 )
 
@@ -220,6 +221,95 @@ metadata:
 	thirdConfigMap := yamlSubset{}
 	require.NoError(t, yaml.Unmarshal(configMapThirdDeploy, &thirdConfigMap))
 	require.Equal(t, yamlSubset{LastChange: lastChange{Namespaces: []string{env.Namespace}}, UsedGKs: []usedGK{{Group: "", Kind: "Secret"}}}, thirdConfigMap)
+}
+
+func TestAppChangesMaxToKeep(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kubectl := Kubectl{t, env.Namespace, Logger{}}
+
+	rbacName := "test-e2e-rbac-app"
+	scopedContext := "scoped-context"
+	scopedUser := "scoped-user"
+	name := "test-app-changes-max-to-keep"
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", rbacName})
+		kapp.Run([]string{"delete", "-a", name})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	rbac := fmt.Sprintf(`
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: scoped-sa
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: scoped-sa
+  annotations:
+    kubernetes.io/service-account.name: scoped-sa
+type: kubernetes.io/service-account-token
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: scoped-role
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch", "patch", "update", "create"] # no delete permission
+- apiGroups: [""]
+  resources: ["configmaps"]
+  resourceNames: ["%s", "%s"]
+  verbs: ["delete"] # delete permission for meta configmap only
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["*"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: scoped-role-binding
+subjects:
+- kind: ServiceAccount
+  name: scoped-sa
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: scoped-role
+`, name, name+app.AppSuffix)
+
+	kapp.RunWithOpts([]string{"deploy", "-a", rbacName, "-f", "-"}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(rbac)})
+	cleanUpContext := ScopedContext(t, kubectl, "scoped-sa", scopedContext, scopedUser)
+	defer cleanUpContext()
+
+	yaml1 := `
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-config
+`
+	logger.Section("Setting app-changes-max-to-keep to 0 doesn't create new app-changes", func() {
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--app-changes-max-to-keep=0", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
+			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+
+		out, _ = kapp.RunWithOpts([]string{"app-change", "ls", "-a", name, "--json"}, RunOpts{})
+
+		resp := uitest.JSONUIFromBytes(t, []byte(out))
+
+		require.Equal(t, 0, len(resp.Tables[0].Rows), "Expected to have 0 app changes")
+
+		out = kapp.Run([]string{"delete", "-a", name, fmt.Sprintf("--kubeconfig-context=%s", scopedContext)})
+	})
+
 }
 
 type usedGK struct {
