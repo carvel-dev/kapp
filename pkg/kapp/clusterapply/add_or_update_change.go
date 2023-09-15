@@ -4,6 +4,7 @@
 package clusterapply
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/util"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -262,12 +264,16 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 			return true, nil
 		}
 
-		_, err = c.identifiedResources.Update(latestResWithHistoryUpdated)
+		latestResourceAnnotations := latestResWithHistoryUpdated.Annotations()
+		appliedResAnnValJSONStr, err := json.Marshal(latestResourceAnnotations[ctldiff.AppliedResAnnKey])
+		jsonStr := fmt.Sprintf("{\"metadata\": {\"annotations\": { \"%s\" : \"%s\", \"%s\": %s}}}", ctldiff.AppliedResDiffMD5AnnKey, latestResourceAnnotations[ctldiff.AppliedResDiffMD5AnnKey], ctldiff.AppliedResAnnKey, appliedResAnnValJSONStr)
+		data := []byte(jsonStr)
+
+		_, err = c.identifiedResources.Patch(savedRes, types.MergePatchType, data)
 		if err != nil {
 			latestResWithHistory = nil // Get again
 			return false, fmt.Errorf("Saving record of last applied resource: %w", err)
 		}
-
 		return true, nil
 	})
 }
