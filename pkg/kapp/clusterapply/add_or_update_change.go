@@ -264,15 +264,16 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 			return true, nil
 		}
 
-		jsonStr, err := json.Marshal(latestResWithHistoryUpdated.Annotations())
-		data := []byte(fmt.Sprintf("{\"metadata\": {\"annotations\": %s }}", jsonStr))
+		latestResourceAnnotations := latestResWithHistoryUpdated.Annotations()
+		appliedResAnnValJsonStr, err := json.Marshal(latestResourceAnnotations[ctldiff.AppliedResAnnKey])
+		jsonStr := fmt.Sprintf("{\"metadata\": {\"annotations\": { \"%s\" : \"%s\", \"%s\": %s}}}", ctldiff.AppliedResDiffMD5AnnKey, latestResourceAnnotations[ctldiff.AppliedResDiffMD5AnnKey], ctldiff.AppliedResAnnKey, appliedResAnnValJsonStr)
+		data := []byte(jsonStr)
 
 		_, err = c.identifiedResources.Patch(savedRes, types.MergePatchType, data)
 		if err != nil {
 			latestResWithHistory = nil // Get again
 			return false, fmt.Errorf("Saving record of last applied resource: %w", err)
 		}
-
 		return true, nil
 	})
 }
