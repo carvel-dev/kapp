@@ -30,7 +30,7 @@ type App interface {
 	// Sorted as first is oldest
 	Changes() ([]Change, error)
 	LastChange() (Change, error)
-	BeginChange(ChangeMeta) (Change, error)
+	BeginChange(ChangeMeta, int) (Change, error)
 	GCChanges(max int, reviewFunc func(changesToDelete []Change) error) (int, int, error)
 }
 
