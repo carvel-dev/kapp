@@ -510,7 +510,7 @@ func (a *RecordedApp) LastChange() (Change, error) {
 		return nil, err
 	}
 
-	if len(meta.LastChangeName) == 0 {
+	if meta.LastChange.Successful == nil {
 		return nil, nil
 	}
 
@@ -524,13 +524,13 @@ func (a *RecordedApp) LastChange() (Change, error) {
 	return change, nil
 }
 
-func (a *RecordedApp) BeginChange(meta ChangeMeta) (Change, error) {
+func (a *RecordedApp) BeginChange(meta ChangeMeta, appChangesMaxToKeep int) (Change, error) {
 	appMeta, err := a.meta()
 	if err != nil {
 		return nil, err
 	}
 
-	change, err := NewRecordedAppChanges(a.nsName, a.name, appMeta.LabelValue, a.appChangesUseAppLabel, a.coreClient).Begin(meta)
+	change, err := NewRecordedAppChanges(a.nsName, a.name, appMeta.LabelValue, a.appChangesUseAppLabel, a.coreClient).Begin(meta, appChangesMaxToKeep)
 	if err != nil {
 		return nil, err
 	}

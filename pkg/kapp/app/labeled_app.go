@@ -75,9 +75,9 @@ func (a *LabeledApp) Rename(_ string, _ string) error { return fmt.Errorf("Not s
 
 func (a *LabeledApp) Meta() (Meta, error) { return Meta{}, nil }
 
-func (a *LabeledApp) Changes() ([]Change, error)             { return nil, nil }
-func (a *LabeledApp) LastChange() (Change, error)            { return nil, nil }
-func (a *LabeledApp) BeginChange(ChangeMeta) (Change, error) { return NoopChange{}, nil }
+func (a *LabeledApp) Changes() ([]Change, error)                  { return nil, nil }
+func (a *LabeledApp) LastChange() (Change, error)                 { return nil, nil }
+func (a *LabeledApp) BeginChange(ChangeMeta, int) (Change, error) { return NoopChange{}, nil }
 func (a *LabeledApp) GCChanges(_ int, _ func(changesToDelete []Change) error) (int, int, error) {
 	return 0, 0, nil
 }
