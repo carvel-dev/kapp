@@ -4,6 +4,7 @@
 package diff
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -68,13 +69,13 @@ func (r ResourceWithHistory) AllowsRecordingLastApplied() bool {
 	return !found
 }
 
-func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ctlres.Resource, bool, error) {
+func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (string, bool, error) {
 	// Use compact representation to take as little space as possible
 	// because annotation value max length is 262144 characters
 	// (https://github.com/vmware-tanzu/carvel-kapp/issues/48).
 	appliedResBytes, err := appliedChange.AppliedResource().AsCompactBytes()
 	if err != nil {
-		return nil, true, err
+		return "", true, err
 	}
 
 	diff := appliedChange.OpsDiff()
@@ -84,37 +85,30 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ct
 			r.resource.Description(), diff.MinimalMD5(), diff.MinimalString())
 	}
 
-	annsMod := ctlres.StringMapAppendMod{
-		ResourceMatcher: ctlres.AllMatcher{},
-		Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations"}),
-		KVs: map[string]string{
-			AppliedResAnnKey:        string(appliedResBytes),
-			AppliedResDiffMD5AnnKey: diff.MinimalMD5(),
+	annsKVS := map[string]string{
+		AppliedResAnnKey:        string(appliedResBytes),
+		AppliedResDiffMD5AnnKey: diff.MinimalMD5(),
 
-			// Following fields useful for debugging:
-			//   debugAppliedResDiffAnnKey:     diff.MinimalString(),
-			//   debugAppliedResDiffFullAnnKey: diff.FullString(),
-		},
+		// Following fields useful for debugging:
+		//   debugAppliedResDiffAnnKey:     diff.MinimalString(),
+		//   debugAppliedResDiffFullAnnKey: diff.FullString(),
 	}
 
 	const annValMaxLen = 262144
 
 	// kapp deploy should work without adding disable annotation when annotation value max length exceed
 	// (https://github.com/vmware-tanzu/carvel-kapp/issues/410)
-	for _, annVal := range annsMod.KVs {
+	for _, annVal := range annsKVS {
 		if len(annVal) > annValMaxLen {
-			return nil, false, nil
+			return "", false, nil
 		}
 	}
 
-	resultRes := r.resource.DeepCopy()
-
-	err = annsMod.Apply(resultRes)
+	result, err := json.Marshal(annsKVS)
 	if err != nil {
-		return nil, true, err
+		return "", false, err
 	}
-
-	return resultRes, true, nil
+	return string(result), true, nil
 }
 
 func (r ResourceWithHistory) CalculateChange(appliedRes ctlres.Resource) (Change, error) {

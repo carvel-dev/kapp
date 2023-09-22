@@ -4,7 +4,6 @@
 package clusterapply
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -254,7 +253,7 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 		}
 
 		// Record last applied change on the latest version of a resource
-		latestResWithHistoryUpdated, madeAnyModifications, err := latestResWithHistory.RecordLastAppliedResource(applyChange)
+		annotationStr, madeAnyModifications, err := latestResWithHistory.RecordLastAppliedResource(applyChange)
 		if err != nil {
 			return true, fmt.Errorf("Recording last applied resource: %w", err)
 		}
@@ -264,9 +263,7 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 			return true, nil
 		}
 
-		latestResourceAnnotations := latestResWithHistoryUpdated.Annotations()
-		appliedResAnnValJSONStr, err := json.Marshal(latestResourceAnnotations[ctldiff.AppliedResAnnKey])
-		jsonStr := fmt.Sprintf("{\"metadata\": {\"annotations\": { \"%s\" : \"%s\", \"%s\": %s}}}", ctldiff.AppliedResDiffMD5AnnKey, latestResourceAnnotations[ctldiff.AppliedResDiffMD5AnnKey], ctldiff.AppliedResAnnKey, appliedResAnnValJSONStr)
+		jsonStr := fmt.Sprintf("{\"metadata\": {\"annotations\": %s }}", annotationStr)
 		data := []byte(jsonStr)
 
 		_, err = c.identifiedResources.Patch(savedRes, types.MergePatchType, data)
