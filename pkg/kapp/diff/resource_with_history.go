@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	AppliedResAnnKey        = "kapp.k14s.io/original"
-	AppliedResDiffMD5AnnKey = "kapp.k14s.io/original-diff-md5"
+	appliedResAnnKey        = "kapp.k14s.io/original"
+	appliedResDiffMD5AnnKey = "kapp.k14s.io/original-diff-md5"
 
 	// Following fields useful for debugging:
 	debugAppliedResDiffAnnKey     = "kapp.k14s.io/original-diff"
@@ -86,8 +86,8 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (st
 	}
 
 	annsKVS := map[string]string{
-		AppliedResAnnKey:        string(appliedResBytes),
-		AppliedResDiffMD5AnnKey: diff.MinimalMD5(),
+		appliedResAnnKey:        string(appliedResBytes),
+		appliedResDiffMD5AnnKey: diff.MinimalMD5(),
 
 		// Following fields useful for debugging:
 		//   debugAppliedResDiffAnnKey:     diff.MinimalString(),
@@ -125,8 +125,8 @@ func (r ResourceWithHistory) CalculateChange(appliedRes ctlres.Resource) (Change
 }
 
 func (r ResourceWithHistory) recalculateLastAppliedChange() ([]Change, string, string) {
-	lastAppliedResBytes := r.resource.Annotations()[AppliedResAnnKey]
-	lastAppliedDiffMD5 := r.resource.Annotations()[AppliedResDiffMD5AnnKey]
+	lastAppliedResBytes := r.resource.Annotations()[appliedResAnnKey]
+	lastAppliedDiffMD5 := r.resource.Annotations()[appliedResDiffMD5AnnKey]
 
 	if len(lastAppliedResBytes) == 0 || len(lastAppliedDiffMD5) == 0 {
 		return nil, "", ""
@@ -191,7 +191,7 @@ func (ResourceWithoutHistory) removeAppliedResAnnKeysMods() []ctlres.ResourceMod
 	return []ctlres.ResourceMod{
 		ctlres.FieldRemoveMod{
 			ResourceMatcher: ctlres.AllMatcher{},
-			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", AppliedResAnnKey}),
+			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", appliedResAnnKey}),
 		},
 		ctlres.FieldRemoveMod{
 			ResourceMatcher: ctlres.AllMatcher{},
@@ -199,7 +199,7 @@ func (ResourceWithoutHistory) removeAppliedResAnnKeysMods() []ctlres.ResourceMod
 		},
 		ctlres.FieldRemoveMod{
 			ResourceMatcher: ctlres.AllMatcher{},
-			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", AppliedResDiffMD5AnnKey}),
+			Path:            ctlres.NewPathFromStrings([]string{"metadata", "annotations", appliedResDiffMD5AnnKey}),
 		},
 		ctlres.FieldRemoveMod{
 			ResourceMatcher: ctlres.AllMatcher{},
