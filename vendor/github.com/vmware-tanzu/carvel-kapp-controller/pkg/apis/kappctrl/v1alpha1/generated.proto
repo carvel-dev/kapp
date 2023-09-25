@@ -280,6 +280,11 @@ message AppSpec {
   // (optional; default=false; v0.18.0+)
   // +optional
   optional bool noopDelete = 9;
+
+  // Specifies the default namespace to install the App resources, by default this is
+  // same as the App's namespace (optional; v0.48.0+)
+  // +optional
+  optional string defaultNamespace = 10;
 }
 
 // +k8s:openapi-gen=true
