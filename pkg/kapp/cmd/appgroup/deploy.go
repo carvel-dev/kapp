@@ -66,14 +66,14 @@ func (o *DeployOptions) Run() error {
 
 	// TODO what if app is renamed? currently it
 	// will have conflicting resources with new-named app
-	updatedApps, err := o.appsToUpdate()
+	updatedApps, sortedApps, err := o.appsToUpdate()
 	if err != nil {
 		return err
 	}
 
 	var exitCode float64
 	// TODO is there some order between apps?
-	for _, appGroupApp := range updatedApps {
+	for _, appGroupApp := range sortedApps {
 		err := o.deployApp(appGroupApp)
 		if err != nil {
 			if deployErr, ok := err.(cmdapp.DeployDiffExitStatus); ok {
@@ -117,13 +117,15 @@ type appGroupApp struct {
 	Path string
 }
 
-func (o *DeployOptions) appsToUpdate() (map[string]appGroupApp, error) {
+func (o *DeployOptions) appsToUpdate() (map[string]appGroupApp, []appGroupApp, error) {
 	result := map[string]appGroupApp{}
+	var applications []appGroupApp
+
 	dir := o.DeployFlags.Directory
 
 	fileInfos, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, fmt.Errorf("Reading directory '%s': %w", dir, err)
+		return nil, nil, fmt.Errorf("Reading directory '%s': %w", dir, err)
 	}
 
 	for _, fi := range fileInfos {
@@ -134,10 +136,11 @@ func (o *DeployOptions) appsToUpdate() (map[string]appGroupApp, error) {
 			Name: fmt.Sprintf("%s-%s", o.AppGroupFlags.Name, fi.Name()),
 			Path: filepath.Join(dir, fi.Name()),
 		}
+		applications = append(applications, app)
 		result[app.Name] = app
 	}
 
-	return result, nil
+	return result, applications, nil
 }
 
 func (o *DeployOptions) deployApp(app appGroupApp) error {
