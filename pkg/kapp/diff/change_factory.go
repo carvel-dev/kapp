@@ -10,13 +10,12 @@ import (
 type ChangeFactory struct {
 	rebaseMods                               []ctlres.ResourceModWithMultiple
 	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod
-	diffAgainstExistingFieldExclusionRules   []ctlres.FieldRemoveMod
 }
 
 func NewChangeFactory(rebaseMods []ctlres.ResourceModWithMultiple,
-	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod, diffAgainstExistingFieldExclusionRules []ctlres.FieldRemoveMod) ChangeFactory {
+	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod) ChangeFactory {
 
-	return ChangeFactory{rebaseMods, diffAgainstLastAppliedFieldExclusionMods, diffAgainstExistingFieldExclusionRules}
+	return ChangeFactory{rebaseMods, diffAgainstLastAppliedFieldExclusionMods}
 }
 
 func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Resource) (Change, error) {
@@ -37,7 +36,7 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Re
 			existingRes = rebasedLastAppliedRes
 		}
 
-		historylessExistingRes, err := f.newResourceWithoutHistory(existingRes).Resource()
+		historylessExistingRes, err := f.NewResourceWithHistory(existingRes).HistorylessResource()
 		if err != nil {
 			return nil, err
 		}
@@ -46,7 +45,7 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Re
 	}
 
 	if newRes != nil {
-		historylessNewRes, err := f.newResourceWithoutHistory(newRes).Resource()
+		historylessNewRes, err := f.NewResourceWithHistory(newRes).HistorylessResource()
 		if err != nil {
 			return nil, err
 		}
@@ -64,7 +63,7 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Re
 
 func (f ChangeFactory) NewExactChange(existingRes, newRes ctlres.Resource) (Change, error) {
 	if existingRes != nil {
-		historylessExistingRes, err := f.newResourceWithoutHistory(existingRes).Resource()
+		historylessExistingRes, err := f.NewResourceWithHistory(existingRes).HistorylessResource()
 		if err != nil {
 			return nil, err
 		}
@@ -73,7 +72,7 @@ func (f ChangeFactory) NewExactChange(existingRes, newRes ctlres.Resource) (Chan
 	}
 
 	if newRes != nil {
-		historylessNewRes, err := f.newResourceWithoutHistory(newRes).Resource()
+		historylessNewRes, err := f.NewResourceWithHistory(newRes).HistorylessResource()
 		if err != nil {
 			return nil, err
 		}
@@ -91,8 +90,4 @@ func (f ChangeFactory) NewExactChange(existingRes, newRes ctlres.Resource) (Chan
 
 func (f ChangeFactory) NewResourceWithHistory(resource ctlres.Resource) ResourceWithHistory {
 	return NewResourceWithHistory(resource, &f, f.diffAgainstLastAppliedFieldExclusionMods)
-}
-
-func (f ChangeFactory) newResourceWithoutHistory(resource ctlres.Resource) ResourceWithoutHistory {
-	return NewResourceWithoutHistory(resource, f.diffAgainstExistingFieldExclusionRules)
 }

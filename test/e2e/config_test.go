@@ -4,15 +4,14 @@
 package e2e
 
 import (
-	"fmt"
 	"math/rand"
 	"strings"
 	"testing"
 
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
+	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/require"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
-	"sigs.k8s.io/yaml"
 )
 
 func TestConfig(t *testing.T) {
@@ -560,7 +559,7 @@ func asYAML(t *testing.T, val interface{}) string {
 	return string(bs)
 }
 
-func TestDefaultConfig_ExcludeDiffAgainstExistingStatus(t *testing.T) {
+func TestDefaultConfig_ExcludeDiffAgainstLastAppliedStatus(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
@@ -592,6 +591,38 @@ status:
   conditions: []
   storedVersions: []
 `
+
+	updatedStatusYaml := `
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: tests.kapp.example
+spec:
+  group: kapp.example
+  names:
+    kind: Test
+    plural: tests
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions:
+  - message: some conflicts found
+    reason: NoConflicts
+    status: "True"
+    type: NamesAccepted
+  storedVersions: []
+`
+
 	updatedYaml := `
 ---
 apiVersion: apiextensions.k8s.io/v1
@@ -637,6 +668,20 @@ status:
 -linesss-     schema:
 -linesss-       openAPIV3Schema:
 -linesss-         type: object
+-linesss- status:
+-linesss-   acceptedNames:`
+
+	expectedChangesForStatusUpdate := `
+@@ update customresourcedefinition/tests.kapp.example (apiextensions.k8s.io/v1) cluster @@
+  ...
+-linesss-     plural: ""
+-linesss-   conditions: []
+-linesss-   conditions:
+-linesss-   - message: some conflicts found
+-linesss-     reason: NoConflicts
+-linesss-     status: "True"
+-linesss-     type: NamesAccepted
+-linesss-   storedVersions: []
 -linesss- `
 
 	expectedChangesForExternalUpdate := `
@@ -658,7 +703,31 @@ status:
 -linesss-     plural: tests
 -linesss-     singular: test
 -linesss-   scope: Namespaced
--linesss-   versions:`
+-linesss-   versions:
+  ...
+-linesss-   acceptedNames:
+-linesss-     kind: Test
+-linesss-     listKind: TestList
+-linesss-     plural: tests
+-linesss-     singular: test
+-linesss-   conditions:
+-linesss-   - lastTransitionTime: "2006-01-02T15:04:05Z07:00"
+-linesss-     message: no conflicts found
+-linesss-     reason: NoConflicts
+-linesss-     status: "True"
+-linesss-     type: NamesAccepted
+-linesss-   - lastTransitionTime: "2006-01-02T15:04:05Z07:00"
+-linesss-     message: the initial names have been accepted
+-linesss-     reason: InitialNamesAccepted
+-linesss-     status: "True"
+-linesss-     type: Established
+-linesss-   storedVersions:
+-linesss-   - v1alpha1
+-linesss-     kind: ""
+-linesss-     plural: ""
+-linesss-   conditions: []
+-linesss-   storedVersions: []
+-linesss- `
 
 	name := "test-default-config-exclude-diff-against-last-applied-status"
 	cleanUp := func() {
@@ -694,8 +763,16 @@ status:
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "-c"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedYaml)})
 
-		// status is ignored in diff
+		// last applied status is used for diffing, hence no changes to status are detected
 		checkChangesOutput(t, replaceTimestampWithDfaultValue(out), expectedChangesForUpdate)
+	})
+
+	logger.Section("deploy with some changes to status field", func() {
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "-c"},
+			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedStatusYaml)})
+
+		// if status is updated, diffing is done against last applied status
+		checkChangesOutput(t, replaceTimestampWithDfaultValue(out), expectedChangesForStatusUpdate)
 	})
 
 	logger.Section("deploy after some changes are made by external controller", func() {
@@ -707,7 +784,7 @@ status:
 		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "-c"},
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml)})
 
-		// status is ignored when smart diff is not used
+		// status is not ignored when smart diff is not used
 		checkChangesOutput(t, replaceTimestampWithDfaultValue(out), expectedChangesForExternalUpdate)
 	})
 }
@@ -778,283 +855,8 @@ rules:
 	})
 }
 
-func TestConfigHavingRegex(t *testing.T) {
-	configMapResYaml := `
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: game-demo
-  annotations:
-    foo1: bar1
-    foo2: bar2
-data:
-  player_initial_lives: "3"
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: game-test
-  annotations:
-    foo2: bar2
-data:
-  player_initial_lives: "3"
-`
-
-	updatedConfigMapResYaml := `
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: game-demo
-data:
-  player_initial_lives: "3"
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: game-test
-data:
-  player_initial_lives: "3"
-`
-
-	configYaml := `
----
-apiVersion: kapp.k14s.io/v1alpha1
-kind: Config
-rebaseRules:
-  - path: [metadata, annotations, {regex: "^foo"}]
-    type: %s
-    sources: [new, existing]
-    resourceMatchers:
-      - apiVersionKindMatcher: {apiVersion: v1, kind: ConfigMap}
-`
-
-	faultyConfigYaml := `
----
-apiVersion: kapp.k14s.io/v1alpha1
-kind: Config
-rebaseRules:
-  - path: [metadata, annotations, {regex: }]
-    type: %s
-    sources: [new, existing]
-    resourceMatchers:
-      - apiVersionKindMatcher: {apiVersion: v1, kind: ConfigMap}
-`
-
-	deploymentResYaml := `
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  namespace: default
-  name: simple-app
-spec:
-  selector:
-    matchLabels:
-      simple-app: ""
-  template:
-    metadata:
-      labels:
-        simple-app: ""
-    spec:
-      containers:
-      - name: simple-app
-        image: docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0
-        env:
-        - name: HELLO
-          value: strange
-        - name: HELLO_MSG
-          value: stranger
-`
-
-	updatedDeploymentResYaml := `
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  namespace: default
-  name: simple-app
-spec:
-  selector:
-    matchLabels:
-      simple-app: ""
-  template:
-    metadata:
-      labels:
-        simple-app: ""
-    spec:
-      containers:
-      - name: simple-app
-        image: docker.io/dkalinin/k8s-simple-app@sha256:4c8b96d4fffdfae29258d94a22ae4ad1fe36139d47288b8960d9958d1e63a9d0
-        env:
-        - name: HELLO
-        - name: HELLO_MSG
-`
-
-	deploymentConfig := `
----
-apiVersion: kapp.k14s.io/v1alpha1
-kind: Config
-
-rebaseRules:
-  - path: [spec, template, spec, containers, {allIndexes: true}, env, %s]
-    type: %s
-    sources: [new, existing]
-    resourceMatchers:
-      - apiVersionKindMatcher: {apiVersion: apps/v1, kind: Deployment}
-`
-
-	deploymentConfigIndex := `
----
-apiVersion: kapp.k14s.io/v1alpha1
-kind: Config
-
-rebaseRules:
-  - path: [spec, template, spec, containers, {allIndexes: true}, env, {index: 0}, %s]
-    type: copy
-    sources: [new, existing]
-    resourceMatchers:
-      - apiVersionKindMatcher: {apiVersion: apps/v1, kind: Deployment}
-  - path: [spec, template, spec, containers, {allIndexes: true}, env, {index: 1}, %s]
-    type: copy
-    sources: [new, existing]
-    resourceMatchers:
-      - apiVersionKindMatcher: {apiVersion: apps/v1, kind: Deployment}
-`
-
-	env := BuildEnv(t)
-	logger := Logger{}
-	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
-	fieldsExcludedInMatch := []string{"kapp.k14s.io/app", "creationTimestamp:", "resourceVersion:", "uid:", "selfLink:", "kapp.k14s.io/association"}
-	name := "test-config-path-regex"
-	cleanUp := func() {
-		kapp.Run([]string{"delete", "-a", name})
-	}
-
-	cleanUp()
-	defer cleanUp()
-
-	logger.Section("deploy configmaps with annotations", func() {
-		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(configMapResYaml)})
-	})
-
-	logger.Section("deploy configmaps without annotations", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
-			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedConfigMapResYaml + fmt.Sprintf(configYaml, "copy"))})
-
-		require.Errorf(t, err, "Expected to receive error")
-		require.Containsf(t, err.Error(), "Exiting after diffing with no pending changes (exit status 2)", "Expected to find stderr output")
-		require.Containsf(t, err.Error(), "exit code: '2'", "Expected to find exit code")
-	})
-
-	logger.Section("passing faulty config", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
-			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedConfigMapResYaml + fmt.Sprintf(faultyConfigYaml, "copy"))})
-
-		require.Errorf(t, err, "Expected to receive error")
-		require.Containsf(t, err.Error(), "panic: Unknown path part", "Expected to panic")
-	})
-
-	logger.Section("Remove all the annotation with remove config", func() {
-		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-changes-yaml"},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(configMapResYaml + fmt.Sprintf(configYaml, "remove"))})
-
-		expectedOutput := `
----
-# update: configmap/game-demo (v1) namespace: kapp-test
-apiVersion: v1
-data:
-  player_initial_lives: "3"
-kind: ConfigMap
-metadata:
-  annotations: {}
-  labels:
-  name: game-demo
-  namespace: kapp-test
----
-# update: configmap/game-test (v1) namespace: kapp-test
-apiVersion: v1
-data:
-  player_initial_lives: "3"
-kind: ConfigMap
-metadata:
-  annotations: {}
-  labels:
-  name: game-test
-  namespace: kapp-test
-`
-		out = strings.TrimSpace(replaceTarget(replaceSpaces(replaceTs(out))))
-		out = clearKeys(fieldsExcludedInMatch, out)
-
-		expectedOutput = strings.TrimSpace(replaceSpaces(expectedOutput))
-		require.Contains(t, out, expectedOutput, "output does not match")
-	})
-
-	logger.Section("Deployment resource", func() {
-		_, _ = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name},
-			RunOpts{IntoNs: true, StdinReader: strings.NewReader(deploymentResYaml)})
-	})
-
-	logger.Section("Deployment resource with remove value field and copying with rebase rule", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
-			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedDeploymentResYaml + fmt.Sprintf(deploymentConfig, "{allIndexes: true}, value", "copy"))})
-
-		// no change as value field is copied again for all indexes in the updatedDeployment using config resource
-		require.Errorf(t, err, "Expected to receive error")
-		require.Containsf(t, err.Error(), "Exiting after diffing with no pending changes (exit status 2)", "Expected to find stderr output")
-		require.Containsf(t, err.Error(), "exit code: '2'", "Expected to find exit code")
-	})
-
-	logger.Section("Deployment resource with remove value field and copying with rebase rule using regex", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
-			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedDeploymentResYaml + fmt.Sprintf(deploymentConfig, "{allIndexes: true}, {regex: \"^val\"}", "copy"))})
-
-		// no change as value field is copied again using regex for all indexes in the updatedDeployment using config resource
-		require.Errorf(t, err, "Expected to receive error")
-		require.Containsf(t, err.Error(), "Exiting after diffing with no pending changes (exit status 2)", "Expected to find stderr output")
-		require.Containsf(t, err.Error(), "exit code: '2'", "Expected to find exit code")
-	})
-
-	logger.Section("Deployment resource with remove value field and copying with rebase rule using index and field", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
-			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedDeploymentResYaml + fmt.Sprintf(deploymentConfigIndex, "value", "value"))})
-
-		// no change as value field is copied again for both index of env 0 and 1 in the updatedDeployment using config resource
-		require.Errorf(t, err, "Expected to receive error")
-		require.Containsf(t, err.Error(), "Exiting after diffing with no pending changes (exit status 2)", "Expected to find stderr output")
-		require.Containsf(t, err.Error(), "exit code: '2'", "Expected to find exit code")
-	})
-
-	logger.Section("Deployment resource with remove value field and copying with rebase rule using index and regex", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
-			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedDeploymentResYaml + fmt.Sprintf(deploymentConfigIndex, "{regex: \"^val\"}", "{regex: \"^val\"}"))})
-
-		// no change as value field is copied again using regex for both index of env 0 and 1 in the updatedDeployment using config resource
-		require.Errorf(t, err, "Expected to receive error")
-		require.Containsf(t, err.Error(), "Exiting after diffing with no pending changes (exit status 2)", "Expected to find stderr output")
-		require.Containsf(t, err.Error(), "exit code: '2'", "Expected to find exit code")
-	})
-
-	logger.Section("Deployment resource with remove value field and unmatched regex", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
-			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedDeploymentResYaml + fmt.Sprintf(deploymentConfigIndex, "{regex: \"^tal\"}", "{regex: \"^tal\"}"))})
-
-		// change exists as no field is present as per given regex and hence it was unable to copy the field
-		require.Errorf(t, err, "Expected to receive error")
-		require.Containsf(t, err.Error(), "Exiting after diffing with pending changes (exit status 3)", "Expected to find stderr output")
-	})
-
-	logger.Section("Deployment resource with remove value field and unmatched regex and allIndex", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--diff-run", "--diff-exit-status"},
-			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(updatedDeploymentResYaml + fmt.Sprintf(deploymentConfig, "{allIndexes: true}, {regex: \"^tal\"}", "copy"))})
-
-		// change exists as no field is present as per given regex on all the indexes and hence it was unable to copy the field
-		require.Errorf(t, err, "Expected to receive error")
-		require.Containsf(t, err.Error(), "Exiting after diffing with pending changes (exit status 3)", "Expected to find stderr output")
-	})
-
-}
-
 func RandomString(n int) string {
-	letters := []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+	var letters = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
 
 	s := make([]rune, n)
 	for i := range s {

@@ -84,9 +84,6 @@ func (t StringMapAppendMod) apply(obj interface{}, path Path) error {
 				panic(fmt.Sprintf("Unknown array index: %#v", part.ArrayIndex))
 			}
 
-		case part.Regex != nil:
-			panic("Regex in path part is only supported for rebaseRules.")
-
 		default:
 			panic(fmt.Sprintf("Unexpected path part: %#v", part))
 		}

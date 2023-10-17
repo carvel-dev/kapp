@@ -231,7 +231,6 @@ diffAgainstLastAppliedFieldExclusionRules:
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
   resourceMatchers: *appsV1DeploymentWithRevAnnKey
 
-diffAgainstExistingFieldExclusionRules:
 - path: [status]
   resourceMatchers:
   - allMatcher: {}

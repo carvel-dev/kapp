@@ -11,12 +11,10 @@ import (
 type Flags struct {
 	NamespaceFlags cmdcore.NamespaceFlags
 	Name           string
-	AppNamespace   string
 }
 
 func (s *Flags) Set(cmd *cobra.Command, flagsFactory cmdcore.FlagsFactory) {
 	s.NamespaceFlags.Set(cmd, flagsFactory)
 
 	cmd.Flags().StringVarP(&s.Name, "group", "g", "", "Set app group name")
-	cmd.Flags().StringVar(&s.AppNamespace, "app-namespace", s.AppNamespace, "Set app namespace (to store app state)")
 }

@@ -254,22 +254,16 @@ spec:
                   type: integer
             status:
               type: object
-              default: {}
               properties:
                 conditions:
                   type: array
-                  default: 
-                    - {}
                   items:
                     type: object
-                    default: {}
                     properties:
                       status:
                         type: string
-                        default: "True"
                       type:
                         type: string
-                        default: Progressing
   scope: Namespaced
   names:
     plural: crontabs
@@ -298,6 +292,10 @@ metadata:
 spec:
   cronSpec: "* * * * */5"
   image: my-awesome-cron-image
+status:
+  conditions:
+  - type: Progressing
+    status: "True"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -315,7 +313,7 @@ metadata:
 				break
 			}
 		}
-		patch := `[{ "op": "add", "path": "/status", "value": {"conditions": [{"type": "Available", "status": "True"}]}}]`
+		patch := `[{ "op": "add", "path": "/status/conditions/-", "value": {type: "Available", status: "True"}}]`
 		PatchClusterResource("CronTab", "my-new-cron-object-1", env.Namespace, patch, kubectl)
 	}()
 

@@ -112,7 +112,7 @@ func (a RecordedAppChanges) DeleteAll() error {
 	return nil
 }
 
-func (a RecordedAppChanges) Begin(meta ChangeMeta, appChangesMaxToKeep int) (*ChangeImpl, error) {
+func (a RecordedAppChanges) Begin(meta ChangeMeta) (*ChangeImpl, error) {
 	newMeta := ChangeMeta{
 		StartedAt:   time.Now().UTC(),
 		Description: meta.Description,
@@ -137,22 +137,16 @@ func (a RecordedAppChanges) Begin(meta ChangeMeta, appChangesMaxToKeep int) (*Ch
 		configMap.ObjectMeta.Labels[legacyChangeLabelKey] = a.appName
 	}
 
-	changeName := ""
-
-	if appChangesMaxToKeep > 0 {
-		createdChange, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, metav1.CreateOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("Creating app change: %w", err)
-		}
-		changeName = createdChange.Name
+	createdChange, err := a.coreClient.CoreV1().ConfigMaps(a.nsName).Create(context.TODO(), configMap, metav1.CreateOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("Creating app change: %w", err)
 	}
 
 	change := &ChangeImpl{
-		name:                changeName,
-		nsName:              a.nsName,
-		coreClient:          a.coreClient,
-		meta:                newMeta,
-		appChangesMaxToKeep: appChangesMaxToKeep,
+		name:       createdChange.Name,
+		nsName:     createdChange.Namespace,
+		coreClient: a.coreClient,
+		meta:       newMeta,
 	}
 
 	return change, nil

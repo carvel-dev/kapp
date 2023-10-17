@@ -5,8 +5,7 @@ package resources
 
 import (
 	"fmt"
-	"io"
-	"io/fs"
+	"io/ioutil"
 	"net/http"
 	"os"
 )
@@ -32,34 +31,17 @@ var _ FileSource = StdinSource{}
 
 func NewStdinSource() StdinSource            { return StdinSource{} }
 func (s StdinSource) Description() string    { return "stdin" }
-func (s StdinSource) Bytes() ([]byte, error) { return io.ReadAll(os.Stdin) }
+func (s StdinSource) Bytes() ([]byte, error) { return ioutil.ReadAll(os.Stdin) }
 
 type LocalFileSource struct {
-	fsys fs.FS
 	path string
 }
 
 var _ FileSource = LocalFileSource{}
 
-func NewLocalFileSource(fsys fs.FS, path string) LocalFileSource {
-	return LocalFileSource{fsys: fsys, path: path}
-}
-func (s LocalFileSource) Description() string { return fmt.Sprintf("file '%s'", s.path) }
-func (s LocalFileSource) Bytes() ([]byte, error) {
-	switch t := s.fsys.(type) {
-	case fs.ReadFileFS:
-		return t.ReadFile(s.path)
-	case fs.FS:
-		f, err := t.Open(s.path)
-		if err != nil {
-			return nil, err
-		}
-		defer f.Close()
-		return fs.ReadFile(s.fsys, s.path)
-	default:
-		return os.ReadFile(s.path)
-	}
-}
+func NewLocalFileSource(path string) LocalFileSource { return LocalFileSource{path} }
+func (s LocalFileSource) Description() string        { return fmt.Sprintf("file '%s'", s.path) }
+func (s LocalFileSource) Bytes() ([]byte, error)     { return ioutil.ReadFile(s.path) }
 
 type HTTPFileSource struct {
 	url    string
@@ -86,7 +68,7 @@ func (s HTTPFileSource) Bytes() ([]byte, error) {
 		return nil, fmt.Errorf("Requesting URL '%s': %s", s.url, resp.Status)
 	}
 
-	result, err := io.ReadAll(resp.Body)
+	result, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("Reading URL '%s': %w", s.url, err)
 	}

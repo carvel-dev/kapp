@@ -96,23 +96,6 @@ func (t FieldRemoveMod) apply(obj interface{}, path Path) error {
 			default:
 				panic(fmt.Sprintf("Unknown array index: %#v", part.ArrayIndex))
 			}
-		case part.Regex != nil:
-			if part.Regex.Regex == nil {
-				panic("Regex should be non nil")
-			}
-			matchedKeys, err := matchRegexWithSrcObj(*part.Regex.Regex, obj)
-			if err != nil {
-				return err
-			}
-			for _, key := range matchedKeys {
-				newPath := append(Path{&PathPart{MapKey: &key}}, path[i+1:]...)
-				err := t.apply(obj, newPath)
-				if err != nil {
-					return err
-				}
-			}
-
-			return nil
 
 		default:
 			panic(fmt.Sprintf("Unexpected path part: %#v", part))
