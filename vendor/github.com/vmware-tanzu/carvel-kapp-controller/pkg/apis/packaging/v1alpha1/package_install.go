@@ -75,6 +75,10 @@ type PackageInstallSpec struct {
 	// associated resources.
 	// +optional
 	NoopDelete bool `json:"noopDelete,omitempty"`
+	// Specifies the default namespace to install the Package resources, by default this is
+	// same as the PackageInstall namespace (optional; v0.48.0+)
+	// +optional
+	DefaultNamespace string `json:"defaultNamespace,omitempty"`
 }
 
 type PackageRef struct {

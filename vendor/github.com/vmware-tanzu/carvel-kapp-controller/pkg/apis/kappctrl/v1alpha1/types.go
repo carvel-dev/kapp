@@ -76,6 +76,10 @@ type AppSpec struct {
 	// (optional; default=false; v0.18.0+)
 	// +optional
 	NoopDelete bool `json:"noopDelete,omitempty" protobuf:"varint,9,opt,name=noopDelete"`
+	// Specifies the default namespace to install the App resources, by default this is
+	// same as the App's namespace (optional; v0.48.0+)
+	// +optional
+	DefaultNamespace string `json:"defaultNamespace,omitempty" protobuf:"bytes,10,opt,name=defaultNamespace"`
 }
 
 // +k8s:openapi-gen=true
