@@ -16,7 +16,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.3
 	github.com/vmware-tanzu/carvel-kapp-controller v0.45.1
-	golang.org/x/net v0.10.0
+	golang.org/x/net v0.17.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.27.2
 	k8s.io/apimachinery v0.27.2
@@ -52,9 +52,9 @@ require (
 	github.com/vito/go-interact v1.0.1 // indirect
 	github.com/vmware-tanzu/carvel-vendir v0.33.1 // indirect
 	golang.org/x/oauth2 v0.1.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/term v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
