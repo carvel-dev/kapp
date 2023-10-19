@@ -35,7 +35,7 @@ spec:
     spec:
       containers:
       - name: echo
-        image: hashicorp/http-echo
+        image: hashicorp/http-echo:alpine
         args:
         - -listen=:80
         - -text=hello
@@ -46,7 +46,7 @@ spec:
             name: config
       initContainers:
       - name: echo-init
-        image: hashicorp/http-echo
+        image: hashicorp/http-echo:alpine
         args:
         - -version
         envFrom:
@@ -156,7 +156,7 @@ data:
 -linesss-         envFrom:
 -linesss-         - configMapRef:
 -linesss-             name: config-ver-1
--linesss-         image: hashicorp/http-echo
+-linesss-         image: hashicorp/http-echo:alpine
 -linesss-         name: echo
 -linesss-         ports:
 -linesss-         - containerPort: 80
@@ -166,7 +166,7 @@ data:
 -linesss-         envFrom:
 -linesss-         - configMapRef:
 -linesss-             name: config-ver-1
--linesss-         image: hashicorp/http-echo
+-linesss-         image: hashicorp/http-echo:alpine
 -linesss-         name: echo-init
 -linesss-       volumes:
 -linesss-       - name: vol1
@@ -195,13 +195,13 @@ data:
 -linesss-         - configMapRef:
 -linesss-             name: config-ver-1
 -linesss-             name: config-ver-2
--linesss-         image: hashicorp/http-echo
+-linesss-         image: hashicorp/http-echo:alpine
 -linesss-         name: echo
   ...
 -linesss-         - configMapRef:
 -linesss-             name: config-ver-1
 -linesss-             name: config-ver-2
--linesss-         image: hashicorp/http-echo
+-linesss-         image: hashicorp/http-echo:alpine
 -linesss-         name: echo-init
   ...
 -linesss-         secret:
