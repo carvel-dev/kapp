@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -125,8 +126,12 @@ metadata:
 	})
 
 	logger.Section("deploy app that uses failing api service", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name3}, RunOpts{
+		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name3}, RunOpts{
 			AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml3)})
+
+		fmt.Printf(" \n =========> Out: %+v", out)
+		fmt.Printf("\n ==========>  err: %+v", err)
+		fmt.Printf("\n ==========>  err.Error(): %+s", err.Error())
 		require.Errorf(t, err, "Expected error when deploying with failing api service")
 
 		require.Contains(t, err.Error(), "unable to retrieve the complete list of server APIs: samplekapptest.com/v1",
