@@ -10777,7 +10777,7 @@ data:
             require_client_certificate: true
 
 
-      # Manual 'whitebox' mode
+      # Manual 'open-box' mode
       - name: "local.15019"
         address:
           socket_address:
@@ -14144,7 +14144,7 @@ data:
         url: https://uaa.cf.cppforlife.io/authenticate
       limitedFunctionality:
         enabled: false
-        whitelist:
+        whitelist: # wokeignore:rule=whitelist
           endpoints:
           - /oauth/authorize/**
           - /oauth/token/**
