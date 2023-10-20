@@ -16,7 +16,7 @@ func TestIgnoreFailingAPIServices(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
-	kubectl := Kubectl{t, env.Namespace, l}
+	kubectl := Kubectl{t, env.Namespace, logger}
 
 	yaml1 := `
 ---
