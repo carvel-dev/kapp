@@ -134,7 +134,7 @@ metadata:
 		fmt.Printf(" \n =========> Out: %+v", out)
 		fmt.Printf("\n ==========>  err: %+v", err)
 
-		out, err = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name3}, RunOpts{
+		out, err = kubectl.RunWithOpts([]string{"apply", "-f", "-"}, RunOpts{
 			AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml3)})
 
 		fmt.Printf(" \n =========> Out: %+v", out)
