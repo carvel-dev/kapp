@@ -13,7 +13,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.21.5
+          go-version: 1.21.1
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
         with:
@@ -36,7 +36,7 @@ jobs:
 
           wget -O- https://github.com/kubernetes/minikube/releases/download/v1.31.0/minikube-linux-amd64 > /tmp/bin/minikube
           chmod +x /tmp/bin/minikube
-          minikube start --driver=docker --kubernetes-version 1.16.0
+          minikube start --driver=docker --kubernetes-version 1.21.5
           eval $(minikube docker-env --shell=bash)
 
           # Ensure that there is no existing kapp installed
