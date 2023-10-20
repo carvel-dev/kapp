@@ -94,7 +94,7 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	// Delete apps that no longer are present in directories.
+	// Delete apps that no longer are present in directories..
 	for _, app := range existingAppsInGroup {
 		for _, v := range updatedApps {
 			if app.Name() == v.Name {
