@@ -16,6 +16,7 @@ func TestIgnoreFailingAPIServices(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
 	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kubectl := Kubectl{t, env.Namespace, l}
 
 	yaml1 := `
 ---
@@ -126,13 +127,20 @@ metadata:
 	})
 
 	logger.Section("deploy app that uses failing api service", func() {
-		out, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name3}, RunOpts{
+
+		out, err := kubectl.RunWithOpts([]string{"get", "apiservice"}, RunOpts{
+			AllowError: true})
+
+		fmt.Printf(" \n =========> Out: %+v", out)
+		fmt.Printf("\n ==========>  err: %+v", err)
+
+		out, err = kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name3}, RunOpts{
 			AllowError: true, IntoNs: true, StdinReader: strings.NewReader(yaml3)})
 
 		fmt.Printf(" \n =========> Out: %+v", out)
 		fmt.Printf("\n ==========>  err: %+v", err)
 		fmt.Printf("\n ==========>  err.Error(): %+s", err.Error())
-		require.Errorf(t, err, "Expected error when deploying with failing api service")
+		require.Errorf(t, err, "Expected error when deploying with failing api serviceeasouckweg")
 
 		require.Contains(t, err.Error(), "unable to retrieve the complete list of server APIs: samplekapptest.com/v1",
 			"Expected api retrieval error")
