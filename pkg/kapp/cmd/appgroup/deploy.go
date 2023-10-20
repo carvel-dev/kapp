@@ -126,7 +126,7 @@ func (o *DeployOptions) appsToUpdate() ([]appGroupApp, error) {
 
 	fileInfos, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, fmt.Errorf("Reading directory '%s': %w", dir, err)
+		return nil, fmt.Errorf("Reading directories '%s': %w", dir, err)
 	}
 
 	for _, fi := range fileInfos {
