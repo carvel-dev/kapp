@@ -94,10 +94,6 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	for _, v := range existingAppsInGroup {
-		fmt.Printf("EXISTING Projects found : %s\n", v.Name())
-	}
-
 	// Delete apps that no longer are present in directories
 	for _, app := range existingAppsInGroup {
 		for _, v := range updatedApps {
