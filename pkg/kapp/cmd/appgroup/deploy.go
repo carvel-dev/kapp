@@ -94,14 +94,12 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
-	// Delete apps that no longer are present in directories..
+	// Delete apps that no longer are present in directories
 	for _, app := range existingAppsInGroup {
-		for _, v := range updatedApps {
-			if app.Name() == v.Name {
-				err := o.deleteApp(app.Name())
-				if err != nil {
-					return err
-				}
+		if _, found := updatedApps[app.Name()]; !found {
+			err := o.deleteApp(app.Name())
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -119,14 +117,13 @@ type appGroupApp struct {
 	Path string
 }
 
-func (o *DeployOptions) appsToUpdate() ([]appGroupApp, error) {
-	var applications []appGroupApp
-
+func (o *DeployOptions) appsToUpdate() (map[string]appGroupApp, error) {
+	result := map[string]appGroupApp{}
 	dir := o.DeployFlags.Directory
 
 	fileInfos, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, fmt.Errorf("Reading directories '%s': %w", dir, err)
+		return nil, fmt.Errorf("Reading directory '%s': %w", dir, err)
 	}
 
 	for _, fi := range fileInfos {
@@ -137,9 +134,10 @@ func (o *DeployOptions) appsToUpdate() ([]appGroupApp, error) {
 			Name: fmt.Sprintf("%s-%s", o.AppGroupFlags.Name, fi.Name()),
 			Path: filepath.Join(dir, fi.Name()),
 		}
-		applications = append(applications, app)
+		result[app.Name] = app
 	}
-	return applications, nil
+
+	return result, nil
 }
 
 func (o *DeployOptions) deployApp(app appGroupApp) error {
