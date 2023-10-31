@@ -66,14 +66,14 @@ func (o *DeployOptions) Run() error {
 
 	// TODO what if app is renamed? currently it
 	// will have conflicting resources with new-named app
-	updatedApps, sortedApps, err := o.appsToUpdate()
+	updatedApps, err := o.appsToUpdate()
 	if err != nil {
 		return err
 	}
 
 	var exitCode float64
 	// TODO is there some order between apps?
-	for _, appGroupApp := range sortedApps {
+	for _, appGroupApp := range updatedApps {
 		err := o.deployApp(appGroupApp)
 		if err != nil {
 			if deployErr, ok := err.(cmdapp.DeployDiffExitStatus); ok {
@@ -94,12 +94,18 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
+	for _, v := range existingAppsInGroup {
+		fmt.Printf("EXISTING Projects found : %s\n", v.Name())
+	}
+
 	// Delete apps that no longer are present in directories
 	for _, app := range existingAppsInGroup {
-		if _, found := updatedApps[app.Name()]; !found {
-			err := o.deleteApp(app.Name())
-			if err != nil {
-				return err
+		for _, v := range updatedApps {
+			if app.Name() == v.Name {
+				err := o.deleteApp(app.Name())
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -117,15 +123,14 @@ type appGroupApp struct {
 	Path string
 }
 
-func (o *DeployOptions) appsToUpdate() (map[string]appGroupApp, []appGroupApp, error) {
-	result := map[string]appGroupApp{}
+func (o *DeployOptions) appsToUpdate() ([]appGroupApp, error) {
 	var applications []appGroupApp
 
 	dir := o.DeployFlags.Directory
 
 	fileInfos, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Reading directory '%s': %w", dir, err)
+		return nil, fmt.Errorf("Reading directory '%s': %w", dir, err)
 	}
 
 	for _, fi := range fileInfos {
@@ -137,10 +142,8 @@ func (o *DeployOptions) appsToUpdate() (map[string]appGroupApp, []appGroupApp, e
 			Path: filepath.Join(dir, fi.Name()),
 		}
 		applications = append(applications, app)
-		result[app.Name] = app
 	}
-
-	return result, applications, nil
+	return applications, nil
 }
 
 func (o *DeployOptions) deployApp(app appGroupApp) error {
