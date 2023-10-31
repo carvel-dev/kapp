@@ -113,8 +113,8 @@ func (o *DeployOptions) Run() error {
 }
 
 type appGroupApp struct {
-	Path string
 	Name string
+	Path string
 }
 
 func (o *DeployOptions) appsToUpdate() (map[string]appGroupApp, error) {
