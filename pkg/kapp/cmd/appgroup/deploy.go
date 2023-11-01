@@ -94,12 +94,18 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
+	for _, v := range existingAppsInGroup {
+		fmt.Printf("EXISTING Projects found : %s\n", v.Name())
+	}
+
 	// Delete apps that no longer are present in directories
 	for _, app := range existingAppsInGroup {
-		if _, found := updatedApps[app.Name()]; !found {
-			err := o.deleteApp(app.Name())
-			if err != nil {
-				return err
+		for _, v := range updatedApps {
+			if app.Name() == v.Name {
+				err := o.deleteApp(app.Name())
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -117,8 +123,9 @@ type appGroupApp struct {
 	Path string
 }
 
-func (o *DeployOptions) appsToUpdate() (map[string]appGroupApp, error) {
-	result := map[string]appGroupApp{}
+func (o *DeployOptions) appsToUpdate() ([]appGroupApp, error) {
+	var applications []appGroupApp
+
 	dir := o.DeployFlags.Directory
 
 	fileInfos, err := os.ReadDir(dir)
@@ -134,10 +141,12 @@ func (o *DeployOptions) appsToUpdate() (map[string]appGroupApp, error) {
 			Name: fmt.Sprintf("%s-%s", o.AppGroupFlags.Name, fi.Name()),
 			Path: filepath.Join(dir, fi.Name()),
 		}
-		result[app.Name] = app
+		applications = append(applications, app)
 	}
-
-	return result, nil
+	for _, v := range applications {
+		fmt.Printf("EXISTING Projects found : %s\n", v.Name)
+	}
+	return applications, nil
 }
 
 func (o *DeployOptions) deployApp(app appGroupApp) error {
