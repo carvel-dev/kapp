@@ -61,6 +61,8 @@ type Resource interface {
 	MarkTransient(bool)
 	Transient() bool
 
+	UnstructuredObject() map[string]interface{}
+
 	unstructured() unstructured.Unstructured     // private
 	unstructuredPtr() *unstructured.Unstructured // private
 	setUnstructured(unstructured.Unstructured)   // private
@@ -279,6 +281,8 @@ func (r *ResourceImpl) Debug(title string) {
 
 func (r *ResourceImpl) SetOrigin(origin string) { r.origin = origin }
 func (r *ResourceImpl) Origin() string          { return r.origin }
+
+func (r *ResourceImpl) UnstructuredObject() map[string]interface{} { return r.un.Object }
 
 func (r *ResourceImpl) unstructured() unstructured.Unstructured      { return r.un }
 func (r *ResourceImpl) unstructuredPtr() *unstructured.Unstructured  { return &r.un }
