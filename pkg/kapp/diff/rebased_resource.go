@@ -19,13 +19,6 @@ func NewRebasedResource(existingRes, newRes ctlres.Resource, mods []ctlres.Resou
 		panic("Expected either existingRes or newRes be non-nil")
 	}
 
-	if existingRes != nil {
-		existingRes = existingRes.DeepCopy()
-	}
-	if newRes != nil {
-		newRes = newRes.DeepCopy()
-	}
-
 	return RebasedResource{existingRes: existingRes, newRes: newRes, mods: mods}
 }
 

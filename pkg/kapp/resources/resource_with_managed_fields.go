@@ -9,9 +9,6 @@ type ResourceWithManagedFields struct {
 }
 
 func NewResourceWithManagedFields(res Resource, managedFields bool) ResourceWithManagedFields {
-	if res != nil {
-		res = res.DeepCopy()
-	}
 	return ResourceWithManagedFields{res: res, managedFields: managedFields}
 }
 
