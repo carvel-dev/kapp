@@ -39,6 +39,7 @@ func (t FieldCopyMod) ApplyFromMultiple(res Resource, srcs map[FieldCopyModSourc
 		// Make a copy of resource, to avoid modifications
 		// that may be done even in case when there is nothing to copy
 		updatedRes := res.DeepCopy()
+		source = source.DeepCopy()
 		updated, err := t.apply(updatedRes.unstructured().Object, source.unstructured().Object, t.Path, Path{}, srcs)
 		if err != nil {
 			return fmt.Errorf("FieldCopyMod for path '%s' on resource '%s': %s", t.Path.AsString(), res.Description(), err)
@@ -198,7 +199,7 @@ func (t FieldCopyMod) copyIntoMap(obj map[string]interface{}, fullPath Path, src
 			continue
 		}
 
-		val, found, err := t.obtainValue(srcRes.unstructured().Object, fullPath)
+		val, found, err := t.obtainValue(srcRes.DeepCopy().unstructured().Object, fullPath)
 		if err != nil {
 			return false, err
 		} else if !found {
