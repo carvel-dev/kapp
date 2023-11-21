@@ -16,10 +16,12 @@ type ConfigurableTextDiff struct {
 	ignored             bool
 
 	memoizedTextDiff *TextDiff
+
+	opts ChangeOpts
 }
 
-func NewConfigurableTextDiff(existingRes, newRes ctlres.Resource, ignored bool) *ConfigurableTextDiff {
-	return &ConfigurableTextDiff{existingRes, newRes, ignored, nil}
+func NewConfigurableTextDiff(existingRes, newRes ctlres.Resource, ignored bool, opts ChangeOpts) *ConfigurableTextDiff {
+	return &ConfigurableTextDiff{existingRes, newRes, ignored, nil, opts}
 }
 
 func (d ConfigurableTextDiff) Full() TextDiff {
@@ -73,5 +75,5 @@ func (d ConfigurableTextDiff) calculate(existingRes, newRes ctlres.Resource) Tex
 		newLines = existingLines // show as no changes
 	}
 
-	return NewTextDiff(existingLines, newLines)
+	return NewTextDiff(existingLines, newLines, d.opts.AllowAnchoredDiff)
 }

@@ -486,3 +486,125 @@ metadata:
 			RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
 	})
 }
+
+func TestAnchoredDiff(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+
+	name := "test-anchored-diff"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+
+	cleanUp()
+	defer cleanUp()
+
+	yaml1 := `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-1
+  annotations:
+    kbld.k14s.io/images: |
+      - origins:
+        - resolved:
+            tag: 9.5.5
+             url: docker.io/grafana/grafana:9.5.5
+        url: index.docker.io/grafana/grafana@sha256:6c6fe32401b6b14e1886e61a7bacd5cc4b6fbd0de1e58e985db0e48f99fe1be1
+      - origins:
+        - resolved:
+            tag: 1.24.3
+            url: quay.io/kiwigrid/k8s-sidecar:1.24.3
+        url: quay.io/kiwigrid/k8s-sidecar@sha256:5af76eebbba79edf4f7471bf1c3d5f2b40858114730c92d95eafe5716abe1fe8
+data:
+
+`
+
+	yaml2 := `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-1
+  annotations:
+    kbld.k14s.io/images: |
+      - origins:
+        - resolved:
+            tag: 10.1.4
+            url: docker.io/grafana/grafana:10.1.4
+        url: index.docker.io/grafana/grafana@sha256:29f39e23705d3ef653fa84ca3c01731e0771f1fedbd69ecb99868270cdeb0572
+      - origins:
+        - resolved:
+            tag: 1.25.1
+            url: quay.io/kiwigrid/k8s-sidecar:1.25.1
+        url: quay.io/kiwigrid/k8s-sidecar@sha256:415d07ee1027c3ff7af9e26e05e03ffd0ec0ccf9f619ac00ab24366efe4343bd
+data:
+
+`
+	// Add keys so that number of lines in the yamls are > 500
+	for i := 0; i <= 500; i++ {
+		line := fmt.Sprintf("  key%v: value%v\n", i, i)
+		yaml1 += line
+		yaml2 += line
+	}
+
+	logger.Section("deploy initial", func() {
+		kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml1)})
+	})
+
+	logger.Section("deploy without anchored diff", func() {
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "-c", "--diff-run", "--diff-summary=false"}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
+		expectedDiff := `
+@@ update configmap/cm-1 (v1) namespace: kapp-test @@
+  ...
+508,508           - resolved:
+509     -             tag: 9.5.5
+510     -              url: docker.io/grafana/grafana:9.5.5
+511     -         url: index.docker.io/grafana/grafana@sha256:6c6fe32401b6b14e1886e61a7bacd5cc4b6fbd0de1e58e985db0e48f99fe1be1
+    509 +             tag: 10.1.4
+    510 +             url: docker.io/grafana/grafana:10.1.4
+    511 +         url: index.docker.io/grafana/grafana@sha256:29f39e23705d3ef653fa84ca3c01731e0771f1fedbd69ecb99868270cdeb0572
+512,512         - origins:
+513,513           - resolved:
+514     -             tag: 1.24.3
+515     -             url: quay.io/kiwigrid/k8s-sidecar:1.24.3
+516     -         url: quay.io/kiwigrid/k8s-sidecar@sha256:5af76eebbba79edf4f7471bf1c3d5f2b40858114730c92d95eafe5716abe1fe8
+    514 +             tag: 1.25.1
+    515 +             url: quay.io/kiwigrid/k8s-sidecar:1.25.1
+    516 +         url: quay.io/kiwigrid/k8s-sidecar@sha256:415d07ee1027c3ff7af9e26e05e03ffd0ec0ccf9f619ac00ab24366efe4343bd
+517,517     creationTimestamp: "2006-01-02T15:04:05Z07:00"
+518,518     labels:
+
+Succeeded
+`
+		require.Equal(t, expectedDiff, replaceTimestampWithDfaultValue(replaceTarget(out)))
+	})
+
+	logger.Section("deploy with anchored diff", func() {
+		out, _ := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "-c", "--diff-run", "--diff-summary=false", "--diff-anchored"}, RunOpts{IntoNs: true, StdinReader: strings.NewReader(yaml2)})
+		expectedDiff := `
+@@ update configmap/cm-1 (v1) namespace: kapp-test @@
+  ...
+508,508           - resolved:
+509     -             tag: 9.5.5
+510     -              url: docker.io/grafana/grafana:9.5.5
+511     -         url: index.docker.io/grafana/grafana@sha256:6c6fe32401b6b14e1886e61a7bacd5cc4b6fbd0de1e58e985db0e48f99fe1be1
+512     -       - origins:
+513     -         - resolved:
+514     -             tag: 1.24.3
+515     -             url: quay.io/kiwigrid/k8s-sidecar:1.24.3
+516     -         url: quay.io/kiwigrid/k8s-sidecar@sha256:5af76eebbba79edf4f7471bf1c3d5f2b40858114730c92d95eafe5716abe1fe8
+    509 +             tag: 10.1.4
+    510 +             url: docker.io/grafana/grafana:10.1.4
+    511 +         url: index.docker.io/grafana/grafana@sha256:29f39e23705d3ef653fa84ca3c01731e0771f1fedbd69ecb99868270cdeb0572
+    512 +       - origins:
+    513 +         - resolved:
+    514 +             tag: 1.25.1
+    515 +             url: quay.io/kiwigrid/k8s-sidecar:1.25.1
+    516 +         url: quay.io/kiwigrid/k8s-sidecar@sha256:415d07ee1027c3ff7af9e26e05e03ffd0ec0ccf9f619ac00ab24366efe4343bd
+517,517     creationTimestamp: "2006-01-02T15:04:05Z07:00"
+518,518     labels:
+
+Succeeded
+`
+		require.Equal(t, expectedDiff, replaceTimestampWithDfaultValue(replaceTarget(out)))
+	})
+}

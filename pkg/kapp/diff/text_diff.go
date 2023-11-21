@@ -15,7 +15,11 @@ type TextDiff struct {
 	recs []difflib.DiffRecord
 }
 
-func NewTextDiff(existingLines, newLines []string) TextDiff {
+func NewTextDiff(existingLines, newLines []string, allowAnchoredDiff bool) TextDiff {
+	if allowAnchoredDiff && (len(existingLines) > 500 || len(newLines) > 500) {
+		// Diff is memory hungry, use AnchoredDiff for large resources
+		return TextDiff{difflib.AnchoredDiff(existingLines, newLines)}
+	}
 	return TextDiff{difflib.Diff(existingLines, newLines)}
 }
 

@@ -17,6 +17,8 @@ type DiffFlags struct {
 	Run        bool
 	ExitStatus bool
 	UI         bool
+
+	AnchoredDiff bool
 }
 
 func (s *DiffFlags) SetWithPrefix(prefix string, cmd *cobra.Command) {
@@ -39,4 +41,6 @@ func (s *DiffFlags) SetWithPrefix(prefix string, cmd *cobra.Command) {
 
 	cmd.Flags().StringVar(&s.Filter, prefix+"filter", "", `Set changes filter (example: {"and":[{"ops":["update"]},{"existingResource":{"kinds":["Deployment"]}]})`)
 	cmd.Flags().BoolVar(&s.ChangesYAML, prefix+"changes-yaml", false, "Print YAML to be applied")
+
+	cmd.Flags().BoolVar(&s.AnchoredDiff, prefix+"anchored", false, "Allow using anchored diff for large resources")
 }

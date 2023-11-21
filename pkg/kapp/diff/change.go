@@ -45,11 +45,13 @@ type ChangeImpl struct {
 	configurableTextDiff *ConfigurableTextDiff
 	opsDiff              *OpsDiff
 	changeOpVal          ChangeOp
+
+	opts ChangeOpts
 }
 
 var _ Change = &ChangeImpl{}
 
-func NewChange(existingRes, newRes, appliedRes, clusterOriginalRes ctlres.Resource) *ChangeImpl {
+func NewChange(existingRes, newRes, appliedRes, clusterOriginalRes ctlres.Resource, opts ChangeOpts) *ChangeImpl {
 	if existingRes == nil && newRes == nil {
 		panic("Expected either existingRes or newRes be non-nil")
 	}
@@ -67,7 +69,7 @@ func NewChange(existingRes, newRes, appliedRes, clusterOriginalRes ctlres.Resour
 		clusterOriginalRes = clusterOriginalRes.DeepCopy()
 	}
 
-	return &ChangeImpl{existingRes: existingRes, newRes: newRes, appliedRes: appliedRes, clusterOriginalRes: clusterOriginalRes}
+	return &ChangeImpl{existingRes: existingRes, newRes: newRes, appliedRes: appliedRes, clusterOriginalRes: clusterOriginalRes, opts: opts}
 }
 
 func (d *ChangeImpl) NewOrExistingResource() ctlres.Resource {
@@ -129,7 +131,7 @@ func (d *ChangeImpl) isIgnoredTransient() bool {
 func (d *ChangeImpl) ConfigurableTextDiff() *ConfigurableTextDiff {
 	// diff is called very often, so memoize
 	if d.configurableTextDiff == nil {
-		d.configurableTextDiff = NewConfigurableTextDiff(d.existingRes, d.newRes, d.IsIgnored())
+		d.configurableTextDiff = NewConfigurableTextDiff(d.existingRes, d.newRes, d.IsIgnored(), d.opts)
 	}
 	return d.configurableTextDiff
 }

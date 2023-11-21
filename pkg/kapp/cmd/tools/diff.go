@@ -53,7 +53,7 @@ func (o *DiffOptions) Run() error {
 		return err
 	}
 
-	changeFactory := ctldiff.NewChangeFactory(nil, nil, nil)
+	changeFactory := ctldiff.NewChangeFactory(nil, nil, nil, ctldiff.ChangeOpts{o.DiffFlags.AnchoredDiff})
 
 	changes, err := ctldiff.NewChangeSet(existingResources, newResources, o.DiffFlags.ChangeSetOpts, changeFactory).Calculate()
 	if err != nil {

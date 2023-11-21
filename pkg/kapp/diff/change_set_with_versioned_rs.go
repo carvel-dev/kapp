@@ -198,7 +198,7 @@ func (d ChangeSetWithVersionedRs) noopAndDeleteChanges(
 }
 
 func (d ChangeSetWithVersionedRs) newKeepChange(existingRes ctlres.Resource) Change {
-	return NewChangePrecalculated(existingRes, nil, nil, ChangeOpKeep, NewConfigurableTextDiff(existingRes, nil, true), OpsDiff{})
+	return NewChangePrecalculated(existingRes, nil, nil, ChangeOpKeep, NewConfigurableTextDiff(existingRes, nil, true, ChangeOpts{false}), OpsDiff{})
 }
 
 func (d ChangeSetWithVersionedRs) newNoopChange(existingRes ctlres.Resource) Change {

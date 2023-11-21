@@ -15,7 +15,7 @@ import (
 func TestDefaultTemplateRules(t *testing.T) {
 	_, defaultConfig, err := config.NewConfFromResourcesWithDefaults([]ctlres.Resource{})
 	require.NoError(t, err)
-	changeFactory := ctldiff.NewChangeFactory(defaultConfig.RebaseMods(), defaultConfig.DiffAgainstLastAppliedFieldExclusionMods(), defaultConfig.DiffAgainstExistingFieldExclusionMods())
+	changeFactory := ctldiff.NewChangeFactory(defaultConfig.RebaseMods(), defaultConfig.DiffAgainstLastAppliedFieldExclusionMods(), defaultConfig.DiffAgainstExistingFieldExclusionMods(), ctldiff.ChangeOpts{false})
 
 	testCases := []struct {
 		description  string
