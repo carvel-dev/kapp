@@ -14,8 +14,8 @@ type KubeAPIFlags struct {
 
 func (f *KubeAPIFlags) Set(cmd *cobra.Command, _ FlagsFactory) {
 	// Similar names are used by kubelet and other controllers
-	cmd.PersistentFlags().Float32Var(&f.QPS, "kube-api-qps", 1000, "Set Kubernetes API client QPS limit")
-	cmd.PersistentFlags().IntVar(&f.Burst, "kube-api-burst", 1000, "Set Kubernetes API client burst limit")
+	cmd.PersistentFlags().Float32Var(&f.QPS, "kube-api-qps", 50, "Set Kubernetes API client QPS limit")
+	cmd.PersistentFlags().IntVar(&f.Burst, "kube-api-burst", 100, "Set Kubernetes API client burst limit")
 }
 
 func (f *KubeAPIFlags) Configure(config ConfigFactory) {
