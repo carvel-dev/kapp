@@ -60,8 +60,8 @@ github.com/emicklei/go-restful/v3 v3.10.1/go.mod h1:6n3XBCmQQb25CM2LCACGz8ukIrRr
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
-github.com/fsnotify/fsnotify v1.5.4 h1:jRbGcIw6P2Meqdwuo0H1p6JVLbL5DHKAKlYndzMwVZI=
-github.com/fsnotify/fsnotify v1.5.4/go.mod h1:OVB6XrOHzAwXMpEM7uPOzcehqUV2UqJxmVXmkdnm1bU=
+github.com/fsnotify/fsnotify v1.6.0 h1:n+5WquG0fcWoWp6xPWfHdbskMCQaFnG6PfBrh1Ky4HY=
+github.com/fsnotify/fsnotify v1.6.0/go.mod h1:sl3t1tCWJFWoRz9R8WJCbQihKKwmorjAbSClcnxKAGw=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=
 github.com/go-kit/kit v0.8.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2as=
@@ -300,8 +300,8 @@ github.com/urfave/cli/v2 v2.2.0/go.mod h1:SE9GqnLQmjVa0iPEY0f1w3ygNIYcIJ0OKPMoW2
 github.com/vito/go-interact v0.0.0-20171111012221-fa338ed9e9ec/go.mod h1:wPlfmglZmRWMYv/qJy3P+fK/UnoQB5ISk4txfNd9tDo=
 github.com/vito/go-interact v1.0.1 h1:O8xi8c93bRUv2Tb/v6HdiuGc+WnWt+AQzF74MOOdlBs=
 github.com/vito/go-interact v1.0.1/go.mod h1:HrdHSJXD2yn1MhlTwSIMeFgQ5WftiIorszVGd3S/DAA=
-github.com/vmware-tanzu/carvel-kapp-controller v0.46.2 h1:TQRXFnZ6PryhQxx+4X1w2NSpEXyT6qg1/r3/4RkR6UE=
-github.com/vmware-tanzu/carvel-kapp-controller v0.46.2/go.mod h1:LJf4oaNfKW8kk6ddD8uRaayaUecGiqrz278oe4AEBSc=
+github.com/vmware-tanzu/carvel-kapp-controller v0.49.0 h1:qsVvuvhQjoSbrzVTsSsuiXzd2X5oK4H2Il4zAHDMD50=
+github.com/vmware-tanzu/carvel-kapp-controller v0.49.0/go.mod h1:3rpvp98IrVlqZ/Vli9YmFsmtf1Z1A9OrdYyx9Wtl9KM=
 github.com/vmware-tanzu/carvel-vendir v0.33.1 h1:5wzx0aRyEiorkWwrpGvACJOpFcgvmCeVqhIY9TPuLvk=
 github.com/vmware-tanzu/carvel-vendir v0.33.1/go.mod h1:cZEa46rwzPt/ROdAuIgrCXLDJ+LqxNZaNxbz8MLtwWc=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
