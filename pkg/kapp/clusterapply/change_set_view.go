@@ -6,12 +6,12 @@ package clusterapply
 import (
 	"fmt"
 
+	ctlconf "carvel.dev/kapp/pkg/kapp/config"
+	"carvel.dev/kapp/pkg/kapp/diff"
+	ctldiff "carvel.dev/kapp/pkg/kapp/diff"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	"github.com/cppforlife/color"
 	"github.com/cppforlife/go-cli-ui/ui"
-	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
-	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 type ChangeSetViewOpts struct {

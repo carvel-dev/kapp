@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	ctlcap "carvel.dev/kapp/pkg/kapp/clusterapply"
 	"github.com/spf13/cobra"
-	ctlcap "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/clusterapply"
 )
 
 var (

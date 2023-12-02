@@ -8,9 +8,9 @@ import (
 	"reflect"
 	"sort"
 
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
+	ctlresm "carvel.dev/kapp/pkg/kapp/resourcesmisc"
 	"github.com/cppforlife/color"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
-	ctlresm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
 )
 
 const (

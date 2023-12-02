@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"strings"
 
+	ctlconf "carvel.dev/kapp/pkg/kapp/config"
+	ctldiff "carvel.dev/kapp/pkg/kapp/diff"
+	ctldgraph "carvel.dev/kapp/pkg/kapp/diffgraph"
+	"carvel.dev/kapp/pkg/kapp/logger"
 	uierrs "github.com/cppforlife/go-cli-ui/errors"
-	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
-	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
-	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 )
 
 type ClusterChangeSetOpts struct {

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	ctldgraph "carvel.dev/kapp/pkg/kapp/diffgraph"
 	"github.com/stretchr/testify/require"
-	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
 )
 
 func TestNewChangeGroupFromAnnString(t *testing.T) {

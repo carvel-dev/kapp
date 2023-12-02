@@ -6,7 +6,7 @@ package resources
 import (
 	"fmt"
 
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
+	"carvel.dev/kapp/pkg/kapp/logger"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 )

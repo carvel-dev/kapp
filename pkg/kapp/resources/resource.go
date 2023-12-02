@@ -253,7 +253,7 @@ func (r *ResourceImpl) AsCompactBytes() ([]byte, error) {
 	// For larger resources (especially very indented ones),
 	// JSON representation seems to be more space effecient.
 	// It's also chosed by kubectl's last-applied-configuration annotation.
-	// (https://github.com/vmware-tanzu/carvel-kapp/issues/48).
+	// (https://carvel.dev/kapp/issues/48).
 	return json.Marshal(r.un.Object)
 }
 

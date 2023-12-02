@@ -6,7 +6,7 @@ package app
 import (
 	"github.com/spf13/cobra"
 
-	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
+	cmdcore "carvel.dev/kapp/pkg/kapp/cmd/core"
 )
 
 type Flags struct {

@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"strings"
 
+	ctlconf "carvel.dev/kapp/pkg/kapp/config"
+	ctldiff "carvel.dev/kapp/pkg/kapp/diff"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
+	ctlresm "carvel.dev/kapp/pkg/kapp/resourcesmisc"
 	uierrs "github.com/cppforlife/go-cli-ui/errors"
-	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
-	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
-	ctlresm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
 )
 
 const (

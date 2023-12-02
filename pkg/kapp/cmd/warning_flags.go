@@ -4,8 +4,8 @@
 package cmd
 
 import (
+	cmdcore "carvel.dev/kapp/pkg/kapp/cmd/core"
 	"github.com/spf13/cobra"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
 )
 
 type WarningFlags struct {

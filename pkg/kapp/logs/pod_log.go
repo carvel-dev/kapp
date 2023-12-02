@@ -6,8 +6,8 @@ package logs
 import (
 	"sync"
 
+	"carvel.dev/kapp/pkg/kapp/matcher"
 	"github.com/cppforlife/go-cli-ui/ui"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/matcher"
 	corev1 "k8s.io/api/core/v1"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
