@@ -14,7 +14,6 @@ For those interested in extending and improving `kapp`, below is a quick referen
 - [.github/workflows/test-gh.yml](https://github.com/carvel-dev/kapp/blob/develop/.github/workflows/test-gh.yml) is a Github Action that runs build and unit tests when commits are pushed
 - [hack](https://github.com/carvel-dev/kapp/tree/develop/hack) has build and test scripts
 - [cmd/kapp](https://github.com/carvel-dev/kapp/blob/develop/cmd/kapp) is the entry package for main kapp binary
-- [cmd/kapp-lambda-website](https://github.com/carvel-dev/kapp/blob/develop/cmd/kapp-lambda-website) is the entry package for AWS Lambda compatible binary that wraps `kapp website` command
 - [pkg/kapp/cmd](https://github.com/carvel-dev/kapp/tree/develop/pkg/kapp/cmd) includes all kapp CLI commands (kapp.go is root command)
   - [pkg/kapp/cmd/app](https://github.com/carvel-dev/kapp/tree/develop/pkg/kapp/cmd/app) includes all top level CLI commands (deploy, delete, etc.)
 - [pkg/kapp/app](https://github.com/carvel-dev/kapp/tree/develop/pkg/kapp/app) package includes two types of app and details about them (such as app change tracking):
