@@ -27,7 +27,7 @@ func TestWaitTimeout(t *testing.T) {
      spec: 
        containers: 
        - name: successful-job 
-         image: busybox 
+         image: busybox
          command: ["/bin/sh", "-c", "sleep 10"] 
        restartPolicy: Never
 `

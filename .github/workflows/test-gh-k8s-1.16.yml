@@ -1,4 +1,4 @@
-name: test-gh-k8s-1.16
+name: test-gh-k8s-1.21
 on:
   push:
     branches:
@@ -7,7 +7,7 @@ on:
     types: [opened, reopened, synchronize]
 jobs:
   test-all:
-    name: Test GH
+    name: Test GH 1.21
     runs-on: ubuntu-20.04
     steps:
       - name: Set up Go
@@ -34,9 +34,9 @@ jobs:
 
           wget -O- https://carvel.dev/install.sh | K14SIO_INSTALL_BIN_DIR=/tmp/bin bash
 
-          wget -O- https://github.com/kubernetes/minikube/releases/download/v1.10.0/minikube-linux-amd64 > /tmp/bin/minikube
-          chmod +x /tmp/bin/minikube
-          minikube start --driver=docker --kubernetes-version 1.16.0
+          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          install minikube-linux-amd64 /usr/local/bin/minikube
+          minikube start --driver=docker --kubernetes-version 1.21.0
           eval $(minikube docker-env --shell=bash)
 
           # Ensure that there is no existing kapp installed
