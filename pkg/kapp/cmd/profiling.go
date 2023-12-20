@@ -10,8 +10,8 @@ import (
 	"runtime"
 	"runtime/pprof"
 
+	cmdcore "carvel.dev/kapp/pkg/kapp/cmd/core"
 	"github.com/spf13/cobra"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
 )
 
 type ProfilingFlags struct {

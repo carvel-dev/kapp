@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/util"
+	"carvel.dev/kapp/pkg/kapp/logger"
+	"carvel.dev/kapp/pkg/kapp/util"
 	"k8s.io/apimachinery/pkg/labels"
 )
 

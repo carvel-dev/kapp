@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/util"
+	ctldgraph "carvel.dev/kapp/pkg/kapp/diffgraph"
+	"carvel.dev/kapp/pkg/kapp/util"
 )
 
 type ApplyingChangesOpts struct {

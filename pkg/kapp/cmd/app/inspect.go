@@ -6,14 +6,14 @@ package app
 import (
 	"fmt"
 
+	cmdcore "carvel.dev/kapp/pkg/kapp/cmd/core"
+	cmdtools "carvel.dev/kapp/pkg/kapp/cmd/tools"
+	ctldiff "carvel.dev/kapp/pkg/kapp/diff"
+	"carvel.dev/kapp/pkg/kapp/logger"
+	"carvel.dev/kapp/pkg/kapp/resources"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
-	cmdtools "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/tools"
-	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 type InspectOptions struct {

@@ -4,8 +4,8 @@
 package v1alpha1
 
 import (
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	versions "carvel.dev/vendir/pkg/vendir/versions/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

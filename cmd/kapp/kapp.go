@@ -8,11 +8,11 @@ import (
 	"os"
 	"time"
 
+	"carvel.dev/kapp/pkg/kapp/cmd"
+	cmdapp "carvel.dev/kapp/pkg/kapp/cmd/app"
 	"github.com/cppforlife/cobrautil"
 	uierrs "github.com/cppforlife/go-cli-ui/errors"
 	"github.com/cppforlife/go-cli-ui/ui"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd"
-	cmdapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/app"
 
 	// Import to initialize client auth plugins.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"

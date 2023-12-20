@@ -5,10 +5,10 @@ package resources_test
 import (
 	"testing"
 
+	"carvel.dev/kapp/pkg/kapp/logger"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/stretchr/testify/require"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"

@@ -9,8 +9,8 @@ import (
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
 
-	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	cmdcore "carvel.dev/kapp/pkg/kapp/cmd/core"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 )
 
 type InspectOptions struct {

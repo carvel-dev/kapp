@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	ctldiff "carvel.dev/kapp/pkg/kapp/diff"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	"github.com/stretchr/testify/require"
-	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 func TestChangeSet_RebaseWithoutNew_And_WithUnexpectedChanges(t *testing.T) {

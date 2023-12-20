@@ -4,7 +4,7 @@
 package v1alpha1
 
 import (
-	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	versions "carvel.dev/vendir/pkg/vendir/versions/v1alpha1"
 )
 
 // +k8s:openapi-gen=true
