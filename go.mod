@@ -7,7 +7,7 @@ require (
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
 	github.com/cppforlife/go-cli-ui v0.0.0-20220425131040-94f26b16bc14
 	github.com/cppforlife/go-patch v0.2.0
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/go-version v1.6.0
 	github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57
 	github.com/k14s/ytt v0.36.0
