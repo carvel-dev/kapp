@@ -65,3 +65,64 @@ func buildDep(resourcesBs string, t *testing.T) *ctlresm.AppsV1Deployment {
 
 	return ctlresm.NewAppsV1Deployment(newResources[0], newResources[1:])
 }
+func TestIsDoneApplying(t *testing.T) {
+	// Define a Deployment with a Progressing condition set to False
+	depYAML := `
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-deployment
+status:
+  observedGeneration: 1
+  conditions:
+  - type: Progressing
+    status: "False"
+    reason: "ProgressDeadlineExceeded"
+    message: "Progress deadline exceeded"
+`
+
+	// Parse the Deployment YAML into kapp resources
+	resources, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(depYAML))).Resources()
+	require.NoError(t, err, "Expected resources to parse")
+
+	// Create an AppsV1Deployment instance with the parsed resources
+	deployment := ctlresm.NewAppsV1Deployment(resources[0], nil)
+
+	// Invoke the IsDoneApplying method to check for Progressing condition
+	state := deployment.IsDoneApplying()
+
+	// Define the expected state based on the test case
+	expectedState := ctlresm.DoneApplyState{
+		Done:       true,
+		Successful: false,
+		Message:    "Deployment is not progressing: ProgressDeadlineExceeded (message: Progress deadline exceeded)",
+	}
+
+	require.Equal(t, expectedState, state, "Found incorrect state")
+
+	// Case: ReplicaFailure condition is True
+	depYAML = `
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-deployment
+status:
+  observedGeneration: 1
+  conditions:
+  - type: ReplicaFailure
+    status: "True"
+    reason: "FailedCreate"
+    message: "Failed to create pods"
+`
+	resources, err = ctlres.NewFileResource(ctlres.NewBytesSource([]byte(depYAML))).Resources()
+	require.NoError(t, err, "Expected resources to parse")
+	deployment = ctlresm.NewAppsV1Deployment(resources[0], nil)
+	state = deployment.IsDoneApplying()
+	expectedState = ctlresm.DoneApplyState{
+		Done:       false,
+		Successful: false,
+		Message:    "Deployment has encountered replica failure: FailedCreate (message: Failed to create pods)",
+	}
+	require.Equal(t, expectedState, state, "Found incorrect state")
+
+}
