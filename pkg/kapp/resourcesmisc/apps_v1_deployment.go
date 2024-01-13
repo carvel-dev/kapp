@@ -54,10 +54,10 @@ func (s AppsV1Deployment) IsDoneApplying() DoneApplyState {
 					"Deployment is not progressing: %s (message: %s)", cond.Reason, cond.Message)}
 			}
 
-		case "FailedDelete":
+		case appsv1.DeploymentReplicaFailure:
 			if cond.Status == corev1.ConditionTrue {
-				return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
-					"Deployment failed to delete pods: %s (message: %s)", cond.Reason, cond.Message)}
+				return DoneApplyState{Done: false, Successful: false, Message: fmt.Sprintf(
+					"Deployment has encountered replica failure: %s (message: %s)", cond.Reason, cond.Message)}
 			}
 		}
 	}

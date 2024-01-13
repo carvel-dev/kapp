@@ -59,6 +59,60 @@ status:
 	require.Equal(t, expectedState, state, "Found incorrect state")
 }
 
+func TestAppsV1DeploymentReplicaFailure(t *testing.T) {
+
+	depYAML := `
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-deployment
+  generation: 1
+status:
+  observedGeneration: 1
+  conditions:
+  - type: Progressing
+    status: "False"
+    reason: "ProgressDeadlineExceeded"
+    message: "Progress deadline exceeded"
+`
+
+	deployment := buildDep(depYAML, t)
+	state := deployment.IsDoneApplying()
+
+	expectedState := ctlresm.DoneApplyState{
+		Done:       true,
+		Successful: false,
+		Message:    "Deployment is not progressing: ProgressDeadlineExceeded (message: Progress deadline exceeded)",
+	}
+
+	require.Equal(t, expectedState, state, "Found incorrect state")
+
+	depYAML = `
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-deployment
+  generation: 1
+status:
+  observedGeneration: 1
+  conditions:
+  - type: ReplicaFailure
+    status: "True"
+    reason: "FailedCreate"
+    message: "Failed to create pods"
+`
+	deployment = buildDep(depYAML, t)
+	state = deployment.IsDoneApplying()
+
+	expectedState = ctlresm.DoneApplyState{
+		Done:       false,
+		Successful: false,
+		Message:    "Deployment has encountered replica failure: FailedCreate (message: Failed to create pods)",
+	}
+
+	require.Equal(t, expectedState, state, "Found incorrect state")
+}
+
 func buildDep(resourcesBs string, t *testing.T) *ctlresm.AppsV1Deployment {
 	newResources, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(resourcesBs))).Resources()
 	require.NoErrorf(t, err, "Expected resources to parse")
