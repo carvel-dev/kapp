@@ -59,14 +59,8 @@ status:
 	require.Equal(t, expectedState, state, "Found incorrect state")
 }
 
-func buildDep(resourcesBs string, t *testing.T) *ctlresm.AppsV1Deployment {
-	newResources, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(resourcesBs))).Resources()
-	require.NoErrorf(t, err, "Expected resources to parse")
+func TestAppsV1DeploymentReplicaFailure(t *testing.T) {
 
-	return ctlresm.NewAppsV1Deployment(newResources[0], newResources[1:])
-}
-func TestIsDoneApplying(t *testing.T) {
-	// Define a Deployment with a Progressing condition set to False
 	depYAML := `
 apiVersion: apps/v1
 kind: Deployment
@@ -81,17 +75,9 @@ status:
     message: "Progress deadline exceeded"
 `
 
-	// Parse the Deployment YAML into kapp resources
-	resources, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(depYAML))).Resources()
-	require.NoError(t, err, "Expected resources to parse")
-
-	// Create an AppsV1Deployment instance with the parsed resources
-	deployment := ctlresm.NewAppsV1Deployment(resources[0], nil)
-
-	// Invoke the IsDoneApplying method to check for Progressing condition
+	deployment := buildDep(depYAML, t)
 	state := deployment.IsDoneApplying()
 
-	// Define the expected state based on the test case
 	expectedState := ctlresm.DoneApplyState{
 		Done:       true,
 		Successful: false,
@@ -100,7 +86,6 @@ status:
 
 	require.Equal(t, expectedState, state, "Found incorrect state")
 
-	// Case: ReplicaFailure condition is True
 	depYAML = `
 apiVersion: apps/v1
 kind: Deployment
@@ -114,15 +99,21 @@ status:
     reason: "FailedCreate"
     message: "Failed to create pods"
 `
-	resources, err = ctlres.NewFileResource(ctlres.NewBytesSource([]byte(depYAML))).Resources()
-	require.NoError(t, err, "Expected resources to parse")
-	deployment = ctlresm.NewAppsV1Deployment(resources[0], nil)
+	deployment = buildDep(depYAML, t)
 	state = deployment.IsDoneApplying()
+
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
 		Message:    "Deployment has encountered replica failure: FailedCreate (message: Failed to create pods)",
 	}
-	require.Equal(t, expectedState, state, "Found incorrect state")
 
+	require.Equal(t, expectedState, state, "Found incorrect state")
+}
+
+func buildDep(resourcesBs string, t *testing.T) *ctlresm.AppsV1Deployment {
+	newResources, err := ctlres.NewFileResource(ctlres.NewBytesSource([]byte(resourcesBs))).Resources()
+	require.NoErrorf(t, err, "Expected resources to parse")
+
+	return ctlresm.NewAppsV1Deployment(newResources[0], newResources[1:])
 }
