@@ -66,6 +66,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: test-deployment
+  generation: 1
 status:
   observedGeneration: 1
   conditions:
@@ -91,6 +92,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: test-deployment
+  generation: 1
 status:
   observedGeneration: 1
   conditions:
