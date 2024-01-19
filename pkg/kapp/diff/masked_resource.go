@@ -21,7 +21,7 @@ func NewMaskedResource(res ctlres.Resource, rules []ctlconf.DiffMaskRule) Masked
 	if res == nil {
 		panic("Expected res be non-nil")
 	}
-	return MaskedResource{res.DeepCopy(), rules}
+	return MaskedResource{res, rules}
 }
 
 func (r MaskedResource) Resource() (ctlres.Resource, error) {

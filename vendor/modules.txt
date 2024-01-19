@@ -10,7 +10,7 @@ github.com/cppforlife/go-cli-ui/errors
 github.com/cppforlife/go-cli-ui/ui
 github.com/cppforlife/go-cli-ui/ui/table
 github.com/cppforlife/go-cli-ui/ui/test
-# github.com/cppforlife/go-patch v0.2.0
+# github.com/cppforlife/go-patch v0.0.0-20240118020416-2147782e467b
 ## explicit
 github.com/cppforlife/go-patch/patch
 # github.com/davecgh/go-spew v1.1.1
@@ -81,7 +81,7 @@ github.com/josharian/intern
 # github.com/json-iterator/go v1.1.12
 ## explicit; go 1.12
 github.com/json-iterator/go
-# github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57
+# github.com/k14s/difflib v0.0.0-20240118055029-596a7a5585c3
 ## explicit
 github.com/k14s/difflib
 # github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368

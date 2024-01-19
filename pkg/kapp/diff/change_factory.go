@@ -11,12 +11,17 @@ type ChangeFactory struct {
 	rebaseMods                               []ctlres.ResourceModWithMultiple
 	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod
 	diffAgainstExistingFieldExclusionRules   []ctlres.FieldRemoveMod
+	opts                                     ChangeOpts
+}
+
+type ChangeOpts struct {
+	AllowAnchoredDiff bool
 }
 
 func NewChangeFactory(rebaseMods []ctlres.ResourceModWithMultiple,
-	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod, diffAgainstExistingFieldExclusionRules []ctlres.FieldRemoveMod) ChangeFactory {
+	diffAgainstLastAppliedFieldExclusionMods []ctlres.FieldRemoveMod, diffAgainstExistingFieldExclusionRules []ctlres.FieldRemoveMod, opts ChangeOpts) ChangeFactory {
 
-	return ChangeFactory{rebaseMods, diffAgainstLastAppliedFieldExclusionMods, diffAgainstExistingFieldExclusionRules}
+	return ChangeFactory{rebaseMods, diffAgainstLastAppliedFieldExclusionMods, diffAgainstExistingFieldExclusionRules, opts}
 }
 
 func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Resource) (Change, error) {
@@ -59,7 +64,7 @@ func (f ChangeFactory) NewChangeAgainstLastApplied(existingRes, newRes ctlres.Re
 		return nil, err
 	}
 
-	return NewChange(existingRes, rebasedNewRes, newRes, existingResForRebasing), nil
+	return NewChange(existingRes, rebasedNewRes, newRes, existingResForRebasing, f.opts), nil
 }
 
 func (f ChangeFactory) NewExactChange(existingRes, newRes ctlres.Resource) (Change, error) {
@@ -86,7 +91,7 @@ func (f ChangeFactory) NewExactChange(existingRes, newRes ctlres.Resource) (Chan
 		return nil, err
 	}
 
-	return NewChange(existingRes, rebasedNewRes, newRes, existingRes), nil
+	return NewChange(existingRes, rebasedNewRes, newRes, existingRes, f.opts), nil
 }
 
 func (f ChangeFactory) NewResourceWithHistory(resource ctlres.Resource) ResourceWithHistory {

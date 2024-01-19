@@ -6,7 +6,6 @@ package diff
 import (
 	"github.com/cppforlife/go-patch/patch"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
-	"gopkg.in/yaml.v2"
 )
 
 type ChangeOp string
@@ -46,11 +45,13 @@ type ChangeImpl struct {
 	configurableTextDiff *ConfigurableTextDiff
 	opsDiff              *OpsDiff
 	changeOpVal          ChangeOp
+
+	opts ChangeOpts
 }
 
 var _ Change = &ChangeImpl{}
 
-func NewChange(existingRes, newRes, appliedRes, clusterOriginalRes ctlres.Resource) *ChangeImpl {
+func NewChange(existingRes, newRes, appliedRes, clusterOriginalRes ctlres.Resource, opts ChangeOpts) *ChangeImpl {
 	if existingRes == nil && newRes == nil {
 		panic("Expected either existingRes or newRes be non-nil")
 	}
@@ -68,7 +69,7 @@ func NewChange(existingRes, newRes, appliedRes, clusterOriginalRes ctlres.Resour
 		clusterOriginalRes = clusterOriginalRes.DeepCopy()
 	}
 
-	return &ChangeImpl{existingRes: existingRes, newRes: newRes, appliedRes: appliedRes, clusterOriginalRes: clusterOriginalRes}
+	return &ChangeImpl{existingRes: existingRes, newRes: newRes, appliedRes: appliedRes, clusterOriginalRes: clusterOriginalRes, opts: opts}
 }
 
 func (d *ChangeImpl) NewOrExistingResource() ctlres.Resource {
@@ -130,7 +131,7 @@ func (d *ChangeImpl) isIgnoredTransient() bool {
 func (d *ChangeImpl) ConfigurableTextDiff() *ConfigurableTextDiff {
 	// diff is called very often, so memoize
 	if d.configurableTextDiff == nil {
-		d.configurableTextDiff = NewConfigurableTextDiff(d.existingRes, d.newRes, d.IsIgnored())
+		d.configurableTextDiff = NewConfigurableTextDiff(d.existingRes, d.newRes, d.IsIgnored(), d.opts)
 	}
 	return d.configurableTextDiff
 }
@@ -147,36 +148,7 @@ func (d *ChangeImpl) OpsDiff() OpsDiff {
 }
 
 func (d *ChangeImpl) calculateOpsDiff() OpsDiff {
-	var existingObj interface{}
-	var newObj interface{}
-
-	if d.existingRes != nil {
-		existingBytes, err := d.existingRes.AsYAMLBytes()
-		if err != nil {
-			panic("yamling existingRes") // TODO panic
-		}
-
-		err = yaml.Unmarshal(existingBytes, &existingObj)
-		if err != nil {
-			panic("unyamling existingRes") // TODO panic
-		}
-	}
-
-	if d.newRes != nil {
-		newBytes, err := d.newRes.AsYAMLBytes()
-		if err != nil {
-			panic("yamling newRes") // TODO panic
-		}
-
-		err = yaml.Unmarshal(newBytes, &newObj)
-		if err != nil {
-			panic("unyamling newRes") // TODO panic
-		}
-	} else if d.IsIgnored() {
-		newObj = existingObj // show as no changes
-	}
-
-	return OpsDiff(patch.Diff{Left: existingObj, Right: newObj}.Calculate())
+	return OpsDiff(patch.Diff{Left: d.existingRes.UnstructuredObject(), Right: d.newRes.UnstructuredObject()}.Calculate())
 }
 
 func (d *ChangeImpl) newResHasExistsAnnotation() bool {
