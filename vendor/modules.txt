@@ -10,7 +10,7 @@ github.com/cppforlife/go-cli-ui/errors
 github.com/cppforlife/go-cli-ui/ui
 github.com/cppforlife/go-cli-ui/ui/table
 github.com/cppforlife/go-cli-ui/ui/test
-# github.com/cppforlife/go-patch v0.0.0-20240118020416-2147782e467b
+# github.com/cppforlife/go-patch v0.2.0
 ## explicit
 github.com/cppforlife/go-patch/patch
 # github.com/davecgh/go-spew v1.1.1

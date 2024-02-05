@@ -6,7 +6,7 @@ require (
 	github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
 	github.com/cppforlife/go-cli-ui v0.0.0-20220425131040-94f26b16bc14
-	github.com/cppforlife/go-patch v0.0.0-20240118020416-2147782e467b
+	github.com/cppforlife/go-patch v0.2.0
 	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/go-version v1.6.0
 	github.com/k14s/difflib v0.0.0-20240118055029-596a7a5585c3
