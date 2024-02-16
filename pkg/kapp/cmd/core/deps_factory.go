@@ -9,15 +9,20 @@ import (
 	"sync"
 
 	"github.com/cppforlife/go-cli-ui/ui"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 )
 
 type DepsFactory interface {
 	DynamicClient(opts DynamicClientOpts) (dynamic.Interface, error)
 	CoreClient() (kubernetes.Interface, error)
+	RESTMapper() (meta.RESTMapper, error)
 	ConfigureWarnings(warnings bool)
 }
 
@@ -81,6 +86,25 @@ func (f *DepsFactoryImpl) CoreClient() (kubernetes.Interface, error) {
 	f.printTarget(config)
 
 	return clientset, nil
+}
+
+func (f *DepsFactoryImpl) RESTMapper() (meta.RESTMapper, error) {
+	config, err := f.configFactory.RESTConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	disc, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	cachedDisc := memory.NewMemCacheClient(disc)
+	mapper := restmapper.NewDeferredDiscoveryRESTMapper(cachedDisc)
+
+	f.printTarget(config)
+
+	return mapper, nil
 }
 
 func (f *DepsFactoryImpl) ConfigureWarnings(warnings bool) {

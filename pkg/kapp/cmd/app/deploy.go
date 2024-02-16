@@ -4,6 +4,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"os"
@@ -27,6 +28,7 @@ import (
 	ctldiffui "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffui"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 	ctllogs "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logs"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/preflight"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	ctlresm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
 )
@@ -50,11 +52,13 @@ type DeployOptions struct {
 	ResourceTypesFlags  ResourceTypesFlags
 	LabelFlags          LabelFlags
 
+	PreflightChecks *preflight.Registry
+
 	FileSystem fs.FS
 }
 
-func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeployOptions {
-	return &DeployOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, preflights *preflight.Registry) *DeployOptions {
+	return &DeployOptions{ui: ui, depsFactory: depsFactory, logger: logger, PreflightChecks: preflights}
 }
 
 func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -91,6 +95,7 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	o.ResourceTypesFlags.Set(cmd)
 	o.LabelFlags.Set(cmd)
 	o.PrevAppFlags.Set(cmd)
+	o.PreflightChecks.AddFlags(cmd.Flags())
 
 	return cmd
 }
@@ -192,6 +197,13 @@ func (o *DeployOptions) Run() error {
 			return DeployApplyExitStatus{hasNoChanges}
 		}
 		return nil
+	}
+
+	if o.PreflightChecks != nil {
+		err = o.PreflightChecks.Run(context.Background(), clusterChangesGraph)
+		if err != nil {
+			return fmt.Errorf("preflight checks failed: %w", err)
+		}
 	}
 
 	err = o.ui.AskForConfirmation()

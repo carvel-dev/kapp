@@ -17,6 +17,8 @@ import (
 	cmdsa "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/serviceaccount"
 	cmdtools "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/tools"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/permissions"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/preflight"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/version"
 )
 
@@ -32,21 +34,32 @@ type KappOptions struct {
 	KubeconfigFlags cmdcore.KubeconfigFlags
 	WarningFlags    WarningFlags
 	ProfilingFlags  ProfilingFlags
+
+	PreflightChecks *preflight.Registry
 }
 
 func NewKappOptions(ui *ui.ConfUI, configFactory cmdcore.ConfigFactory,
-	depsFactory cmdcore.DepsFactory) *KappOptions {
+	depsFactory cmdcore.DepsFactory, preflights *preflight.Registry) *KappOptions {
 
 	return &KappOptions{ui: ui, logger: logger.NewUILogger(ui),
-		configFactory: configFactory, depsFactory: depsFactory}
+		configFactory: configFactory, depsFactory: depsFactory, PreflightChecks: preflights}
 }
 
 func NewDefaultKappCmd(ui *ui.ConfUI) *cobra.Command {
 	configFactory := cmdcore.NewConfigFactoryImpl()
 	depsFactory := cmdcore.NewDepsFactoryImpl(configFactory, ui)
-	options := NewKappOptions(ui, configFactory, depsFactory)
+	preflights := defaultKappPreflightRegistry(depsFactory)
+	options := NewKappOptions(ui, configFactory, depsFactory, preflights)
 	flagsFactory := cmdcore.NewFlagsFactory(configFactory, depsFactory)
 	return NewKappCmd(options, flagsFactory)
+}
+
+func defaultKappPreflightRegistry(depsFactory cmdcore.DepsFactory) *preflight.Registry {
+	registry := preflight.NewRegistry(map[string]preflight.Check{
+		"PermissionValidation": permissions.NewPreflight(depsFactory, false),
+	})
+
+	return registry
 }
 
 func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -95,7 +108,7 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 
 	cmd.AddCommand(cmdapp.NewListCmd(cmdapp.NewListOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	cmd.AddCommand(cmdapp.NewInspectCmd(cmdapp.NewInspectOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
-	cmd.AddCommand(cmdapp.NewDeployCmd(cmdapp.NewDeployOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	cmd.AddCommand(cmdapp.NewDeployCmd(cmdapp.NewDeployOptions(o.ui, o.depsFactory, o.logger, o.PreflightChecks), flagsFactory))
 	cmd.AddCommand(cmdapp.NewDeployConfigCmd(cmdapp.NewDeployConfigOptions(o.ui, o.depsFactory), flagsFactory))
 	cmd.AddCommand(cmdapp.NewDeleteCmd(cmdapp.NewDeleteOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	cmd.AddCommand(cmdapp.NewRenameCmd(cmdapp.NewRenameOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
@@ -103,7 +116,7 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	cmd.AddCommand(cmdapp.NewLabelCmd(cmdapp.NewLabelOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 
 	agCmd := cmdag.NewCmd()
-	agCmd.AddCommand(cmdag.NewDeployCmd(cmdag.NewDeployOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
+	agCmd.AddCommand(cmdag.NewDeployCmd(cmdag.NewDeployOptions(o.ui, o.depsFactory, o.logger, o.PreflightChecks), flagsFactory))
 	agCmd.AddCommand(cmdag.NewDeleteCmd(cmdag.NewDeleteOptions(o.ui, o.depsFactory, o.logger), flagsFactory))
 	cmd.AddCommand(agCmd)
 
