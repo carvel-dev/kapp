@@ -15,6 +15,7 @@ import (
 	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
 	cmdtools "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/tools"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/preflight"
 )
 
 type DeployOptions struct {
@@ -22,9 +23,10 @@ type DeployOptions struct {
 	depsFactory cmdcore.DepsFactory
 	logger      logger.Logger
 
-	AppGroupFlags Flags
-	DeployFlags   DeployFlags
-	AppFlags      DeployAppFlags
+	AppGroupFlags   Flags
+	DeployFlags     DeployFlags
+	AppFlags        DeployAppFlags
+	PreflightChecks *preflight.Registry
 }
 
 type DeployAppFlags struct {
@@ -36,8 +38,8 @@ type DeployAppFlags struct {
 	LabelFlags          cmdapp.LabelFlags
 }
 
-func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger) *DeployOptions {
-	return &DeployOptions{ui: ui, depsFactory: depsFactory, logger: logger}
+func NewDeployOptions(ui ui.UI, depsFactory cmdcore.DepsFactory, logger logger.Logger, preflights *preflight.Registry) *DeployOptions {
+	return &DeployOptions{ui: ui, depsFactory: depsFactory, logger: logger, PreflightChecks: preflights}
 }
 
 func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Command {
@@ -56,6 +58,7 @@ func NewDeployCmd(o *DeployOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	o.AppFlags.DeleteApplyFlags.SetWithDefaults("delete", cmdapp.ApplyFlagsDeleteDefaults, cmd)
 	o.AppFlags.DeployFlags.Set(cmd)
 	o.AppFlags.LabelFlags.Set(cmd)
+	o.PreflightChecks.AddFlags(cmd.Flags())
 	return cmd
 }
 
@@ -146,7 +149,7 @@ func (o *DeployOptions) deployApp(app appGroupApp) error {
 	o.ui.PrintLinef("--- deploying app '%s' (namespace: %s) from %s",
 		app.Name, o.appNamespace(), app.Path)
 
-	deployOpts := cmdapp.NewDeployOptions(o.ui, o.depsFactory, o.logger)
+	deployOpts := cmdapp.NewDeployOptions(o.ui, o.depsFactory, o.logger, o.PreflightChecks)
 	deployOpts.AppFlags = cmdapp.Flags{
 		Name:           app.Name,
 		NamespaceFlags: o.AppGroupFlags.NamespaceFlags,

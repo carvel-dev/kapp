@@ -21,6 +21,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/app"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/preflight"
 )
 
 func TestDeployFilesystem(t *testing.T) {
@@ -55,7 +56,7 @@ func TestDeployFilesystem(t *testing.T) {
 	depsFactory := core.NewDepsFactoryImpl(configFactory, theUI)
 	log := logger.NewUILogger(theUI)
 
-	deployOptions := app.NewDeployOptions(theUI, depsFactory, log)
+	deployOptions := app.NewDeployOptions(theUI, depsFactory, log, &preflight.Registry{})
 	deployOptions.AppFlags.NamespaceFlags.Name = env.Namespace
 	deployOptions.AppFlags.Name = appName
 	deployOptions.FileFlags.Files = []string{

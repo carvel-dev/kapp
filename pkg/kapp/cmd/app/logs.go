@@ -74,7 +74,7 @@ func (o *LogsOptions) Run() error {
 		supportObjs.IdentifiedResources.PodResources(labelSelector, nil),
 	}
 
-	contFilter := func(pod corev1.Pod) []string {
+	contFilter := func(_ corev1.Pod) []string {
 		return o.LogsFlags.ContainerNames
 	}
 
