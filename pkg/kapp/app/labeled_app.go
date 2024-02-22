@@ -49,10 +49,14 @@ func (a *LabeledApp) CreateOrUpdate(_ string, _ map[string]string, _ bool) (bool
 }
 func (a *LabeledApp) Exists() (bool, string, error) { return true, "", nil }
 
-func (a *LabeledApp) Delete() error {
+func (a *LabeledApp) Delete(checkResourcesDeleted bool) error {
 	labelSelector, err := a.LabelSelector()
 	if err != nil {
 		return err
+	}
+
+	if !checkResourcesDeleted {
+		return nil
 	}
 
 	rs, err := a.identifiedResources.List(labelSelector, nil, ctlres.IdentifiedResourcesListOpts{IgnoreCachedResTypes: true})

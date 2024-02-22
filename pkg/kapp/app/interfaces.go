@@ -24,7 +24,7 @@ type App interface {
 
 	CreateOrUpdate(string, map[string]string, bool) (bool, error)
 	Exists() (bool, string, error)
-	Delete() error
+	Delete(bool) error
 	Rename(string, string) error
 
 	// Sorted as first is oldest
