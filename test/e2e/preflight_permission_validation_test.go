@@ -107,7 +107,7 @@ spec:
 `
 	basicResource = strings.ReplaceAll(basicResource, "__test-name__", testName)
 	logger.Section("deploy app with Pod with permissions to create Pods", func() {
-		kapp.RunWithOpts([]string{"deploy", "--preflight=PermissionValidation=true", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
+		kapp.RunWithOpts([]string{"deploy", "--preflight=PermissionValidation", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
 			RunOpts{StdinReader: strings.NewReader(basicResource)})
 
 		NewPresentClusterResource("pod", testName, testName, kubectl)
@@ -128,7 +128,7 @@ rules:
 
 	roleResource = strings.ReplaceAll(roleResource, "__test-name__", testName)
 	logger.Section("deploy app with Role with permissions to create Roles", func() {
-		kapp.RunWithOpts([]string{"deploy", "--preflight=PermissionValidation=true", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
+		kapp.RunWithOpts([]string{"deploy", "--preflight=PermissionValidation", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
 			RunOpts{StdinReader: strings.NewReader(roleResource)})
 
 		NewPresentClusterResource("role", testName, testName, kubectl)
@@ -152,7 +152,7 @@ roleRef:
 `
 	bindingResource = strings.ReplaceAll(bindingResource, "__test-name__", testName)
 	logger.Section("deploy app with Pod with permissions to create RoleBindings", func() {
-		kapp.RunWithOpts([]string{"deploy", "--preflight=PermissionValidation=true", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
+		kapp.RunWithOpts([]string{"deploy", "--preflight=PermissionValidation", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
 			RunOpts{StdinReader: strings.NewReader(roleResource + bindingResource)})
 
 		NewPresentClusterResource("rolebinding", testName, testName, kubectl)

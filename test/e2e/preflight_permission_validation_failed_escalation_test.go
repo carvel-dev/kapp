@@ -107,7 +107,7 @@ rules:
 
 	roleResource = strings.ReplaceAll(roleResource, "__test-name__", testName)
 	logger.Section("attempt to deploy app with privilege escalation Role without privilege escalation permissions", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "--preflight=PermissionValidation=true", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
+		_, err := kapp.RunWithOpts([]string{"deploy", "--preflight=PermissionValidation", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
 			RunOpts{StdinReader: strings.NewReader(roleResource), AllowError: true})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "running preflight check \"PermissionValidation\": potential privilege escalation, not permitted to \"create\" rbac.authorization.k8s.io/v1, Kind=Role")
@@ -132,7 +132,7 @@ roleRef:
 `
 	bindingResource = strings.ReplaceAll(bindingResource, "__test-name__", testName)
 	logger.Section("attempt deploy app with privilege escalation RoleBinding without privilege escalation permissions", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "--preflight=PermissionValidation=true", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
+		_, err := kapp.RunWithOpts([]string{"deploy", "--preflight=PermissionValidation", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
 			RunOpts{StdinReader: strings.NewReader(bindingResource), AllowError: true})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "running preflight check \"PermissionValidation\": potential privilege escalation, not permitted to \"create\" rbac.authorization.k8s.io/v1, Kind=RoleBinding")
