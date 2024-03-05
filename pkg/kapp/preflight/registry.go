@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/spf13/pflag"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
 	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
 )
 
@@ -17,6 +18,8 @@ const preflightFlag = "preflight"
 // Registry is a collection of preflight checks
 type Registry struct {
 	known map[string]Check
+	// Stores the enabled values from the command line
+	enabledFlag map[string]bool
 }
 
 // NewRegistry will return a new *Registry with the
@@ -59,25 +62,23 @@ func (c *Registry) Type() string {
 // Returns an error if there is a problem
 // parsing the preflight checks
 func (c *Registry) Set(s string) error {
-	if c.known == nil {
+	if c.known == nil || c.enabledFlag == nil {
 		return nil
 	}
 
-	enabled := map[string]struct{}{}
-	// enable those specified
+	// Using enabledFlag allows multiple --preflight check flags to be specified
 	mappings := strings.Split(s, ",")
 	for _, key := range mappings {
 		if _, ok := c.known[key]; !ok {
 			return fmt.Errorf("unknown preflight check %q specified", key)
 		}
-		c.known[key].SetEnabled(true)
-		enabled[key] = struct{}{}
+		c.enabledFlag[key] = true
 	}
-	// disable unspecified validators
+
+	// enable/disabled based on validators specified
 	for key := range c.known {
-		if _, ok := enabled[key]; !ok {
-			c.known[key].SetEnabled(false)
-		}
+		enabled, ok := c.enabledFlag[key]
+		c.known[key].SetEnabled(ok && enabled)
 	}
 	return nil
 }
@@ -101,7 +102,54 @@ func (c *Registry) AddCheck(name string, check Check) {
 	if c.known == nil {
 		c.known = make(map[string]Check)
 	}
+	if c.enabledFlag == nil {
+		c.enabledFlag = make(map[string]bool)
+	}
 	c.known[name] = check
+}
+
+// Validate the configuration provided; the rules are:
+// 1. Unknown validator = error
+// 2. Duplicate validator = error
+func (c *Registry) validateConfig(conf []config.PreflightRule) error {
+	haveConfig := map[string]bool{}
+	for _, rule := range conf {
+		if _, ok := c.known[rule.Name]; !ok {
+			return fmt.Errorf("unknown preflight check in configuration: %q", rule.Name)
+		}
+		if _, ok := haveConfig[rule.Name]; ok {
+			return fmt.Errorf("duplicate preflight check in configuration: %q", rule.Name)
+		}
+		haveConfig[rule.Name] = true
+	}
+	return nil
+}
+
+func (c *Registry) SetConfig(conf []config.PreflightRule) error {
+	// We get the --preflight cmdline flag _before_ the configuration from the file.
+	// So, we need to evaluate the config that we've gotten in light of the enabledFlag
+	if err := c.validateConfig(conf); err != nil {
+		return err
+	}
+	// map the configuration by name
+	config := map[string]map[string]any{}
+	for _, rule := range conf {
+		config[rule.Name] = rule.Config
+	}
+	if len(c.enabledFlag) == 0 {
+		// no --preflight flag, so enable validators according to their presence in the config
+		for name, check := range c.known {
+			_, ok := config[name]
+			check.SetEnabled(ok)
+		}
+	}
+	for name, check := range c.known {
+		err := check.SetConfig(config[name])
+		if err != nil {
+			return fmt.Errorf("setting preflight config %q: %w", name, err)
+		}
+	}
+	return nil
 }
 
 // Run will execute any enabled preflight checks. The provided

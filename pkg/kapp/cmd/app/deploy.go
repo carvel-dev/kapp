@@ -200,6 +200,10 @@ func (o *DeployOptions) Run() error {
 	}
 
 	if o.PreflightChecks != nil {
+		err = o.PreflightChecks.SetConfig(conf.PreflightRules())
+		if err != nil {
+			return fmt.Errorf("preflight configuration settings failed: %w", err)
+		}
 		err = o.PreflightChecks.Run(context.Background(), clusterChangesGraph)
 		if err != nil {
 			return fmt.Errorf("preflight checks failed: %w", err)

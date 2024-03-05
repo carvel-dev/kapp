@@ -155,6 +155,14 @@ func (c Conf) TemplateRules() []TemplateRule {
 	return result
 }
 
+func (c Conf) PreflightRules() []PreflightRule {
+	var result []PreflightRule
+	for _, config := range c.configs {
+		result = append(result, config.PreflightRules...)
+	}
+	return result
+}
+
 func (c Conf) DiffMaskRules() []DiffMaskRule {
 	var result []DiffMaskRule
 	for _, config := range c.configs {

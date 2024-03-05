@@ -30,6 +30,7 @@ type Config struct {
 	LabelScopingRules   []LabelScopingRule
 	TemplateRules       []TemplateRule
 	DiffMaskRules       []DiffMaskRule
+	PreflightRules      []PreflightRule
 
 	AdditionalLabels                          map[string]string
 	DiffAgainstLastAppliedFieldExclusionRules []DiffAgainstLastAppliedFieldExclusionRule
@@ -143,6 +144,11 @@ type ChangeRuleBinding struct {
 	Rules            []string
 	IgnoreIfCyclical bool
 	ResourceMatchers []ResourceMatcher
+}
+
+type PreflightRule struct {
+	Name   string
+	Config map[string]any
 }
 
 func NewConfigFromResource(res ctlres.Resource) (Config, error) {

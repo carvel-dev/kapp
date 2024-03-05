@@ -37,6 +37,10 @@ func (p *Preflight) SetEnabled(enabled bool) {
 	p.enabled = enabled
 }
 
+func (p *Preflight) SetConfig(_ preflight.CheckConfig) error {
+	return nil
+}
+
 func (p *Preflight) Run(ctx context.Context, changeGraph *ctldgraph.ChangeGraph) error {
 	client, err := p.depsFactory.CoreClient()
 	if err != nil {
