@@ -569,6 +569,14 @@ changeGroupBindings:
   resourceMatchers: &serviceAccountMatchers
   - apiVersionKindMatcher: {kind: ServiceAccount, apiVersion: v1}
 
+- name: change-groups.kapp.k14s.io/secret-associated-with-sa
+  resourceMatchers:
+  - andMatcher: 
+      matchers: 
+      - apiVersionKindMatcher: {kind: Secret, apiVersion: v1}
+      - hasAnnotationMatcher:
+              keys: [kubernetes.io/service-account.name]
+
 - name: change-groups.kapp.k14s.io/kapp-controller-app
   resourceMatchers: *appMatchers
 
@@ -587,6 +595,12 @@ changeRuleBindings:
           matcher: &disableDefaultChangeGroupAnnMatcher
             hasAnnotationMatcher:
               keys: [kapp.k14s.io/disable-default-change-group-and-rules]
+
+# Create SA before creating secret associated with SA
+- rules:
+  - "upsert before upserting change-groups.kapp.k14s.io/secret-associated-with-sa"
+  resourceMatchers:
+  - apiVersionKindMatcher: {kind: ServiceAccount, apiVersion: v1}
 
 # Delete CRs before CRDs to retain detailed observability
 # instead of having CRD deletion trigger all CR deletion
