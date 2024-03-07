@@ -6,7 +6,6 @@ package preflight
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/spf13/pflag"
@@ -31,16 +30,18 @@ func NewRegistry(checks map[string]Check) *Registry {
 }
 
 // String returns a string representation of the
-// preflight checks. It follows the format:
-// CheckName={true||false},...
+// enabled preflight checks. It follows the format:
+// CheckName,...
 // This method is needed so Registry implements
 // the pflag.Value interface
 func (c *Registry) String() string {
-	defaults := []string{}
+	enabled := []string{}
 	for k, v := range c.known {
-		defaults = append(defaults, fmt.Sprintf("%s=%v", k, v.Enabled()))
+		if v.Enabled() {
+			enabled = append(enabled, k)
+		}
 	}
-	return strings.Join(defaults, ",")
+	return strings.Join(enabled, ",")
 }
 
 // Type returns a string representing the type
@@ -51,9 +52,10 @@ func (c *Registry) Type() string {
 }
 
 // Set takes in a string in the format of
-// CheckName={true||false},...
+// CheckName,...
 // and sets the specified preflight check
-// as enabled if true, disabled if false
+// as enabled if listed, otherwise, sets as
+// disabled if not listed.
 // Returns an error if there is a problem
 // parsing the preflight checks
 func (c *Registry) Set(s string) error {
@@ -61,23 +63,21 @@ func (c *Registry) Set(s string) error {
 		return nil
 	}
 
+	enabled := map[string]struct{}{}
+	// enable those specified
 	mappings := strings.Split(s, ",")
-	for _, mapping := range mappings {
-		set := strings.SplitN(mapping, "=", 2)
-		if len(set) != 2 {
-			return fmt.Errorf("unable to parse check definition %q, too many '='. Must follow the format check={true||false}", mapping)
-		}
-		key, value := set[0], set[1]
-
+	for _, key := range mappings {
 		if _, ok := c.known[key]; !ok {
 			return fmt.Errorf("unknown preflight check %q specified", key)
 		}
-
-		enabled, err := strconv.ParseBool(value)
-		if err != nil {
-			return fmt.Errorf("unable to parse boolean representation of %q: %w", mapping, err)
+		c.known[key].SetEnabled(true)
+		enabled[key] = struct{}{}
+	}
+	// disable unspecified validators
+	for key := range c.known {
+		if _, ok := enabled[key]; !ok {
+			c.known[key].SetEnabled(false)
 		}
-		c.known[key].SetEnabled(enabled)
 	}
 	return nil
 }

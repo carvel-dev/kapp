@@ -20,42 +20,32 @@ func TestRegistrySet(t *testing.T) {
 	}{
 		{
 			name:       "no preflight checks registered, parsing skipped, any value can be provided",
-			preflights: "someCheck=true",
+			preflights: "someCheck",
 			registry:   &Registry{},
 		},
 		{
 			name:       "preflight checks registered, invalid check format in flag, error returned",
-			preflights: "some=check=something=true",
+			preflights: ",",
 			registry: &Registry{
 				known: map[string]Check{
-					"some": nil,
+					"some": NewCheck(func(_ context.Context, _ *diffgraph.ChangeGraph) error { return nil }, true),
 				},
 			},
 			shouldErr: true,
 		},
 		{
 			name:       "preflight checks registered, unknown preflight check specified, error returned",
-			preflights: "nonexistent=true",
+			preflights: "nonexistent",
 			registry: &Registry{
 				known: map[string]Check{
-					"exists": nil,
-				},
-			},
-			shouldErr: true,
-		},
-		{
-			name:       "preflight checks registered, known check specified, non-boolean value provided, error returned",
-			preflights: "someCheck=enabled",
-			registry: &Registry{
-				known: map[string]Check{
-					"someCheck": nil,
+					"exists": NewCheck(func(_ context.Context, _ *diffgraph.ChangeGraph) error { return nil }, true),
 				},
 			},
 			shouldErr: true,
 		},
 		{
 			name:       "preflight checks registered, valid input, no error returned",
-			preflights: "someCheck=true",
+			preflights: "someCheck",
 			registry: &Registry{
 				known: map[string]Check{
 					"someCheck": NewCheck(func(_ context.Context, _ *diffgraph.ChangeGraph) error { return nil }, true),

@@ -109,7 +109,7 @@ spec:
 `
 	basicResource = strings.ReplaceAll(basicResource, "__test-name__", testName)
 	logger.Section("attempt to deploy app with a Pod and missing permissions to create Pods", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "--preflight=PermissionValidation=true", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
+		_, err := kapp.RunWithOpts([]string{"deploy", "--preflight=PermissionValidation", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
 			RunOpts{StdinReader: strings.NewReader(basicResource), AllowError: true})
 
 		require.Error(t, err)
@@ -132,7 +132,7 @@ rules:
 
 	roleResource = strings.ReplaceAll(roleResource, "__test-name__", testName)
 	logger.Section("attempt to deploy app with a Role and missing permissions to create Roles", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "--preflight=PermissionValidation=true", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
+		_, err := kapp.RunWithOpts([]string{"deploy", "--preflight=PermissionValidation", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
 			RunOpts{StdinReader: strings.NewReader(roleResource), AllowError: true})
 
 		require.Error(t, err)
@@ -158,7 +158,7 @@ roleRef:
 `
 	bindingResource = strings.ReplaceAll(bindingResource, "__test-name__", testName)
 	logger.Section("attempt to deploy app with a RoleBinding and missing permissions to create RoleBindings", func() {
-		_, err := kapp.RunWithOpts([]string{"deploy", "--preflight=PermissionValidation=true", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
+		_, err := kapp.RunWithOpts([]string{"deploy", "--preflight=PermissionValidation", "-a", appName, "-f", "-", fmt.Sprintf("--kubeconfig-context=%s", scopedContext)},
 			RunOpts{StdinReader: strings.NewReader(bindingResource), AllowError: true})
 
 		require.Error(t, err)
