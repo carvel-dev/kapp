@@ -4,6 +4,7 @@
 package diffgraph_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -805,6 +806,34 @@ metadata:
 (delete) serviceaccount/default-sa2 (v1) namespace: test2
 (delete) configmap/simple-cm (v1) namespace: test2
 (delete) serviceaccount/default-sa3 (v1) namespace: default
+`)
+	require.Equal(t, expectedOutput, output)
+}
+
+func TestChangeGraphWithSecretAndSA(t *testing.T) {
+	yaml := `
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sa-0
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-0
+  annotations:
+    kubernetes.io/service-account.name: sa-0
+type: kubernetes.io/service-account-token
+`
+
+	graph, err := buildChangeGraph(yaml, ctldgraph.ActualChangeOpUpsert, t)
+	require.NoErrorf(t, err, "Expected graph to build")
+
+	output := strings.TrimSpace(graph.PrintStr())
+	fmt.Println(output)
+	expectedOutput := strings.TrimSpace(`
+(upsert) serviceaccount/sa-0 (v1) cluster
+(upsert) secret/secret-0 (v1) cluster
 `)
 	require.Equal(t, expectedOutput, output)
 }
