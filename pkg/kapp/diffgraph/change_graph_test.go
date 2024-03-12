@@ -809,6 +809,33 @@ metadata:
 	require.Equal(t, expectedOutput, output)
 }
 
+func TestChangeGraphWithSecretAndSA(t *testing.T) {
+	yaml := `
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sa-0
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-0
+  annotations:
+    kubernetes.io/service-account.name: sa-0
+type: kubernetes.io/service-account-token
+`
+
+	graph, err := buildChangeGraph(yaml, ctldgraph.ActualChangeOpUpsert, t)
+	require.NoErrorf(t, err, "Expected graph to build")
+
+	output := strings.TrimSpace(graph.PrintStr())
+	expectedOutput := strings.TrimSpace(`
+(upsert) serviceaccount/sa-0 (v1) cluster
+(upsert) secret/secret-0 (v1) cluster
+`)
+	require.Equal(t, expectedOutput, output)
+}
+
 func buildChangeGraph(resourcesBs string, op ctldgraph.ActualChangeOp, t *testing.T) (*ctldgraph.ChangeGraph, error) {
 	return buildChangeGraphWithOpts(buildGraphOpts{resourcesBs: resourcesBs, op: op}, t)
 }
