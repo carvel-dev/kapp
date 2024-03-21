@@ -12,6 +12,7 @@ import (
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/util"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -252,7 +253,7 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 		}
 
 		// Record last applied change on the latest version of a resource
-		latestResWithHistoryUpdated, madeAnyModifications, err := latestResWithHistory.RecordLastAppliedResource(applyChange)
+		annotationStr, madeAnyModifications, err := latestResWithHistory.RecordLastAppliedResource(applyChange)
 		if err != nil {
 			return true, fmt.Errorf("Recording last applied resource: %w", err)
 		}
@@ -262,12 +263,14 @@ func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error
 			return true, nil
 		}
 
-		_, err = c.identifiedResources.Update(latestResWithHistoryUpdated)
+		jsonStr := fmt.Sprintf("{\"metadata\": {\"annotations\": %s }}", annotationStr)
+		data := []byte(jsonStr)
+
+		_, err = c.identifiedResources.Patch(savedRes, types.MergePatchType, data)
 		if err != nil {
 			latestResWithHistory = nil // Get again
 			return false, fmt.Errorf("Saving record of last applied resource: %w", err)
 		}
-
 		return true, nil
 	})
 }
