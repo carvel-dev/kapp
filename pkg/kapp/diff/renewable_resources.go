@@ -16,17 +16,17 @@ const (
 )
 
 type RenewableResources struct {
-	existingRs, newRs []ctlres.Resource
+	diffRs DiffResources
 }
 
-func NewRenewableResources(existingRs, newRs []ctlres.Resource) *RenewableResources {
-	return &RenewableResources{existingRs: existingRs, newRs: newRs}
+func NewRenewableResources(diffRs DiffResources) *RenewableResources {
+	return &RenewableResources{diffRs}
 }
 
 func (d RenewableResources) Prepare() error {
-	exResourcesMap := existingResourcesMap(d.existingRs)
+	exResourcesMap := d.diffRs.existingResourcesMap()
 
-	for _, res := range d.newRs {
+	for _, res := range d.diffRs.newRs {
 		val, found := res.Annotations()[renewDurationAnnKey]
 		if found {
 			duration, err := time.ParseDuration(val)
