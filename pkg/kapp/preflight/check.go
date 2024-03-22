@@ -1,10 +1,11 @@
-// Copyright 2024 VMware, Inc.
+// Copyright 2024 The Carvel Authors.
 // SPDX-License-Identifier: Apache-2.0
 
 package preflight
 
 import (
 	"context"
+
 	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
 )
 
