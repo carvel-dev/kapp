@@ -99,12 +99,17 @@ func (o *DeployOptions) Run() error {
 
 	// Delete apps that no longer are present in directories
 	for _, app := range existingAppsInGroup {
+		var found bool
 		for _, v := range updatedApps {
 			if app.Name() == v.Name {
-				err := o.deleteApp(app.Name())
-				if err != nil {
-					return err
-				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			err := o.deleteApp(app.Name())
+			if err != nil {
+				return err
 			}
 		}
 	}
