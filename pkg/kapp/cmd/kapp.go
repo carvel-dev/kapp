@@ -16,6 +16,7 @@ import (
 	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
 	cmdsa "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/serviceaccount"
 	cmdtools "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/tools"
+	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/crdupgradesafety"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/permissions"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/preflight"
@@ -57,6 +58,7 @@ func NewDefaultKappCmd(ui *ui.ConfUI) *cobra.Command {
 func defaultKappPreflightRegistry(depsFactory cmdcore.DepsFactory) *preflight.Registry {
 	registry := preflight.NewRegistry(map[string]preflight.Check{
 		"PermissionValidation": permissions.NewPreflight(depsFactory, false),
+		"CRDUpgradeSafety":     crdupgradesafety.NewPreflight(depsFactory, false),
 	})
 
 	return registry
