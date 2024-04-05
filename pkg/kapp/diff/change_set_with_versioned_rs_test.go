@@ -27,7 +27,7 @@ metadata:
     kapp.k14s.io/versioned: ""
 `))
 
-	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRes}, []ctlres.Resource{newRs}, nil,
+	changeSetWithVerRes := NewChangeSetWithVersionedRs(NewDiffResources([]ctlres.Resource{existingRes}, []ctlres.Resource{newRs}, nil),
 		ChangeSetOpts{}, ChangeFactory{})
 
 	changes, err := changeSetWithVerRes.Calculate()
@@ -75,7 +75,7 @@ metadata:
   name: secret
 `))
 
-	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRes}, []ctlres.Resource{newRs}, nil,
+	changeSetWithVerRes := NewChangeSetWithVersionedRs(NewDiffResources([]ctlres.Resource{existingRes}, []ctlres.Resource{newRs}, nil),
 		ChangeSetOpts{}, ChangeFactory{})
 
 	changes, err := changeSetWithVerRes.Calculate()
@@ -124,7 +124,7 @@ metadata:
   name: secret
 `))
 
-	changeSetWithVerRes := NewChangeSetWithVersionedRs([]ctlres.Resource{existingRes}, []ctlres.Resource{newRs}, nil,
+	changeSetWithVerRes := NewChangeSetWithVersionedRs(NewDiffResources([]ctlres.Resource{existingRes}, []ctlres.Resource{newRs}, nil),
 		ChangeSetOpts{}, ChangeFactory{})
 
 	changes, err := changeSetWithVerRes.Calculate()

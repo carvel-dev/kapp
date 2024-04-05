@@ -293,7 +293,7 @@ spec:
 		}
 
 		// Calculate changes with default template rules
-		changes, err := ctldiff.NewChangeSetWithVersionedRs([]ctlres.Resource{}, newResources, defaultConfig.TemplateRules(), ctldiff.ChangeSetOpts{}, changeFactory).Calculate()
+		changes, err := ctldiff.NewChangeSetWithVersionedRs(ctldiff.NewDiffResources([]ctlres.Resource{}, newResources, defaultConfig.TemplateRules()), ctldiff.ChangeSetOpts{}, changeFactory).Calculate()
 		require.NoError(t, err)
 
 		// Compare against expected diff
