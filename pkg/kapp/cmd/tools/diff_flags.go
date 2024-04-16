@@ -4,9 +4,9 @@
 package tools
 
 import (
+	ctlcap "carvel.dev/kapp/pkg/kapp/clusterapply"
+	ctldiff "carvel.dev/kapp/pkg/kapp/diff"
 	"github.com/spf13/cobra"
-	ctlcap "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/clusterapply"
-	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
 )
 
 type DiffFlags struct {

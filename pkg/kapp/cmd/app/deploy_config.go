@@ -4,10 +4,10 @@
 package app
 
 import (
+	cmdcore "carvel.dev/kapp/pkg/kapp/cmd/core"
+	ctlconf "carvel.dev/kapp/pkg/kapp/config"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
-	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
 )
 
 type DeployConfigOptions struct {

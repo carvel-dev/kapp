@@ -10,7 +10,7 @@ VERSION="${1:-`get_latest_git_tag`}"
 
 # makes builds reproducible
 export CGO_ENABLED=0
-LDFLAGS="-X github.com/vmware-tanzu/carvel-kapp/pkg/kapp/version.Version=$VERSION -buildid="
+LDFLAGS="-X carvel.dev/kapp/pkg/kapp/version.Version=$VERSION -buildid="
 
 go mod vendor
 go mod tidy

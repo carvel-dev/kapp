@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	"github.com/stretchr/testify/require"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 func TestTemplate(t *testing.T) {

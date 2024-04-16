@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"sort"
 
-	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	ctlconf "carvel.dev/kapp/pkg/kapp/config"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 )
 
 type MaskedResource struct {

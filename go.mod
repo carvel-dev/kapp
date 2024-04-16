@@ -1,4 +1,4 @@
-module github.com/vmware-tanzu/carvel-kapp
+module carvel.dev/kapp
 
 go 1.22
 

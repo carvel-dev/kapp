@@ -6,8 +6,8 @@ package app
 import (
 	"fmt"
 
+	ctllogs "carvel.dev/kapp/pkg/kapp/logs"
 	"github.com/spf13/cobra"
-	ctllogs "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logs"
 )
 
 type LogsFlags struct {

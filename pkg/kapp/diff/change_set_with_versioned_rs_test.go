@@ -6,8 +6,8 @@ package diff
 import (
 	"testing"
 
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	"github.com/stretchr/testify/require"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 func TestChangeSet_ExistingVersioned_NewNonVersioned_Resource(t *testing.T) {

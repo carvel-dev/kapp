@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"strings"
 
+	"carvel.dev/kapp/pkg/kapp/config"
+	ctldgraph "carvel.dev/kapp/pkg/kapp/diffgraph"
 	"github.com/spf13/pflag"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
-	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
 )
 
 const preflightFlag = "preflight"

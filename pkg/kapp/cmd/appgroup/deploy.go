@@ -9,13 +9,13 @@ import (
 	"os"
 	"path/filepath"
 
+	cmdapp "carvel.dev/kapp/pkg/kapp/cmd/app"
+	cmdcore "carvel.dev/kapp/pkg/kapp/cmd/core"
+	cmdtools "carvel.dev/kapp/pkg/kapp/cmd/tools"
+	"carvel.dev/kapp/pkg/kapp/logger"
+	"carvel.dev/kapp/pkg/kapp/preflight"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	cmdapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/app"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
-	cmdtools "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/tools"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/preflight"
 )
 
 type DeployOptions struct {

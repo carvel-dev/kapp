@@ -6,8 +6,8 @@ package app
 import (
 	"fmt"
 
+	ctlapp "carvel.dev/kapp/pkg/kapp/app"
 	"github.com/spf13/cobra"
-	ctlapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/app"
 )
 
 type DeployFlags struct {

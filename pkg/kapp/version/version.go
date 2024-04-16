@@ -7,10 +7,10 @@ import "runtime/debug"
 
 var (
 	// Version can be set via:
-	// -ldflags="-X 'github.com/vmware-tanzu/carvel-kapp/pkg/kapp/version.Version=$TAG'"
+	// -ldflags="-X 'carvel.dev/kapp/pkg/kapp/version.Version=$TAG'"
 	defaultVersion = "develop"
 	Version        = ""
-	moduleName     = "github.com/vmware-tanzu/carvel-kapp"
+	moduleName     = "carvel.dev/kapp"
 )
 
 func init() {

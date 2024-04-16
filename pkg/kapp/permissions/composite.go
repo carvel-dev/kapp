@@ -6,7 +6,7 @@ package permissions
 import (
 	"context"
 
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 

@@ -7,10 +7,10 @@ import (
 	"errors"
 	"testing"
 
+	ctlconf "carvel.dev/kapp/pkg/kapp/config"
+	"carvel.dev/kapp/pkg/kapp/diffgraph"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	"github.com/stretchr/testify/require"
-	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 func TestRegistrySet(t *testing.T) {

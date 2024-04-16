@@ -6,8 +6,8 @@ package matcher_test
 import (
 	"testing"
 
+	"carvel.dev/kapp/pkg/kapp/matcher"
 	"github.com/stretchr/testify/require"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/matcher"
 )
 
 func TestStringMatcherMatches(t *testing.T) {

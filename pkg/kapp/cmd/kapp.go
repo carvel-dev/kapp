@@ -6,21 +6,21 @@ package cmd
 import (
 	"io"
 
+	cmdapp "carvel.dev/kapp/pkg/kapp/cmd/app"
+	cmdac "carvel.dev/kapp/pkg/kapp/cmd/appchange"
+	cmdag "carvel.dev/kapp/pkg/kapp/cmd/appgroup"
+	cmdcm "carvel.dev/kapp/pkg/kapp/cmd/configmap"
+	cmdcore "carvel.dev/kapp/pkg/kapp/cmd/core"
+	cmdsa "carvel.dev/kapp/pkg/kapp/cmd/serviceaccount"
+	cmdtools "carvel.dev/kapp/pkg/kapp/cmd/tools"
+	"carvel.dev/kapp/pkg/kapp/crdupgradesafety"
+	"carvel.dev/kapp/pkg/kapp/logger"
+	"carvel.dev/kapp/pkg/kapp/permissions"
+	"carvel.dev/kapp/pkg/kapp/preflight"
+	"carvel.dev/kapp/pkg/kapp/version"
 	"github.com/cppforlife/cobrautil"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	cmdapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/app"
-	cmdac "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/appchange"
-	cmdag "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/appgroup"
-	cmdcm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/configmap"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
-	cmdsa "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/serviceaccount"
-	cmdtools "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/tools"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/crdupgradesafety"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/permissions"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/preflight"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/version"
 )
 
 type KappOptions struct {
@@ -162,7 +162,7 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 
 	configureTTYFlag := func(cmd *cobra.Command) {
 		var forceTTY bool
-		// Default tty to true for deploy and delete commands: https://github.com/vmware-tanzu/carvel-kapp/issues/28
+		// Default tty to true for deploy and delete commands: https://github.com/carvel-dev/kapp/issues/28
 		_, defaultTTY := cmd.Annotations[cmdapp.TTYByDefaultKey]
 
 		cmd.Flags().BoolVar(&forceTTY, "tty", defaultTTY, "Force TTY-like output")

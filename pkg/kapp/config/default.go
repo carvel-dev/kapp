@@ -4,7 +4,7 @@
 package config
 
 import (
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 )
 
 const defaultConfigYAML = `---
@@ -656,7 +656,7 @@ changeRuleBindings:
 
 # Insert roles/ClusterRoles before inserting any roleBinding/ClusterRoleBinding
 # Sometimes Binding Creation fail as corresponding Role is not created.
-# https://github.com/vmware-tanzu/carvel-kapp/issues/145
+# https://github.com/carvel-dev/kapp/issues/145
 - rules:
   - "upsert after upserting change-groups.kapp.k14s.io/rbac-roles"
   ignoreIfCyclical: true

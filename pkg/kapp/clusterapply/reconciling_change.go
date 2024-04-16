@@ -4,10 +4,10 @@
 package clusterapply
 
 import (
-	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
-	ctlresm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
+	ctldiff "carvel.dev/kapp/pkg/kapp/diff"
+	"carvel.dev/kapp/pkg/kapp/logger"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
+	ctlresm "carvel.dev/kapp/pkg/kapp/resourcesmisc"
 )
 
 type ReconcilingChange struct {

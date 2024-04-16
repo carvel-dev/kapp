@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/util"
+	"carvel.dev/kapp/pkg/kapp/logger"
+	"carvel.dev/kapp/pkg/kapp/util"
 	"golang.org/x/net/http2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -493,7 +493,7 @@ func (c *ResourcesImpl) isServerRescaleErr(err error) bool {
 	return false
 }
 
-// Handles case pointed out in : https://github.com/vmware-tanzu/carvel-kapp/issues/258.
+// Handles case pointed out in : https://github.com/carvel-dev/kapp/issues/258.
 // An internal network error which might succeed on retrying.
 func (c *ResourcesImpl) isInternalFailure(err error) bool {
 	switch err := err.(type) {
@@ -594,7 +594,7 @@ func IsResourceChangeBlockedErr(err error) bool {
 }
 
 // Retries retryable errors thrown by etcd server.
-// Addresses : https://github.com/vmware-tanzu/carvel-kapp/issues/106
+// Addresses : https://github.com/carvel-dev/kapp/issues/106
 func (c *ResourcesImpl) isEtcdRetryableError(err error) bool {
 	return etcdserverRetryableErrCheck.MatchString(err.Error())
 }

@@ -7,8 +7,8 @@ import (
 	"errors"
 	"testing"
 
+	"carvel.dev/kapp/pkg/kapp/crdupgradesafety"
 	"github.com/stretchr/testify/assert"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/crdupgradesafety"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 

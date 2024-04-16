@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"time"
 
-	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
-	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/util"
+	ctlconf "carvel.dev/kapp/pkg/kapp/config"
+	ctldiff "carvel.dev/kapp/pkg/kapp/diff"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
+	"carvel.dev/kapp/pkg/kapp/util"
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 

@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"strings"
 
-	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
-	ctlresm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
+	ctldiff "carvel.dev/kapp/pkg/kapp/diff"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
+	ctlresm "carvel.dev/kapp/pkg/kapp/resourcesmisc"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -93,7 +93,7 @@ func (c DeleteChange) IsDoneApplying() (ctlresm.DoneApplyState, []string, error)
 	// it should not matter if change is ignored or not
 	// because it should be deleted eventually anyway (thru GC)
 	// We should check for the UID check because of the following bug:
-	// https://github.com/vmware-tanzu/carvel-kapp/issues/229
+	// https://github.com/carvel-dev/kapp/issues/229
 	existingRes, exists, err := c.identifiedResources.Exists(res, ctlres.ExistsOpts{SameUID: true})
 	if err != nil {
 		return ctlresm.DoneApplyState{}, nil, err

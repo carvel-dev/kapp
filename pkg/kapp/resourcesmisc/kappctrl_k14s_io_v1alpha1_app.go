@@ -6,8 +6,8 @@ package resourcesmisc
 import (
 	"fmt"
 
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	kcv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 )

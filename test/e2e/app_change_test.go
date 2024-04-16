@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"carvel.dev/kapp/pkg/kapp/app"
 	uitest "github.com/cppforlife/go-cli-ui/ui/test"
 	"github.com/stretchr/testify/require"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/app"
 )
 
 func TestAppChange(t *testing.T) {

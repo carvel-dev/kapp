@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	authv1 "k8s.io/api/authorization/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"

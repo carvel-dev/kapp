@@ -7,9 +7,9 @@ import (
 	"context"
 	"errors"
 
-	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
-	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/preflight"
+	cmdcore "carvel.dev/kapp/pkg/kapp/cmd/core"
+	ctldgraph "carvel.dev/kapp/pkg/kapp/diffgraph"
+	"carvel.dev/kapp/pkg/kapp/preflight"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )

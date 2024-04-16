@@ -6,7 +6,7 @@ package preflight
 import (
 	"context"
 
-	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
+	ctldgraph "carvel.dev/kapp/pkg/kapp/diffgraph"
 )
 
 type CheckFunc func(context.Context, *ctldgraph.ChangeGraph, CheckConfig) error

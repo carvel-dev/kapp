@@ -4,7 +4,7 @@
 package resourcesmisc
 
 import (
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	"sigs.k8s.io/yaml"
 )
 

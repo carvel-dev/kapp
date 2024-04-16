@@ -4,8 +4,8 @@
 package diff
 
 import (
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	"github.com/cppforlife/go-patch/patch"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 type ChangeOp string

@@ -4,10 +4,10 @@
 package app
 
 import (
-	ctlapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/app"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	ctlapp "carvel.dev/kapp/pkg/kapp/app"
+	cmdcore "carvel.dev/kapp/pkg/kapp/cmd/core"
+	"carvel.dev/kapp/pkg/kapp/logger"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	"k8s.io/client-go/kubernetes"
 )
 

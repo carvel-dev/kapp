@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"testing"
 
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	"github.com/stretchr/testify/require"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 func TestHTTPFileSources(t *testing.T) {

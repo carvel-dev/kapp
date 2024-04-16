@@ -21,7 +21,7 @@ builds:
 
     ldflags:
       - -buildid=
-      - -X github.com/vmware-tanzu/carvel-kapp/pkg/kapp/version.Version={{ .Version }}
+      - -X carvel.dev/kapp/pkg/kapp/version.Version={{ .Version }}
 
 archives:
   - format: binary
@@ -32,20 +32,20 @@ archives:
       windows: Windows
       amd64: x86_64
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
   algorithm: sha256
   disable: false
 signs:
   - artifacts: checksum
-    certificate: '${artifact}.pem'
+    certificate: "${artifact}.pem"
     cmd: cosign
     args:
       - sign-blob
       - "--yes"
-      - '--output-certificate=${certificate}'
-      - '--output-signature=${signature}'
-      - '${artifact}'
-    output: true     
+      - "--output-certificate=${certificate}"
+      - "--output-signature=${signature}"
+      - "${artifact}"
+    output: true
 snapshot:
   name_template: "{{ .Tag }}-next"
 release:
@@ -76,7 +76,7 @@ release:
     <summary><h2>Installation and signature verification</h2></summary>
 
     ### Installation
-    
+
     #### By downloading binary from the release
 
     For instance, if you are using Linux on an AMD64 architecture:
@@ -140,5 +140,5 @@ changelog:
     # the changelog
     # Default is empty
     exclude:
-      - '^docs:'
+      - "^docs:"
       - typo

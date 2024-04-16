@@ -8,12 +8,12 @@ import (
 	"io"
 	"strings"
 
+	ctlcap "carvel.dev/kapp/pkg/kapp/clusterapply"
+	cmdcore "carvel.dev/kapp/pkg/kapp/cmd/core"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	"github.com/cppforlife/color"
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
-	ctlcap "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/clusterapply"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 type InspectTreeView struct {

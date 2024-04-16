@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"strings"
 
+	ctlconf "carvel.dev/kapp/pkg/kapp/config"
 	"github.com/cppforlife/color"
 	"github.com/k14s/difflib"
-	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
 )
 
 type TextDiffViewOpts struct {

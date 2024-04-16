@@ -4,7 +4,7 @@
 package clusterapply
 
 import (
-	ctlresm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
+	ctlresm "carvel.dev/kapp/pkg/kapp/resourcesmisc"
 )
 
 type UI interface {

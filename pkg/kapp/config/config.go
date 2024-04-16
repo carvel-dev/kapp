@@ -6,10 +6,10 @@ package config
 import (
 	"fmt"
 
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
+	"carvel.dev/kapp/pkg/kapp/version"
+	"carvel.dev/kapp/pkg/kapp/yttresmod"
 	semver "github.com/hashicorp/go-version"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/version"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/yttresmod"
 	"sigs.k8s.io/yaml"
 )
 

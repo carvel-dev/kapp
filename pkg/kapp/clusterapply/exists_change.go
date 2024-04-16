@@ -6,8 +6,8 @@ package clusterapply
 import (
 	"fmt"
 
-	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
+	ctldiff "carvel.dev/kapp/pkg/kapp/diff"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 )
 
 type ExistsChange struct {

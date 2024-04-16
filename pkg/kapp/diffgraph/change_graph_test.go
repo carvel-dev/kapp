@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
+	ctlconf "carvel.dev/kapp/pkg/kapp/config"
+	ctldgraph "carvel.dev/kapp/pkg/kapp/diffgraph"
+	"carvel.dev/kapp/pkg/kapp/logger"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	"github.com/stretchr/testify/require"
-	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
-	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 func TestChangeGraph(t *testing.T) {

@@ -4,13 +4,13 @@
 package app
 
 import (
+	cmdcore "carvel.dev/kapp/pkg/kapp/cmd/core"
+	"carvel.dev/kapp/pkg/kapp/logger"
+	ctllogs "carvel.dev/kapp/pkg/kapp/logs"
+	"carvel.dev/kapp/pkg/kapp/matcher"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
-	ctllogs "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logs"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/matcher"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	corev1 "k8s.io/api/core/v1"
 )
 

@@ -8,9 +8,9 @@ import (
 	"errors"
 	"fmt"
 
-	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
-	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/preflight"
+	cmdcore "carvel.dev/kapp/pkg/kapp/cmd/core"
+	ctldgraph "carvel.dev/kapp/pkg/kapp/diffgraph"
+	"carvel.dev/kapp/pkg/kapp/preflight"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

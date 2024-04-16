@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"testing"
 
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
+	ctlresm "carvel.dev/kapp/pkg/kapp/resourcesmisc"
 	"github.com/stretchr/testify/require"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
-	ctlresm "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resourcesmisc"
 )
 
 func TestPackagingCarvelDevV1alpha1PackageInstallFailure(t *testing.T) {

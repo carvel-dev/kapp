@@ -125,7 +125,7 @@ func (g *ResourceTypesImpl) serverResources() ([]*metav1.APIResourceList, error)
 				return serverResources, nil
 			}
 			// Even local services may not be Available immediately, so retry
-			lastErr = fmt.Errorf("%w (possibly related issue: https://github.com/vmware-tanzu/carvel-kapp/issues/12)", lastErr)
+			lastErr = fmt.Errorf("%w (possibly related issue: https://github.com/carvel-dev/kapp/issues/12)", lastErr)
 		}
 		time.Sleep(1 * time.Second)
 	}

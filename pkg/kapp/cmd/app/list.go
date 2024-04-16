@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"time"
 
+	cmdcore "carvel.dev/kapp/pkg/kapp/cmd/core"
+	cmdtools "carvel.dev/kapp/pkg/kapp/cmd/tools"
+	"carvel.dev/kapp/pkg/kapp/logger"
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	"github.com/spf13/cobra"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
-	cmdtools "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/tools"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 )
 
 type ListOptions struct {

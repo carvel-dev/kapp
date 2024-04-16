@@ -18,10 +18,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/app"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/preflight"
+	"carvel.dev/kapp/pkg/kapp/cmd/app"
+	"carvel.dev/kapp/pkg/kapp/cmd/core"
+	"carvel.dev/kapp/pkg/kapp/logger"
+	"carvel.dev/kapp/pkg/kapp/preflight"
 )
 
 func TestDeployFilesystem(t *testing.T) {

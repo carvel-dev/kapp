@@ -4,18 +4,18 @@
 package app
 
 import (
+	ctlapp "carvel.dev/kapp/pkg/kapp/app"
+	ctlcap "carvel.dev/kapp/pkg/kapp/clusterapply"
+	cmdcore "carvel.dev/kapp/pkg/kapp/cmd/core"
+	cmdtools "carvel.dev/kapp/pkg/kapp/cmd/tools"
+	ctlconf "carvel.dev/kapp/pkg/kapp/config"
+	ctldiff "carvel.dev/kapp/pkg/kapp/diff"
+	ctldgraph "carvel.dev/kapp/pkg/kapp/diffgraph"
+	ctldiffui "carvel.dev/kapp/pkg/kapp/diffui"
+	"carvel.dev/kapp/pkg/kapp/logger"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/spf13/cobra"
-	ctlapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/app"
-	ctlcap "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/clusterapply"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
-	cmdtools "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/tools"
-	ctlconf "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/config"
-	ctldiff "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diff"
-	ctldgraph "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffgraph"
-	ctldiffui "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/diffui"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
-	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 )
 
 type DeleteOptions struct {
@@ -292,7 +292,7 @@ const (
 func (o *DeleteOptions) changeIgnored(resources []ctlres.Resource) {
 	// Good example for use of this annotation is PVCs created by StatefulSet
 	// (PVCs do not get deleted when StatefulSet is deleted:
-	// https://github.com/vmware-tanzu/carvel-kapp/issues/36)
+	// https://github.com/carvel-dev/kapp/issues/36)
 	for _, res := range resources {
 		if _, found := res.Annotations()[ownedForDeletionAnnKey]; found {
 			res.MarkTransient(false)

@@ -4,12 +4,12 @@
 package configmap
 
 import (
+	cmdapp "carvel.dev/kapp/pkg/kapp/cmd/app"
+	cmdcore "carvel.dev/kapp/pkg/kapp/cmd/core"
+	"carvel.dev/kapp/pkg/kapp/logger"
 	"github.com/cppforlife/go-cli-ui/ui"
 	uitable "github.com/cppforlife/go-cli-ui/ui/table"
 	"github.com/spf13/cobra"
-	cmdapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/app"
-	cmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
-	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 )
 
 type ListOptions struct {
