@@ -42,6 +42,11 @@ type customWaitingResourceCondition struct {
 }
 
 func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
+	deletingRes := NewDeleting(s.resource)
+	if deletingRes != nil {
+		return deletingRes.IsDoneApplying()
+	}
+
 	obj := customWaitingResourceStruct{}
 
 	err := s.resource.AsUncheckedTypedObj(&obj)

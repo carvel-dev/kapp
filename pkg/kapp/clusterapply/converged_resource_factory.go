@@ -28,6 +28,10 @@ func (f ConvergedResourceFactory) New(res ctlres.Resource,
 	associatedRsFunc func(ctlres.Resource, []ctlres.ResourceRef) ([]ctlres.Resource, error)) ConvergedResource {
 
 	specificResFactories := []SpecificResFactory{
+		// custom waiting resource waiter deals with reconciliation _and_ deletion
+		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
+			return ctlresm.NewCustomWaitingResource(res, f.waitRules), nil
+		},
 		// kapp-controller app resource waiter deals with reconciliation _and_ deletion
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			return ctlresm.NewKappctrlK14sIoV1alpha1App(res), nil
@@ -38,13 +42,11 @@ func (f ConvergedResourceFactory) New(res ctlres.Resource,
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			return ctlresm.NewPackagingCarvelDevV1alpha1PackageRepo(res), nil
 		},
+
 		// Deal with deletion generically since below resource waiters do not not know about that
 		// TODO shoud we make all of them deal with deletion internally?
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			return ctlresm.NewDeleting(res), nil
-		},
-		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
-			return ctlresm.NewCustomWaitingResource(res, f.waitRules), nil
 		},
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			return ctlresm.NewAPIExtensionsVxCRD(res), nil
