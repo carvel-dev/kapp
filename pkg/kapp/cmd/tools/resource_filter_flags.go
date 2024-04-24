@@ -12,23 +12,23 @@ import (
 )
 
 type ResourceFilterFlags struct {
-	age string
-	rf  ctlres.ResourceFilter
-	bf  string
+	Age string
+	Rf  ctlres.ResourceFilter
+	Bf  string
 }
 
 func (s *ResourceFilterFlags) Set(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&s.age, "filter-age", "", "Set age filter (example: 5m-, 500h+, 10m-)")
+	cmd.Flags().StringVar(&s.Age, "filter-age", "", "Set age filter (example: 5m-, 500h+, 10m-)")
 
-	cmd.Flags().StringSliceVar(&s.rf.Kinds, "filter-kind", nil, "Set kinds filter (example: Pod) (can repeat)")
-	cmd.Flags().StringSliceVar(&s.rf.Namespaces, "filter-ns", nil, "Set namespace filter (example: knative-serving) (can repeat)")
-	cmd.Flags().StringSliceVar(&s.rf.Names, "filter-name", nil, "Set name filter (example: controller) (can repeat)")
-	cmd.Flags().StringSliceVar(&s.rf.KindNames, "filter-kind-name", nil, "Set kind-name filter (example: Pod/controller) (can repeat)")
-	cmd.Flags().StringSliceVar(&s.rf.KindNamespaces, "filter-kind-ns", nil, "Set kind-namespace filter (example: Pod/, Pod/knative-serving) (can repeat)")
-	cmd.Flags().StringSliceVar(&s.rf.KindNsNames, "filter-kind-ns-name", nil, "Set kind-namespace-name filter (example: Deployment/knative-serving/controller) (can repeat)")
-	cmd.Flags().StringSliceVar(&s.rf.Labels, "filter-labels", nil, "Set label filter (example: x=y)")
+	cmd.Flags().StringSliceVar(&s.Rf.Kinds, "filter-kind", nil, "Set kinds filter (example: Pod) (can repeat)")
+	cmd.Flags().StringSliceVar(&s.Rf.Namespaces, "filter-ns", nil, "Set namespace filter (example: knative-serving) (can repeat)")
+	cmd.Flags().StringSliceVar(&s.Rf.Names, "filter-name", nil, "Set name filter (example: controller) (can repeat)")
+	cmd.Flags().StringSliceVar(&s.Rf.KindNames, "filter-kind-name", nil, "Set kind-name filter (example: Pod/controller) (can repeat)")
+	cmd.Flags().StringSliceVar(&s.Rf.KindNamespaces, "filter-kind-ns", nil, "Set kind-namespace filter (example: Pod/, Pod/knative-serving) (can repeat)")
+	cmd.Flags().StringSliceVar(&s.Rf.KindNsNames, "filter-kind-ns-name", nil, "Set kind-namespace-name filter (example: Deployment/knative-serving/controller) (can repeat)")
+	cmd.Flags().StringSliceVar(&s.Rf.Labels, "filter-labels", nil, "Set label filter (example: x=y)")
 
-	cmd.Flags().StringVar(&s.bf, "filter", "", `Set filter (example: {"and":[{"not":{"resource":{"kinds":["foo%"]}}},{"resource":{"kinds":["!foo"]}}]})`)
+	cmd.Flags().StringVar(&s.Bf, "filter", "", `Set filter (example: {"and":[{"not":{"resource":{"kinds":["foo%"]}}},{"resource":{"kinds":["!foo"]}}]})`)
 }
 
 func (s *ResourceFilterFlags) ResourceFilter() (ctlres.ResourceFilter, error) {
@@ -37,12 +37,12 @@ func (s *ResourceFilterFlags) ResourceFilter() (ctlres.ResourceFilter, error) {
 		return ctlres.ResourceFilter{}, err
 	}
 
-	rf := s.rf
+	rf := s.Rf
 	rf.CreatedAtAfterTime = createdAtAfterTime
 	rf.CreatedAtBeforeTime = createdAtBeforeTime
 
-	if len(s.bf) > 0 {
-		boolFilter, err := ctlres.NewBoolFilterFromString(s.bf)
+	if len(s.Bf) > 0 {
+		boolFilter, err := ctlres.NewBoolFilterFromString(s.Bf)
 		if err != nil {
 			return ctlres.ResourceFilter{}, err
 		}
@@ -54,21 +54,21 @@ func (s *ResourceFilterFlags) ResourceFilter() (ctlres.ResourceFilter, error) {
 }
 
 func (s *ResourceFilterFlags) Times() (*time.Time, *time.Time, error) {
-	if len(s.age) == 0 {
+	if len(s.Age) == 0 {
 		return nil, nil, nil
 	}
 
 	var ageStr string
 	var ageOlder bool
 
-	lastIdx := len(s.age) - 1
+	lastIdx := len(s.Age) - 1
 
-	switch string(s.age[lastIdx]) {
+	switch string(s.Age[lastIdx]) {
 	case "+":
-		ageStr = s.age[:lastIdx]
+		ageStr = s.Age[:lastIdx]
 		ageOlder = true
 	case "-":
-		ageStr = s.age[:lastIdx]
+		ageStr = s.Age[:lastIdx]
 	}
 
 	dur, err := time.ParseDuration(ageStr)
