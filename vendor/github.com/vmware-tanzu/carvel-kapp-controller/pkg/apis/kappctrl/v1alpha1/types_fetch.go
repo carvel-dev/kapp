@@ -1,10 +1,10 @@
-// Copyright 2020 VMware, Inc.
+// Copyright 2024 The Carvel Authors.
 // SPDX-License-Identifier: Apache-2.0
 
 package v1alpha1
 
 import (
-	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	versions "carvel.dev/vendir/pkg/vendir/versions/v1alpha1"
 )
 
 // +k8s:openapi-gen=true
@@ -106,6 +106,9 @@ type AppFetchGit struct {
 	// Skip lfs download (optional)
 	// +optional
 	LFSSkipSmudge bool `json:"lfsSkipSmudge,omitempty" protobuf:"varint,5,opt,name=lfsSkipSmudge"`
+	// Force the usage of HTTP Basic Auth when Basic Auth is provided (optional)
+	// +optional
+	ForceHTTPBasicAuth bool `json:"forceHTTPBasicAuth,omitempty" protobuf:"varint,7,opt,name=forceHTTPBasicAuth"`
 }
 
 // +k8s:openapi-gen=true

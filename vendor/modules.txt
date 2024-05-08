@@ -1,3 +1,6 @@
+# carvel.dev/vendir v0.40.0
+## explicit; go 1.21
+carvel.dev/vendir/pkg/vendir/versions/v1alpha1
 # github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef
 ## explicit
 github.com/cppforlife/cobrautil
@@ -118,7 +121,7 @@ github.com/mailru/easyjson/jwriter
 # github.com/mattn/go-colorable v0.1.13
 ## explicit; go 1.15
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.19
+# github.com/mattn/go-isatty v0.0.20
 ## explicit; go 1.15
 github.com/mattn/go-isatty
 # github.com/mitchellh/go-wordwrap v1.0.1
@@ -155,13 +158,10 @@ github.com/stretchr/testify/require
 # github.com/vito/go-interact v1.0.1
 ## explicit; go 1.12
 github.com/vito/go-interact/interact
-# github.com/vmware-tanzu/carvel-kapp-controller v0.50.2
+# github.com/vmware-tanzu/carvel-kapp-controller v0.51.0
 ## explicit; go 1.21
 github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1
 github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1
-# github.com/vmware-tanzu/carvel-vendir v0.36.0
-## explicit; go 1.21
-github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1
 # golang.org/x/net v0.25.0
 ## explicit; go 1.18
 golang.org/x/net/context

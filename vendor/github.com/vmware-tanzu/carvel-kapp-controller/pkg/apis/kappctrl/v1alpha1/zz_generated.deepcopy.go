@@ -6,7 +6,7 @@
 package v1alpha1
 
 import (
-	versionsv1alpha1 "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	versionsv1alpha1 "carvel.dev/vendir/pkg/vendir/versions/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )

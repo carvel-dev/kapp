@@ -3,7 +3,7 @@
 
 syntax = 'proto2';
 
-package github.com.vmware_tanzu.carvel_vendir.pkg.vendir.versions.v1alpha1;
+package carvel.dev.vendir.pkg.vendir.versions.v1alpha1;
 
 // Package-wide variables from generator "generated".
 option go_package = "v1alpha1";
