@@ -499,8 +499,8 @@ k8s.io/client-go/util/flowcontrol
 k8s.io/client-go/util/homedir
 k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/workqueue
-# k8s.io/component-helpers v0.29.3
-## explicit; go 1.21
+# k8s.io/component-helpers v0.30.0
+## explicit; go 1.22.0
 k8s.io/component-helpers/auth/rbac/validation
 # k8s.io/klog/v2 v2.120.1
 ## explicit; go 1.18
