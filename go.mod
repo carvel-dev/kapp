@@ -2,6 +2,8 @@ module github.com/vmware-tanzu/carvel-kapp
 
 go 1.22
 
+toolchain go1.22.3
+
 require (
 	github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
