@@ -1,6 +1,7 @@
 name: Trivy CVE Dependency Scanner
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 0 * * *'
 
@@ -10,7 +11,7 @@ jobs:
     with:
       repo: carvel-dev/kapp
       tool: kapp
-      goVersion: 1.22.2
+      goVersion: '1.22'
     secrets:
       githubToken: ${{ secrets.GITHUB_TOKEN }}
       slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL }}

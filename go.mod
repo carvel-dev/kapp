@@ -1,8 +1,6 @@
 module carvel.dev/kapp
 
-go 1.22.0
-
-toolchain go1.22.2
+go 1.22.3
 
 require (
 	github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef
