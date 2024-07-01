@@ -13,7 +13,7 @@ require (
 	github.com/k14s/ytt v0.36.0
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/openshift/crd-schema-checker v0.0.0-20240404194209-35a9033b1d11
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.51.0
