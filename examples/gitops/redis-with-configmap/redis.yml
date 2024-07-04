@@ -19,7 +19,7 @@ metadata:
 spec:
   containers:
   - name: redis
-    image: registry.k8s.io/redis:e2e
+    image: registry.k8s.io/redis@sha256:cb111d1bd870a6a471385a4a69ad17469d326e9dd91e0e455350cacf36e1b3ee
     ports:
     - containerPort: 6379
     resources:
