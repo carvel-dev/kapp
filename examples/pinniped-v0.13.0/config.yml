@@ -521,7 +521,7 @@ metadata:
   labels:
     app: pinniped-concierge
 data:
-  pinniped.yaml: "discovery:\n  url: null\napi:\n  servingCertificate:\n    durationSeconds: 2592000\n    renewBeforeSeconds: 2160000\napiGroupSuffix: pinniped.dev\n# aggregatedAPIServerPort may be set here, although other YAML references to the default port (10250) may also need to be updated\n# impersonationProxyServerPort may be set here, although other YAML references to the default port (8444) may also need to be updated\nnames:\n  servingCertificateSecret: pinniped-concierge-api-tls-serving-certificate\n  credentialIssuer: pinniped-concierge-config\n  apiService: pinniped-concierge-api\n  impersonationLoadBalancerService: pinniped-concierge-impersonation-proxy-load-balancer\n  impersonationClusterIPService: pinniped-concierge-impersonation-proxy-cluster-ip\n  impersonationTLSCertificateSecret: pinniped-concierge-impersonation-proxy-tls-serving-certificate\n  impersonationCACertificateSecret: pinniped-concierge-impersonation-proxy-ca-certificate\n  impersonationSignerSecret: pinniped-concierge-impersonation-proxy-signer-ca-certificate\n  agentServiceAccount: pinniped-concierge-kube-cert-agent\nlabels: {\"app\":\"pinniped-concierge\"}\nkubeCertAgent:\n  namePrefix: pinniped-concierge-kube-cert-agent-\n  \n  \n  image: https://ghcr.io/vmware-tanzu/pinniped/pinniped-server:v0.32.0@sha256:f76fa757678f1ab2492be698dc33afbec5ce22b32eebb8a648d5196f9e63ce35\n  \n  \n  \n\n"
+  pinniped.yaml: "discovery:\n  url: null\napi:\n  servingCertificate:\n    durationSeconds: 2592000\n    renewBeforeSeconds: 2160000\napiGroupSuffix: pinniped.dev\n# aggregatedAPIServerPort may be set here, although other YAML references to the default port (10250) may also need to be updated\n# impersonationProxyServerPort may be set here, although other YAML references to the default port (8444) may also need to be updated\nnames:\n  servingCertificateSecret: pinniped-concierge-api-tls-serving-certificate\n  credentialIssuer: pinniped-concierge-config\n  apiService: pinniped-concierge-api\n  impersonationLoadBalancerService: pinniped-concierge-impersonation-proxy-load-balancer\n  impersonationClusterIPService: pinniped-concierge-impersonation-proxy-cluster-ip\n  impersonationTLSCertificateSecret: pinniped-concierge-impersonation-proxy-tls-serving-certificate\n  impersonationCACertificateSecret: pinniped-concierge-impersonation-proxy-ca-certificate\n  impersonationSignerSecret: pinniped-concierge-impersonation-proxy-signer-ca-certificate\n  agentServiceAccount: pinniped-concierge-kube-cert-agent\nlabels: {\"app\":\"pinniped-concierge\"}\nkubeCertAgent:\n  namePrefix: pinniped-concierge-kube-cert-agent-\n  \n  \n  image: ghcr.io/vmware-tanzu/pinniped/pinniped-server:v0.32.0@sha256:f76fa757678f1ab2492be698dc33afbec5ce22b32eebb8a648d5196f9e63ce35\n  \n  \n  \n\n"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -549,7 +549,7 @@ spec:
       serviceAccountName: pinniped-concierge
       containers:
       - name: pinniped-concierge
-        image: https://ghcr.io/vmware-tanzu/pinniped/pinniped-server:v0.32.0@sha256:f76fa757678f1ab2492be698dc33afbec5ce22b32eebb8a648d5196f9e63ce35
+        image: ghcr.io/vmware-tanzu/pinniped/pinniped-server:v0.32.0@sha256:f76fa757678f1ab2492be698dc33afbec5ce22b32eebb8a648d5196f9e63ce35
         imagePullPolicy: IfNotPresent
         securityContext:
           readOnlyRootFilesystem: true
@@ -1172,7 +1172,7 @@ spec:
       serviceAccountName: local-user-authenticator
       containers:
       - name: local-user-authenticator
-        image: https://ghcr.io/vmware-tanzu/pinniped/pinniped-server:v0.32.0@sha256:f76fa757678f1ab2492be698dc33afbec5ce22b32eebb8a648d5196f9e63ce35
+        image: ghcr.io/vmware-tanzu/pinniped/pinniped-server:v0.32.0@sha256:f76fa757678f1ab2492be698dc33afbec5ce22b32eebb8a648d5196f9e63ce35
         imagePullPolicy: IfNotPresent
         command:
         - local-user-authenticator
@@ -1406,7 +1406,7 @@ spec:
       serviceAccountName: pinniped-supervisor
       containers:
       - name: pinniped-supervisor
-        image: https://ghcr.io/vmware-tanzu/pinniped/pinniped-server:v0.32.0@sha256:f76fa757678f1ab2492be698dc33afbec5ce22b32eebb8a648d5196f9e63ce35
+        image: ghcr.io/vmware-tanzu/pinniped/pinniped-server:v0.32.0@sha256:f76fa757678f1ab2492be698dc33afbec5ce22b32eebb8a648d5196f9e63ce35
         imagePullPolicy: IfNotPresent
         command:
         - pinniped-supervisor
