@@ -22,7 +22,7 @@ time kapp delete -y -a cert-manager
 time kapp deploy -y -a gk -f examples/gatekeeper-v3.10.0/config.yml
 time kapp delete -y -a gk
 
-time kapp deploy -y -a pinniped -f examples/pinniped-v0.13.0/
+time kapp deploy -y -a pinniped -f examples/pinniped-v0.32.0/
 time kapp delete -y -a pinniped
 
 pkill -9 'minikube'
