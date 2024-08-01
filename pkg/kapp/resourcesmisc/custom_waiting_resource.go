@@ -5,11 +5,15 @@ package resourcesmisc
 
 import (
 	"fmt"
+	"sync"
+	"time"
 
 	ctlconf "carvel.dev/kapp/pkg/kapp/config"
 	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+var timeoutMap sync.Map
 
 type CustomWaitingResource struct {
 	resource ctlres.Resource
@@ -81,18 +85,40 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 	hasConditionWaitingForGeneration := false
 	// Check on failure conditions first
 	for _, condMatcher := range s.waitRule.ConditionMatchers {
+		// Check whether timeout has occured
+		var isTimeOutConditionPresent bool
+
 		for _, cond := range obj.Status.Conditions {
 			if cond.Type == condMatcher.Type && cond.Status == condMatcher.Status {
 				if condMatcher.SupportsObservedGeneration && obj.Metadata.Generation != cond.ObservedGeneration {
 					hasConditionWaitingForGeneration = true
 					continue
 				}
+
+				if condMatcher.Timeout != "" {
+					isTimeOutConditionPresent = true
+					if s.hasTimeoutOccurred(condMatcher.Timeout, fmt.Sprintf("%s.%s", s.resource.Namespace(), s.resource.Name())) {
+						return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
+							"Encountered failure condition %s == %s: %s (message: %s) continuously for %s duration",
+							cond.Type, condMatcher.Status, cond.Reason, cond.Message, condMatcher.Timeout)}
+					}
+					return DoneApplyState{Done: false, Message: fmt.Sprintf(
+						"%s: %s (message: %s)",
+						cond.Type, cond.Reason, cond.Message)}
+				}
+
 				if condMatcher.Failure {
 					return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
 						"Encountered failure condition %s == %s: %s (message: %s)",
 						cond.Type, condMatcher.Status, cond.Reason, cond.Message)}
 				}
 			}
+		}
+
+		// Reset the timer in case timeout condition flipped from being present to not present in the Cluster resource status
+		if !isTimeOutConditionPresent {
+			timeoutMap.Delete(fmt.Sprintf("%s.%s", s.resource.Namespace(), s.resource.Name()))
+			continue
 		}
 	}
 
@@ -131,4 +157,17 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 	}
 
 	return DoneApplyState{Done: false, Message: "No failing or successful conditions found"}
+}
+
+func (s CustomWaitingResource) hasTimeoutOccurred(timeout string, key string) bool {
+	expiryTime, found := timeoutMap.Load(key)
+	if found {
+		return time.Now().Sub(expiryTime.(time.Time)) > 0
+	}
+	dur, err := time.ParseDuration(timeout)
+	if err != nil {
+		dur = 15 * time.Minute
+	}
+	timeoutMap.Store(key, time.Now().Add(dur))
+	return false
 }

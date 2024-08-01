@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -30,6 +31,33 @@ func TestWaitTimeout(t *testing.T) {
          image: busybox
          command: ["/bin/sh", "-c", "sleep 10"] 
        restartPolicy: Never
+`
+
+	yaml2 := `
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+spec:
+  containers:
+  - name: nginx
+    image: %s
+    ports:
+    - containerPort: 80
+---
+apiVersion: kapp.k14s.io/v1alpha1
+kind: Config
+waitRules:
+- supportsObservedGeneration: true
+  conditionMatchers:
+  - type: ContainersReady
+    status: "False"
+    timeout: 50s
+  - type: Ready
+    status: "True"
+    success: true
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
 `
 
 	name := "test-wait-timeout"
@@ -66,5 +94,24 @@ func TestWaitTimeout(t *testing.T) {
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(yaml1)})
 
 		require.NoErrorf(t, err, "Expected to be successful without resource timeout")
+	})
+
+	cleanUp()
+
+	logger.Section("Deploy timeout after staying in a condition for certain time", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
+			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(fmt.Sprintf(yaml2, "nginx:200"))})
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "message: containers with unready status: [nginx]) continuously for 50s duration")
+	})
+
+	cleanUp()
+
+	logger.Section("Deploy should be successful", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
+			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(fmt.Sprintf(yaml2, "nginx"))})
+
+		require.NoError(t, err)
 	})
 }
