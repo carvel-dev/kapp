@@ -50,12 +50,12 @@ kind: Config
 waitRules:
 - supportsObservedGeneration: true
   conditionMatchers:
-  - type: ContainersReady
-    status: "False"
-    timeout: 50s
   - type: Ready
     status: "True"
     success: true
+  - type: ContainersReady
+    status: "False"
+    timeout: 50s
   resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
 `

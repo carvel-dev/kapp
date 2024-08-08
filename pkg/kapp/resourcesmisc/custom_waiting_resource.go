@@ -97,7 +97,7 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 
 				if condMatcher.Timeout != "" {
 					isTimeOutConditionPresent = true
-					if s.hasTimeoutOccurred(condMatcher.Timeout, fmt.Sprintf("%s.%s", s.resource.Namespace(), s.resource.Name())) {
+					if s.hasTimeoutOccurred(condMatcher.Timeout, s.resource.Description()) {
 						return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
 							"Encountered failure condition %s == %s: %s (message: %s) continuously for %s duration",
 							cond.Type, condMatcher.Status, cond.Reason, cond.Message, condMatcher.Timeout)}
@@ -115,9 +115,10 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 			}
 		}
 
-		// Reset the timer in case timeout condition flipped from being present to not present in the Cluster resource status
-		if !isTimeOutConditionPresent {
-			timeoutMap.Delete(fmt.Sprintf("%s.%s", s.resource.Namespace(), s.resource.Name()))
+		// Reset the timer in case timeout condition flipped from being present to not present in the Cluster resource status.
+		// Reset should only happen if condMatcher has timeout. Otherwise, it is possible that condMatcher which dont have timeout will try to reset the map.
+		if condMatcher.Timeout != "" && !isTimeOutConditionPresent {
+			timeoutMap.Delete(s.resource.Description())
 			continue
 		}
 	}
