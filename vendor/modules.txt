@@ -545,7 +545,7 @@ k8s.io/component-base/metrics/legacyregistry
 k8s.io/component-base/metrics/prometheus/feature
 k8s.io/component-base/metrics/prometheusextension
 k8s.io/component-base/version
-# k8s.io/component-helpers v0.30.3
+# k8s.io/component-helpers v0.31.0
 ## explicit; go 1.22.0
 k8s.io/component-helpers/auth/rbac/validation
 # k8s.io/klog/v2 v2.130.1
