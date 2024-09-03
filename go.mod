@@ -71,3 +71,24 @@ require (
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 )
+
+replace (
+	k8s.io/cloud-provider => k8s.io/cloud-provider v0.30.2
+	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.30.2
+	k8s.io/controller-manager => k8s.io/controller-manager v0.30.2
+	k8s.io/cri-api => k8s.io/cri-api v0.30.2
+	k8s.io/cri-client => k8s.io/cri-client v0.30.2
+	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.30.2
+	k8s.io/dynamic-resource-allocation => k8s.io/dynamic-resource-allocation v0.30.2
+	k8s.io/endpointslice => k8s.io/endpointslice v0.30.2
+	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.30.2
+	k8s.io/kube-proxy => k8s.io/kube-proxy v0.30.2
+	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.30.2
+	k8s.io/kubectl => k8s.io/kubectl v0.30.2
+	k8s.io/kubelet => k8s.io/kubelet v0.30.2
+	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.30.2
+	k8s.io/metrics => k8s.io/metrics v0.30.2
+	k8s.io/mount-utils => k8s.io/mount-utils v0.30.2
+	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.30.2
+	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.30.2
+)
