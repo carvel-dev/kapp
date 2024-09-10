@@ -10,7 +10,7 @@ jobs:
     with:
       repo: carvel-dev/kapp
       tool: kapp
-      goVersion: 1.21.9
+      goVersion: 1.22.5
     secrets:
       githubToken: ${{ secrets.GITHUB_TOKEN }}
       slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL }}
