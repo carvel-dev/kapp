@@ -99,8 +99,8 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 					isTimeOutConditionPresent = true
 					if s.hasTimeoutOccurred(condMatcher.Timeout, s.resource.Description()) {
 						return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
-							"Encountered failure condition %s == %s: %s (message: %s) continuously for %s duration",
-							cond.Type, condMatcher.Status, cond.Reason, cond.Message, condMatcher.Timeout)}
+							"continuously failed for %s with %s == %s: %s (message: %s)",
+							condMatcher.Timeout, cond.Type, condMatcher.Status, cond.Reason, cond.Message)}
 					}
 					return DoneApplyState{Done: false, Message: fmt.Sprintf(
 						"%s: %s (message: %s)",
