@@ -65,10 +65,17 @@ func (s CustomWaitingResource) IsDoneApplying() DoneApplyState {
 	}
 
 	if s.waitRule.Ytt != nil {
+		startTime, found := timeoutMap.Load(s.resource.Description())
+		if !found {
+			startTime = time.Now().Unix()
+			timeoutMap.Store(s.resource.Description(), startTime)
+		}
 		configObj, err := WaitRuleContractV1{
 			ResourceMatcher: ctlres.AnyMatcher{
 				Matchers: ctlconf.ResourceMatchers(s.waitRule.ResourceMatchers).AsResourceMatchers()},
-			Starlark: s.waitRule.Ytt.FuncContractV1.Resource,
+			Starlark:    s.waitRule.Ytt.FuncContractV1.Resource,
+			CurrentTime: time.Now().Unix(),
+			StartTime:   startTime.(int64),
 		}.Apply(s.resource)
 		if err != nil {
 			return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(

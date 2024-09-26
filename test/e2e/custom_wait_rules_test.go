@@ -260,3 +260,65 @@ Succeeded`))
 		require.Equal(t, expectedOutput, out)
 	})
 }
+
+func TestYTTWaitRuleWithTimeout(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	name := "test-custom-wait-rule-timeout-contract-v1"
+
+	yaml := `
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+spec:
+  containers:
+  - name: nginx
+    image: %s
+    ports:
+    - containerPort: 80
+---
+apiVersion: kapp.k14s.io/v1alpha1
+kind: Config
+waitRules:
+- ytt:
+    funcContractV1:
+      resource.star: |
+        def is_done(resource):
+          for condition in resource.status.conditions:
+            if condition.type == "ContainersReady" and condition.status == "False":
+              expiryTime = getExpiryTime(resource.startTime)
+              if int(resource.currentTime) - expiryTime > 0:
+                  return {"done": True, "successful": False, "message": "Continuously failed for 50s with " + condition.message}
+              else:
+                  return {"done": False, "successful": False, "message": condition.message}
+              end
+            elif condition.type == "Ready" and condition.status == "True":
+              return {"done": True, "successful": True, "message": condition.message}
+            end
+          end
+          return {"done": False, "successful": False, "message": "Not in Failed or Running state"}
+        end
+    
+        def getExpiryTime(startTime):
+        return int(startTime)+50 
+        end
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: v1, kind: Pod}
+`
+
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	logger.Section("Deploy timeout after staying in a condition for certain time with ytt wait rules", func() {
+		_, err := kapp.RunWithOpts([]string{"deploy", "-f", "-", "-a", name, "--json"},
+			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(fmt.Sprintf(yaml, "nginx:200"))})
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "Continuously failed for 50s with")
+	})
+}
