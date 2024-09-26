@@ -16,6 +16,8 @@ import (
 type WaitRuleContractV1 struct {
 	ResourceMatcher ctlres.ResourceMatcher
 	Starlark        string
+	CurrentTime     int64
+	StartTime       int64
 }
 
 type waitRuleContractV1Result struct {
@@ -48,6 +50,7 @@ func (t WaitRuleContractV1) evalYtt(res ctlres.Resource) (*WaitRuleContractV1Res
 		}
 		return yaml.Marshal(res.DeepCopyRaw())
 	}
+	opts.DataValuesFlags.KVsFromStrings = []string{fmt.Sprintf("startTime=%d", t.StartTime), fmt.Sprintf("currentTime=%d", t.CurrentTime)}
 
 	filesToProcess := []*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("resource.star", []byte(t.Starlark))),
