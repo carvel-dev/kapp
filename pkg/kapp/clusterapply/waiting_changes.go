@@ -116,9 +116,9 @@ func (c *WaitingChanges) WaitForAny() ([]WaitingChange, []string, error) {
 			case state.Done && !state.Successful:
 				msg := ""
 				if len(state.Message) > 0 {
-					msg += " (" + state.Message + ")"
+					msg = ": " + state.Message
 				}
-				err := fmt.Errorf("%s: Finished unsuccessfully%s", desc, msg)
+				err := fmt.Errorf("%s: Finished waiting unsuccessfully%s", desc, msg)
 				if c.exitOnError {
 					return nil, nil, err
 				}

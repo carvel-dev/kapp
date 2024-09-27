@@ -36,7 +36,7 @@ status:
 	expectedState := ctlresm.DoneApplyState{
 		Done:       true,
 		Successful: false,
-		Message:    fmt.Sprintf("Reconcile failed:  (message: %s)", usefulErrorMessage),
+		Message:    fmt.Sprintf("Reconcile failed: message: %s", usefulErrorMessage),
 	}
 	require.Equal(t, expectedState, state)
 
@@ -46,7 +46,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       true,
 		Successful: false,
-		Message:    fmt.Sprintf("Reconcile failed:  (message: %s)", conditionMessage),
+		Message:    fmt.Sprintf("Reconcile failed: message: %s", conditionMessage),
 	}
 	require.Equal(t, state, expectedState)
 

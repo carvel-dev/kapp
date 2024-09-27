@@ -84,7 +84,7 @@ func (s CoreV1Pod) pendingDetailsReason(pod corev1.Pod) string {
 		if st.State.Waiting != nil {
 			msg := st.State.Waiting.Reason
 			if len(st.State.Waiting.Message) > 0 {
-				msg += fmt.Sprintf(" (message: %s)", st.State.Waiting.Message)
+				msg += fmt.Sprintf(", message: %s", st.State.Waiting.Message)
 			}
 			return msg
 		}
@@ -96,7 +96,7 @@ func (s CoreV1Pod) pendingDetailsReason(pod corev1.Pod) string {
 			if cond.Reason == corev1.PodReasonUnschedulable {
 				msg := cond.Reason
 				if len(cond.Message) > 0 {
-					msg += fmt.Sprintf(" (message: %s)", cond.Message)
+					msg += fmt.Sprintf(", message: %s", cond.Message)
 				}
 				return msg
 			}

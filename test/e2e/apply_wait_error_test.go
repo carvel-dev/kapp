@@ -128,8 +128,8 @@ spec:
 
 		expectedErrs := []string{
 			`kapp: Error:`,
-			fmt.Sprintf(`- waiting on reconcile job/my-job-fail-2 (batch/v1) namespace: %s: Finished unsuccessfully (Failed with reason BackoffLimitExceeded: Job has reached the specified backoff limit)`, env.Namespace),
-			fmt.Sprintf(`- waiting on reconcile job/my-job-fail (batch/v1) namespace: %s: Finished unsuccessfully (Failed with reason BackoffLimitExceeded: Job has reached the specified backoff limit)`, env.Namespace),
+			fmt.Sprintf(`- waiting on reconcile job/my-job-fail-2 (batch/v1) namespace: %s: Finished waiting unsuccessfully: Failed with reason BackoffLimitExceeded: Job has reached the specified backoff limit`, env.Namespace),
+			fmt.Sprintf(`- waiting on reconcile job/my-job-fail (batch/v1) namespace: %s: Finished waiting unsuccessfully: Failed with reason BackoffLimitExceeded: Job has reached the specified backoff limit`, env.Namespace),
 			fmt.Sprintf(`- create service/service-fail (v1) namespace: %s: Creating resource service/service-fail (v1) namespace: kapp-test: API server says: Service "service-fail" is invalid: spec.ports: Required value (reason: Invalid)`, env.Namespace),
 		}
 

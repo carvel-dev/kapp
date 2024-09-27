@@ -51,13 +51,13 @@ func (s AppsV1Deployment) IsDoneApplying() DoneApplyState {
 		case appsv1.DeploymentProgressing:
 			if cond.Status == corev1.ConditionFalse {
 				return DoneApplyState{Done: true, Successful: false, Message: fmt.Sprintf(
-					"Deployment is not progressing: %s (message: %s)", cond.Reason, cond.Message)}
+					"Deployment is not progressing: %s, message: %s", cond.Reason, cond.Message)}
 			}
 
 		case appsv1.DeploymentReplicaFailure:
 			if cond.Status == corev1.ConditionTrue {
 				return DoneApplyState{Done: false, Successful: false, Message: fmt.Sprintf(
-					"Deployment has encountered replica failure: %s (message: %s)", cond.Reason, cond.Message)}
+					"Deployment has encountered replica failure: %s, message: %s", cond.Reason, cond.Message)}
 			}
 		}
 	}

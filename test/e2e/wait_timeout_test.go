@@ -103,7 +103,7 @@ waitRules:
 			RunOpts{IntoNs: true, AllowError: true, StdinReader: strings.NewReader(fmt.Sprintf(yaml2, "nginx:200"))})
 
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "message: containers with unready status: [nginx]) continuously for 50s duration")
+		require.Contains(t, err.Error(), "Continuously failed for 50s with")
 	})
 
 	cleanUp()

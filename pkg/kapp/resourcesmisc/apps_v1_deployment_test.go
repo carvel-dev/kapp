@@ -82,7 +82,7 @@ status:
 	expectedState := ctlresm.DoneApplyState{
 		Done:       true,
 		Successful: false,
-		Message:    "Deployment is not progressing: ProgressDeadlineExceeded (message: Progress deadline exceeded)",
+		Message:    "Deployment is not progressing: ProgressDeadlineExceeded, message: Progress deadline exceeded",
 	}
 
 	require.Equal(t, expectedState, state, "Found incorrect state")
@@ -107,7 +107,7 @@ status:
 	expectedState = ctlresm.DoneApplyState{
 		Done:       false,
 		Successful: false,
-		Message:    "Deployment has encountered replica failure: FailedCreate (message: Failed to create pods)",
+		Message:    "Deployment has encountered replica failure: FailedCreate, message: Failed to create pods",
 	}
 
 	require.Equal(t, expectedState, state, "Found incorrect state")
