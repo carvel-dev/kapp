@@ -11,14 +11,29 @@ jobs:
   test-all:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
+      max-parallel: 2
       matrix:
-        k8s-version: [1.27.0, 1.30.0, 1.31.0, 1.32.0]
+        k8s-version: [v1.27.0, latest]
     steps:
-    - name: Create kind cluster v${{matrix.k8s-version}}
+    - name: install kind
       uses: helm/kind-action@v1
       with:
-        node_image: kindest/node:v${{ matrix.k8s-version }}
-    - name: Verify kind
+        install_only: true
+    - name: Resolve Kubernetes version
+      id: resolve-k8s-version
+      run: |
+        k8s_version=${{ matrix.k8s-version }}
+        if [ "${k8s_version}" = "latest" ]; then
+          k8s_version=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/kubernetes/kubernetes/releases/latest | grep -oE 'tag/v[0-9]+\.[0-9]+\.[0-9]+' | cut -d'/' -f2)
+          echo "Resolved latest k8s version to: $k8s_version"
+        fi
+        echo "k8s_version=$k8s_version" >> $GITHUB_ENV
+    - name: Create Kind Cluster(k8s version ${{ env.k8s_version }})
+      run: |
+        k8s_version=${{ env.k8s_version }}
+        kind create cluster --image kindest/node:${k8s_version}
+    - name: Verify kind and k8s version
       run: |
         kind version
         kubectl version
