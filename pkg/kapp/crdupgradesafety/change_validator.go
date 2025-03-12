@@ -540,8 +540,8 @@ func CalculateFlatSchemaDiff(o, n FlatSchema) (map[string]FieldDiff, error) {
 		// we should still detect changes in the children fields.
 		oldCopy := schema.DeepCopy()
 		newCopy := newSchema.DeepCopy()
-		oldCopy.Properties = nil
-		newCopy.Properties = nil
+		oldCopy.Properties, oldCopy.Items = nil, nil
+		newCopy.Properties, newCopy.Items = nil, nil
 		if !reflect.DeepEqual(oldCopy, newCopy) {
 			diffMap[field] = FieldDiff{
 				Old: oldCopy,
