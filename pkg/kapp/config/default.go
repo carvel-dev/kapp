@@ -73,6 +73,7 @@ rebaseRules:
   - [metadata, annotations, pv.kubernetes.io/bound-by-controller]
   - [metadata, annotations, pv.kubernetes.io/migrated-to]
   - [metadata, annotations, volume.beta.kubernetes.io/storage-provisioner]
+  - [metadata, annotations, volume.kubernetes.io/storage-provisioner]
   - [spec, storageClassName]
   - [spec, volumeMode]
   - [spec, volumeName]
