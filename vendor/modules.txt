@@ -195,25 +195,26 @@ github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1
 # github.com/x448/float16 v0.8.4
 ## explicit; go 1.11
 github.com/x448/float16
-# golang.org/x/net v0.30.0
-## explicit; go 1.18
+# golang.org/x/net v0.36.0
+## explicit; go 1.23.0
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
+golang.org/x/net/internal/httpcommon
 # golang.org/x/oauth2 v0.21.0
 ## explicit; go 1.18
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.26.0
+# golang.org/x/sys v0.30.0
 ## explicit; go 1.18
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.25.0
+# golang.org/x/term v0.29.0
 ## explicit; go 1.18
 golang.org/x/term
-# golang.org/x/text v0.19.0
+# golang.org/x/text v0.22.0
 ## explicit; go 1.18
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
@@ -568,7 +569,7 @@ k8s.io/kube-openapi/pkg/schemaconv
 k8s.io/kube-openapi/pkg/spec3
 k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/validation/spec
-# k8s.io/kubernetes v1.31.2
+# k8s.io/kubernetes v1.31.7
 ## explicit; go 1.22.0
 k8s.io/kubernetes/pkg/apis/rbac
 k8s.io/kubernetes/pkg/apis/rbac/v1

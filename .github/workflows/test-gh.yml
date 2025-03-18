@@ -1,30 +1,60 @@
-name: test-gh
+name: Run All Tests
+
 on:
   push:
     branches:
       - develop
   pull_request:
     types: [opened, reopened, synchronize]
+
 jobs:
   test-all:
-    name: Test GH
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        k8s-version: [v1.27.0, latest]
     steps:
-    - name: Set up Go
-      uses: actions/setup-go@v5
+    - name: install kind
+      uses: helm/kind-action@v1
       with:
-        go-version: '1.23'
+        install_only: true
+    - name: Resolve Kubernetes version
+      id: resolve-k8s-version
+      run: |
+        k8s_version=${{ matrix.k8s-version }}
+        if [ "${k8s_version}" = "latest" ]; then
+          k8s_version=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/kubernetes/kubernetes/releases/latest | grep -oE 'tag/v[0-9]+\.[0-9]+\.[0-9]+' | cut -d'/' -f2)
+          echo "Resolved latest k8s version to: $k8s_version"
+        fi
+        echo "k8s_version=$k8s_version" >> $GITHUB_ENV
+    - name: Create Kind Cluster(k8s version ${{ env.k8s_version }})
+      run: |
+        k8s_version=${{ env.k8s_version }}
+        kind create cluster --image kindest/node:${k8s_version}
+    - name: Verify kind and k8s version
+      run: |
+        kind version
+        kubectl version
     - name: Check out code into the Go module directory
       uses: actions/checkout@v4
       with:
         path: src/github.com/${{ github.repository }}
         fetch-depth: 0
-    - name: Run Tests
+    - name: Set up go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: src/github.com/${{ github.repository }}/go.mod
+    - name: Verify go version
+      run: |
+        go version
+    - name: Run tests
       run: |
         set -e -x
 
         export GOPATH=$(pwd)
-        cd src/github.com/${{ github.repository }}
+        pushd src/github.com/${{ github.repository }}
 
         # Install ytt for build
         mkdir -p /tmp/bin
@@ -33,11 +63,6 @@ jobs:
         ./hack/verify-no-dirty-files.sh
 
         wget -O- https://carvel.dev/install.sh | K14SIO_INSTALL_BIN_DIR=/tmp/bin bash
-
-        curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-        install minikube-linux-amd64 /usr/local/bin/minikube
-        minikube start --driver=docker
-        eval $(minikube docker-env --shell=bash)
 
         # Ensure that there is no existing kapp installed
         rm -f /tmp/bin/kapp
