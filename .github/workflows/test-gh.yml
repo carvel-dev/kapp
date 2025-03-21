@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      max-parallel: 2
+      max-parallel: 3
       matrix:
         k8s-version: [v1.25.0, 1.26.0, latest]
     steps:
