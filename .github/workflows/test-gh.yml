@@ -12,9 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      max-parallel: 3
+      max-parallel: 2
       matrix:
-        k8s-version: [v1.25.0, 1.26.0, latest]
+        k8s-version: [v1.25.16, 1.26.15]
     steps:
     - name: install kind
       uses: helm/kind-action@v1
