@@ -67,6 +67,14 @@ rebaseRules:
   resourceMatchers:
   - apiVersionKindMatcher: {apiVersion: v1, kind: Namespace}
 
+# Kubernetes adds a label to namespaces
+- paths:
+  - [metadata, annotations, kubernetes.io/metadata.name]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers:
+  - apiVersionKindMatcher: {apiVersion: v1, kind: Namespace}
+
 # PVC
 - paths:
   - [metadata, annotations, pv.kubernetes.io/bind-completed]
