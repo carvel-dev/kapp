@@ -29,6 +29,8 @@ type DeployFlags struct {
 	AppMetadataFile string
 
 	DisableGKScoping bool
+
+	ChangeGraphFile string
 }
 
 func (s *DeployFlags) Set(cmd *cobra.Command) {
@@ -63,4 +65,6 @@ func (s *DeployFlags) Set(cmd *cobra.Command) {
 
 	cmd.Flags().BoolVar(&s.DisableGKScoping, "dangerous-disable-gk-scoping",
 		false, "Disable scoping of resource searching to used GroupKinds")
+
+	cmd.Flags().StringVar(&s.ChangeGraphFile, "change-graph-file-output", "", "Render the deployment graph to a file")
 }
