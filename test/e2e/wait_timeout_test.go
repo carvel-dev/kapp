@@ -48,8 +48,7 @@ spec:
 apiVersion: kapp.k14s.io/v1alpha1
 kind: Config
 waitRules:
-- supportsObservedGeneration: true
-  conditionMatchers:
+- conditionMatchers:
   - type: Ready
     status: "True"
     success: true
