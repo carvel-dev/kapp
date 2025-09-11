@@ -1,0 +1,83 @@
+name: Run Kind E2E Tests
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  test-all:
+    runs-on: ubuntu-latest
+    env:
+      KIND_CLUSTER_NAME: kind
+      K8S_VERSION: v1.34.1
+    steps:
+    - name: install kind
+      uses: helm/kind-action@v1
+      with:
+        install_only: true
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
+      with:
+        path: src/github.com/${{ github.repository }}
+        fetch-depth: 0
+    - name: Set up go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: src/github.com/${{ github.repository }}/go.mod
+    - name: Verify go version
+      run: |
+        go version
+    - name: Install bazelisk
+      run: |
+        curl -Lo bazelisk https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64
+        chmod +x bazelisk
+        sudo mv bazelisk /usr/local/bin/bazel
+
+    - name: Clone Kubernetes source at ${{ env.K8S_VERSION }}
+      run: |
+        git clone --depth 1 --branch ${K8S_VERSION} https://github.com/kubernetes/kubernetes.git
+        ls kubernetes
+
+    - name: Debug working directories
+      run: |
+        echo "Workflow root: $PWD"
+        echo "Listing contents:"
+        ls -la
+        echo "Listing kubernetes source:"
+        ls -la kubernetes
+
+    - name: Build KIND node image for Kubernetes ${{ env.K8S_VERSION }}
+      working-directory: ./kubernetes
+      run: |
+        kind build node-image --type=bazel --image kindest/node:${K8S_VERSION}
+
+    - name: Create KIND cluster with custom image
+      run: |
+        kind create cluster --name $KIND_CLUSTER_NAME --image kindest/node:${K8S_VERSION}
+
+    - name: Verify cluster is ready
+      run: kubectl cluster-info --context kind-${KIND_CLUSTER_NAME}
+    - name: Run tests
+      run: |
+        set -e -x
+
+        export GOPATH=$(pwd)
+        pushd src/github.com/${{ github.repository }}
+
+        # Install ytt for build
+        mkdir -p /tmp/bin
+        export PATH=/tmp/bin:$PATH
+
+        ./hack/verify-no-dirty-files.sh
+
+        wget -O- https://carvel.dev/install.sh | K14SIO_INSTALL_BIN_DIR=/tmp/bin bash
+
+        # Ensure that there is no existing kapp installed
+        rm -f /tmp/bin/kapp
+
+        ./hack/build-binaries.sh
+
+        export KAPP_E2E_NAMESPACE=kapp-test
+        kubectl create ns $KAPP_E2E_NAMESPACE
+
+        ./hack/test-all.sh
