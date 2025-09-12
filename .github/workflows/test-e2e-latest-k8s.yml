@@ -5,16 +5,17 @@ on:
     types: [opened, reopened, synchronize]
 
 jobs:
-  test-all:
+  test-k8s-1-34-1:
     runs-on: ubuntu-latest
     env:
       KIND_CLUSTER_NAME: kind
       K8S_VERSION: v1.34.1
     steps:
     - name: install kind
-      uses: helm/kind-action@v1
-      with:
-        install_only: true
+      run: |
+        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.30.0/kind-$(uname)-amd64
+        chmod +x ./kind
+        sudo mv ./kind /usr/local/bin/kind
     - name: Check out code into the Go module directory
       uses: actions/checkout@v4
       with:
