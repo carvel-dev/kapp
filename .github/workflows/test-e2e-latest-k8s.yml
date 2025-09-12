@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       KIND_CLUSTER_NAME: kind
-      K8S_VERSION: v1.34.1
+      K8S_VERSION: v1.34.0
     steps:
     - name: install kind
       run: |
