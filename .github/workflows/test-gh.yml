@@ -14,24 +14,16 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        k8s-version: [v1.27.0, latest]
+        k8s-version: [v1.28.0, v1.34.0]
     steps:
     - name: install kind
-      uses: helm/kind-action@v1
-      with:
-        install_only: true
-    - name: Resolve Kubernetes version
-      id: resolve-k8s-version
+      run: |
+        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.30.0/kind-$(uname)-amd64
+        chmod +x ./kind
+        sudo mv ./kind /usr/local/bin/kind
+    - name: Create Kind Cluster(k8s version ${{ matrix.k8s-version }})
       run: |
         k8s_version=${{ matrix.k8s-version }}
-        if [ "${k8s_version}" = "latest" ]; then
-          k8s_version=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/kubernetes/kubernetes/releases/latest | grep -oE 'tag/v[0-9]+\.[0-9]+\.[0-9]+' | cut -d'/' -f2)
-          echo "Resolved latest k8s version to: $k8s_version"
-        fi
-        echo "k8s_version=$k8s_version" >> $GITHUB_ENV
-    - name: Create Kind Cluster(k8s version ${{ env.k8s_version }})
-      run: |
-        k8s_version=${{ env.k8s_version }}
         kind create cluster --image kindest/node:${k8s_version}
     - name: Verify kind and k8s version
       run: |
