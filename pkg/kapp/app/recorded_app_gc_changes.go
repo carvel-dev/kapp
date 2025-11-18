@@ -7,7 +7,7 @@ const (
 	AppChangesMaxToKeepDefault = 200
 )
 
-func (a *RecordedApp) GCChanges(max int, reviewFunc func(changesToDelete []Change) error) (int, int, error) {
+func (a *RecordedApp) GCChanges(maxValue int, reviewFunc func(changesToDelete []Change) error) (int, int, error) {
 	if reviewFunc == nil {
 		reviewFunc = func(_ []Change) error { return nil }
 	}
@@ -17,12 +17,12 @@ func (a *RecordedApp) GCChanges(max int, reviewFunc func(changesToDelete []Chang
 		return 0, 0, err
 	}
 
-	if len(changes) < max {
+	if len(changes) < maxValue {
 		return len(changes), 0, reviewFunc(nil)
 	}
 
 	// First change is oldest
-	changes = changes[0 : len(changes)-max]
+	changes = changes[0 : len(changes)-maxValue]
 
 	err = reviewFunc(changes)
 	if err != nil {
@@ -36,5 +36,5 @@ func (a *RecordedApp) GCChanges(max int, reviewFunc func(changesToDelete []Chang
 		}
 	}
 
-	return max, len(changes), nil
+	return maxValue, len(changes), nil
 }

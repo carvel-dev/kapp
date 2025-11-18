@@ -153,7 +153,7 @@ func (c AddOrUpdateChange) tryToResolveUpdateConflict(
 
 			textDiff, err := recalcChanges[0].ConfigurableTextDiff().Masked(c.diffMaskRules)
 			if err != nil {
-				return fmt.Errorf(errMsg)
+				return fmt.Errorf("%s", errMsg)
 			}
 			return fmt.Errorf("%s: Recalculated diff:\n%s", errMsg, textDiff.MinimalString())
 		}
