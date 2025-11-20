@@ -14,8 +14,13 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        k8s-version: [v1.27.0, latest]
+        k8s-version: [v1.28.0, latest]
     steps:
+    - name: Free space
+      run: |
+        docker system prune -af || true
+        sudo rm -rf /usr/local/lib/android /usr/share/dotnet
+        df -h
     - name: install kind
       uses: helm/kind-action@v1
       with:
@@ -37,7 +42,7 @@ jobs:
         git checkout ${k8s_version}
         git clone https://github.com/kubernetes-sigs/kind.git && cd kind
         kind build node-image --type=source $(pwd)/.. --image kindest/node:${k8s_version}
-        cd ../../../
+        cd $(pwd)/../../../
         rm -rf tmp && echo "Cleanup completed: Temporary directory 'tmp' has been removed." || echo "Cleanup failed: Could not remove 'tmp' directory."
     - name: Create Kind Cluster(k8s version ${{ env.k8s_version }})
       run: |
