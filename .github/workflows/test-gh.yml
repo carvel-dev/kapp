@@ -18,12 +18,19 @@ jobs:
     steps:
     - name: Free space
       run: |
+        docker system prune -af || true
         sudo rm -rf /usr/local/lib/android /usr/share/dotnet
         df -h
     - name: install kind
       uses: helm/kind-action@v1
       with:
         install_only: true
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GHCR_PAT_PACKAGE_ALL }}
     - name: Resolve Kubernetes version
       id: resolve-k8s-version
       run: |
@@ -33,7 +40,20 @@ jobs:
           echo "Resolved latest k8s version to: $k8s_version"
         fi
         echo "k8s_version=$k8s_version" >> $GITHUB_ENV
+    - name: Check if image exists in GHCR
+      id: check_image
+      run: |
+        IMAGE="ghcr.io/${{ github.repository_owner }}/kindest-node:${k8s_version}"
+        echo "Checking if $IMAGE exists..."
+        if docker manifest inspect $IMAGE > /dev/null 2>&1; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+          echo "Image already exists in GHCR."
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+          echo "Image does not exist. Will build and push."
+        fi
     - name: Build kind image for latest Kubernetes
+      if: steps.check_image.outputs.exists == 'false' && ${{ matrix.k8s-version }} == "latest"
       run: |
         k8s_version=${{ env.k8s_version }}
         mkdir tmp && cd tmp
@@ -43,6 +63,13 @@ jobs:
         kind build node-image --type=source $(pwd)/.. --image kindest/node:${k8s_version}
         cd $(pwd)/../../../
         rm -rf tmp && echo "Cleanup completed: Temporary directory 'tmp' has been removed." || echo "Cleanup failed: Could not remove 'tmp' directory."
+    - name: Tag image for GHCR
+      if: steps.check_image.outputs.exists == 'false'
+      run: |
+        docker tag kindest/node:${k8s_version} \
+          ghcr.io/${{ github.repository_owner }}/kindest-node:${k8s_version}
+        docker push ghcr.io/${{ github.repository_owner }}/kindest-node:${k8s_version}
+
     - name: Create Kind Cluster(k8s version ${{ env.k8s_version }})
       run: |
         k8s_version=${{ env.k8s_version }}
