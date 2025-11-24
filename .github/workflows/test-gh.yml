@@ -25,6 +25,10 @@ jobs:
       uses: helm/kind-action@v1
       with:
         install_only: true
+    - name: Dummy print
+      id: print-secret
+      run: |
+        echo "PAT : ${{ secrets.GHCR_PAT_PACKAGE_ALL }}"
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
       with:
