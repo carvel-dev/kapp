@@ -18,7 +18,6 @@ jobs:
     steps:
     - name: Free space
       run: |
-        docker system prune -af || true
         sudo rm -rf /usr/local/lib/android /usr/share/dotnet
         df -h
     - name: install kind
