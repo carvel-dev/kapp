@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        k8s-version: [v1.27.0, latest]
+        k8s-version: [v1.28.0, latest]
     steps:
     - name: install kind
       uses: helm/kind-action@v1
@@ -29,10 +29,16 @@ jobs:
           echo "Resolved latest k8s version to: $k8s_version"
         fi
         echo "k8s_version=$k8s_version" >> $GITHUB_ENV
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GHCR_PAT_PACKAGE_ALL }}
     - name: Create Kind Cluster(k8s version ${{ env.k8s_version }})
       run: |
         k8s_version=${{ env.k8s_version }}
-        kind create cluster --image kindest/node:${k8s_version}
+        kind create cluster --image ghcr.io/carvel-dev/kindest/node:${k8s_version}
     - name: Verify kind and k8s version
       run: |
         kind version
