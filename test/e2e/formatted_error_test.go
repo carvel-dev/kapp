@@ -55,9 +55,9 @@ kapp: Error: create job/successful-job (batch/v1) namespace: default:
     API server says:
       Job.batch "successful-job" is invalid: 
 
-  - spec.selector: Invalid value: v1.LabelSelector{MatchLabels:map[string]string{"blah":"balh", -replaced-, -replaced-}, MatchExpressions:[]v1.LabelSelectorRequirement(nil)}: 'selector' not auto-generated
+  - spec.selector: Invalid value: v1.LabelSelector{MatchLabels:map[string]string{-replaced-, "blah":"balh", -replaced-}, MatchExpressions:[]v1.LabelSelectorRequirement(nil)}: 'selector' not auto-generated
 
-  - spec.template.metadata.labels: Invalid value: map[string]string{-replaced-, "foo":"foo", "job-name":"successful-job", -replaced-, -replaced-}: 'selector' does not match template 'labels'
+  - spec.template.metadata.labels: Invalid value: map[string]string{-replaced-, -replaced-, -replaced-, "foo":"foo", "job-name":"successful-job", -replaced-, -replaced-}: 'selector' does not match template 'labels'
 
  (reason: Invalid)
 `)
@@ -65,16 +65,16 @@ kapp: Error: create job/successful-job (batch/v1) namespace: default:
 		minorVersion, err := getServerMinorVersion()
 		require.NoErrorf(t, err, "Error getting k8s server minor version")
 		// batch.kubernetes.io/controller-uid and batch.kubernetes.io/job-name annotaions are added
-		if minorVersion >= 27 {
+		if minorVersion >= 31 {
 			expectedErr = strings.TrimSpace(`
 kapp: Error: create job/successful-job (batch/v1) namespace: default:
   Creating resource job/successful-job (batch/v1) namespace: default:
     API server says:
       Job.batch "successful-job" is invalid: 
 
-  - spec.selector: Invalid value: v1.LabelSelector{MatchLabels:map[string]string{-replaced-, "blah":"balh", -replaced-}, MatchExpressions:[]v1.LabelSelectorRequirement(nil)}: 'selector' not auto-generated
+  - spec.selector: Invalid value: {"matchLabels":{-replaced-,"blah":"balh",-replaced-}}: 'selector' not auto-generated
 
-  - spec.template.metadata.labels: Invalid value: map[string]string{-replaced-, -replaced-, -replaced-, "foo":"foo", "job-name":"successful-job", -replaced-, -replaced-}: 'selector' does not match template 'labels'
+  - spec.template.metadata.labels: Invalid value: {-replaced-,-replaced-,-replaced-,"foo":"foo","job-name":"successful-job",-replaced-,-replaced-}: 'selector' does not match template 'labels'
 
  (reason: Invalid)
 `)

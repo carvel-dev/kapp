@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        k8s-version: [v1.27.0, latest]
+        k8s-version: [v1.28.0, latest]
     steps:
     - name: install kind
       uses: helm/kind-action@v1
@@ -32,7 +32,14 @@ jobs:
     - name: Create Kind Cluster(k8s version ${{ env.k8s_version }})
       run: |
         k8s_version=${{ env.k8s_version }}
-        kind create cluster --image kindest/node:${k8s_version}
+        echo "Checking if kindest/node:${k8s_version} exists..."
+        if docker pull kindest/node:${k8s_version}; then
+          echo "Using kindest/node:${k8s_version}"
+          kind create cluster --image kindest/node:${k8s_version}
+        else
+          echo "kindest/node:${k8s_version} not found. Using fallback image ghcr.io/carvel-dev/kindest/node:${k8s_version}"
+          kind create cluster --image ghcr.io/carvel-dev/kindest/node:${k8s_version}
+        fi
     - name: Verify kind and k8s version
       run: |
         kind version
