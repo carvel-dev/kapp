@@ -20,6 +20,12 @@ jobs:
       uses: helm/kind-action@v1
       with:
         install_only: true
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GHCR_PAT_PACKAGE_ALL }}
     - name: Resolve Kubernetes version
       id: resolve-k8s-version
       run: |
@@ -38,8 +44,8 @@ jobs:
         git clone https://github.com/kubernetes-sigs/kind.git && cd kind
         kind build node-image --type=source $(pwd)/.. --image kindest/node:v1.35.0-beta.0
         docker tag kindest/node:v1.35.0-beta.0 \
-          ghcr.io/${{ github.repository_owner }}/kindest-node:v1.35.0-beta.0
-        docker push ghcr.io/${{ github.repository_owner }}/kindest-node:v1.35.0-beta.0
+          ghcr.io/${{ github.repository_owner }}/kindest/node:v1.35.0-beta.0
+        docker push ghcr.io/${{ github.repository_owner }}/kindest/node:v1.35.0-beta.0
         cd $(pwd)/../../../
         rm -rf tmp && echo "Cleanup completed: Temporary directory 'tmp' has been removed." || echo "Cleanup failed: Could not remove 'tmp' directory."
     - name: Create Kind Cluster(k8s version ${{ env.k8s_version }})
