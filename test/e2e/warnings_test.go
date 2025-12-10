@@ -149,7 +149,7 @@ func getServerMinorVersion() (minorVersion int, err error) {
 	if err != nil {
 		return minorVersion, err
 	}
-	minorVersion, err = strconv.Atoi(sv.Minor)
+	minorVersion, err = strconv.Atoi(strings.TrimSuffix(sv.Minor, "+"))
 	if err != nil {
 		return minorVersion, err
 	}

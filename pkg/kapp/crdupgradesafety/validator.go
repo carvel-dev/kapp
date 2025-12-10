@@ -18,7 +18,7 @@ import (
 type Validation interface {
 	// Validate contains the actual validation logic. An error being
 	// returned means validation has failed
-	Validate(old, new v1.CustomResourceDefinition) error
+	Validate(oldCRD, newCRD v1.CustomResourceDefinition) error
 	// Name returns a human-readable name for the validation
 	Name() string
 }
@@ -26,7 +26,7 @@ type Validation interface {
 // ValidateFunc is a function to validate a CustomResourceDefinition
 // for safe upgrades. It accepts the old and new CRDs and returns an
 // error if performing an upgrade from old -> new is unsafe.
-type ValidateFunc func(old, new v1.CustomResourceDefinition) error
+type ValidateFunc func(oldCRD, newCRD v1.CustomResourceDefinition) error
 
 // ValidationFunc is a helper to wrap a ValidateFunc
 // as an implementation of the Validation interface
@@ -46,20 +46,20 @@ func (vf *ValidationFunc) Name() string {
 	return vf.name
 }
 
-func (vf *ValidationFunc) Validate(old, new v1.CustomResourceDefinition) error {
-	return vf.validateFunc(old, new)
+func (vf *ValidationFunc) Validate(oldCRD, newCRD v1.CustomResourceDefinition) error {
+	return vf.validateFunc(oldCRD, newCRD)
 }
 
 type Validator struct {
 	Validations []Validation
 }
 
-func (v *Validator) Validate(old, new v1.CustomResourceDefinition) error {
+func (v *Validator) Validate(oldCRD, newCRD v1.CustomResourceDefinition) error {
 	validateErrs := []error{}
 	for _, validation := range v.Validations {
-		if err := validation.Validate(old, new); err != nil {
+		if err := validation.Validate(oldCRD, newCRD); err != nil {
 			formattedErr := fmt.Errorf("CustomResourceDefinition %s failed upgrade safety validation. %q validation failed: %w",
-				new.Name, validation.Name(), err)
+				newCRD.Name, validation.Name(), err)
 
 			validateErrs = append(validateErrs, formattedErr)
 		}
@@ -70,22 +70,22 @@ func (v *Validator) Validate(old, new v1.CustomResourceDefinition) error {
 	return nil
 }
 
-func NoScopeChange(old, new v1.CustomResourceDefinition) error {
-	if old.Spec.Scope != new.Spec.Scope {
-		return fmt.Errorf("scope changed from %q to %q", old.Spec.Scope, new.Spec.Scope)
+func NoScopeChange(oldCRD, newCRD v1.CustomResourceDefinition) error {
+	if oldCRD.Spec.Scope != newCRD.Spec.Scope {
+		return fmt.Errorf("scope changed from %q to %q", oldCRD.Spec.Scope, newCRD.Spec.Scope)
 	}
 	return nil
 }
 
-func NoStoredVersionRemoved(old, new v1.CustomResourceDefinition) error {
+func NoStoredVersionRemoved(oldCRD, newCRD v1.CustomResourceDefinition) error {
 	newVersions := sets.New[string]()
-	for _, version := range new.Spec.Versions {
+	for _, version := range newCRD.Spec.Versions {
 		if !newVersions.Has(version.Name) {
 			newVersions.Insert(version.Name)
 		}
 	}
 
-	for _, storedVersion := range old.Status.StoredVersions {
+	for _, storedVersion := range oldCRD.Status.StoredVersions {
 		if !newVersions.Has(storedVersion) {
 			return fmt.Errorf("stored version %q removed", storedVersion)
 		}
@@ -94,14 +94,14 @@ func NoStoredVersionRemoved(old, new v1.CustomResourceDefinition) error {
 	return nil
 }
 
-func NoExistingFieldRemoved(old, new v1.CustomResourceDefinition) error {
+func NoExistingFieldRemoved(oldCRD, newCRD v1.CustomResourceDefinition) error {
 	reg := manifestcomparators.NewRegistry()
 	err := reg.AddComparator(manifestcomparators.NoFieldRemoval())
 	if err != nil {
 		return err
 	}
 
-	results, errs := reg.Compare(&old, &new)
+	results, errs := reg.Compare(&oldCRD, &newCRD)
 	if len(errs) > 0 {
 		return errors.Join(errs...)
 	}

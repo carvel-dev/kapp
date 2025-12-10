@@ -11,12 +11,12 @@ type Throttle struct {
 	ch chan struct{}
 }
 
-func NewThrottle(max int) Throttle {
-	if max < 1 {
-		panic(fmt.Sprintf("Expected maximum throttle to be >= 1, but was %d", max))
+func NewThrottle(maxValue int) Throttle {
+	if maxValue < 1 {
+		panic(fmt.Sprintf("Expected maximum throttle to be >= 1, but was %d", maxValue))
 	}
-	ch := make(chan struct{}, max)
-	for i := 0; i < max; i++ {
+	ch := make(chan struct{}, maxValue)
+	for i := 0; i < maxValue; i++ {
 		ch <- struct{}{}
 	}
 	return Throttle{ch}

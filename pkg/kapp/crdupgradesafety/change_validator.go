@@ -432,10 +432,10 @@ func (cv *ChangeValidator) Name() string {
 //
 // Additionally, any changes that are not validated and handled by the known ChangeValidations
 // are deemed as unsafe and returns an error.
-func (cv *ChangeValidator) Validate(old, new v1.CustomResourceDefinition) error {
+func (cv *ChangeValidator) Validate(oldCRD, newCRD v1.CustomResourceDefinition) error {
 	errs := []error{}
-	for _, version := range old.Spec.Versions {
-		newVersion := manifestcomparators.GetVersionByName(&new, version.Name)
+	for _, version := range oldCRD.Spec.Versions {
+		newVersion := manifestcomparators.GetVersionByName(&newCRD, version.Name)
 		if newVersion == nil {
 			// if the new version doesn't exist skip this version
 			continue
