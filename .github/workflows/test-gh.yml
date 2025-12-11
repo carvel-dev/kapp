@@ -64,15 +64,15 @@ jobs:
         echo "k8s_version=$k8s_version" >> $GITHUB_ENV
     - name: Build and push kind image for latest Kubernetes
       run: |
-        k8s_version=v1.35.0-beta.0
+        k8s_version=v1.34.3
         mkdir tmp && cd tmp
         git clone https://github.com/kubernetes/kubernetes.git && cd kubernetes
-        git checkout v1.35.0-beta.0
+        git checkout $k8s_version
         git clone https://github.com/kubernetes-sigs/kind.git && cd kind
-        kind build node-image --type=source $(pwd)/.. --image kindest/node:v1.35.0-beta.0
-        docker tag kindest/node:v1.35.0-beta.0 \
-          ghcr.io/${{ github.repository_owner }}/kindest/node:v1.35.0-beta.0
-        docker push ghcr.io/${{ github.repository_owner }}/kindest/node:v1.35.0-beta.0
+        kind build node-image --type=source $(pwd)/.. --image kindest/node:$k8s_version
+        docker tag kindest/node:$k8s_version \
+          ghcr.io/${{ github.repository_owner }}/kindest/node:$k8s_version
+        docker push ghcr.io/${{ github.repository_owner }}/kindest/node:$k8s_version
         cd $(pwd)/../../../
         rm -rf tmp && echo "Cleanup completed: Temporary directory 'tmp' has been removed." || echo "Cleanup failed: Could not remove 'tmp' directory."
     - name: Create Kind Cluster(k8s version ${{ env.k8s_version }})
