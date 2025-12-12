@@ -20,6 +20,15 @@ jobs:
       uses: helm/kind-action@v1
       with:
         install_only: true
+    - name: Free disk space (before build)
+      run: |
+        echo "=== Removing unnecessary packages ==="
+        sudo rm -rf /opt/hostedtoolcache || true
+        sudo rm -rf /usr/local/lib/android || true
+        echo "=== Docker cleanup ==="
+        docker system prune -af || true
+        docker volume prune -f || true
+        echo "=== Cleanup complete ==="
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
       with:
