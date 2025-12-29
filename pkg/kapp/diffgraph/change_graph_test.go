@@ -4,6 +4,7 @@
 package diffgraph_test
 
 import (
+	"os"
 	"strings"
 	"testing"
 
@@ -838,6 +839,48 @@ type: kubernetes.io/service-account-token
 
 func buildChangeGraph(resourcesBs string, op ctldgraph.ActualChangeOp, t *testing.T) (*ctldgraph.ChangeGraph, error) {
 	return buildChangeGraphWithOpts(buildGraphOpts{resourcesBs: resourcesBs, op: op}, t)
+}
+
+func TestRenderGraph(t *testing.T) {
+	configYAML := `
+kind: Job
+metadata:
+  name: import-etcd-into-db
+  annotations:
+    kapp.k14s.io/change-group: "apps.big.co/import-etcd-into-db"
+---
+kind: Job
+metadata:
+  name: after-migrations
+  annotations:
+    kapp.k14s.io/change-group.group1: "apps.big.co/after-migrations-1"
+    kapp.k14s.io/change-group.group2: "apps.big.co/after-migrations-2"
+---
+kind: Job
+metadata:
+  name: migrations
+  annotations:
+    kapp.k14s.io/change-rule.rule1: "upsert after upserting apps.big.co/import-etcd-into-db"
+    kapp.k14s.io/change-rule.rule2: "upsert before upserting apps.big.co/after-migrations-1"
+    kapp.k14s.io/change-rule.rule3: "upsert before upserting apps.big.co/after-migrations-2"
+`
+
+	graph, err := buildChangeGraph(configYAML, ctldgraph.ActualChangeOpUpsert, t)
+	require.NoErrorf(t, err, "Expected graph to build")
+	tmpFile, err := os.CreateTemp("", "*")
+	defer func() {
+		os.Remove(tmpFile.Name())
+	}()
+	require.NoErrorf(t, err, "Failed to create temp file")
+	err = graph.WriteToFile(tmpFile.Name())
+	require.NoErrorf(t, err, "Failed to write to file")
+	contents, err := os.ReadFile(tmpFile.Name())
+	require.NoErrorf(t, err, "Failed to read file")
+
+	expectedOutput := strings.TrimSpace(`
+{"nodes":[{"id":"v1.88b09231fb1239b5798a9fc230ef23f3","data":{"name":"import-etcd-into-db","namespace":null,"changeGroups":["apps.big.co/import-etcd-into-db"],"groupKind":{"group":"","kind":"Job"},"op":"upsert"}},{"id":"v1.3258dfc11ef4e6bfbfe728d7f6ed8193","data":{"name":"after-migrations","namespace":null,"changeGroups":["apps.big.co/after-migrations-1","apps.big.co/after-migrations-2"],"groupKind":{"group":"","kind":"Job"},"op":"upsert"}},{"id":"v1.cb954b4a1b9d4fbaaf4ff3ce5a9df1ba","data":{"name":"migrations","namespace":null,"changeGroups":[],"groupKind":{"group":"","kind":"Job"},"op":"upsert"}}],"edges":[{"source":"v1.3258dfc11ef4e6bfbfe728d7f6ed8193","target":"v1.cb954b4a1b9d4fbaaf4ff3ce5a9df1ba"},{"source":"v1.cb954b4a1b9d4fbaaf4ff3ce5a9df1ba","target":"v1.88b09231fb1239b5798a9fc230ef23f3"}]}
+  `)
+	require.Equal(t, expectedOutput, strings.TrimSpace(string(contents)))
 }
 
 type buildGraphOpts struct {

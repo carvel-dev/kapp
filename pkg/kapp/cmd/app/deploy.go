@@ -183,6 +183,13 @@ func (o *DeployOptions) Run() error {
 		return err
 	}
 
+	if o.DeployFlags.ChangeGraphFile != "" {
+		err = clusterChangesGraph.WriteToFile(o.DeployFlags.ChangeGraphFile)
+		if err != nil {
+			return err
+		}
+	}
+
 	if o.DiffFlags.UI {
 		return o.presentDiffUI(clusterChangesGraph)
 	}

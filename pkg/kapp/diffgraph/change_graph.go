@@ -4,12 +4,15 @@
 package diffgraph
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
 	ctlconf "carvel.dev/kapp/pkg/kapp/config"
 	"carvel.dev/kapp/pkg/kapp/logger"
+	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 )
 
 type ChangeGraph struct {
@@ -313,4 +316,51 @@ func (g *ChangeGraph) checkCyclesVisit(nodeN *Change, markedTemp, markedPerm map
 	delete(markedTemp, nodeN)
 	markedPerm[nodeN] = struct{}{}
 	return nil
+}
+
+func (g *ChangeGraph) WriteToFile(outputFile string) error {
+	sb := &strings.Builder{}
+	encoder := json.NewEncoder(sb)
+	nodes := []RenderedNode{}
+	edges := []RenderedEdge{}
+
+	for _, change := range g.All() {
+		change.Change.Resource().UnstructuredObject()
+		changeGroups, _ := change.Groups()
+
+		groups := []string{}
+		for _, changeGroup := range changeGroups {
+			groups = append(groups, changeGroup.Name)
+		}
+		changeID := ctlres.NewAssociationLabel(change.Change.Resource()).Value()
+		var namespaceRef *string
+		namespace := change.Change.Resource().Namespace()
+		if namespace != "" {
+			namespaceRef = &namespace
+		}
+		node := RenderedNode{
+			ID: changeID,
+			Data: RenderedNodeData{
+				Name:         change.Change.Resource().Name(),
+				Namespace:    namespaceRef,
+				ChangeGroups: groups,
+				GroupKind:    RenderedGroupKind(change.Change.Resource().GroupKind()),
+				Op:           change.Change.Op(),
+			},
+		}
+		nodes = append(nodes, node)
+		changeDependencies := change.WaitingFor
+		for _, dependency := range changeDependencies {
+			depID := ctlres.NewAssociationLabel(dependency.Change.Resource()).Value()
+			edges = append(edges, RenderedEdge{
+				Source: changeID,
+				Target: depID,
+			})
+		}
+	}
+	encoder.Encode(RenderedGraph{
+		Nodes: nodes,
+		Edges: edges,
+	})
+	return os.WriteFile(outputFile, []byte(sb.String()), os.ModePerm)
 }
