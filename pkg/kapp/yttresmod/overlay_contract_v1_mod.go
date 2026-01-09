@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	ctlres "carvel.dev/kapp/pkg/kapp/resources"
-	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
-	"github.com/k14s/ytt/pkg/cmd/ui"
-	"github.com/k14s/ytt/pkg/files"
+	cmdtpl "carvel.dev/ytt/pkg/cmd/template"
+	"carvel.dev/ytt/pkg/cmd/ui"
+	"carvel.dev/ytt/pkg/files"
 	"sigs.k8s.io/yaml"
 )
 
@@ -44,11 +44,15 @@ func (t OverlayContractV1Mod) evalYtt(res ctlres.Resource, srcs map[ctlres.Field
 	opts := cmdtpl.NewOptions()
 
 	opts.DataValuesFlags.FromFiles = []string{"values.yml"}
-	opts.DataValuesFlags.ReadFileFunc = func(path string) ([]byte, error) {
+	opts.DataValuesFlags.ReadFilesFunc = func(path string) ([]*files.File, error) {
 		if path != "values.yml" {
 			return nil, fmt.Errorf("Unknown file to read: %s", path)
 		}
-		return t.valuesYAML(srcs)
+		valuesBytes, err := t.valuesYAML(srcs)
+		if err != nil {
+			return nil, err
+		}
+		return []*files.File{files.MustNewFileFromSource(files.NewBytesSource("values.yml", valuesBytes))}, nil
 	}
 
 	resYAMLBs, err := res.AsYAMLBytes()
