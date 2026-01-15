@@ -3,6 +3,7 @@ module carvel.dev/kapp
 go 1.25.5
 
 require (
+	carvel.dev/ytt v0.52.2
 	github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
 	github.com/cppforlife/go-cli-ui v0.0.0-20220425131040-94f26b16bc14
@@ -10,7 +11,6 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/go-version v1.6.0
 	github.com/k14s/difflib v0.0.0-20240118055029-596a7a5585c3
-	github.com/k14s/ytt v0.36.0
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/openshift/crd-schema-checker v0.0.0-20240404194209-35a9033b1d11
 	github.com/spf13/cobra v1.8.1
