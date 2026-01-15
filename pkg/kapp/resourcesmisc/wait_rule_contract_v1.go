@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	ctlres "carvel.dev/kapp/pkg/kapp/resources"
-	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
-	"github.com/k14s/ytt/pkg/cmd/ui"
-	"github.com/k14s/ytt/pkg/files"
+	cmdtpl "carvel.dev/ytt/pkg/cmd/template"
+	"carvel.dev/ytt/pkg/cmd/ui"
+	"carvel.dev/ytt/pkg/files"
 	"sigs.k8s.io/yaml"
 )
 
@@ -44,11 +44,15 @@ func (t WaitRuleContractV1) evalYtt(res ctlres.Resource) (*WaitRuleContractV1Res
 	opts := cmdtpl.NewOptions()
 
 	opts.DataValuesFlags.FromFiles = []string{"values.yml"}
-	opts.DataValuesFlags.ReadFileFunc = func(path string) ([]byte, error) {
+	opts.DataValuesFlags.ReadFilesFunc = func(path string) ([]*files.File, error) {
 		if path != "values.yml" {
 			return nil, fmt.Errorf("Unknown file to read: %s", path)
 		}
-		return yaml.Marshal(res.DeepCopyRaw())
+		valuesBytes, err := yaml.Marshal(res.DeepCopyRaw())
+		if err != nil {
+			return nil, err
+		}
+		return []*files.File{files.MustNewFileFromSource(files.NewBytesSource("values.yml", valuesBytes))}, nil
 	}
 	opts.DataValuesFlags.KVsFromStrings = []string{fmt.Sprintf("startTime=%d", t.StartTime), fmt.Sprintf("currentTime=%d", t.CurrentTime)}
 
