@@ -16,6 +16,4 @@ linters:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclude:
-    # exclude stuttering linting error
-    - ".*and that stutters;.*"
+  new-from-rev: 81ec69d2757c261768a21eef8ff53169e658aad5
