@@ -20,11 +20,13 @@ type Kubectl struct {
 	l         Logger
 }
 
+// Run executes a kubectl command with the default options and returns the output.
 func (k Kubectl) Run(args []string) string {
 	out, _ := k.RunWithOpts(args, RunOpts{})
 	return out
 }
 
+// RunWithOpts executes a kubectl command with the provided options.
 func (k Kubectl) RunWithOpts(args []string, opts RunOpts) (string, error) {
 	if !opts.NoNamespace {
 		args = append(args, []string{"-n", k.namespace}...)
