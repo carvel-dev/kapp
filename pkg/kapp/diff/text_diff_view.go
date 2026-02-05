@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	ctlconf "carvel.dev/kapp/pkg/kapp/config"
+	"github.com/carvel-dev/difflib"
 	"github.com/cppforlife/color"
-	"github.com/k14s/difflib"
 )
 
 type TextDiffViewOpts struct {

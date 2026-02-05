@@ -143,25 +143,6 @@ func CompletionWithDesc(choice string, description string) Completion {
 	return choice + "\t" + description
 }
 
-// Completion is a string that can be used for completions
-//
-// two formats are supported:
-//   - the completion choice
-//   - the completion choice with a textual description (separated by a TAB).
-//
-// [CompletionWithDesc] can be used to create a completion string with a textual description.
-//
-// Note: Go type alias is used to provide a more descriptive name in the documentation, but any string can be used.
-type Completion = string
-
-// CompletionFunc is a function that provides completion results.
-type CompletionFunc = func(cmd *Command, args []string, toComplete string) ([]Completion, ShellCompDirective)
-
-// CompletionWithDesc returns a [Completion] with a description by using the TAB delimited format.
-func CompletionWithDesc(choice string, description string) Completion {
-	return choice + "\t" + description
-}
-
 // NoFileCompletions can be used to disable file completion for commands that should
 // not trigger file completions.
 //
