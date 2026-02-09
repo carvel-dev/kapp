@@ -1,6 +1,6 @@
 module carvel.dev/kapp
 
-go 1.25.6
+go 1.25.7
 
 require (
 	carvel.dev/ytt v0.53.0
