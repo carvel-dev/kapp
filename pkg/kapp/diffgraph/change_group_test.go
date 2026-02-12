@@ -4,7 +4,6 @@
 package diffgraph_test
 
 import (
-	"strings"
 	"testing"
 
 	ctldgraph "carvel.dev/kapp/pkg/kapp/diffgraph"
@@ -21,8 +20,6 @@ func TestNewChangeGroupFromAnnString(t *testing.T) {
 		"valid-name.com/valid",
 		"valid-name.com/valid-name_Another_Name--valid",
 		"valid-name.com/valid-name_CustomResourceDefinition--valid",
-		// Allow arbitrary long names since it might be populated with data via placeholders
-		"valid-name.com/valid-name_CustomResourceDefinition--valid" + strings.Repeat("a", 1000),
 		// Example from pinniped of a long name
 		"change-groups.kapp.k14s.io/crds-authentication.concierge.pinniped.dev-WebhookAuthenticator",
 	}

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/k14s/difflib"
+	"github.com/carvel-dev/difflib"
 )
 
 type TextDiff struct {
