@@ -1,8 +1,8 @@
 # carvel.dev/vendir v0.45.1
 ## explicit; go 1.25.6
 carvel.dev/vendir/pkg/vendir/versions/v1alpha1
-# carvel.dev/ytt v0.53.0
-## explicit; go 1.25.6
+# carvel.dev/ytt v0.53.2
+## explicit; go 1.25.7
 carvel.dev/ytt/pkg/cmd/template
 carvel.dev/ytt/pkg/cmd/ui
 carvel.dev/ytt/pkg/filepos

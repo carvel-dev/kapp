@@ -1,7 +1,7 @@
 carvel.dev/vendir v0.45.1 h1:vVZjAEZz/j1HVLfm1/avlRF235skXpHFrx77GDqJMgo=
 carvel.dev/vendir v0.45.1/go.mod h1:t7/ulJsKBhyOAFyJUt3m1JyIdyvZsAh8eLGr0n1MiLk=
-carvel.dev/ytt v0.53.0 h1:4x5Kr1EZGN1VTbDT+3960bre0RMyIPQsS8lA6tqktf4=
-carvel.dev/ytt v0.53.0/go.mod h1:8y3pugh7e26Z2mVatMJqvcXdU2ELmzZvvUcAWI35mPw=
+carvel.dev/ytt v0.53.2 h1:gwuEfkwXC3CIt5VfxjCu19Htc9d3iJUfgeAOYpD2c70=
+carvel.dev/ytt v0.53.2/go.mod h1:KB0zsBE4RnIbJfY0aScl2X22lbL61iO6Er6aOhX1M04=
 github.com/BurntSushi/toml v1.2.1 h1:9F2/+DoOYIOksmaJFPw1tGFy1eDnIJXg+UHjuD8lTak=
 github.com/BurntSushi/toml v1.2.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
 github.com/Masterminds/semver/v3 v3.4.0 h1:Zog+i5UMtVoCU8oKka5P7i9q9HgrJeGzI9SA1Xbatp0=

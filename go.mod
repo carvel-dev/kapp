@@ -3,7 +3,7 @@ module carvel.dev/kapp
 go 1.25.7
 
 require (
-	carvel.dev/ytt v0.53.0
+	carvel.dev/ytt v0.53.2
 	github.com/carvel-dev/difflib v0.0.0-20240118055029-596a7a5585c3
 	github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
