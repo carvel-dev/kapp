@@ -14,7 +14,7 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/openshift/crd-schema-checker v0.0.0-20240404194209-35a9033b1d11
 	github.com/spf13/cobra v1.10.0
-	github.com/spf13/pflag v1.0.9
+	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	github.com/vmware-tanzu/carvel-kapp-controller v0.51.0
 	golang.org/x/net v0.47.0
