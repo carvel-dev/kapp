@@ -164,3 +164,73 @@ func checkChangeDiff(t *testing.T, change Change, expectedDiff string) {
 
 	require.Equal(t, expectedDiff, actualDiffString, "Expected diff to match")
 }
+
+func TestChangeSet_DeleteObsoleteVersions_InSameApply(t *testing.T) {
+	// Test with custom num-versions annotation set to 3
+
+	existingV1 := ctlres.MustNewResourceFromBytes([]byte(`
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-ver-1
+  annotations:
+    kapp.k14s.io/versioned: ""
+data:
+  key: value1
+`))
+
+	existingV2 := ctlres.MustNewResourceFromBytes([]byte(`
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-ver-2
+  annotations:
+    kapp.k14s.io/versioned: ""
+data:
+  key: value2
+`))
+
+	existingV3 := ctlres.MustNewResourceFromBytes([]byte(`
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-ver-3
+  annotations:
+    kapp.k14s.io/versioned: ""
+data:
+  key: value3
+`))
+
+	// Deploy a new version with num-versions: 3
+	newConfig := ctlres.MustNewResourceFromBytes([]byte(`
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config
+  annotations:
+    kapp.k14s.io/versioned: ""
+    kapp.k14s.io/num-versions: "3"
+data:
+  key: value4
+`))
+
+	existingResources := []ctlres.Resource{existingV1, existingV2, existingV3}
+	changeSetWithVerRes := NewChangeSetWithVersionedRs(existingResources, []ctlres.Resource{newConfig}, nil,
+		ChangeSetOpts{}, ChangeFactory{})
+
+	changes, err := changeSetWithVerRes.Calculate()
+	require.NoError(t, err)
+
+	// Expect: 1 add (v4), 1 delete (v1), 2 noop (v2-v3)
+	require.Len(t, changes, 4, "Expected 4 changes: 1 add, 1 delete, 2 noop")
+
+	var deleteCount int
+	for _, change := range changes {
+		if change.Op() == ChangeOpDelete {
+			deleteCount++
+			require.Equal(t, "config-ver-1", change.ExistingResource().Name(), "Expected v1 to be deleted")
+		}
+	}
+
+	require.Equal(t, 1, deleteCount, "Expected 1 delete operation (v1 should be deleted immediately)")
+}
