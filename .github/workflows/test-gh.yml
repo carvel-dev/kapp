@@ -25,21 +25,37 @@ jobs:
       run: |
         k8s_version=${{ matrix.k8s-version }}
         if [ "${k8s_version}" = "latest" ]; then
-          k8s_version=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/kubernetes/kubernetes/releases/latest | grep -oE 'tag/v[0-9]+\.[0-9]+\.[0-9]+' | cut -d'/' -f2)
-          echo "Resolved latest k8s version to: $k8s_version"
+          # Resolve to the latest kindest/node tag available on Docker Hub (not kubernetes/kubernetes releases,
+          # which may lag behind kind image availability)
+          k8s_version=$(curl -fsSL "https://hub.docker.com/v2/repositories/kindest/node/tags?page_size=100&ordering=last_updated" \
+            | jq -r '.results[].name' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sort -V | tail -1)
+          if [ -z "$k8s_version" ]; then
+            echo "Failed to resolve latest kindest/node version from Docker Hub" >&2
+            exit 1
+          fi
+          echo "Resolved latest kindest/node version to: $k8s_version"
+
+          # Warn if kind's latest minor version lags behind the latest upstream Kubernetes minor version
+          k8s_latest=$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/kubernetes/kubernetes/releases/latest \
+            | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+')
+          if [ -z "$k8s_latest" ]; then
+            echo "Failed to resolve latest Kubernetes version from GitHub" >&2
+            exit 1
+          fi
+          kind_minor=$(echo "$k8s_version" | cut -d'.' -f2)
+          k8s_minor=$(echo "$k8s_latest" | cut -d'.' -f2)
+          if [ "$kind_minor" -lt "$k8s_minor" ]; then
+            echo "::warning::kindest/node latest is $k8s_version (minor=$kind_minor) but upstream Kubernetes latest is $k8s_latest (minor=$k8s_minor). kind has not yet published an image for the newest minor version."
+          fi
         fi
-        echo "k8s_version=$k8s_version" >> $GITHUB_ENV
-    - name: Create Kind Cluster(k8s version ${{ env.k8s_version }})
+        echo "k8s_version=${k8s_version}" >> $GITHUB_ENV
+        echo "k8s_version=${k8s_version}" >> $GITHUB_OUTPUT
+    - name: Create Kind Cluster (k8s version ${{ steps.resolve-k8s-version.outputs.k8s_version }})
       run: |
-        k8s_version=${{ env.k8s_version }}
-        echo "Checking if kindest/node:${k8s_version} exists..."
-        if docker pull kindest/node:${k8s_version}; then
-          echo "Using kindest/node:${k8s_version}"
-          kind create cluster --image kindest/node:${k8s_version}
-        else
-          echo "kindest/node:${k8s_version} not found. Using fallback image ghcr.io/carvel-dev/kindest/node:${k8s_version}"
-          kind create cluster --image ghcr.io/carvel-dev/kindest/node:${k8s_version}
-        fi
+        echo "Creating kind cluster with kindest/node:${{ env.k8s_version }}"
+        kind create cluster --image kindest/node:${{ env.k8s_version }}
     - name: Verify kind and k8s version
       run: |
         kind version
