@@ -3,11 +3,12 @@ module carvel.dev/kapp
 go 1.25.7
 
 require (
+	carvel.dev/kapp-controller v0.59.7
 	carvel.dev/ytt v0.53.0
 	github.com/carvel-dev/difflib v0.0.0-20240118055029-596a7a5585c3
 	github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
-	github.com/cppforlife/go-cli-ui v0.0.0-20220425131040-94f26b16bc14
+	github.com/cppforlife/go-cli-ui v0.0.0-20220520125801-e45d9169a663
 	github.com/cppforlife/go-patch v0.0.0-20240118020416-2147782e467b
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/go-version v1.7.0
@@ -16,7 +17,6 @@ require (
 	github.com/spf13/cobra v1.10.0
 	github.com/spf13/pflag v1.0.9
 	github.com/stretchr/testify v1.11.1
-	github.com/vmware-tanzu/carvel-kapp-controller v0.51.0
 	golang.org/x/net v0.50.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.35.1
@@ -31,7 +31,7 @@ require (
 )
 
 require (
-	carvel.dev/vendir v0.45.1 // indirect
+	carvel.dev/vendir v0.45.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -63,8 +63,8 @@ require (
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/vito/go-interact v1.0.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	go.opentelemetry.io/otel v1.36.0 // indirect
-	go.opentelemetry.io/otel/trace v1.36.0 // indirect
+	go.opentelemetry.io/otel v1.40.0 // indirect
+	go.opentelemetry.io/otel/trace v1.40.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect

@@ -41,6 +41,8 @@ type AppTemplateYtt struct {
 // +k8s:openapi-gen=true
 type AppTemplateKbld struct {
 	Paths []string `json:"paths,omitempty" protobuf:"bytes,1,rep,name=paths"`
+	// Resolve to specific platform for image indexes (optional)
+	Platform string `json:"platform,omitempty" protobuf:"bytes,2,opt,name=platform"`
 }
 
 // +k8s:openapi-gen=true
