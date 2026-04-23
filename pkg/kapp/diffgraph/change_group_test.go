@@ -22,6 +22,8 @@ func TestNewChangeGroupFromAnnString(t *testing.T) {
 		"valid-name.com/valid-name_CustomResourceDefinition--valid",
 		// Example from pinniped of a long name
 		"change-groups.kapp.k14s.io/crds-authentication.concierge.pinniped.dev-WebhookAuthenticator",
+		// Regression test for #1123: long CRD group + kind can exceed 63 bytes.
+		"change-groups.kapp.k14s.io/crds-fooooooooooooooooooooooooooooooooooooooooooooooooooooo.example.com-SomeLongCRDName",
 	}
 	for _, name := range names {
 		cg, err := ctldgraph.NewChangeGroupFromAnnString(name)

@@ -52,8 +52,9 @@ func (r ChangeGroup) isQualifiedNameWithoutLen(name string) []string {
 	errStrs := k8sval.IsQualifiedName(name)
 	var updatedErrStrs []string
 	for _, err := range errStrs {
-		// Allow change group names to have more characters than the default maxLength
-		if !strings.Contains(err, k8sval.MaxLenError(k8sval.DNS1035LabelMaxLength)) {
+		// Allow change group names to have more characters than the default maxLength.
+		// k8s has used both "characters" and "bytes" wording across versions.
+		if !strings.Contains(err, "must be no more than 63 ") {
 			updatedErrStrs = append(updatedErrStrs, err)
 		}
 	}
