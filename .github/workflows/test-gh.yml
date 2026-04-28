@@ -73,7 +73,7 @@ jobs:
         echo "k8s_version=$k8s_version" >> $GITHUB_ENV
     - name: Build and push kind image for latest Kubernetes
       run: |
-        k8s_version=v1.35.1
+        k8s_version=v1.36.0
         mkdir tmp && cd tmp
         git clone https://github.com/kubernetes/kubernetes.git && cd kubernetes
         git checkout $k8s_version
