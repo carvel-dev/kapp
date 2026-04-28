@@ -234,6 +234,11 @@ func (in *AppFetchGit) DeepCopyInto(out *AppFetchGit) {
 		*out = new(AppFetchLocalRef)
 		**out = **in
 	}
+	if in.Depth != nil {
+		in, out := &in.Depth, &out.Depth
+		*out = new(int64)
+		**out = **in
+	}
 	return
 }
 

@@ -3,7 +3,7 @@
 
 syntax = "proto2";
 
-package github.com.vmware_tanzu.carvel_kapp_controller.pkg.apis.kappctrl.v1alpha1;
+package carvel.dev.kapp_controller.pkg.apis.kappctrl.v1alpha1;
 
 import "carvel.dev/vendir/pkg/vendir/versions/v1alpha1/generated.proto";
 import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
@@ -11,7 +11,7 @@ import "k8s.io/apimachinery/pkg/runtime/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 
 // Package-wide variables from generator "generated".
-option go_package = "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1";
+option go_package = "carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1";
 
 // +k8s:openapi-gen=true
 message AppCluster {
@@ -127,6 +127,10 @@ message AppFetchGit {
   // Force the usage of HTTP Basic Auth when Basic Auth is provided (optional)
   // +optional
   optional bool forceHTTPBasicAuth = 7;
+
+  // depth of commits to fetch; 1 (default) means only latest commit, 0 means everything (optional)
+  // +optional
+  optional int64 depth = 8;
 }
 
 // +k8s:openapi-gen=true
@@ -357,6 +361,9 @@ message AppTemplateJsonnet {
 // +k8s:openapi-gen=true
 message AppTemplateKbld {
   repeated string paths = 1;
+
+  // Resolve to specific platform for image indexes (optional)
+  optional string platform = 2;
 }
 
 // TODO implement kustomize

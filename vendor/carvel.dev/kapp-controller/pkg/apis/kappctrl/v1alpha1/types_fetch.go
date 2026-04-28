@@ -109,6 +109,9 @@ type AppFetchGit struct {
 	// Force the usage of HTTP Basic Auth when Basic Auth is provided (optional)
 	// +optional
 	ForceHTTPBasicAuth bool `json:"forceHTTPBasicAuth,omitempty" protobuf:"varint,7,opt,name=forceHTTPBasicAuth"`
+	// depth of commits to fetch; 1 (default) means only latest commit, 0 means everything (optional)
+	// +optional
+	Depth *int64 `json:"depth,omitempty" protobuf:"bytes,8,opt,name=depth"`
 }
 
 // +k8s:openapi-gen=true

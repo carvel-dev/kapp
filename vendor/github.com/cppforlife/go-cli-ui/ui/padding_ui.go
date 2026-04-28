@@ -57,14 +57,14 @@ func (ui *PaddingUI) PrintTable(table Table) {
 	ui.parent.PrintTable(table)
 }
 
-func (ui *PaddingUI) AskForText(label string) (string, error) {
+func (ui *PaddingUI) AskForText(opts TextOpts) (string, error) {
 	ui.padBefore(paddingUIModeAskText)
-	return ui.parent.AskForText(label)
+	return ui.parent.AskForText(opts)
 }
 
-func (ui *PaddingUI) AskForChoice(label string, options []string) (int, error) {
+func (ui *PaddingUI) AskForChoice(opts ChoiceOpts) (int, error) {
 	ui.padBefore(paddingUIModeAuto)
-	return ui.parent.AskForChoice(label, options)
+	return ui.parent.AskForChoice(opts)
 }
 
 func (ui *PaddingUI) AskForPassword(label string) (string, error) {
