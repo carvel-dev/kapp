@@ -39,12 +39,12 @@ func (ui *NonTTYUI) PrintTable(table Table) {
 	ui.parent.PrintTable(table)
 }
 
-func (ui *NonTTYUI) AskForText(label string) (string, error) {
-	return ui.parent.AskForText(label)
+func (ui *NonTTYUI) AskForText(opts TextOpts) (string, error) {
+	return ui.parent.AskForText(opts)
 }
 
-func (ui *NonTTYUI) AskForChoice(label string, options []string) (int, error) {
-	return ui.parent.AskForChoice(label, options)
+func (ui *NonTTYUI) AskForChoice(opts ChoiceOpts) (int, error) {
+	return ui.parent.AskForChoice(opts)
 }
 
 func (ui *NonTTYUI) AskForPassword(label string) (string, error) {

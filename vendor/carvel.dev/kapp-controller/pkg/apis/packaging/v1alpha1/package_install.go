@@ -4,8 +4,8 @@
 package v1alpha1
 
 import (
+	"carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	versions "carvel.dev/vendir/pkg/vendir/versions/v1alpha1"
-	"github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -17,6 +17,7 @@ import (
 // +kubebuilder:printcolumn:name=Package version,JSONPath=.status.version,description=PackageMetadata version,type=string
 // +kubebuilder:printcolumn:name=Description,JSONPath=.status.friendlyDescription,description=Friendly description,type=string
 // +kubebuilder:printcolumn:name=Age,JSONPath=.metadata.creationTimestamp,description=Time since creation,type=date
+// +kubebuilder:printcolumn:name=Paused,JSONPath=.spec.paused,description=Paused,type=boolean
 // A Package Install is an actual installation of a package and its underlying resources on a Kubernetes cluster.
 // It is represented in kapp-controller by a PackageInstall CR.
 // A PackageInstall CR must reference a Package CR.

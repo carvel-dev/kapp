@@ -96,27 +96,44 @@ func (ui *WriterUI) PrintTable(table Table) {
 	}
 }
 
-func (ui *WriterUI) AskForText(label string) (string, error) {
-	var text string
-
-	err := interact.NewInteraction(label).Resolve(&text)
-	if err != nil {
-		return "", fmt.Errorf("Asking for text: %s", err)
+func (ui *WriterUI) AskForText(opts TextOpts) (string, error) {
+	if opts.ValidateFunc == nil {
+		opts.ValidateFunc = func(s string) (bool, string, error) {
+			return true, "", nil
+		}
 	}
 
-	return text, nil
+	for {
+		text := opts.Default
+		err := interact.NewInteraction(opts.Label).Resolve(&text)
+		if err != nil {
+			return "", fmt.Errorf("Asking for text: %s", err)
+		}
+
+		isValid, message, err := opts.ValidateFunc(text)
+		if err != nil {
+			return "", fmt.Errorf("Validation input: %s", err)
+		}
+		if isValid {
+			return text, nil
+		} else {
+			if len(message) == 0 {
+				message = "(reason for failure not specified)"
+			}
+			ui.ErrorLinef("Failed validation: %s", message)
+		}
+	}
 }
 
-func (ui *WriterUI) AskForChoice(label string, options []string) (int, error) {
+func (ui *WriterUI) AskForChoice(opts ChoiceOpts) (int, error) {
 	var choices []interact.Choice
 
-	for i, opt := range options {
+	for i, opt := range opts.Choices {
 		choices = append(choices, interact.Choice{Display: opt, Value: i})
 	}
 
-	var chosen int
-
-	err := interact.NewInteraction(label, choices...).Resolve(&chosen)
+	chosen := opts.Default
+	err := interact.NewInteraction(opts.Label, choices...).Resolve(&chosen)
 	if err != nil {
 		return 0, fmt.Errorf("Asking for choice: %s", err)
 	}

@@ -3,10 +3,11 @@ module carvel.dev/kapp
 go 1.25.7
 
 require (
-	carvel.dev/ytt v0.53.0
+	carvel.dev/kapp-controller v0.59.8
+	carvel.dev/ytt v0.54.0
 	github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
-	github.com/cppforlife/go-cli-ui v0.0.0-20220425131040-94f26b16bc14
+	github.com/cppforlife/go-cli-ui v0.0.0-20220520125801-e45d9169a663
 	github.com/cppforlife/go-patch v0.0.0-20240118020416-2147782e467b
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/go-version v1.6.0
@@ -15,8 +16,7 @@ require (
 	github.com/openshift/crd-schema-checker v0.0.0-20240404194209-35a9033b1d11
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
-	github.com/stretchr/testify v1.10.0
-	github.com/vmware-tanzu/carvel-kapp-controller v0.51.0
+	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.47.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.34.2
@@ -31,7 +31,7 @@ require (
 )
 
 require (
-	carvel.dev/vendir v0.45.1 // indirect
+	carvel.dev/vendir v0.45.3 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -67,7 +67,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
-	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/term v0.37.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/time v0.9.0 // indirect

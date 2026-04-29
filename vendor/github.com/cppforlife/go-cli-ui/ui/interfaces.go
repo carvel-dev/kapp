@@ -16,8 +16,8 @@ type UI interface {
 
 	PrintTable(Table)
 
-	AskForText(label string) (string, error)
-	AskForChoice(label string, options []string) (int, error)
+	AskForText(opts TextOpts) (string, error)
+	AskForChoice(opts ChoiceOpts) (int, error)
 	AskForPassword(label string) (string, error)
 
 	// AskForConfirmation returns error if user doesnt want to continue
