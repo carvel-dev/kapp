@@ -10,7 +10,7 @@ require (
 	github.com/cppforlife/go-cli-ui v0.0.0-20220425131040-94f26b16bc14
 	github.com/cppforlife/go-patch v0.0.0-20240118020416-2147782e467b
 	github.com/google/go-cmp v0.7.0
-	github.com/hashicorp/go-version v1.6.0
+	github.com/hashicorp/go-version v1.7.0
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/openshift/crd-schema-checker v0.0.0-20240404194209-35a9033b1d11
 	github.com/spf13/cobra v1.10.0
