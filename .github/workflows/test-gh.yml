@@ -52,10 +52,34 @@ jobs:
         fi
         echo "k8s_version=${k8s_version}" >> $GITHUB_ENV
         echo "k8s_version=${k8s_version}" >> $GITHUB_OUTPUT
-    - name: Create Kind Cluster (k8s version ${{ steps.resolve-k8s-version.outputs.k8s_version }})
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GHCR_PAT_PACKAGE_ALL }}
+    - name: Create Kind Cluster(k8s version ${{ env.k8s_version }})
       run: |
-        echo "Creating kind cluster with kindest/node:${{ env.k8s_version }}"
-        kind create cluster --image kindest/node:${{ env.k8s_version }}
+        k8s_version=${{ env.k8s_version }}
+        target_ghcr_image="ghcr.io/carvel-dev/kindest/node:${k8s_version}"
+
+        echo "1. Checking if official kindest/node:${k8s_version} exists on Docker Hub..."
+        if docker pull kindest/node:${k8s_version}; then
+          echo "Using official kindest/node:${k8s_version}"
+          kind create cluster --image kindest/node:${k8s_version}
+        elif docker pull "${target_ghcr_image}"; then
+          echo "2. Official image missing. Using existing fallback ${target_ghcr_image}"
+          kind create cluster --image "${target_ghcr_image}"
+        else
+          echo "3. Image not found on Docker Hub or GHCR. Building node image for ${k8s_version}..."
+          kind build node-image --image "${target_ghcr_image}" --type release "${k8s_version}"
+
+          echo "Pushing built image to GHCR..."
+          docker push "${target_ghcr_image}" || echo "Warning: Failed to push to GHCR (e.g., PR from fork with read-only token). Proceeding with local image..."
+
+          echo "Creating cluster with built image..."
+          kind create cluster --image "${target_ghcr_image}"
+        fi
     - name: Verify kind and k8s version
       run: |
         kind version
