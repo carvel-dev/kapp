@@ -20,15 +20,6 @@ jobs:
       uses: helm/kind-action@v1
       with:
         install_only: true
-    - name: Free disk space (before build)
-      run: |
-        echo "=== Removing unnecessary packages ==="
-        sudo rm -rf /opt/hostedtoolcache || true
-        sudo rm -rf /usr/local/lib/android || true
-        echo "=== Docker cleanup ==="
-        docker system prune -af || true
-        docker volume prune -f || true
-        echo "=== Cleanup complete ==="
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
       with:
@@ -65,27 +56,21 @@ jobs:
             echo "::warning::kindest/node latest is $k8s_version (minor=$kind_minor) but upstream Kubernetes latest is $k8s_latest (minor=$k8s_minor). kind has not yet published an image for the newest minor version."
           fi
         fi
-<<<<<<< HEAD
-        echo "k8s_version=${k8s_version}" >> $GITHUB_ENV
-        echo "k8s_version=${k8s_version}" >> $GITHUB_OUTPUT
-    - name: Create Kind Cluster (k8s version ${{ steps.resolve-k8s-version.outputs.k8s_version }})
-=======
         echo "k8s_version=$k8s_version" >> $GITHUB_ENV
     - name: Build and push kind image for latest Kubernetes
       run: |
-        k8s_version=v1.36.0
+        k8s_version=v1.36.3
         mkdir tmp && cd tmp
         git clone https://github.com/kubernetes/kubernetes.git && cd kubernetes
         git checkout $k8s_version
         git clone https://github.com/kubernetes-sigs/kind.git && cd kind
         kind build node-image --type=source $(pwd)/.. --image kindest/node:$k8s_version
         docker tag kindest/node:$k8s_version \
-          ghcr.io/${{ github.repository_owner }}/kindest/node:$k8s_version
-        docker push ghcr.io/${{ github.repository_owner }}/kindest/node:$k8s_version
+          ghcr.io/${{ github.repository_owner }}/kindest-node:$k8s_version
+        docker push ghcr.io/${{ github.repository_owner }}/kindest-node:$k8s_version
         cd $(pwd)/../../../
         rm -rf tmp && echo "Cleanup completed: Temporary directory 'tmp' has been removed." || echo "Cleanup failed: Could not remove 'tmp' directory."
     - name: Create Kind Cluster(k8s version ${{ env.k8s_version }})
->>>>>>> 51b8c6d9 (Build kind image)
       run: |
         echo "Creating kind cluster with kindest/node:${{ env.k8s_version }}"
         kind create cluster --image kindest/node:${{ env.k8s_version }}
