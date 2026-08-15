@@ -120,7 +120,10 @@ func (t FieldCopyMod) apply(obj interface{}, srcObj interface{}, path Path, full
 
 					var srcTypeObj map[string]interface{}
 					if objI < len(srcTypedObj) {
-						srcTypeObj = srcTypedObj[objI].(map[string]interface{})
+						srcTypeObj, ok = srcTypedObj[objI].(map[string]interface{})
+						if !ok {
+							return false, fmt.Errorf("Unexpected non-map found: %T", srcTypedObj[objI])
+						}
 					}
 					updated, err := t.apply(obj, srcTypeObj, path[i+1:], newFullPath, srcs)
 					if err != nil {

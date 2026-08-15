@@ -239,3 +239,34 @@ func (e modFieldCopyExample) Check(t *testing.T) {
 
 	expectEqualsStripped(t, e.Description, string(resultBs), e.Expected)
 }
+
+func TestModFieldCopyNonMapArrayElement(t *testing.T) {
+	// The default config carries allIndexes copy rules, for example
+	// [webhooks, {allIndexes: true}, clientConfig, caBundle], so a source
+	// resource whose array holds a scalar where a map is expected reaches this
+	// path without any custom config.
+	res := ctlres.MustNewResourceFromBytes([]byte(`
+metadata:
+  labels:
+  - {}`))
+
+	ress := map[ctlres.FieldCopyModSource]ctlres.Resource{
+		ctlres.FieldCopyModSourceNew: ctlres.MustNewResourceFromBytes([]byte(`
+metadata:
+  labels:
+  - just-a-string`)),
+	}
+
+	err := ctlres.FieldCopyMod{
+		ResourceMatcher: ctlres.AllMatcher{},
+		Path: ctlres.Path{
+			ctlres.NewPathPartFromString("metadata"),
+			ctlres.NewPathPartFromString("labels"),
+			ctlres.NewPathPartFromIndexAll(),
+			ctlres.NewPathPartFromString("label-key"),
+		},
+		Sources: []ctlres.FieldCopyModSource{ctlres.FieldCopyModSourceNew},
+	}.ApplyFromMultiple(res, ress)
+
+	require.ErrorContains(t, err, "Unexpected non-map found")
+}
