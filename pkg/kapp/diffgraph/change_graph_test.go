@@ -4,7 +4,9 @@
 package diffgraph_test
 
 import (
+	"encoding/json"
 	"os"
+	"sort"
 	"strings"
 	"testing"
 
@@ -880,7 +882,17 @@ metadata:
 	expectedOutput := strings.TrimSpace(`
 {"nodes":[{"id":"v1.88b09231fb1239b5798a9fc230ef23f3","data":{"name":"import-etcd-into-db","namespace":null,"changeGroups":["apps.big.co/import-etcd-into-db"],"groupKind":{"group":"","kind":"Job"},"op":"upsert"}},{"id":"v1.3258dfc11ef4e6bfbfe728d7f6ed8193","data":{"name":"after-migrations","namespace":null,"changeGroups":["apps.big.co/after-migrations-1","apps.big.co/after-migrations-2"],"groupKind":{"group":"","kind":"Job"},"op":"upsert"}},{"id":"v1.cb954b4a1b9d4fbaaf4ff3ce5a9df1ba","data":{"name":"migrations","namespace":null,"changeGroups":[],"groupKind":{"group":"","kind":"Job"},"op":"upsert"}}],"edges":[{"source":"v1.3258dfc11ef4e6bfbfe728d7f6ed8193","target":"v1.cb954b4a1b9d4fbaaf4ff3ce5a9df1ba"},{"source":"v1.cb954b4a1b9d4fbaaf4ff3ce5a9df1ba","target":"v1.88b09231fb1239b5798a9fc230ef23f3"}]}
   `)
-	require.Equal(t, expectedOutput, strings.TrimSpace(string(contents)))
+
+	require.Equal(t, parseAndSortGraph(t, expectedOutput), parseAndSortGraph(t, strings.TrimSpace(string(contents))))
+}
+
+func parseAndSortGraph(t *testing.T, s string) ctldgraph.RenderedGraph {
+	var graph ctldgraph.RenderedGraph
+	require.NoErrorf(t, json.Unmarshal([]byte(s), &graph), "Failed to unmarshal rendered graph")
+	for i := range graph.Nodes {
+		sort.Strings(graph.Nodes[i].Data.ChangeGroups)
+	}
+	return graph
 }
 
 type buildGraphOpts struct {
