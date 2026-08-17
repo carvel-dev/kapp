@@ -68,6 +68,8 @@ func (c ClusterChangeSet) Calculate() ([]*ClusterChange, *ctldgraph.ChangeGraph,
 			clusterChange.WaitOp() == ClusterChangeWaitOpNoop
 	})
 
+	c.configVersionedDeleteOrdering(changesGraph)
+
 	var clusterChanges []*ClusterChange
 
 	for _, change := range changesGraph.All() {
@@ -76,6 +78,31 @@ func (c ClusterChangeSet) Calculate() ([]*ClusterChange, *ctldgraph.ChangeGraph,
 	}
 
 	return clusterChanges, changesGraph, nil
+}
+
+// configures obsolete versioned resources to wait for all operations to complete before deleting
+func (c ClusterChangeSet) configVersionedDeleteOrdering(graph *ctldgraph.ChangeGraph) {
+	var versionedDeletes []*ctldgraph.Change
+	var upsertOperations []*ctldgraph.Change
+
+	for _, change := range graph.All() {
+		cc := change.Change.(wrappedClusterChange).ClusterChange
+		_, hasVersionedAnn := cc.Resource().Annotations()[ctldiff.VersionedResAnnKey]
+		if hasVersionedAnn && cc.ApplyOp() == ClusterChangeApplyOpDelete {
+			versionedDeletes = append(versionedDeletes, change)
+		} else if !hasVersionedAnn && cc.ApplyOp() != ClusterChangeApplyOpDelete && cc.ApplyOp() != ClusterChangeApplyOpNoop {
+			upsertOperations = append(upsertOperations, change)
+		}
+	}
+
+	for _, del := range versionedDeletes {
+		for _, op := range upsertOperations {
+			if op.IsTransitivelyWaitingFor(del) {
+				continue
+			}
+			del.WaitingFor = append(del.WaitingFor, op)
+		}
+	}
 }
 
 func (c ClusterChangeSet) markChangesToWait(change *ctldgraph.Change) bool {

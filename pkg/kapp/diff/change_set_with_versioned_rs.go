@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	versionedResAnnKey        = "kapp.k14s.io/versioned"               // Value is ignored
+	VersionedResAnnKey        = "kapp.k14s.io/versioned"               // Value is ignored
 	versionedResOrigAnnKey    = "kapp.k14s.io/versioned-keep-original" // Value is ignored
 	versionedResNumVersAnnKey = "kapp.k14s.io/num-versions"
 )
@@ -42,21 +42,21 @@ func (d ChangeSetWithVersionedRs) Calculate() ([]Change, error) {
 
 	// First try to calculate changes will update references on all resources
 	// (which includes versioned and non-versioned resources)
-	_, _, err := d.addAndKeepChanges(newRs, existingRsGrouped)
+	_, _, _, err := d.addAndKeepChanges(newRs, existingRsGrouped)
 	if err != nil {
 		return nil, err
 	}
 
 	// Since there might have been circular dependencies;
 	// second try catches ones that werent changed during first run
-	addChanges, alreadyAdded, err := d.addAndKeepChanges(newRs, existingRsGrouped)
+	addChanges, alreadyAdded, newVersionAdded, err := d.addAndKeepChanges(newRs, existingRsGrouped)
 	if err != nil {
 		return nil, err
 	}
 
 	allChanges = append(allChanges, addChanges...)
 
-	keepAndDeleteChanges, err := d.noopAndDeleteChanges(existingRsGrouped, alreadyAdded)
+	keepAndDeleteChanges, err := d.noopAndDeleteChanges(existingRsGrouped, alreadyAdded, newVersionAdded)
 	if err != nil {
 		return nil, err
 	}
@@ -95,10 +95,11 @@ func (d ChangeSetWithVersionedRs) assignNewNames(
 
 func (d ChangeSetWithVersionedRs) addAndKeepChanges(
 	newRs versionedResources, existingRsGrouped map[string][]ctlres.Resource) (
-	[]Change, map[string]ctlres.Resource, error) {
+	[]Change, map[string]ctlres.Resource, map[string]struct{}, error) {
 
 	changes := []Change{}
 	alreadyAdded := map[string]ctlres.Resource{}
+	newVersionAdded := map[string]struct{}{} // keys where a genuinely new version was created
 
 	for _, newRes := range newRs.Versioned {
 		newResKey := VersionedResource{newRes, nil}.UniqVersionedKey().String()
@@ -110,16 +111,18 @@ func (d ChangeSetWithVersionedRs) addAndKeepChanges(
 			// Calculate update change to determine if anything changed
 			updateChange, err := d.newChange(existingRes, newRes)
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, nil, err
 			}
 
 			switch updateChange.Op() {
 			case ChangeOpUpdate:
 				changes = append(changes, d.newAddChangeFromUpdateChange(newRes, updateChange))
+				newVersionAdded[newResKey] = struct{}{}
 			case ChangeOpKeep:
 				// Use latest copy of resource to update affected resources
 				usedRes = existingRes
 				changes = append(changes, d.newKeepChange(existingRes))
+				// Not added to newVersionAdded: content unchanged, no new version created
 			default:
 				panic(fmt.Sprintf("Unexpected change op %s", updateChange.Op()))
 			}
@@ -127,7 +130,7 @@ func (d ChangeSetWithVersionedRs) addAndKeepChanges(
 			// Since there no existing resource, create change for new resource
 			addChange, err := d.newChange(nil, newRes)
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, nil, err
 			}
 			changes = append(changes, addChange)
 		}
@@ -137,18 +140,18 @@ func (d ChangeSetWithVersionedRs) addAndKeepChanges(
 
 		err := verRes.UpdateAffected(newRs.NonVersioned)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 
 		err = verRes.UpdateAffected(newRs.Versioned)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 
 		alreadyAdded[newResKey] = newRes
 	}
 
-	return changes, alreadyAdded, nil
+	return changes, alreadyAdded, newVersionAdded, nil
 }
 
 func (d ChangeSetWithVersionedRs) newAddChangeFromUpdateChange(
@@ -160,7 +163,8 @@ func (d ChangeSetWithVersionedRs) newAddChangeFromUpdateChange(
 
 func (d ChangeSetWithVersionedRs) noopAndDeleteChanges(
 	existingRsGrouped map[string][]ctlres.Resource,
-	alreadyAdded map[string]ctlres.Resource) ([]Change, error) {
+	alreadyAdded map[string]ctlres.Resource,
+	newVersionAdded map[string]struct{}) ([]Change, error) {
 
 	changes := []Change{}
 
@@ -173,6 +177,11 @@ func (d ChangeSetWithVersionedRs) noopAndDeleteChanges(
 			numToKeep, err = d.numOfResourcesToKeep(newRes)
 			if err != nil {
 				return nil, err
+			}
+			// A new version is being added, we will have len(existingRs)+1 versions after apply
+			// reducing numToKeep by 1 allows to delete the obsolete version immediately rather than on the following apply.
+			if _, isNewVersion := newVersionAdded[existingResKey]; isNewVersion {
+				numToKeep = numToKeep - 1
 			}
 		}
 		if numToKeep > len(existingRs) {
@@ -241,7 +250,7 @@ type versionedResources struct {
 func newVersionedResources(rs []ctlres.Resource) versionedResources {
 	var result versionedResources
 	for _, res := range rs {
-		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
+		_, hasVersionedAnn := res.Annotations()[VersionedResAnnKey]
 		_, hasVersionedOrigAnn := res.Annotations()[versionedResOrigAnnKey]
 
 		if hasVersionedAnn {
@@ -262,7 +271,7 @@ func existingVersionedResources(rs []ctlres.Resource) versionedResources {
 		// Expect that versioned resources should not be transient
 		// (Annotations may have been copied from versioned resources
 		// onto transient resources for non-versioning related purposes).
-		_, hasVersionedAnn := res.Annotations()[versionedResAnnKey]
+		_, hasVersionedAnn := res.Annotations()[VersionedResAnnKey]
 
 		versionedRs := VersionedResource{res: res}
 		_, version := versionedRs.BaseNameAndVersion()
@@ -280,7 +289,7 @@ func newGroupedVersionedResources(rs []ctlres.Resource) map[string][]ctlres.Reso
 	result := map[string][]ctlres.Resource{}
 
 	groupByFunc := func(res ctlres.Resource) string {
-		_, found := res.Annotations()[versionedResAnnKey]
+		_, found := res.Annotations()[VersionedResAnnKey]
 		if found {
 			return VersionedResource{res, nil}.UniqVersionedKey().String()
 		}
