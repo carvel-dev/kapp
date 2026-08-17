@@ -98,11 +98,11 @@ func (ui *JSONUI) PrintTable(table Table) {
 	ui.uiResp.Tables = append(ui.uiResp.Tables, resp)
 }
 
-func (ui *JSONUI) AskForText(_ string) (string, error) {
+func (ui *JSONUI) AskForText(_ TextOpts) (string, error) {
 	panic("Cannot ask for input in JSON UI")
 }
 
-func (ui *JSONUI) AskForChoice(_ string, _ []string) (int, error) {
+func (ui *JSONUI) AskForChoice(_ ChoiceOpts) (int, error) {
 	panic("Cannot ask for a choice in JSON UI")
 }
 

@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"fmt"
+
 	. "github.com/cppforlife/go-cli-ui/ui/table"
 )
 
@@ -40,12 +42,21 @@ func (ui *NonInteractiveUI) PrintTable(table Table) {
 	ui.parent.PrintTable(table)
 }
 
-func (ui *NonInteractiveUI) AskForText(label string) (string, error) {
-	panic("Cannot ask for input in non-interactive UI")
+func (ui *NonInteractiveUI) AskForText(opts TextOpts) (string, error) {
+	if opts.ValidateFunc != nil {
+		isValid, message, err := opts.ValidateFunc(opts.Default)
+		if err != nil || !isValid {
+			return "", fmt.Errorf("Validation error: %s", message)
+		}
+	}
+	return opts.Default, nil
 }
 
-func (ui *NonInteractiveUI) AskForChoice(label string, options []string) (int, error) {
-	panic("Cannot ask for a choice in non-interactive UI")
+func (ui *NonInteractiveUI) AskForChoice(opts ChoiceOpts) (int, error) {
+	if opts.Default >= len(opts.Choices) || opts.Default < 0 {
+		return 0, fmt.Errorf("Default value should be index and must be in (0-%d)", len(opts.Choices)-1)
+	}
+	return opts.Default, nil
 }
 
 func (ui *NonInteractiveUI) AskForPassword(label string) (string, error) {

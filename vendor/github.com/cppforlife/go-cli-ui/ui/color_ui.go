@@ -66,12 +66,12 @@ func (ui *ColorUI) PrintTable(table Table) {
 	ui.parent.PrintTable(table)
 }
 
-func (ui *ColorUI) AskForText(label string) (string, error) {
-	return ui.parent.AskForText(label)
+func (ui *ColorUI) AskForText(opts TextOpts) (string, error) {
+	return ui.parent.AskForText(opts)
 }
 
-func (ui *ColorUI) AskForChoice(label string, options []string) (int, error) {
-	return ui.parent.AskForChoice(label, options)
+func (ui *ColorUI) AskForChoice(opts ChoiceOpts) (int, error) {
+	return ui.parent.AskForChoice(opts)
 }
 
 func (ui *ColorUI) AskForPassword(label string) (string, error) {

@@ -1,8 +1,12 @@
-# carvel.dev/vendir v0.45.1
-## explicit; go 1.25.6
+# carvel.dev/kapp-controller v0.59.7
+## explicit; go 1.25.7
+carvel.dev/kapp-controller/pkg/apis/kappctrl/v1alpha1
+carvel.dev/kapp-controller/pkg/apis/packaging/v1alpha1
+# carvel.dev/vendir v0.45.2
+## explicit; go 1.25.7
 carvel.dev/vendir/pkg/vendir/versions/v1alpha1
-# carvel.dev/ytt v0.53.0
-## explicit; go 1.25.6
+# carvel.dev/ytt v0.55.2
+## explicit; go 1.26.4
 carvel.dev/ytt/pkg/cmd/template
 carvel.dev/ytt/pkg/cmd/ui
 carvel.dev/ytt/pkg/filepos
@@ -41,8 +45,8 @@ github.com/cppforlife/cobrautil
 # github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835
 ## explicit; go 1.13
 github.com/cppforlife/color
-# github.com/cppforlife/go-cli-ui v0.0.0-20220425131040-94f26b16bc14
-## explicit; go 1.13
+# github.com/cppforlife/go-cli-ui v0.0.0-20220520125801-e45d9169a663
+## explicit; go 1.17
 github.com/cppforlife/go-cli-ui/errors
 github.com/cppforlife/go-cli-ui/ui
 github.com/cppforlife/go-cli-ui/ui/table
@@ -60,7 +64,7 @@ github.com/emicklei/go-restful/v3/log
 # github.com/fxamacker/cbor/v2 v2.9.0
 ## explicit; go 1.20
 github.com/fxamacker/cbor/v2
-# github.com/go-logr/logr v1.4.3
+# github.com/go-logr/logr v1.4.4
 ## explicit; go 1.18
 github.com/go-logr/logr
 # github.com/go-openapi/jsonpointer v0.21.0
@@ -167,10 +171,10 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/spf13/cobra v1.10.0
+# github.com/spf13/cobra v1.10.2
 ## explicit; go 1.15
 github.com/spf13/cobra
-# github.com/spf13/pflag v1.0.9
+# github.com/spf13/pflag v1.0.10
 ## explicit; go 1.12
 github.com/spf13/pflag
 # github.com/stretchr/testify v1.11.1
@@ -181,21 +185,18 @@ github.com/stretchr/testify/require
 # github.com/vito/go-interact v1.0.1
 ## explicit; go 1.12
 github.com/vito/go-interact/interact
-# github.com/vmware-tanzu/carvel-kapp-controller v0.51.0
-## explicit; go 1.21
-github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1
-github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1
 # github.com/x448/float16 v0.8.4
 ## explicit; go 1.11
 github.com/x448/float16
-# go.opentelemetry.io/otel v1.36.0
-## explicit; go 1.23.0
+# go.opentelemetry.io/otel v1.45.0
+## explicit; go 1.25.0
 go.opentelemetry.io/otel/attribute
 go.opentelemetry.io/otel/attribute/internal
+go.opentelemetry.io/otel/attribute/internal/xxhash
 go.opentelemetry.io/otel/codes
-go.opentelemetry.io/otel/semconv/v1.26.0
-# go.opentelemetry.io/otel/trace v1.36.0
-## explicit; go 1.23.0
+go.opentelemetry.io/otel/semconv/v1.43.0
+# go.opentelemetry.io/otel/trace v1.45.0
+## explicit; go 1.25.0
 go.opentelemetry.io/otel/trace
 go.opentelemetry.io/otel/trace/embedded
 go.opentelemetry.io/otel/trace/internal/telemetry
@@ -205,8 +206,8 @@ go.yaml.in/yaml/v2
 # go.yaml.in/yaml/v3 v3.0.4
 ## explicit; go 1.16
 go.yaml.in/yaml/v3
-# golang.org/x/net v0.50.0
-## explicit; go 1.24.0
+# golang.org/x/net v0.58.0
+## explicit; go 1.25.0
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
@@ -217,16 +218,16 @@ golang.org/x/net/internal/httpsfv
 ## explicit; go 1.23.0
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.41.0
-## explicit; go 1.24.0
+# golang.org/x/sys v0.47.0
+## explicit; go 1.25.0
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.40.0
-## explicit; go 1.24.0
+# golang.org/x/term v0.45.0
+## explicit; go 1.25.0
 golang.org/x/term
-# golang.org/x/text v0.34.0
-## explicit; go 1.24.0
+# golang.org/x/text v0.41.0
+## explicit; go 1.25.0
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi

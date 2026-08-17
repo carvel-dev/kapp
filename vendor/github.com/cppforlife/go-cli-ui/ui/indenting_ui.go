@@ -42,12 +42,12 @@ func (ui *IndentingUI) PrintTable(table Table) {
 	ui.parent.PrintTable(table)
 }
 
-func (ui *IndentingUI) AskForText(label string) (string, error) {
-	return ui.parent.AskForText(label)
+func (ui *IndentingUI) AskForText(opts TextOpts) (string, error) {
+	return ui.parent.AskForText(opts)
 }
 
-func (ui *IndentingUI) AskForChoice(label string, options []string) (int, error) {
-	return ui.parent.AskForChoice(label, options)
+func (ui *IndentingUI) AskForChoice(opts ChoiceOpts) (int, error) {
+	return ui.parent.AskForChoice(opts)
 }
 
 func (ui *IndentingUI) AskForPassword(label string) (string, error) {
