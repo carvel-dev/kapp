@@ -7,7 +7,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"maps"
 	"reflect"
+	"slices"
 
 	"github.com/openshift/crd-schema-checker/pkg/manifestcomparators"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -449,7 +451,10 @@ func (cv *ChangeValidator) Validate(oldCRD, newCRD v1.CustomResourceDefinition) 
 			continue
 		}
 
-		for field, diff := range diffs {
+		// ensure order of the potentially multi-line final error
+		for _, field := range slices.Sorted(maps.Keys(diffs)) {
+			diff := diffs[field]
+
 			handled := false
 			for _, validation := range cv.Validations {
 				ok, err := validation(diff)
