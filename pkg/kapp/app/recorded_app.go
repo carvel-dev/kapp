@@ -344,7 +344,7 @@ func (a *RecordedApp) Exists() (bool, string, error) {
 	return true, "", nil
 }
 
-func (a *RecordedApp) Delete() error {
+func (a *RecordedApp) Delete(checkResourcesDeleted bool) error {
 	app, err := a.labeledApp()
 	if err != nil {
 		return err
@@ -360,7 +360,7 @@ func (a *RecordedApp) Delete() error {
 		return fmt.Errorf("Deleting app changes: %w", err)
 	}
 
-	err = app.Delete()
+	err = app.Delete(checkResourcesDeleted)
 	if err != nil {
 		return err
 	}

@@ -29,6 +29,7 @@ type DeleteOptions struct {
 	ApplyFlags          ApplyFlags
 	ResourceTypesFlags  ResourceTypesFlags
 	PrevAppFlags        PrevAppFlags
+	DeleteFlags         DeleteFlags
 }
 
 type changesSummary struct {
@@ -56,6 +57,7 @@ func NewDeleteCmd(o *DeleteOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Co
 	o.ApplyFlags.SetWithDefaults("", ApplyFlagsDeleteDefaults, cmd)
 	o.ResourceTypesFlags.Set(cmd)
 	o.PrevAppFlags.Set(cmd)
+	o.DeleteFlags.Set(cmd)
 	return cmd
 }
 
@@ -172,7 +174,7 @@ func (o *DeleteOptions) Run() error {
 			return err
 		}
 		if shouldFullyDeleteApp {
-			return app.Delete()
+			return app.Delete(o.DeleteFlags.DisableCheckingResourceDeletion)
 		}
 		return nil
 	})
