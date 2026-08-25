@@ -4,6 +4,7 @@
 package resources
 
 import (
+	"crypto/fips140"
 	"crypto/md5"
 	"fmt"
 
@@ -25,7 +26,17 @@ func NewAssociationLabel(resource Resource) AssociationLabel {
 
 func (a AssociationLabel) v1Value() string {
 	// max 63 char for label values
-	key := fmt.Sprintf("%x", md5.Sum([]byte(NewUniqueResourceKey(a.resource).String())))
+	//
+	// MD5 here is a non-security convenience hash used to keep the label
+	// value short and stable; it is not used for authentication or
+	// integrity verification. WithoutEnforcement lets this run under
+	// GODEBUG=fips140=only, which otherwise panics on any non-approved
+	// primitive regardless of how it's used.
+	var sum [md5.Size]byte
+	fips140.WithoutEnforcement(func() {
+		sum = md5.Sum([]byte(NewUniqueResourceKey(a.resource).String()))
+	})
+	key := fmt.Sprintf("%x", sum)
 	return kappAssociationLabelV1 + "." + key
 }
 
