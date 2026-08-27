@@ -188,6 +188,24 @@ func TestCalculateFlatSchemaDiff(t *testing.T) {
 			expectedDiff: map[string]crdupgradesafety.FieldDiff{},
 		},
 		{
+			name: "diff in child items only, no diff returned, no error",
+			old: crdupgradesafety.FlatSchema{
+				"foo": &v1.JSONSchemaProps{
+					Items: &v1.JSONSchemaPropsOrArray{Schema: &v1.JSONSchemaProps{
+						ID: "bar",
+					}},
+				},
+			},
+			new: crdupgradesafety.FlatSchema{
+				"foo": &v1.JSONSchemaProps{
+					Items: &v1.JSONSchemaPropsOrArray{Schema: &v1.JSONSchemaProps{
+						ID: "baz",
+					}},
+				},
+			},
+			expectedDiff: map[string]crdupgradesafety.FieldDiff{},
+		},
+		{
 			name: "field exists in old but not new, no diff returned, error",
 			old: crdupgradesafety.FlatSchema{
 				"foo": &v1.JSONSchemaProps{},
