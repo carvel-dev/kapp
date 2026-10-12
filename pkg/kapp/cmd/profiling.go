@@ -50,7 +50,7 @@ func (p *ProfilingFlags) initProfiling() error {
 	default:
 		// Check the profile name is valid.
 		if profile := pprof.Lookup(p.profileName); profile == nil {
-			return fmt.Errorf("unknown profile '%s'", p.profileName)
+			return fmt.Errorf("Unknown profile '%s'", p.profileName)
 		}
 	}
 

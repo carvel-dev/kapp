@@ -71,5 +71,5 @@ func (s *NamespaceNameFlag) resolveValue() (string, error) {
 		return configVal, nil
 	}
 
-	return "", fmt.Errorf("Expected to non-empty namespace name")
+	return "", fmt.Errorf("Expected namespace name to be non-empty")
 }

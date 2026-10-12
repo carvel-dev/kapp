@@ -16,10 +16,21 @@ jobs:
       matrix:
         k8s-version: [v1.28.0, latest]
     steps:
-    - name: install kind
-      uses: helm/kind-action@v1
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
       with:
-        install_only: true
+        path: src/github.com/${{ github.repository }}
+        fetch-depth: 0
+    - name: Set up go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: src/github.com/${{ github.repository }}/go.mod
+    - name: Verify go version
+      run: |
+        go version
+    - name: Install latest kind via Go
+      run: |
+        go install sigs.k8s.io/kind@latest
     - name: Resolve Kubernetes version
       id: resolve-k8s-version
       run: |
@@ -44,18 +55,6 @@ jobs:
       run: |
         kind version
         kubectl version
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v4
-      with:
-        path: src/github.com/${{ github.repository }}
-        fetch-depth: 0
-    - name: Set up go
-      uses: actions/setup-go@v5
-      with:
-        go-version-file: src/github.com/${{ github.repository }}/go.mod
-    - name: Verify go version
-      run: |
-        go version
     - name: Run tests
       run: |
         set -e -x

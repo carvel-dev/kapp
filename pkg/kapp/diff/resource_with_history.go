@@ -6,6 +6,7 @@ package diff
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	ctlres "carvel.dev/kapp/pkg/kapp/resources"
 )
@@ -22,8 +23,10 @@ const (
 )
 
 var (
-	resourceWithHistoryDebug = os.Getenv("KAPP_DEBUG_RESOURCE_WITH_HISTORY") == "true"
+	resourceWithHistoryDebug = debugEnabled(os.Getenv("KAPP_DEBUG_RESOURCE_WITH_HISTORY"))
 )
+
+func debugEnabled(val string) bool { return strings.ToLower(val) == "true" }
 
 type ResourceWithHistory struct {
 	resource                                 ctlres.Resource
@@ -43,16 +46,16 @@ func NewResourceWithoutHistory(resource ctlres.Resource, fieldExclusionMods []ct
 // LastAppliedResource will return "last applied" resource that was saved
 // iff it still matches actually saved resource on the cluster (noted at the time of saving).
 func (r ResourceWithHistory) LastAppliedResource() ctlres.Resource {
-	recalculatedLastAppliedChanges, expectedDiffMD5, expectedDiff := r.recalculateLastAppliedChange()
+	recalculatedLastAppliedChanges, expectedDiffMD5 := r.recalculateLastAppliedChange()
 
 	for _, recalculatedLastAppliedChange := range recalculatedLastAppliedChanges {
 		md5Matches := recalculatedLastAppliedChange.OpsDiff().MinimalMD5() == expectedDiffMD5
 
+		// Only hashes are printed: diffs may contain secret values from resources
 		if resourceWithHistoryDebug {
-			fmt.Printf("%s: md5 matches (%t) prev %s recalc %s\n----> pref diff\n%s\n----> recalc diff\n%s\n",
+			fmt.Printf("%s: md5 matches (%t) prev %s recalc %s\n",
 				r.resource.Description(), md5Matches,
-				expectedDiffMD5, recalculatedLastAppliedChange.OpsDiff().MinimalMD5(),
-				expectedDiff, recalculatedLastAppliedChange.OpsDiff().MinimalString())
+				expectedDiffMD5, recalculatedLastAppliedChange.OpsDiff().MinimalMD5())
 		}
 
 		if md5Matches {
@@ -79,9 +82,9 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ct
 
 	diff := appliedChange.OpsDiff()
 
+	// Only the hash is printed: diffs may contain secret values from resources
 	if resourceWithHistoryDebug {
-		fmt.Printf("%s: recording md5 %s\n---> \n%s\n",
-			r.resource.Description(), diff.MinimalMD5(), diff.MinimalString())
+		fmt.Printf("%s: recording md5 %s\n", r.resource.Description(), diff.MinimalMD5())
 	}
 
 	annsMod := ctlres.StringMapAppendMod{
@@ -130,27 +133,25 @@ func (r ResourceWithHistory) CalculateChange(appliedRes ctlres.Resource) (Change
 	return r.newExactHistorylessChange(existingRes, appliedRes)
 }
 
-func (r ResourceWithHistory) recalculateLastAppliedChange() ([]Change, string, string) {
+func (r ResourceWithHistory) recalculateLastAppliedChange() ([]Change, string) {
 	lastAppliedResBytes := r.resource.Annotations()[appliedResAnnKey]
 	lastAppliedDiffMD5 := r.resource.Annotations()[appliedResDiffMD5AnnKey]
 
 	if len(lastAppliedResBytes) == 0 || len(lastAppliedDiffMD5) == 0 {
-		return nil, "", ""
+		return nil, ""
 	}
 
 	lastAppliedRes, err := ctlres.NewResourceFromBytes([]byte(lastAppliedResBytes))
 	if err != nil {
-		return nil, "", ""
+		return nil, ""
 	}
 
 	recalculatedChange, err := r.CalculateChange(lastAppliedRes)
 	if err != nil {
-		return nil, "", "" // TODO deal with error?
+		return nil, "" // TODO deal with error?
 	}
 
-	lastAppliedDiff := r.resource.Annotations()[debugAppliedResDiffAnnKey]
-
-	return []Change{recalculatedChange}, lastAppliedDiffMD5, lastAppliedDiff
+	return []Change{recalculatedChange}, lastAppliedDiffMD5
 }
 
 func (r ResourceWithHistory) newExactHistorylessChange(existingRes, newRes ctlres.Resource) (Change, error) {

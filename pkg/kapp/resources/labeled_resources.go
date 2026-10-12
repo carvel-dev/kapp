@@ -253,7 +253,7 @@ func (a *LabeledResources) checkDisallowedLabels(resources []Resource, disallowe
 		for _, err := range errs {
 			msgs = append(msgs, "- "+err.Error())
 		}
-		return fmt.Errorf("Disallowed labels errors:\n%s", strings.Join(msgs, "\n"))
+		return fmt.Errorf("Disallowed label errors:\n%s", strings.Join(msgs, "\n"))
 	}
 
 	return nil

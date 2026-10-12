@@ -50,8 +50,8 @@ func NewCmdCompletion() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:       "completion [bash|zsh|fish|powershell]",
-		Short:     "Output shell completion code for the specified shell (bash, zsh or fish)",
-		Long:      "Output shell completion code for the specified shell (bash, zsh or fish).",
+		Short:     "Output shell completion code for the specified shell (bash, zsh, fish or powershell)",
+		Long:      "Output shell completion code for the specified shell (bash, zsh, fish or powershell).",
 		Example:   example,
 		ValidArgs: []string{"bash", "zsh", "fish", "powershell"},
 		Args:      cobra.ExactValidArgs(1),
@@ -84,7 +84,7 @@ func getCompletion(sh string, parent *cobra.Command) (string, error) {
 	case "powershell":
 		err = parent.GenPowerShellCompletion(&buf)
 	default:
-		err = errors.New("unsupported shell type (must be bash, zsh or fish): " + sh)
+		err = errors.New("Unsupported shell type (must be bash, zsh, fish or powershell): " + sh)
 	}
 
 	if err != nil {

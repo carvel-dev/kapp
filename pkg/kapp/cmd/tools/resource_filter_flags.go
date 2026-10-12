@@ -81,5 +81,5 @@ func (s *ResourceFilterFlags) Times() (*time.Time, *time.Time, error) {
 	}
 
 	return nil, nil, fmt.Errorf("Expected age filter to be either empty or " +
-		"parseable time.Duration (example: 5m+, 24h-; valid units: ns, us, ms, s, m, h)")
+		"a valid time.Duration (example: 5m+, 24h-; valid units: ns, us, ms, s, m, h)")
 }

@@ -69,7 +69,7 @@ func (o *ListOptions) Run() error {
 		}
 
 		if !o.TimeFlags.BeforeTime.IsZero() && o.TimeFlags.BeforeTime.Before(o.TimeFlags.AfterTime) {
-			return fmt.Errorf("After time %s should be less than before time %s", o.TimeFlags.After, o.TimeFlags.Before)
+			return fmt.Errorf("After time should be earlier than before time (After: %s, Before: %s)", o.TimeFlags.After, o.TimeFlags.Before)
 		}
 	}
 
@@ -85,7 +85,7 @@ func (o *ListOptions) parseTime(input string, formats []string) (time.Time, erro
 			return t, nil
 		}
 	}
-	return time.Time{}, fmt.Errorf("unrecognized time format %s, supported formats: %s", input, formats)
+	return time.Time{}, fmt.Errorf("Unrecognized time format %s, supported formats: %s", input, formats)
 }
 
 type AppChangesTable struct {
