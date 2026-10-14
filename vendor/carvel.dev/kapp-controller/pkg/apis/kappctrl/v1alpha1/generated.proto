@@ -109,7 +109,7 @@ message AppFetchGit {
 
   // Specifies a strategy to resolve to an explicit ref (optional; v0.24.0+)
   // +optional
-  optional carvel.dev.vendir.pkg.vendir.versions.v1alpha1.VersionSelection refSelection = 6;
+  optional .carvel.dev.vendir.pkg.vendir.versions.v1alpha1.VersionSelection refSelection = 6;
 
   // Secret with auth details. allowed keys: ssh-privatekey, ssh-knownhosts, username, password (optional)
   // (if ssh-knownhosts is not specified, git will not perform strict host checking)
@@ -186,7 +186,7 @@ message AppFetchImage {
   // Specifies a strategy to choose a tag (optional; v0.24.0+)
   // if specified, do not include a tag in url key
   // +optional
-  optional carvel.dev.vendir.pkg.vendir.versions.v1alpha1.VersionSelection tagSelection = 4;
+  optional .carvel.dev.vendir.pkg.vendir.versions.v1alpha1.VersionSelection tagSelection = 4;
 
   // Secret may include one or more keys: username, password, token.
   // By default anonymous access is used for authentication.
@@ -207,7 +207,7 @@ message AppFetchImgpkgBundle {
   // Specifies a strategy to choose a tag (optional; v0.24.0+)
   // if specified, do not include a tag in url key
   // +optional
-  optional carvel.dev.vendir.pkg.vendir.versions.v1alpha1.VersionSelection tagSelection = 3;
+  optional .carvel.dev.vendir.pkg.vendir.versions.v1alpha1.VersionSelection tagSelection = 3;
 
   // Secret may include one or more keys: username, password, token.
   // By default anonymous access is used for authentication.
@@ -281,7 +281,7 @@ message AppSpec {
   // format, before reconciling. Always >= 30s. If value below
   // 30s is specified, 30s will be used. (optional; v0.9.0+; default=30s)
   // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.Duration syncPeriod = 8;
+  optional .k8s.io.apimachinery.pkg.apis.meta.v1.Duration syncPeriod = 8;
 
   // Deletion requests for the App will result in the App CR being
   // deleted, but its associated resources will not be deleted
