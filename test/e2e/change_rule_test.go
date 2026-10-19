@@ -10,6 +10,69 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestChangeRuleWaitsForUnchangedJob(t *testing.T) {
+	env := BuildEnv(t)
+	logger := Logger{}
+	kapp := Kapp{t, env.Namespace, env.KappBinaryPath, logger}
+	kubectl := Kubectl{t, env.Namespace, logger}
+
+	name := "test-change-rule-unchanged-job"
+	cleanUp := func() {
+		kapp.Run([]string{"delete", "-a", name})
+	}
+	cleanUp()
+	defer cleanUp()
+
+	// Suspending the Job keeps it pending without relying on pod startup timing.
+	prerequisite := `
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: change-rule-prerequisite
+  annotations:
+    kapp.k14s.io/change-group: prerequisite
+spec:
+  suspend: true
+  template:
+    spec:
+      containers:
+      - name: job
+        image: busybox
+        command: ["true"]
+      restartPolicy: Never
+`
+	config := prerequisite + `
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: change-rule-dependent
+  annotations:
+    kapp.k14s.io/change-rule: upsert after upserting prerequisite
+`
+
+	// Simulate an interrupted deployment that created only the prerequisite.
+	_, err := kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-", "--wait=false"},
+		RunOpts{IntoNs: true, StdinReader: strings.NewReader(prerequisite)})
+	require.NoError(t, err)
+
+	out, err := kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-", "--wait-timeout=1s"},
+		RunOpts{IntoNs: true, StdinReader: strings.NewReader(config), AllowError: true})
+	require.ErrorContains(t, err, "Timed out waiting after 1s")
+	require.Contains(t, out, "noop job/change-rule-prerequisite")
+	exists, err := ClusterResourceExists("configmap", "change-rule-dependent", kubectl)
+	require.NoError(t, err)
+	require.False(t, exists, "the dependent must not be created while the unchanged Job is pending")
+
+	// Explicitly disabling waiting must still allow the dependent to be created.
+	_, err = kapp.RunWithOpts([]string{"deploy", "-a", name, "-f", "-", "--wait=false"},
+		RunOpts{IntoNs: true, StdinReader: strings.NewReader(config)})
+	require.NoError(t, err)
+	exists, err = ClusterResourceExists("configmap", "change-rule-dependent", kubectl)
+	require.NoError(t, err)
+	require.True(t, exists)
+}
+
 func TestServiceAccountAssociatedSecretDefaultChangeRule(t *testing.T) {
 	env := BuildEnv(t)
 	logger := Logger{}
