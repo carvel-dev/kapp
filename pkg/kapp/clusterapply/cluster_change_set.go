@@ -55,17 +55,26 @@ func (c ClusterChangeSet) Calculate() ([]*ClusterChange, *ctldgraph.ChangeGraph,
 		return nil, changesGraph, err
 	}
 
-	changesGraph.AllMatching(func(change *ctldgraph.Change) bool {
-		c.markChangesToWait(change)
-		return false
+	// Start with changes that need applying or waiting before marking any
+	// dependencies. Ready unchanged resources only need to be retained when
+	// they connect one of these changes to an unfinished prerequisite.
+	activeChanges := changesGraph.AllMatching(func(change *ctldgraph.Change) bool {
+		clusterChange := change.Change.(wrappedClusterChange).ClusterChange
+		return clusterChange.ApplyOp() != ClusterChangeApplyOpNoop ||
+			clusterChange.WaitOp() != ClusterChangeWaitOpNoop
 	})
+	needsWaiting := map[*ctldgraph.Change]bool{}
+	for _, change := range activeChanges {
+		c.markChangesToWait(change, needsWaiting)
+	}
 
-	// Prune out changes that are not involved with anything
+	// Prune changes with no work, unless they carry an active dependency.
+	// A resource with disable-wait still needs to preserve that ordering.
 	changesGraph.RemoveMatching(func(change *ctldgraph.Change) bool {
 		clusterChange := change.Change.(wrappedClusterChange).ClusterChange
 
 		return clusterChange.ApplyOp() == ClusterChangeApplyOpNoop &&
-			clusterChange.WaitOp() == ClusterChangeWaitOpNoop
+			clusterChange.WaitOp() == ClusterChangeWaitOpNoop && !needsWaiting[change]
 	})
 
 	var clusterChanges []*ClusterChange
@@ -78,19 +87,24 @@ func (c ClusterChangeSet) Calculate() ([]*ClusterChange, *ctldgraph.ChangeGraph,
 	return clusterChanges, changesGraph, nil
 }
 
-func (c ClusterChangeSet) markChangesToWait(change *ctldgraph.Change) bool {
+func (c ClusterChangeSet) markChangesToWait(change *ctldgraph.Change, visited map[*ctldgraph.Change]bool) bool {
+	if needsWaiting, found := visited[change]; found {
+		return needsWaiting
+	}
+
 	var needsWaiting bool
 	for _, ch := range change.WaitingFor {
-		if c.markChangesToWait(ch) {
+		if c.markChangesToWait(ch, visited) {
 			needsWaiting = true
-			break
 		}
 	}
 	if needsWaiting {
 		change.Change.(wrappedClusterChange).MarkNeedsWaiting()
-		return true
+	} else {
+		needsWaiting = change.Change.(wrappedClusterChange).WaitOp() != ClusterChangeWaitOpNoop
 	}
-	return change.Change.(wrappedClusterChange).WaitOp() != ClusterChangeWaitOpNoop
+	visited[change] = needsWaiting
+	return needsWaiting
 }
 
 func (c ClusterChangeSet) Apply(changesGraph *ctldgraph.ChangeGraph) error {
@@ -169,6 +183,11 @@ func (c wrappedClusterChange) Op() ctldgraph.ActualChangeOp {
 		return ctldgraph.ActualChangeOpDelete
 
 	case ClusterChangeApplyOpNoop:
+		// Unchanged resources still participate in upsert ordering: they may
+		// need to finish reconciling or carry dependencies through the graph.
+		if c.change.Op() == ctldiff.ChangeOpKeep {
+			return ctldgraph.ActualChangeOpUpsert
+		}
 		return ctldgraph.ActualChangeOpNoop
 
 	case ClusterChangeApplyOpExists:

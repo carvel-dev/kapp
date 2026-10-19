@@ -843,6 +843,43 @@ func buildChangeGraph(resourcesBs string, op ctldgraph.ActualChangeOp, t *testin
 	return buildChangeGraphWithOpts(buildGraphOpts{resourcesBs: resourcesBs, op: op}, t)
 }
 
+func TestChangeGraphRemoveMatching(t *testing.T) {
+	graph, err := buildChangeGraph(`
+kind: Job
+metadata:
+  name: completed
+  annotations:
+    kapp.k14s.io/change-group: prerequisites
+---
+kind: Job
+metadata:
+  name: pending
+  annotations:
+    kapp.k14s.io/change-group: prerequisites
+---
+kind: Job
+metadata:
+  name: dependent
+  annotations:
+    kapp.k14s.io/change-rule: upsert after upserting prerequisites
+`, ctldgraph.ActualChangeOpUpsert, t)
+	require.NoError(t, err)
+
+	graph.RemoveMatching(func(change *ctldgraph.Change) bool {
+		return change.Change.Resource().Name() == "completed"
+	})
+	changes := graph.All()
+	require.Len(t, changes, 2)
+	require.Equal(t, "pending", changes[0].Change.Resource().Name())
+	require.Equal(t, "dependent", changes[1].Change.Resource().Name())
+	require.Equal(t, []*ctldgraph.Change{changes[0]}, changes[1].WaitingFor)
+
+	blocked := ctldgraph.NewBlockedChanges(graph)
+	require.Equal(t, []*ctldgraph.Change{changes[1]}, blocked.Blocked())
+	blocked.Unblock(changes[0])
+	require.Empty(t, blocked.Blocked())
+}
+
 func TestRenderGraph(t *testing.T) {
 	configYAML := `
 kind: Job
