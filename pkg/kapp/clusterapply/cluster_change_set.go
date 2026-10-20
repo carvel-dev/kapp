@@ -169,6 +169,11 @@ func (c wrappedClusterChange) Op() ctldgraph.ActualChangeOp {
 		return ctldgraph.ActualChangeOpDelete
 
 	case ClusterChangeApplyOpNoop:
+		// Unchanged resources still participate in upsert ordering: they may
+		// need to finish reconciling or carry dependencies through the graph.
+		if c.change.Op() == ctldiff.ChangeOpKeep {
+			return ctldgraph.ActualChangeOpUpsert
+		}
 		return ctldgraph.ActualChangeOpNoop
 
 	case ClusterChangeApplyOpExists:
