@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"sync"
 
+	"carvel.dev/kapp/internal/diagnostics"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -117,7 +118,7 @@ func (f *DepsFactoryImpl) printTarget(config *rest.Config) {
 		if len(nodesDesc) > 0 {
 			nodesDesc = fmt.Sprintf(" (nodes: %s)", nodesDesc)
 		}
-		f.ui.PrintLinef("Target cluster '%s'%s", config.Host, nodesDesc)
+		f.ui.PrintLinef("Target cluster '%s'%s", diagnostics.URL(config.Host), nodesDesc)
 	})
 }
 
