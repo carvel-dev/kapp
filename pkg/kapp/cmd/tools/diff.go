@@ -6,13 +6,13 @@ package tools
 import (
 	"io/fs"
 
-	"github.com/cppforlife/go-cli-ui/ui"
-	"github.com/spf13/cobra"
-
 	ctlcap "carvel.dev/kapp/pkg/kapp/clusterapply"
 	cmdcore "carvel.dev/kapp/pkg/kapp/cmd/core"
+	ctlconf "carvel.dev/kapp/pkg/kapp/config"
 	ctldiff "carvel.dev/kapp/pkg/kapp/diff"
 	ctlres "carvel.dev/kapp/pkg/kapp/resources"
+	"github.com/cppforlife/go-cli-ui/ui"
+	"github.com/spf13/cobra"
 )
 
 type DiffOptions struct {
@@ -66,8 +66,16 @@ func (o *DiffOptions) Run() error {
 		changeViews = append(changeViews, DiffChangeView{change})
 	}
 
-	// TODO support adding custom config for mask rules?
-	ctlcap.NewChangeSetView(changeViews, nil, o.DiffFlags.ChangeSetViewOpts).Print(o.ui)
+	// Apply the same Secret masking defaults used by deploy diffs.
+	_, conf, err := ctlconf.NewConfFromResourcesWithDefaults(nil)
+	if err != nil {
+		return err
+	}
+	maskRules := conf.DiffMaskRules()
+	if !o.DiffFlags.Mask {
+		maskRules = nil
+	}
+	ctlcap.NewChangeSetView(changeViews, maskRules, o.DiffFlags.ChangeSetViewOpts).Print(o.ui)
 
 	return nil
 }

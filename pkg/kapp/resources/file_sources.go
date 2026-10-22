@@ -9,6 +9,8 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
+
+	"carvel.dev/kapp/internal/diagnostics"
 )
 
 type FileSource interface {
@@ -71,24 +73,24 @@ var _ FileSource = HTTPFileSource{}
 func NewHTTPFileSource(path string) HTTPFileSource { return HTTPFileSource{path, &http.Client{}} }
 
 func (s HTTPFileSource) Description() string {
-	return fmt.Sprintf("HTTP URL '%s'", s.url)
+	return fmt.Sprintf("HTTP URL '%s'", diagnostics.URL(s.url))
 }
 
 func (s HTTPFileSource) Bytes() ([]byte, error) {
 	resp, err := s.Client.Get(s.url)
 	if err != nil {
-		return nil, fmt.Errorf("Requesting URL '%s': %w", s.url, err)
+		return nil, fmt.Errorf("Requesting URL '%s': %w", diagnostics.URL(s.url), diagnostics.Error(err))
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return nil, fmt.Errorf("Requesting URL '%s': %s", s.url, resp.Status)
+		return nil, fmt.Errorf("Requesting URL '%s': %s", diagnostics.URL(s.url), resp.Status)
 	}
 
 	result, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Reading URL '%s': %w", s.url, err)
+		return nil, fmt.Errorf("Reading URL '%s': %w", diagnostics.URL(s.url), diagnostics.Error(err))
 	}
 
 	return result, nil
