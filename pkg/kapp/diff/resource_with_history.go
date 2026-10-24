@@ -5,6 +5,7 @@ package diff
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/validation"
 	"os"
 
 	ctlres "carvel.dev/kapp/pkg/kapp/resources"
@@ -97,14 +98,10 @@ func (r ResourceWithHistory) RecordLastAppliedResource(appliedChange Change) (ct
 		},
 	}
 
-	const annValMaxLen = 262144
-
 	// kapp deploy should work without adding disable annotation when annotation value max length exceed
 	// (https://github.com/carvel-dev/kapp/issues/410)
-	for _, annVal := range annsMod.KVs {
-		if len(annVal) > annValMaxLen {
-			return nil, false, nil
-		}
+	if err = validation.ValidateAnnotationsSize(annsMod.KVs); err != nil {
+		return nil, false, nil
 	}
 
 	resultRes := r.resource.DeepCopy()
