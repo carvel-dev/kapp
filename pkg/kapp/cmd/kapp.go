@@ -68,6 +68,11 @@ func NewKappCmd(o *KappOptions, flagsFactory cmdcore.FlagsFactory) *cobra.Comman
 	cmd := &cobra.Command{
 		Use:   "kapp",
 		Short: "kapp helps to manage applications on your Kubernetes cluster",
+		Long: `kapp helps to manage applications on your Kubernetes cluster
+
+Environment variables:
+  FORCE_COLOR  Set to 1 to force colored output even when stdout is not a terminal
+               (useful with 'kapp inspect ... | less -R'), or to 0 to disable colors`,
 
 		RunE: cobrautil.ShowHelp,
 
