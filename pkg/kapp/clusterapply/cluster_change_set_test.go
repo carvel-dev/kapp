@@ -122,6 +122,58 @@ metadata:
 	}
 }
 
+func TestClusterChangeSetUnchangedDependencyOnApplyOnlyPrerequisite(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		annotation string
+		wait       bool
+	}{
+		{name: "prerequisite waiting disabled", annotation: `kapp.k14s.io/disable-wait: ""`, wait: true},
+		{name: "wait flag disabled", wait: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			config := fmt.Sprintf(`
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prerequisite
+  annotations:
+    %s
+    kapp.k14s.io/change-group: prerequisite
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: intermediate
+  annotations:
+    kapp.k14s.io/change-group: intermediate
+    kapp.k14s.io/change-rule: upsert after upserting prerequisite
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dependent
+  annotations:
+    kapp.k14s.io/change-rule: upsert after upserting intermediate
+`, tc.annotation)
+			changes, graph := calculateChangeSet(t, config, []string{"intermediate"}, ctlapply.ClusterChangeOpts{Wait: tc.wait})
+			require.Len(t, changes, 3, "the unchanged intermediate must carry the dependency on the prerequisite being applied")
+			require.Equal(t, ctlapply.ClusterChangeApplyOpAdd, changes[0].ApplyOp())
+			require.Equal(t, ctlapply.ClusterChangeWaitOpNoop, changes[0].WaitOp())
+			require.Equal(t, ctlapply.ClusterChangeApplyOpNoop, changes[1].ApplyOp())
+
+			blocked := ctldgraph.NewBlockedChanges(graph)
+			for i, name := range []string{"prerequisite", "intermediate", "dependent"} {
+				change := graph.All()[i]
+				require.Equal(t, name, change.Change.Resource().Name())
+				require.Contains(t, blocked.Unblocked(), change)
+				require.Len(t, blocked.Blocked(), 2-i, "changes after %s must wait for it", name)
+				blocked.Unblock(change)
+			}
+		})
+	}
+}
+
 func TestClusterChangeSetUnchangedDependencyWaitingDisabled(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
