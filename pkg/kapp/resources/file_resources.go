@@ -92,13 +92,15 @@ func (r FileResource) Resources() ([]Resource, error) {
 	var resources []Resource
 
 	for i, doc := range docs {
+		origin := fmt.Sprintf("%s doc %d", r.fileSrc.Description(), i+1)
+
 		rs, err := NewResourcesFromBytes(doc)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Parsing %s: %w", origin, err)
 		}
 
 		for _, res := range rs {
-			res.SetOrigin(fmt.Sprintf("%s doc %d", r.fileSrc.Description(), i+1))
+			res.SetOrigin(origin)
 		}
 
 		resources = append(resources, rs...)
