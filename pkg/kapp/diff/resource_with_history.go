@@ -190,6 +190,13 @@ func (r ResourceWithoutHistory) Resource() (ctlres.Resource, error) {
 		}
 	}
 
+	// Removing the last annotation leaves an empty map behind, which would show up as a diff
+	if meta, ok := res.UnstructuredObject()["metadata"].(map[string]interface{}); ok {
+		if anns, ok := meta["annotations"].(map[string]interface{}); ok && len(anns) == 0 {
+			delete(meta, "annotations")
+		}
+	}
+
 	return res, nil
 }
 
