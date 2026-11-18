@@ -101,7 +101,12 @@ func (c ClusterChangeSet) markChangesToWait(change *ctldgraph.Change, visited ma
 	if needsWaiting {
 		change.Change.(wrappedClusterChange).MarkNeedsWaiting()
 	} else {
-		needsWaiting = change.Change.(wrappedClusterChange).WaitOp() != ClusterChangeWaitOpNoop
+		// A change that still has to be applied is unfinished even when
+		// waiting is disabled for it, so dependents reaching it through
+		// unchanged resources must keep that ordering, same as a direct rule.
+		clusterChange := change.Change.(wrappedClusterChange)
+		needsWaiting = clusterChange.ApplyOp() != ClusterChangeApplyOpNoop ||
+			clusterChange.WaitOp() != ClusterChangeWaitOpNoop
 	}
 	visited[change] = needsWaiting
 	return needsWaiting
