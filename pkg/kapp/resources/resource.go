@@ -147,14 +147,10 @@ func (r *ResourceImpl) GroupKind() schema.GroupKind {
 }
 
 func (r *ResourceImpl) GroupVersion() schema.GroupVersion {
-	pieces := strings.Split(r.APIVersion(), "/")
-	if len(pieces) > 2 {
-		panic(fmt.Errorf("Expected version to be of format group/version: was %s", r.APIVersion())) // TODO panic
-	}
-	if len(pieces) == 1 {
-		return schema.GroupVersion{Group: "", Version: pieces[0]}
-	}
-	return schema.GroupVersion{Group: pieces[0], Version: pieces[1]}
+	// apiVersion comes straight from the user's manifest, so it may not be
+	// well formed. Use the same parse GroupKind above relies on, which reports
+	// an empty group and version rather than panicking on a malformed value.
+	return r.un.GroupVersionKind().GroupVersion()
 }
 
 func (r *ResourceImpl) Kind() string       { return r.un.GetKind() }

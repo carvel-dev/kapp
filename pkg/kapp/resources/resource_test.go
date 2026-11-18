@@ -78,3 +78,31 @@ metadata:
 
 	require.NotContains(t, string(compactBs), "\n", "Expected compact repr to not have newlines")
 }
+
+func TestGroupVersion(t *testing.T) {
+	tests := []struct {
+		name            string
+		apiVersion      string
+		expectedGroup   string
+		expectedVersion string
+	}{
+		{"core group", "v1", "", "v1"},
+		{"named group", "apps/v1", "apps", "v1"},
+		{"more separators than a group and a version", "a/b/c", "", ""},
+		{"empty", "", "", ""},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			res := ctlres.MustNewResourceFromBytes([]byte(`
+apiVersion: ` + test.apiVersion + `
+kind: Config
+metadata:
+  name: cfg
+`))
+			gv := res.GroupVersion()
+			require.Equal(t, test.expectedGroup, gv.Group)
+			require.Equal(t, test.expectedVersion, gv.Version)
+		})
+	}
+}
