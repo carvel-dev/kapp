@@ -232,7 +232,7 @@ data:
 		NewPresentClusterResource("configmap", "cm-3", testNamespace, kubectl)
 	})
 
-	logger.Section("inspect app without scope-to-fallback-allowed-namespaces", func() {
+	logger.Section("inspect app with scope-to-fallback-allowed-namespaces false", func() {
 		const appLabelKey string = "kapp.k14s.io/app"
 		NewClusterResource(t, "ns", testNamespace2, "", kubectl)
 		NewClusterResource(t, "cm", "cm-4", testNamespace2, kubectl)
@@ -242,7 +242,7 @@ data:
 		patch := fmt.Sprintf(`[{ "op": "add", "path": "/metadata/labels", "value": {%s: "%s"}}]`, appLabelKey, appLabel)
 		PatchClusterResource("cm", "cm-4", testNamespace2, patch, kubectl)
 
-		out := kapp.Run([]string{"inspect", "-a", appName, "--json"})
+		out := kapp.Run([]string{"inspect", "-a", appName, "--json", "--dangerous-scope-to-fallback-allowed-namespaces=false"})
 
 		// Should get the newly added configmap
 		expectedResources := []map[string]string{{
@@ -279,13 +279,13 @@ data:
 			"reconcile_state": "ok",
 		}}
 
-		resp := uitest.JSONUIFromBytes(t, []byte(out))
+		resp := uitest.JSONUIFromBytes(t, []byte(removeCobraFlagDeprecationWarning(out, "dangerous-scope-to-fallback-allowed-namespaces")))
 
 		require.Equalf(t, expectedResources, replaceAge((resp.Tables[0].Rows)), "Expected resources to match")
 	})
 
-	logger.Section("inspect app with scope-to-fallback-allowed-namespaces", func() {
-		out := kapp.Run([]string{"inspect", "-a", appName, "--json", "--dangerous-scope-to-fallback-allowed-namespaces"})
+	logger.Section("inspect app without scope-to-fallback-allowed-namespaces", func() {
+		out := kapp.Run([]string{"inspect", "-a", appName, "--json"})
 
 		// Shouldn't get the newly added configmap
 		expectedResources := []map[string]string{{
@@ -319,8 +319,8 @@ data:
 		require.Equalf(t, expectedResources, replaceAge((resp.Tables[0].Rows)), "Expected resources to match")
 	})
 
-	logger.Section("delete one configmap and deploy again with scope-to-fallback-allowed-namespaces", func() {
-		kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-", "--dangerous-scope-to-fallback-allowed-namespaces"},
+	logger.Section("delete one configmap and deploy again without", func() {
+		kapp.RunWithOpts([]string{"deploy", "-a", appName, "-f", "-"},
 			RunOpts{StdinReader: strings.NewReader(yaml2)})
 
 		NewPresentClusterResource("configmap", "cm-1", env.Namespace, kubectl)
@@ -329,7 +329,7 @@ data:
 	})
 
 	logger.Section("delete app", func() {
-		kapp.Run([]string{"delete", "-a", appName, "--dangerous-scope-to-fallback-allowed-namespaces"})
+		kapp.Run([]string{"delete", "-a", appName})
 
 		NewMissingClusterResource(t, "configmap", "cm-1", env.Namespace, kubectl)
 		NewMissingClusterResource(t, "configmap", "cm-2", testNamespace, kubectl)
@@ -355,4 +355,16 @@ func ScopedContext(t *testing.T, kubectl Kubectl, _, contextName, userName strin
 		kubectl.Run([]string{"config", "delete-context", contextName})
 		kubectl.Run([]string{"config", "delete-user", userName})
 	}
+}
+
+func removeCobraFlagDeprecationWarning(output, flag string) string {
+	newOut := ""
+	lines := strings.Split(output, "\n")
+	for _, line := range lines {
+		if strings.Contains(line, fmt.Sprintf("Flag --%s has been deprecated", flag)) {
+			continue
+		}
+		newOut += line + "\n"
+	}
+	return newOut
 }

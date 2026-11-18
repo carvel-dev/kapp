@@ -20,7 +20,9 @@ func (s *ResourceTypesFlags) Set(cmd *cobra.Command) {
 		false, "Allow to ignore failing APIServices")
 
 	cmd.Flags().BoolVar(&s.ScopeToFallbackAllowedNamespaces, "dangerous-scope-to-fallback-allowed-namespaces",
-		false, "Scope resource searching to fallback allowed namespaces")
+		true, "Scope resource searching to fallback allowed namespaces")
+
+	cmd.Flags().MarkDeprecated("dangerous-scope-to-fallback-allowed-namespaces", "The default and recommended behavior is to use this fallback mechanism now")
 }
 
 func (s *ResourceTypesFlags) FailingAPIServicePolicy() *FailingAPIServicesPolicy {
