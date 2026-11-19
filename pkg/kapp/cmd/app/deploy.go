@@ -406,7 +406,7 @@ func (o *DeployOptions) existingResources(newResources []ctlres.Resource,
 		SkipOwnershipCheckAllowedApps:               o.DeployFlags.OwnershipOverrideAllowedApps,
 		IsNewApp:                                    isNewApp,
 
-		// Prevent accidently overriding kapp state records
+		// Prevent accidentally overriding kapp state records
 		DisallowedResourcesByLabelKeys: []string{ctlapp.KappIsAppLabelKey},
 		LabelErrorResolutionFunc:       labelErrorResolutionFunc,
 		LabelValAppMapResolverFunc:     labelValAppMapResolver,

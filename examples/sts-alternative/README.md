@@ -16,7 +16,7 @@ Highlights:
 - allows to change any configuration in any way since all resources are managed directly
 - target specific Pods via DNS via per-Pod created Service (e.g. redis-0 is a Service)
 - since we deployed this via one-off kapp invocation if Pod gets deleted from the cluster, it will not be recreated
-  - to address this, make sure that kapp deploy is continiously executed
+  - to address this, make sure that kapp deploy is continuously executed
     - simplest way to do that is to use [kapp-controller](https://github.com/carvel-dev/kapp-controller)
   - (...it would be nice to create a tiny dedicated controller that can keep one named Pod alive)
 

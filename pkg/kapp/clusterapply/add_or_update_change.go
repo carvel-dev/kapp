@@ -220,7 +220,7 @@ func (c AddOrUpdateChange) tryToUpdateAfterCreateConflict(allowNoopUpdates bool)
 func (c AddOrUpdateChange) recordAppliedResource(savedRes ctlres.Resource) error {
 	savedResWithHistory := c.changeFactory.NewResourceWithHistory(savedRes)
 
-	// It may not be benefitial to record last applied conf
+	// It may not be beneficial to record last applied conf
 	// onto resource. This could be useful for resources that
 	// are very large, hence go over annotation value max length.
 	if !savedResWithHistory.AllowsRecordingLastApplied() {
