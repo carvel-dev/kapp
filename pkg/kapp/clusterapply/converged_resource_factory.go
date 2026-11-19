@@ -44,7 +44,7 @@ func (f ConvergedResourceFactory) New(res ctlres.Resource,
 		},
 
 		// Deal with deletion generically since below resource waiters do not not know about that
-		// TODO shoud we make all of them deal with deletion internally?
+		// TODO should we make all of them deal with deletion internally?
 		func(res ctlres.Resource, _ []ctlres.Resource) (SpecificResource, []ctlres.ResourceRef) {
 			return ctlresm.NewDeleting(res), nil
 		},

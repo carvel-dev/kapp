@@ -34,7 +34,7 @@ func EnumChangeValidation(diff FieldDiff) (bool, error) {
 	// This function resets the enum values for the
 	// old and new field and compares them to determine
 	// if there are any additional changes that should be
-	// handled. Reseting the enum values allows for chained
+	// handled. Resetting the enum values allows for chained
 	// evaluations to check if they have handled all the changes
 	// without having to account for fields other than the ones
 	// they are designed to handle. This function should only be called when

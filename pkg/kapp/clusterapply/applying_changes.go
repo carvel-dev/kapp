@@ -53,7 +53,7 @@ func (c *ApplyingChanges) Apply(allChanges []*ctldgraph.Change) ([]WaitingChange
 		c.ui.NotifySection("applying %d changes %s", len(nonAppliedChanges), c.stats())
 
 		// Throttle number of changes are applied concurrently
-		// as it seems that client-go or api-server arent happy
+		// as it seems that client-go or api-server aren't happy
 		// with large number of updates going at once.
 		// Example errors w/o throttling:
 		// - "...: grpc: the client connection is closing (reason: )"
